@@ -1,0 +1,26 @@
+NUM_LANDUSE_TYPES	21																														
+NUM_SOIL_TYPES	5																														
+#			CURVE NUMBER												IS ROOT ZONE	X = AVAILABLE SOIL WATER (INCHES / FEET)							Y = ROOT ZONE (FEET)								
+#			AMCII	AMC II	AMC II	AMC II	AMC II	MAX RECHARGE					Interception	Interception	DEPTH A	ROOT ZONE X	ROOT ZONE X	ROOT ZONE X	ROOT ZONE X	ROOT ZONE X	ROOT ZONE X	ROOT ZONE X	ROOT ZONE Y	ROOT ZONE Y	ROOT ZONE Y	ROOT ZONE Y	ROOT ZONE Y	ROOT ZONE Y	ROOT ZONE Y		
+# LU code	Description	Assumed Imperviousness	CLAY TILL	LOAMY TILL	FINE 	MED/CRS	ORGANIC	CLAY TILL	LOAMY TILL	FINE 	MED/CRS	ORGANIC	(growing season)	(Non-growing season)	CONSTANT VALUE?	1	2	3	4	5	6	7	1	2	3	4	5	6	7	Reference (CN)	Reference (Root Depth)
+11	Open water	not applicable	100	100	100	100	100	0.12	0.6	0.24	2	0.6	0	0	TRUE	0	1.2	1.8	2.4	3	3.6	4.8	0	0	0	0	0	0	0	Dripps	
+12	Perennial Ice/Snow	not applicable	5	5	5	5	5	0.12	0.6	0.24	2	0.6	0	0	TRUE	0	1.2	1.8	2.4	3	3.6	4.8	0	0	0	0	0	0	0		
+21	Low density Residential	0.25	85	80	82.5	54	70	0.12	0.6	0.24	2	0.6	0.0835	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	1.67	1.67	1.67	2.08	1.33	0.83	0.83	210-VI-TR-55 Second Ed. June 1986	Table 10, TM 1957; shallow-rooted crops
+22	High density Residential	0.5	92	90	91	77	85	0.12	0.6	0.24	2	0.6	0.0835	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	1.113389	1.113389	1.113389	1.386736	0.886711	0.553361	0.553361	210-VI-TR-55 Second Ed. June 1986	2/3 of Table 10, TM 1957
+23	Commercial/Industrial/Transportation	0.85	95	94	94.5	89	92	0.12	0.6	0.24	2	0.6	0.0625	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	0.742296446	0.742296446	0.742296446	0.924536891	0.591170224	0.368925779	0.368925779	210-VI-TR-55 Second Ed. June 1986	2/3 of high density residential
+31	Bare Exposed Rock / Sand / Clay (assume similar to dirt road)	not applicable	89	87	88	72	82	0.12	0.6	0.24	2	0.6	0	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	0.5	0.5	0.5	0.5	0.5	0.5	0.5	Copied from Commercial/Industrial Land Use	Assumed value
+32	Quarries/Gravel Pits (assume similar to commercial)	0	95	94	94.5	89	92	0.12	0.6	0.24	2	0.6	0	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	0.5	0.5	0.5	0.5	0.5	0.5	0.5	Copied from Commercial/Industrial Land Use	Assumed value
+33	Transitional (assume similar to newly graded areas)	0	94	91	92.5	77	86	0.12	0.6	0.24	2	0.6	0.09	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	1.67	1.67	1.67	2.08	1.33	0.83	0.83	SCS Nat Eng Handbook Section 4, 1964	Assume same as low density residential
+41	Deciduous Forest	0	85	79	82	42	66	0.12	0.6	0.24	2	0.6	0.05	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	11.67	8.33	6.66	6.66	5.33	3.9	3.9	Yang Hong et al, JAWRA, Nov 06, 2006, iweb.tntech.edu/fhossain/papers/GlobalCN_Hongetal_JAWRA.pdf	Table 10, TM 1957; Closed mature forest
+42	Evergreen Forest	0	79	73	76	34	60	0.12	0.6	0.24	2	0.6	0.05	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	11.67	8.33	6.66	6.66	5.33	3.9	3.9	Yang Hong et al, JAWRA, Nov 06, 2006, iweb.tntech.edu/fhossain/papers/GlobalCN_Hongetal_JAWRA.pdf	Table 10, TM 1957; Closed mature forest
+43	Mixed Forest	0	81	75	78	38	62	0.12	0.6	0.24	2	0.6	0.05	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	11.67	8.33	6.66	6.66	5.33	3.9	3.9	Yang Hong et al, JAWRA, Nov 06, 2006, iweb.tntech.edu/fhossain/papers/GlobalCN_Hongetal_JAWRA.pdf	Table 10, TM 1957; Closed mature forest
+51	Shrubland (assumed same as parkland)	0	80	74	77	39	61	0.12	0.6	0.24	2	0.6	0.0625	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	3.33	3.33	3.33	4.17	3.33	2.22	2.22	210-VI-TR-55 Second Ed. June 1986	Table 10, TM 1957; Deep-rooted crops
+61	Orchard	0	79	72	75.5	32	58	0.12	0.6	0.24	2	0.6	0.05	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	3.9	5	5.55	5	3.33	2.22	2.22	SCS Nat Eng Handbook Section 4, 1964	Table 10, TM 1957; Orchard
+71	Grasslands / Herbaceous (Deep-rooted ag)	0	80	74	77	39	61	0.12	0.6	0.24	2	0.6	0.09	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	3.33	3.33	3.33	4.17	3.33	2.22	2.22	SCS Nat Eng Handbook Section 4, 1964	Table 10, TM 1957; Deep-rooted crops
+81	Pasture (assumed type pasture, good condition)	0	80	74	77	39	61	0.12	0.6	0.24	2	0.6	0.09	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	3.33	3.33	3.33	4.17	3.33	2.22	2.22		Table 10, TM 1957; Deep-rooted crops
+82	Row Crops (Shallow-Rooted Agriculture)	0	89	85	87	67	78	0.12	0.6	0.24	2	0.6	0.09	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	1.67	1.67	1.67	2.08	1.33	0.83	0.83	SCS Nat Eng Handbook Section 4, 1964	Table 10, TM 1957; shallow-rooted crops
+83	Small Grains (Moderate-Rooted Agriculture)	0	89	85	87	67	78	0.12	0.6	0.24	2	0.6	0.09	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	2.5	2.5	3.33	3.33	2.67	1.67	1.67	SCS Nat Eng Handbook Section 4, 1964	Table 10, TM 1957; Moderately deep-rooted crops
+84	Fallow (assumed type fallow, bare soil)	0	94	91	92.5	77	86	0.12	0.6	0.24	2	0.6	0	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	0.5	0.5	0.5	0.5	0.5	0.5	0.5		Assumed value
+85	Urban/Recreational Grasses (assumed type pasture, good condition)	0	80	74	77	39	61	0.12	0.6	0.24	2	0.6	0.0625	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	3.33	3.33	3.33	4.17	3.33	2.22	2.22	210-VI-TR-55 Second Ed. June 1986	Table 10, TM 1957; Deep-rooted crops
+91	Forested Wetland	0	79.5	73	76.25	34	60	0.12	0.6	0.24	2	0.6	0.05	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	6.67	5	4.165	4.37	3.33	2.365	2.365	Average of wetland and mixed forest values	Average of wetland and mixed forest values
+92	Wetland	0	78	71	74.5	30	58	0.12	0.6	0.24	2	0.6	0	0	FALSE	0	1.2	1.8	2.4	3	3.6	4.8	1.67	1.67	1.67	2.08	1.33	0.83	0.83	Yang Hong et al, JAWRA, Nov 06, 2006, iweb.tntech.edu/fhossain/papers/GlobalCN_Hongetal_JAWRA.pdf	Table 10, TM 1957; shallow-rooted crops

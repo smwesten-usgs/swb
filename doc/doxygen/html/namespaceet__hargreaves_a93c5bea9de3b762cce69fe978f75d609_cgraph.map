@@ -1,0 +1,9 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$namespacemeteorological__functions.html#ae644c82b94c9b7d74340c161115f5b7c" title="meteorological_functions::equivalent_evaporation" alt="" coords="337,5,639,35"/>
+<area shape="rect" id="node5" href="$namespaceet__hargreaves.html#a905bbe6d732ac8cd4ed35b59d1b1177e" title="et_hargreaves::ET0_hargreaves" alt="" coords="387,59,589,88"/>
+<area shape="rect" id="node7" href="$namespacemeteorological__functions.html#a934777cd90ce18fe8fce7d7cfed5bf35" title="meteorological_functions::extraterrestrial_radiation_Ra" alt="" coords="321,112,655,141"/>
+<area shape="rect" id="node9" href="$namespacemeteorological__functions.html#ade7f60bc93f4411aa8c4a157341f8b4b" title="meteorological_functions::rel_Earth_Sun_dist" alt="" coords="347,165,629,195"/>
+<area shape="rect" id="node11" href="$namespacemeteorological__functions.html#a50fc95bc69ce9e9fd28b0e1696697a7d" title="meteorological_functions::row_latitude" alt="" coords="367,219,609,248"/>
+<area shape="rect" id="node13" href="$namespacemeteorological__functions.html#a45a598db078dc2575ce2c0ddcc2f69f0" title="meteorological_functions::solar_declination" alt="" coords="353,272,623,301"/>
+<area shape="rect" id="node15" href="$namespacemeteorological__functions.html#abdb8538c50386c8a369970151f80f73d" title="meteorological_functions::sunset_angle" alt="" coords="363,325,613,355"/>
+</map>
