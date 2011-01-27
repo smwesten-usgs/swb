@@ -141,65 +141,80 @@ end function netcdf_open
   enddo
 
   call Assert(LOGICAL(iXDim > 0,kind=T_LOGICAL), &
-     "'x' dimension not found in NetCDF file",TRIM(__FILE__),__LINE__)
+     "'x' dimension not found in NetCDF file", &
+     TRIM(__FILE__),__LINE__)
 
   call Assert(LOGICAL(iYDim > 0,kind=T_LOGICAL), &
-     "'y' dimension not found in NetCDF file",TRIM(__FILE__),__LINE__)
+     "'y' dimension not found in NetCDF file",&
+     TRIM(__FILE__),__LINE__)
 
   call Assert(LOGICAL(iTDim > 0,kind=T_LOGICAL), &
-     "'time' dimension not found in NetCDF file",TRIM(__FILE__),__LINE__)
+     "'time' dimension not found in NetCDF file", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(sVarName(nVariables),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(iVarDim(nVariables),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(rXCoord(iDimLen(iXDim)),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(rYCoord(iDimLen(iYDim)),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(iValue(iDimLen(iXDim),iDimLen(iYDim)),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(iVarNumAttribs(nVariables),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(sAttribName(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   sAttribName = ""
 
   allocate(iAttribType(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(iVarType(nVariables),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(sAttribValue(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   sAttribValue = ""
 
   allocate(rAttribValue(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   allocate(iVarDimID(nVariables,MAX_DIMENSIONS),stat=iStat)
    call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
-     "Problem allocating memory for variable",TRIM(__FILE__),__LINE__)
+     "Problem allocating memory for variable", &
+     TRIM(__FILE__),__LINE__)
 
   write(unit=LU_LOG,FMT="(/,a,/,t9,a,t32,a,t45,a)") "Summary of variables contained in NetCDF file",&
     "NAME","DIMENSIONS","TYPE"
@@ -236,7 +251,8 @@ end function netcdf_open
 
         ! Die if we have greater than 3 dimensions assigned to this variable
         call Assert(lFALSE,"Dimensions > 3 are unsupported; iVarDim = "// &
-           TRIM(int2char(iVarDim(i))),TRIM(__FILE__), __LINE__)
+           TRIM(int2char(iVarDim(i))), &
+           TRIM(__FILE__), __LINE__)
 
     end select
 

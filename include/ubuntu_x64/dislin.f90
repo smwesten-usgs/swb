@@ -3,8 +3,8 @@
 !/**                                                            **/
 !/** Module file for DISLIN Fortran 90.                         **/
 !/**                                                            **/
-!/** Date     :  05.12.2009                                     **/
-!/** Routines :  718                                            **/
+!/** Date     :  09.08.2010                                     **/
+!/** Routines :  727                                            **/
 !/** Version  :  10.0 / explicit-shape                          **/
 !/****************************************************************/
 
@@ -435,6 +435,15 @@ module dislin
       real, dimension (nlray), intent (in) :: zlev
       real, dimension (n,m), intent (in) :: zmat
     end subroutine conshd
+
+    subroutine conshd3d(xray,n,yray,m,zmat,zlev,nlray)
+      implicit none
+      integer, intent (in) :: n,m,nlray
+      real, dimension (n), intent (in) :: xray
+      real, dimension (m), intent (in) :: yray
+      real, dimension (nlray), intent (in) :: zlev
+      real, dimension (n,m), intent (in) :: zmat
+    end subroutine conshd3d
  
     subroutine contri(xray,yray,zray,n,i1ray,i2ray,i3ray,ntri,zlev)
       implicit none
@@ -615,6 +624,11 @@ module dislin
  
     subroutine disalf()
     end subroutine disalf
+
+    subroutine disenv(cstr)
+      implicit none
+      character (len = *), intent (in) :: cstr
+    end subroutine disenv
  
     subroutine disfin()
     end subroutine disfin
@@ -645,6 +659,11 @@ module dislin
       character (len=*), intent (in) :: cstr
       integer, intent (in out) :: ival
     end subroutine dwgbut
+
+    subroutine dwgerr(ival)
+      implicit none
+      integer, intent (in out) :: ival
+    end subroutine dwgerr
  
     subroutine dwgfil(clab,cstr,cmask)
       implicit none
@@ -711,6 +730,12 @@ module dislin
       character (len = *), intent (in) :: copt
     end subroutine expzlb
  
+    subroutine fbars(x,y1,y2,y3,y4,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y1,y2,y3,y4
+    end subroutine fbars
+
     subroutine fcha(x,ndez,nl,cstr)
       implicit none
       real, intent (in) :: x
@@ -1592,6 +1617,12 @@ module dislin
       character (len = *), intent (in) :: cfl, copt
     end subroutine mapfil
 
+    subroutine mapimg(cfl,x1,x2,x3,x4,x5,x6)
+      implicit none
+      character (len = *), intent (in) :: cfl
+      real, intent (in) :: x1,x2,x3,x4,x5,x6
+    end subroutine mapimg
+
     subroutine maplab(copt,ckey)
       implicit none
       character (len = *), intent (in) :: copt,ckey
@@ -2149,6 +2180,13 @@ module dislin
       real, dimension (n,m), intent (in) :: x
     end subroutine qplcon
 
+    subroutine qplcrv(x,y,n,copt)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y
+      character (len = *), intent (in) :: copt
+    end subroutine qplcrv
+
     subroutine qplot(x,y,n)
       implicit none
       integer, intent (in) :: n
@@ -2166,6 +2204,12 @@ module dislin
       integer, intent (in) :: n
       real, dimension (n), intent (in) :: x,y
     end subroutine qplsca
+
+    subroutine qplscl(a,e,or,step,copt)
+      implicit none
+      real, intent (in) :: a,e,or,step
+      character (len = *), intent (in) :: copt
+    end subroutine qplscl
 
     subroutine qplsur(x,n,m)
       implicit none
@@ -2985,6 +3029,12 @@ module dislin
       implicit none
       integer, intent (in) :: id,iv
     end subroutine swgint
+
+    subroutine swgiop (ival,copt)
+      implicit none
+      integer, intent (in) :: ival
+      character (len=*), intent (in) :: copt
+    end subroutine swgiop
  
     subroutine swgjus (ctype,cwidg)
       implicit none
@@ -3668,6 +3718,12 @@ module dislin
       real, intent (in)     :: x1,x2,xval
       integer, intent (out) :: id
     end subroutine wgscl
+
+    subroutine wgsep(ip,id)
+      implicit none
+      integer, intent (in)  :: ip
+      integer, intent (out) :: id
+    end subroutine wgsep
  
     subroutine wgstxt(ip,nsize,nmax,id)
       implicit none
