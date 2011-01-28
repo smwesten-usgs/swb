@@ -157,8 +157,8 @@ elseif(CMAKE_HOST_UNIX)
      #------------------------------------------------------------------------
      set (Fortran_FLAGS_RELEASE "-fast -fPIC")
      set (Fortran_FLAGS_DEBUG "-O0 ")
-     set(CMAKE_FIND_LIBRARY_PREFIXES lib)
-     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
+#     set(CMAKE_FIND_LIBRARY_PREFIXES lib)
+#     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so; so.3")
 
      find_program(CMAKE_MAKE_PROGRAM make
        DOC "Find a suitable make program for building under Linux/IFORT"
@@ -189,15 +189,21 @@ elseif(CMAKE_HOST_UNIX)
        PATH_SUFFIXES
        lib/ubuntu_x64/ifort)
 
-     find_library(OPEN_MOTIF_LIB
-       NAMES libXm.so.3 Xm
-       DOC "Open Motif library"
-       HINTS
-       /usr/lib
-       lib/ubuntu_x64/ifort)
+#     find_library(OPEN_MOTIF_LIB
+#       NAMES libXm.so.3 libXm.so.3.0.2
+#       DOC "Open Motif library"
+#       HINTS
+#       /usr/lib
+#       lib/ubuntu_x64/ifort)
+
+     set(OPEN_MOTIF_LIB "/usr/lib/libXm.so.3")
+
+     # I have no idea why such effort was required to get DISLIN to link with SWB under Linux/ifort!
+     set(X_LIB "/usr/lib/libXm.a;/usr/lib/libXt.a;/usr/lib/libX11.a;/usr/lib/libxcb.a")
+     set(X_LIB ${X_LIB} "/usr/lib/libXdmcp.a;/usr/lib/libXau.a;/usr/lib/libGL.so")
 
      find_library(DISLIN_FORTRAN_LIB
-       NAMES dislin-10.0.a dislin-10.0
+       NAMES dislin-10.0.a
        DOC "DISLIN Fortran library"
        HINTS
        ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
@@ -216,6 +222,9 @@ elseif(CMAKE_HOST_UNIX)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${X_LIB} )
+
+     message("libs: " "${EXTRA_LIBS}")
 
      SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
@@ -250,7 +259,6 @@ message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("--------------------------------------------------------------------")
 
 include_directories(${INCLUDE_DIR})
-set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
 link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
