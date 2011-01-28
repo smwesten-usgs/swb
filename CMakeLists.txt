@@ -260,7 +260,7 @@ elseif(CMAKE_HOST_UNIX)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${M_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_HL_LIB} )
-	 set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
 
      SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
