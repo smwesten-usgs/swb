@@ -189,46 +189,6 @@ elseif(CMAKE_HOST_UNIX)
        PATH_SUFFIXES
        lib/ubuntu_x64/ifort)
 
-     find_library(HDF5_HL_FORTRAN_LIB
-       NAMES libhdf5_hl.a hdf5_hl
-       DOC "hdf5_hl library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
-
-     find_library(HDF5_FORTRAN_LIB
-       NAMES libhdf5.a hdf5
-       DOC "hdf5 library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
-
-     find_library(Z_LIB
-       NAMES libz.a z
-       DOC "z library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
-
-     find_library(M_LIB
-       NAMES libm.a m
-       DOC "m library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
-
-     find_library(SZ_LIB
-       NAMES libsz.a sz
-       DOC "sz library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
-
      find_library(OPEN_MOTIF_LIB
        NAMES libXm.so.3 Xm
        DOC "Open Motif library"
@@ -255,11 +215,6 @@ elseif(CMAKE_HOST_UNIX)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${SZ_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${Z_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${M_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_HL_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
 
      SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
