@@ -788,7 +788,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
        if(lEOF) exit
 
        pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad,&
-           ORDER=(/2,1/))
+           ORDER=(/1,2/))
 
 #ifdef DEBUG_PRINT
        call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -904,7 +904,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 #endif
 
        pGrd%rData(:,:)=RESHAPE(rValSum,(/iNY,iNX/),PAD=rPad,&
-          ORDER=(/2,1/))
+          ORDER=(/1,2/))
 
 #ifdef DEBUG_PRINT
        call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -1022,7 +1022,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
      if(lMonthEnd .and. iMonth == 12) then
 
        pGrd%rData(:,:)=RESHAPE(rValSum,(/iNY,iNX/),PAD=rPad,&
-           ORDER=(/2,1/))
+           ORDER=(/1,2/))
 
        call stats_WriteMinMeanMax(LU_LOG, STAT_INFO(k)%sVARIABLE_NAME, &
           pGrd%rData(:,:))

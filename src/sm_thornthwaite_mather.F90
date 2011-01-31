@@ -187,8 +187,11 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
   iCounter = 0
 
-  j_idx: do j=1,pGrd%iNY
-    i_idx: do i=1,pGrd%iNX
+  ! array is traversed in column-major order (i.e. processed a column
+  ! at a time, which should be more efficient in terms of Fortran
+  ! memory management)
+  i_idx: do i=1,pGrd%iNX
+    j_idx: do j=1,pGrd%iNY
       cel => pGrd%Cells(j,i)
       iCounter = iCounter + 1
 
@@ -1016,9 +1019,9 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
       endif
 
-    end do i_idx
+    end do j_idx
 
-  end do j_idx
+  end do i_idx
 
   ! now issue the following calls to trigger calculation of daily averages
   !
