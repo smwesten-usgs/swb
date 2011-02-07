@@ -27,7 +27,7 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i,j,k,l
+  integer (kind=T_INT) :: iCol,iRow,k,l
   type (T_CELL),pointer :: cel              ! pointer to a grid cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
 
@@ -35,12 +35,12 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
   ! Initialize all CNs to "bare rock"
   pGrd%Cells(:,:)%rBaseCN = real(5,T_SGL)
 
-  do j=1,pGrd%iNY
-    do i=1,pGrd%iNX
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
       ! Use the LU and SG in the grid cell, along with the LU option to
       ! look up the curve number
 
-	  cel => pGrd%Cells(j,i)
+	  cel => pGrd%Cells(iRow,iCol)
 
       ! iterate through all land use types
       do k = 1,size(pConfig%LU,1)
@@ -58,7 +58,7 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
               exit
             end if
           end do
- !		  write(UNIT=LU_LOG,FMT=*) j,i,k, "LU:",pLU%iLandUseType, "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
+ !		  write(UNIT=LU_LOG,FMT=*) iRow,iCol,k, "LU:",pLU%iLandUseType, "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
           exit
         end if
 

@@ -597,7 +597,7 @@ end subroutine netcdf_chk_extent
 
     ! [ LOCALS ]
     type ( T_GENERAL_GRID ),pointer :: pGrd_nc  ! pointer to NetCDF grid
-    integer (kind=T_INT) :: iTime, i, j, i0, i1, j0, j1, i2, j2, i3, j3
+    integer (kind=T_INT) :: iTime, iCol, iRow, i0, i1, j0, j1, i2, j2, i3, j3
     type (T_NETCDF_FILE), pointer :: pNC
     real(kind=T_SGL), allocatable, dimension(:,:) :: rValues
     real (kind=T_SGL) :: rXval, rYval
@@ -637,10 +637,6 @@ end subroutine netcdf_chk_extent
 
     iTime = iJulianDay - pNC%iStartJulianDay + 1
 
-!    do i=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
-!      do j=1,pGrd%iNY
-!
-
     call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
       start= (/1,1,iTime/), &
       count= (/ pNC%iX_NumGridCells, &
@@ -672,45 +668,45 @@ end subroutine netcdf_chk_extent
     if(pNC%lInterpolate) then
 
       if(iScaleFactor==2) then
-        do i=1,pNC%iX_NumGridCells
-          do j=1,pNC%iY_NumGridCells
-            j0 = pOutGrd%iNY - (j-1)*2
-            i0 = 1 + (i-1)*2
+        do iCol=1,pNC%iX_NumGridCells
+          do iRow=1,pNC%iY_NumGridCells
+            j0 = pOutGrd%iNY - (iRow-1)*2
+            i0 = 1 + (iCol-1)*2
             j1 = j0 - 1
             i1 = i0 + 1
-            pOutGrd%rData(j0,i0) = rValues(i,j)
-            pOutGrd%rData(j0,i1) = rValues(i,j)
-            pOutGrd%rData(j1,i0) = rValues(i,j)
-            pOutGrd%rData(j1,i1) = rValues(i,j)
+            pOutGrd%rData(j0,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j0,i1) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i1) = rValues(iCol,iRow)
           end do
         end do
       else if(iScaleFactor==4) then
-        do i=1,pNC%iX_NumGridCells
-          do j=1,pNC%iY_NumGridCells
-            j0 = pOutGrd%iNY - (j-1)*4
-            i0 = 1 + (i-1)*4
+        do iCol=1,pNC%iX_NumGridCells
+          do iRow=1,pNC%iY_NumGridCells
+            j0 = pOutGrd%iNY - (iRow-1)*4
+            i0 = 1 + (iCol-1)*4
             j1 = j0 - 1
             i1 = i0 + 1
             j2 = j1 - 1
             i2 = i1 + 1
             j3 = j2 - 1
             i3 = i2 + 1
-            pOutGrd%rData(j0,i0) = rValues(i,j)
-            pOutGrd%rData(j0,i1) = rValues(i,j)
-            pOutGrd%rData(j0,i2) = rValues(i,j)
-            pOutGrd%rData(j0,i3) = rValues(i,j)
-            pOutGrd%rData(j1,i0) = rValues(i,j)
-            pOutGrd%rData(j1,i1) = rValues(i,j)
-            pOutGrd%rData(j1,i2) = rValues(i,j)
-            pOutGrd%rData(j1,i3) = rValues(i,j)
-            pOutGrd%rData(j2,i0) = rValues(i,j)
-            pOutGrd%rData(j2,i1) = rValues(i,j)
-            pOutGrd%rData(j2,i2) = rValues(i,j)
-            pOutGrd%rData(j2,i3) = rValues(i,j)
-            pOutGrd%rData(j3,i0) = rValues(i,j)
-            pOutGrd%rData(j3,i1) = rValues(i,j)
-            pOutGrd%rData(j3,i2) = rValues(i,j)
-            pOutGrd%rData(j3,i3) = rValues(i,j)
+            pOutGrd%rData(j0,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j0,i1) = rValues(iCol,iRow)
+            pOutGrd%rData(j0,i2) = rValues(iCol,iRow)
+            pOutGrd%rData(j0,i3) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i1) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i2) = rValues(iCol,iRow)
+            pOutGrd%rData(j1,i3) = rValues(iCol,iRow)
+            pOutGrd%rData(j2,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j2,i1) = rValues(iCol,iRow)
+            pOutGrd%rData(j2,i2) = rValues(iCol,iRow)
+            pOutGrd%rData(j2,i3) = rValues(iCol,iRow)
+            pOutGrd%rData(j3,i0) = rValues(iCol,iRow)
+            pOutGrd%rData(j3,i1) = rValues(iCol,iRow)
+            pOutGrd%rData(j3,i2) = rValues(iCol,iRow)
+            pOutGrd%rData(j3,i3) = rValues(iCol,iRow)
           end do
         end do
       else
@@ -721,19 +717,19 @@ end subroutine netcdf_chk_extent
           //" the model domain grid cell size",TRIM(__FILE__),__LINE__)
       end if
 
-!      do i=1,pOutGrd%iNX
-!        rXval = grid_GetGridX(pGrd,i)
-!        do j=1,pOutGrd%iNY
-!          rYval = grid_GetGridY(pGrd,j)
-!          pOutGrd%rData(j,i) = grid_Interpolate(pGrd_nc,rXval,rYval)
+!      do iCol=1,pOutGrd%iNX
+!        rXval = grid_GetGridX(pGrd,iCol)
+!        do iRow=1,pOutGrd%iNY
+!          rYval = grid_GetGridY(pGrd,iRow)
+!          pOutGrd%rData(iRow,iCol) = grid_Interpolate(pGrd_nc,rXval,rYval)
 !        end do
 !      end do
 
 
     else  ! no interpolation needed
-      do i=1,pOutGrd%iNX
-        do j=1,pOutGrd%iNY
-          pOutGrd%rData((pOutGrd%iNY - j + 1),i) = rValues(i,j)
+      do iCol=1,pOutGrd%iNX
+        do iRow=1,pOutGrd%iNY
+          pOutGrd%rData((pOutGrd%iNY - iRow + 1),iCol) = rValues(iCol,iRow)
         end do
       end do
     end if
@@ -759,7 +755,7 @@ end subroutine netcdf_chk_extent
     character(len=256) :: sDateStrPretty
     real (kind=T_DBL) :: rLat, rLon
     real (kind=T_DBL) :: rX, rY
-    integer (kind=T_INT) :: i,j,k
+    integer (kind=T_INT) :: iCol,iRow,k
     integer (kind=T_INT) :: iDay, iMonth, iYear
     character(len=24) :: sStartDate
     real (kind=T_SGL) :: rMultFactor
@@ -926,18 +922,18 @@ end subroutine netcdf_chk_extent
     call netcdf_check(nf90_enddef(pNC%iNCID),TRIM(__FILE__),__LINE__)
 
 !    ! compute and output x values
-!    do i=1,pGrd%iNX
-!      rX = grid_GetGridX(pGrd,i)
+!    do iCol=1,pGrd%iNX
+!      rX = grid_GetGridX(pGrd,iCol)
 !      call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iXVarID, &
-!           values = rX, start = (/i/)))
+!           values = rX, start = (/iCol/)))
 !    end do
 !
 !    ! compute and output y values
-!    do j=1,pGrd%iNY
-!      k =  pGrd%iNY - j + 1
-!      rY = grid_GetGridY(pGrd,j)
+!    do iRow=1,pGrd%iNY
+!      k =  pGrd%iNY - iRow + 1
+!      rY = grid_GetGridY(pGrd,iRow)
 !      call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iYVarID, &
-!           values = rY, start = (/j/)))
+!           values = rY, start = (/iRow/)))
 !    end do
 
     ! write out the latitude and longitude at each UTM X and Y
@@ -948,39 +944,39 @@ end subroutine netcdf_chk_extent
       rMultFactor = rONE
     end if
 
-    do i=1,pGrd%iNX
-      do j=1,pGrd%iNY
-        k =  pGrd%iNY - j + 1
-        rX = grid_GetGridX(pGrd,i) * rMultFactor
-        rY = grid_GetGridY(pGrd,j) * rMultFactor
+    do iCol=1,pGrd%iNX
+      do iRow=1,pGrd%iNY
+        k =  pGrd%iNY - iRow + 1
+        rX = grid_GetGridX(pGrd,iCol) * rMultFactor
+        rY = grid_GetGridY(pGrd,iRow) * rMultFactor
         call UTMtoLL(pConfig, rX, rY, rLat, rLon)
-        if(i==1 .and. j==1 .or. i==pGrd%iNX .and. j==pGrd%iNY) then
+        if(iCol==1 .and. iRow==1 .or. iCol==pGrd%iNX .and. iRow==pGrd%iNY) then
            write(unit=LU_LOG,FMT="('grid coordinate (',i4,',',i4,'): ',2f14.3)") &
-             i,j,rX, rY
+             iCol,iRow,rX, rY
            write(unit=LU_LOG,FMT="('lat / long      (',i4,',',i4,'): ',2f14.3)") &
-             i,j,rLon, rLat
+             iCol,iRow,rLon, rLat
         end if
         call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLatVarID   , &
-           values = rLat, start = (/i,j/)))
+           values = rLat, start = (/iCol,iRow/)))
         call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLonVarID   , &
-           values = rLon, start = (/i,j/)))
+           values = rLon, start = (/iCol,iRow/)))
 !        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iXVarID   , &
-!           values = rX, start = (/i,j/)))
+!           values = rX, start = (/iCol,iRow/)))
 !        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iYVarID   , &
-!           values = rY, start = (/i,j/)))
+!           values = rY, start = (/iCol,iRow/)))
       end do
     end do
 
-    do i=1,pGrd%iNX
-      rX = grid_GetGridX(pGrd,i) * rMultFactor
+    do iCol=1,pGrd%iNX
+      rX = grid_GetGridX(pGrd,iCol) * rMultFactor
       call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iXVarID   , &
-         values = rX, start = (/i/)))
+         values = rX, start = (/iCol/)))
     end do
 
-    do j=1,pGrd%iNY
-      rY = grid_GetGridY(pGrd,j) * rMultFactor
+    do iRow=1,pGrd%iNY
+      rY = grid_GetGridY(pGrd,iRow) * rMultFactor
       call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iYVarID   , &
-         values = rY, start = (/j/)))
+         values = rY, start = (/iRow/)))
     end do
 
 
@@ -1002,15 +998,15 @@ end subroutine netcdf_chk_extent
     ! [LOCAL VARIABLES ]
     type (T_NETCDF_FILE), pointer :: pNC
     real (kind=T_DBL) :: rX, rY
-    integer (kind=T_INT) :: i,j, k
+    integer (kind=T_INT) :: iCol,iRow, k
 
     pNC => pConfig%NETCDF_FILE(iVarNum, iMode)
 
-    do i=1,pGrd%iNX
-      do j=1,pGrd%iNY
-        k =  pGrd%iNY - j + 1
+    do iCol=1,pGrd%iNX
+      do iRow=1,pGrd%iNY
+        k =  pGrd%iNY - iRow + 1
         call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iVarID   , &
-           values = pGrd%rData(k,i), start = (/i,j, iTime/)), &
+           values = pGrd%rData(k,iCol), start = (/iCol,iRow, iTime/)), &
                 TRIM(__FILE__),__LINE__, pNC, iTime)
       end do
     end do

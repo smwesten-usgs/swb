@@ -83,7 +83,7 @@ subroutine et_turc_ComputeET( pGrd, iDayOfYear, rRH, rSunPct )
   real (kind=T_SGL),intent(in) :: rRH,rSunPct
   ! [ LOCALS ]
   real (kind=T_SGL) :: rPotET,rSo,rDelta,rOmega_s,rD_r,rS0,rSn,rT
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: iCol,iRow
   ! [ CONSTANTS ]
   real (kind=T_SGL),parameter :: UNIT_CONV = 0.313_T_SGL / 25.4_T_SGL
 
@@ -97,20 +97,20 @@ subroutine et_turc_ComputeET( pGrd, iDayOfYear, rRH, rSunPct )
                                                   sin(rOmega_s) * cos(rLatitude) * cos(rDelta) )
   rSn = rSo * ( rONE-rAlbedo ) * ( rAs + rBS * rSunPct / rHUNDRED )
 
-  do i=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
-    do j=1,pGrd%iNY
+  do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
+    do iRow=1,pGrd%iNY
 
-      if ( pGrd%Cells(j,i)%rTAvg <= rFREEZING ) then
+      if ( pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
         rPotET = rZERO
       else
-        rT = FtoC(pGrd%Cells(j,i)%rTAvg)
+        rT = FtoC(pGrd%Cells(iRow,iCol)%rTAvg)
         rPotET = UNIT_CONV * rT * ( rSn+2.1_T_SGL ) / ( rT + 15.0_T_SGL )
         if ( rRH < 50.0_T_SGL ) then
           rPotET = rPotET * ( rONE + (50.0_T_SGL - rRH) / 70.0_T_SGL )
         end if
       end if
 
-      pGrd%Cells(j,i)%rSM_PotentialET = rPotET
+      pGrd%Cells(iRow,iCol)%rSM_PotentialET = rPotET
 
     end do
 

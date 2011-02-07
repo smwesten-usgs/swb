@@ -74,6 +74,8 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   character (len=256) :: sBuf
   character (len=3) :: sMonthName
   logical (kind=T_LOGICAL) :: lMonthEnd
+  logical (kind=T_LOGICAL) :: lOpened
+  integer (kind=T_INT) :: iLU
   integer (kind=T_INT),dimension(12) :: iMonthlyCount
   real (kind=T_INT),dimension(12) :: rMonthlySum
   ! [ LOCAL CONSTANTS ]
@@ -84,7 +86,8 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
   open ( unit=LU_TEMP, file=trim(sFileName), iostat=iStat )
-  call Assert ( iStat == 0, "Could not open time series file " // trim(sFileName) )
+  call Assert ( iStat == 0, "Could not open time series file " // trim(sFileName), &
+    trim(__FILE__),__LINE__)
 
   ! Now, compute the monthly-average temperatures for all months
   iMonthlyCount = 0
@@ -151,7 +154,7 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
   real (kind=T_SGL) :: rDecl,rLCF,rPotET, rTempET
 
   ! [ locals ]
-  integer (kind=T_SGL) :: iAvgT, i, j
+  integer (kind=T_SGL) :: iAvgT, iCol, iRow
   real (kind=T_SGL),dimension(3),parameter :: rHighTPoly = &
     (/ -5.25625072726565D-03, 1.04170341298537D+00, - 44.3259754866234D+00 /)
 
@@ -160,22 +163,22 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
 
   rLCF = (24.0_T_SGL / rPI) * acos(-rTanLatitude * tan(rDecl)) / 12.0_T_SGL
 
-  do i=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
-    do j=1,pGrd%iNY
+  do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
+    do iRow=1,pGrd%iNY
 
-      if (pGrd%Cells(j,i)%rTAvg <= rFREEZING ) then
+      if (pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
         rPotET = rZERO
-      else if ( pGrd%Cells(j,i)%rTAvg <= 79.7_T_SGL ) then
+      else if ( pGrd%Cells(iRow,iCol)%rTAvg <= 79.7_T_SGL ) then
 !      rPotET = ( 50.0_T_SGL*(rAvgT-rFREEZING) / (9.0_T_SGL * rAnnualIndex) ) ** rExponentA * &
 !         rLCF * 0.63_T_SGL / 30.0_T_SGL
          rPotET = ((0.63_T_SGL * rLCF) * ((50.0_T_SGL *  &
-                     (pGrd%Cells(j,i)%rTAvg - rFREEZING) &
+                     (pGrd%Cells(iRow,iCol)%rTAvg - rFREEZING) &
                       / (9_T_SGL * rAnnualIndex)) ** rExponentA)) / 30_T_SGL
       else
-        rPotET = rLCF * polynomial( pGrd%Cells(j,i)%rTAvg, rHighTPoly ) / 30.0_T_SGL
+        rPotET = rLCF * polynomial( pGrd%Cells(iRow,iCol)%rTAvg, rHighTPoly ) / 30.0_T_SGL
       end if
 
-      pGrd%Cells(j,i)%rSM_PotentialET = rPotET
+      pGrd%Cells(iRow,iCol)%rSM_PotentialET = rPotET
 
     end do
 

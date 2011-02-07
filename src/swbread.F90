@@ -374,8 +374,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       exit
     endif
 
-    pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad,&
-        ORDER=(/2,1/))
+    pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad)
 
     pMonthGrd%rData = pMonthGrd%rData + pGrd%rData
     pYearGrd%rData = pYearGrd%rData + pGrd%rData

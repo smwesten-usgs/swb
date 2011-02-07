@@ -66,6 +66,8 @@ subroutine et_hargreaves_initialize( pGrd, sFileName )
   return
 end subroutine et_hargreaves_initialize
 
+!------------------------------------------------------------------------------
+
 subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   !! Computes the potential ET for each cell, based on TMIN and TMAX.
   !! Stores cell-by-cell PET values in the model grid.
@@ -82,17 +84,17 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   ! [ LOCALS ]
   real (kind=T_SGL) :: rDelta,rOmega_s,rD_r, rRa
   real (kind=T_SGL) :: rLatitude
-  integer (kind=T_INT) :: i, j
+  integer (kind=T_INT) :: iCol, iRow
 
 !  write(UNIT=LU_LOG,FMT=*) iDayOfYear, iNumDaysInYear
 
   rD_r =rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear)
   rDelta = solar_declination(iDayOfYear, iNumDaysInYear)
 
-  do j=1,pGrd%iNY
+  do iRow=1,pGrd%iNY
 
     rLatitude = row_latitude(pConfig%rNorthernLatitude, &
-            pConfig%rSouthernLatitude, pGrd%iNY, j)
+            pConfig%rSouthernLatitude, pGrd%iNY, iRow)
     rOmega_s = sunset_angle(rLatitude, rDelta)
 
 	! NOTE that the following equation returns extraterrestrial radiation in
@@ -100,16 +102,16 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 	! radiation to be expressed in units of mm / day.
 	rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
 
-!	write(UNIT=LU_LOG,FMT=*) "Row: ",j,"   Latitude: ",rLatitude, "  N_Lat: ",pConfig%rNorthernLatitude, &
+!	write(UNIT=LU_LOG,FMT=*) "Row: ",iRow,"   Latitude: ",rLatitude, "  N_Lat: ",pConfig%rNorthernLatitude, &
 !	   "  S_Lat: ",pConfig%rSouthernLatitude, "  Ra: ", rRa
 
-    do i=1,pGrd%iNX
+    do iCol=1,pGrd%iNX
 
-      pGrd%Cells(j,i)%rSM_PotentialET = ET0_hargreaves( &
+      pGrd%Cells(iRow,iCol)%rSM_PotentialET = ET0_hargreaves( &
                                            pConfig, &
                                            equivalent_evaporation(rRa), &
-                                           pGrd%Cells(j,i)%rTMin, &
-                                           pGrd%Cells(j,i)%rTMax)
+                                           pGrd%Cells(iRow,iCol)%rTMin, &
+                                           pGrd%Cells(iRow,iCol)%rTMax)
     end do
 
   end do
@@ -183,7 +185,6 @@ end function ET0_hargreaves
 !!***
 
 end module et_hargreaves
-
 
 
 

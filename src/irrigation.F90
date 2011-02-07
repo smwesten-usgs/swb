@@ -1,5 +1,7 @@
 module irrigation
 
+#ifdef IRRIGATION_MODULE
+
   use types
   implicit none
 
@@ -90,5 +92,7 @@ subroutine update_irrigation_amounts(pGrd, pConfig)
 
 
 end subroutine update_irrigation_amounts
+
+#endif
 
 end module irrigation

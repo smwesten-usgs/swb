@@ -63,16 +63,18 @@ subroutine et_bc_initialize( grd, sFileName )
   character (len=*),intent(in) :: sFileName
   ! [ LOCALS ]
   real (kind=T_SGL) :: rDelta
-  integer (kind=T_INT) :: i
+  integer (kind=T_INT) :: iDay
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Blaney-Criddle PET model"
-  do i=1,365
-    rDelta = 0.4093_T_SGL * sin( (rTWOPI * i / 365.0_T_SGL) - 1.405_T_SGL )
+  do iDay=1,365
+    rDelta = 0.4093_T_SGL * sin( (rTWOPI * iDay / 365.0_T_SGL) - 1.405_T_SGL )
     rSunAnnual = rSunAnnual + 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / rPI
   end do
 
   return
 end subroutine et_bc_initialize
+
+!------------------------------------------------------------------------------
 
 subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
                           rMinRH, rWindSpd, rSunPct )
@@ -86,7 +88,7 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
   real (kind=T_SGL) :: rDelta,rT,rSunFrac,rPRatio,rAbc,rBbc,rF
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: iCol,iRow
   ! [ CONSTANTS ]
   real (kind=T_SGL),parameter :: UNIT_CONV = 0.313_T_SGL / 25.4_T_SGL
 
@@ -117,18 +119,18 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
          - (0.00975*LOG(rWindSpd+1.)*(LOG(rMinRH+1.)**2)*LOG(rSunFrac+1.))
 
 
-  do i=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
-    do j=1,pGrd%iNY
+  do iCol=1,pGrd%iNX
+    do iRow=1,pGrd%iNY
 
-      rT = FtoC(pGrd%Cells(j,i)%rTAvg)
+      rT = FtoC(pGrd%Cells(iRow,iCol)%rTAvg)
 
       rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)
 
-      if ( pGrd%Cells(j,i)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(j,i)%rSM_PotentialET = rZERO
+      if ( pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
+        pGrd%Cells(iRow,iCol)%rSM_PotentialET = rZERO
       else
       !write(UNIT=LU_LOG,FMT=*)'TEST',iDayOfYear,rPratio,rAbc,rBbc
-        pGrd%Cells(j,i)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
+        pGrd%Cells(iRow,iCol)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
       end if
 
     end do

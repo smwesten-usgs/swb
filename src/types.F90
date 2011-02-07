@@ -104,7 +104,7 @@ module types
 !! Type that contains data for an individual grid cell. The model uses
 !! a grid of T_CELL types. Each variable added to this data type
 !! consumes Ny * Nx * size(T_SGL) bytes.
-  type, public :: T_CELL
+  type T_CELL
       integer (kind=T_SHORT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
       integer (kind=T_SHORT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
       integer (kind=T_SHORT) :: iLandUseIndex       ! Index (row num) of land use table
@@ -127,8 +127,8 @@ module types
       real (kind=T_SGL) :: rStreamCapture           ! Amount of water captured by the stream (or fracture)
 #endif
 
-      integer (kind=T_INT) :: iTgt_i   ! "i" index of target cell into which runoff flows
-      integer (kind=T_INT) :: iTgt_j   ! "j" index of target cell into which runoff flows
+      integer (kind=T_INT) :: iTgt_Row   ! Row: "i" index of target cell into which runoff flows
+      integer (kind=T_INT) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
 
       real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
       real (kind=T_SGL) :: rAdjCN                  ! Curve number from landuse/soil group
@@ -138,7 +138,6 @@ module types
       real (kind=T_SGL) :: rFlowOutOfGrid          ! flow that leaves the grid
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
-      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! term to hold irrigation term, if any
 !      real (kind=T_SGL) :: rInterception           ! Interception term
       real (kind=T_SGL) :: rNetPrecip              ! Net precipitation - precip minus interception
       real (kind=T_SGL) :: rSnowWaterEquiv         ! precipitation that falls as snow (in SWE)
@@ -151,9 +150,12 @@ module types
       real (kind=T_SGL) :: rTMax                   ! Maximum daily temperature
       real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
-!      real (kind=T_SGL) :: rGDD_TBase = 50.        !
-!      real (kind=T_SGL) :: rGDD_TMax = 150.        !
+#ifdef IRRIGATION_MODULE
+      real (kind=T_SGL) :: rGDD_TBase = 50.        !
+      real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
+      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! term to hold irrigation term, if any
+#endif
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
       integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
 !      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
@@ -561,6 +563,7 @@ module types
       integer (kind=T_INT) :: iConfigureET          ! ET calculation option
       integer (kind=T_INT) :: iConfigurePrecip      ! precip input option
       integer (kind=T_INT) :: iConfigureTemperature ! temperature data input option
+      integer (kind=T_INT) :: iConfigureLanduse     ! landuse input data option
       integer (kind=T_INT) :: iConfigureSM          ! soil moisture calculation option
       integer (kind=T_INT) :: iConfigureSnow        ! snowfall and snowmelt option
       integer (kind=T_INT) :: iConfigureSMCapacity  ! maximum soil water capacity option
@@ -608,6 +611,9 @@ module types
       ! Prefix of input ARC or SURFER gridded temperature time-series files
       character (len=256) :: sTMAXFilePrefix
       character (len=256) :: sTMINFilePrefix
+
+      ! Prefix of the input ARC of SURFER gridded DYNAMIC LANDUSE files
+      character (len=256) :: sDynamicLanduseFilePrefix
 
       ! ET parameters
       real (kind=T_SGL) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
@@ -843,6 +849,13 @@ module types
 #ifdef NETCDF_SUPPORT
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
 #endif
+
+  !> Configuration information for landuse input
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
 
   !> Configuration information for snowfall and snowmelt option
   integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
@@ -2021,6 +2034,5 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
   return
 
 end subroutine gregorian_date
-
 
 end module types

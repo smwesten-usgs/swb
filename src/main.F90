@@ -40,29 +40,35 @@ program SWB
 #endif
 
     write(UNIT=*,FMT=*) "  Compilation options:"
-    write(UNIT=*,FMT=*) " ----------------------------"
+    write(UNIT=*,FMT=*) " -------------------------------"
 #ifdef STREAM_INTERACTIONS
-    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS    yes"
+    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS      yes"
 #else
-    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS     no"
+    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS       no"
 #endif
 
 #ifdef GRAPHICS_SUPPORT
-    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT       yes"
+    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT         yes"
 #else
-    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT        no"
+    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT          no"
 #endif
 
 #ifdef NETCDF_SUPPORT
-    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT         yes"
+    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT           yes"
 #else
-    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT          no"
+    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT            no"
+#endif
+
+#ifdef IRRIGATION_MODULE
+    write(UNIT=*,FMT=*) "  IRRIGATION calculations  yes"
+#else
+    write(UNIT=*,FMT=*) "  IRRIGATION calculations   no"
 #endif
 
 #ifdef DEBUG_PRINT
-    write(UNIT=*,FMT=*) "  DEBUG_PRINT            yes"
+    write(UNIT=*,FMT=*) "  DEBUG_PRINT              yes"
 #else
-    write(UNIT=*,FMT=*) "  DEBUG_PRINT             no"
+    write(UNIT=*,FMT=*) "  DEBUG_PRINT               no"
 #endif
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"

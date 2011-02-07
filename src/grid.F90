@@ -69,9 +69,9 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
 
   allocate ( pGrd, stat=iStat )
   call Assert ( iStat == 0, &
-     "Could not allocate pointer to T_GRID object" )
+     "Could not allocate pointer to T_GRID object", trim(__FILE__),__LINE__ )
   call Assert ( LOGICAL(iNX>0 .and. iNY>0,kind=T_LOGICAL), &
-     "Illegal grid dimensions specified" )
+     "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
 
   select case (iDataType)
       case ( T_INT_GRID )
@@ -106,14 +106,14 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
              TRIM(__FILE__),__LINE__)
 
 #ifdef DEBUG_PRINT
-!          iSize = SIZEOF(pGrd)
-!          iSizeCells = SIZEOF(pGrd%Cells)
-!          iNumCells = SIZE(pGrd%Cells)
-!          iSizeSingleCell = iSizeCells / iNumCells
-!
-!          write(unit=LU_LOG,FMT=*) '    Allocated size (Grid):',iSize
-!          write(unit=LU_LOG,FMT=*) '    Allocated size (Cells):',iSizeCells,'(',iSizeCells/1024./1024.,' MB)'
-!          write(unit=LU_LOG,FMT=*) '    Memory required for each grid cell: ',iSizeSingleCell,' (bytes)'
+          iSize = SIZEOF(pGrd)
+          iSizeCells = SIZEOF(pGrd%Cells)
+          iNumCells = SIZE(pGrd%Cells)
+          iSizeSingleCell = iSizeCells / iNumCells
+
+          write(unit=LU_LOG,FMT=*) '    Allocated size (Grid):',iSize
+          write(unit=LU_LOG,FMT=*) '    Allocated size (Cells):',iSizeCells,'(',iSizeCells/1024./1024.,' MB)'
+          write(unit=LU_LOG,FMT=*) '    Memory required for each grid cell: ',iSizeSingleCell,' (bytes)'
 #endif
 
       case default
@@ -127,8 +127,8 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   pGrd%rY0 = rY0
   pGrd%rY1 = rY1
 
-  return
 end function grid_Create
+
 !!***
 
 !--------------------------------------------------------------------------
@@ -263,11 +263,11 @@ function grid_ReadArcGrid ( sFileName, iDataType ) result ( pGrd )
   integer (kind=T_INT) :: iStat                       ! For "iostat="
   integer (kind=T_INT) :: iNX,iNY                     ! Grid dimensions
   integer (kind=T_INT) :: iHdrRecs                    ! Number of records in header
-  integer (kind=T_INT) :: i,j,k                       ! Loop indices for grid reading
+  integer (kind=T_INT) :: iCol,iRow,k                 ! Loop indices for grid reading
   real (kind=T_DBL) :: rX0,rX1                        ! Limits in X
   real (kind=T_DBL) :: rY0,rY1                        ! Limits in Y
   real (kind=T_SGL) :: rCellSize                      ! Cell size
-  integer (kind=T_INT) :: iCount,iCumCount
+  integer (kind=T_INT) :: iCount,iCumlCount
   logical (kind=T_LOGICAL) :: lXLLCenter, lYLLCenter  ! Flags XLLCENTER / XLLCORNER
 
   ! Pre-scan for the number of header records and read the header
@@ -328,7 +328,7 @@ function grid_ReadArcGrid ( sFileName, iDataType ) result ( pGrd )
           ! Go back to the top, skip the header...
           rewind ( unit=LU_GRID, iostat=iStat )
           call Assert ( iStat == 0, "Failed to rewind grid file" )
-          do i=1,iHdrRecs
+          do iCol=1,iHdrRecs
               read ( unit=LU_GRID, fmt="(a256)", iostat=iStat ) sInputRecord
               call Assert ( iStat == 0, &
                 "Could not read input record - file: "//trim(sFileName))
@@ -336,19 +336,19 @@ function grid_ReadArcGrid ( sFileName, iDataType ) result ( pGrd )
           ! ... and read the data.
           select case ( iDataType )
               case ( T_INT_GRID )
-                do j=1,pGrd%iNY
-                  read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(j,:)
+                do iRow=1,pGrd%iNY
+                  read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(iRow,:)
                   call Assert ( iStat == 0, &
                     "Failed to read integer grid data - file: " &
-                    //trim(sFileName)//"  row num: "//TRIM(int2char(j)), &
+                    //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
               case ( T_SGL_GRID )
-                do j=1,pGrd%iNY
-                  read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(j,:)
+                do iRow=1,pGrd%iNY
+                  read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(iRow,:)
                   call Assert ( iStat == 0, &
                     "Failed to read real grid data - file: " &
-                    //trim(sFileName)//"  row num: "//TRIM(int2char(j)), &
+                    //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
               case default
@@ -361,24 +361,24 @@ function grid_ReadArcGrid ( sFileName, iDataType ) result ( pGrd )
   end do
 
   if(iDataType==T_INT_GRID) then    ! check for strange or illegal values
-    iCumCount = 0
+    iCumlCount = 0
     write(LU_LOG,"(1x,'Summary of integer grid data values')")
 
-    do i=0,maxval(pGrd%iData)
-      iCount=COUNT(pGrd%iData==i)
+    do k=0,maxval(pGrd%iData)
+      iCount=COUNT(pGrd%iData==k)
       if(iCount>0) then
-        iCumCount = iCumCount + iCount
+        iCumlCount = iCumlCount + iCount
         write(LU_LOG,FMT="(3x,i8,' grid cells have value: ',i8)") &
-          iCount, i
+          iCount, k
       end if
     end do
 
     write(LU_LOG,FMT="(1x,a,t45,i12)") "Total number of grid cells: ", &
       size(pGrd%iData)
     write(LU_LOG,FMT="(1x,a,t45,i12)") &
-      "Total number of grid cells with value >= 0: ",iCumCount
+      "Total number of grid cells with value >= 0: ",iCumlCount
     flush(LU_LOG)
-    call Assert(LOGICAL(size(pGrd%iData)==iCumCount,kind=T_LOGICAL), &
+    call Assert(LOGICAL(size(pGrd%iData)==iCumlCount,kind=T_LOGICAL), &
       "Illegal or missing values in integer grid file: "//trim(sFileName))
 
   end if
@@ -424,7 +424,7 @@ function grid_ReadSurferGrid ( sFileName, iDataType ) result ( pGrd )
   character (len=4) :: sSentinel                      ! Better be "DSAA" for SURFER!
   integer (kind=T_INT) :: iStat                       ! For "iostat="
   integer (kind=T_INT) :: iNX,iNY                     ! Grid dimensions
-  integer (kind=T_INT) :: i,j                         ! Loop indices for grid reading
+  integer (kind=T_INT) :: iCol,iRow                         ! Loop indices for grid reading
   real (kind=T_DBL) :: rX0,rX1                       ! Limits in X
   real (kind=T_DBL) :: rY0,rY1                       ! Limits in Y
   real (kind=T_SGL) :: rZ0,rZ1                       ! Limits in Z (not used)
@@ -454,13 +454,13 @@ function grid_ReadSurferGrid ( sFileName, iDataType ) result ( pGrd )
   pGrd => grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType )
   select case ( iDataType )
       case ( T_INT_GRID )
-          do j=1, iNY
-              read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(j,:)
+          do iRow=1, iNY
+              read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(iRow,:)
               call Assert ( iStat == 0, "Failed to read integer grid data" )
           end do
       case ( T_SGL_GRID )
-          do j=1, iNY
-              read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(j,:)
+          do iRow=1, iNY
+              read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(iRow,:)
               call Assert ( iStat == 0, "Failed to read real grid data" )
           end do
       case default
@@ -514,7 +514,7 @@ subroutine grid_WriteArcGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues,rNoData)
   real (kind=T_SGL),intent(in), optional :: rNoData
   real (kind=T_SGL),dimension(:,:),intent(in) :: rValues
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: iCol,iRow
   integer (kind=T_INT) ::  istat
   real (kind=T_SGL) :: nodata_value
   character(len=256) :: sBuf
@@ -544,9 +544,9 @@ subroutine grid_WriteArcGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues,rNoData)
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing cell size" )
   write ( unit=LU_TEMP, fmt="('NODATA_VALUE ',f12.3)", iostat=istat ) nodata_value
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing NODATA_VALUE" )
-  do j=1,size(rValues,1)
+  do iRow=1,size(rValues,1)
     write( unit=LU_TEMP, fmt=TRIM(sBuf), iostat=istat ) &
-      (TRIM(real2char(rValues(j,i),iNUM_DIGITS,iFIELD_WIDTH)),i=1,size(rValues,2))
+      (TRIM(real2char(rValues(iRow,iCol),iNUM_DIGITS,iFIELD_WIDTH)),iCol=1,size(rValues,2))
     call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing Arc grid data" )
   end do
 
@@ -589,7 +589,7 @@ subroutine grid_WriteSurferGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues)
   real (kind=T_DBL),intent(in) :: rXmin,rXmax,rYmin,rYmax
   real (kind=T_SGL),dimension(:,:),intent(in) :: rValues
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: iCol,iRow
   integer (kind=T_INT) :: istat
   character(len=256) :: sBuf
 
@@ -612,9 +612,9 @@ subroutine grid_WriteSurferGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues)
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER Y limits" )
   write ( unit=LU_TEMP, fmt=*, iostat=istat ) minval(rValues),maxval(rValues)
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER Z limits" )
-  do j=1,size(rValues,1)
+  do iRow=1,size(rValues,1)
     write( unit=LU_TEMP, fmt=TRIM(sBuf), iostat=istat ) &
-      (TRIM(real2char(rValues(j,i))),i=1,size(rValues,2))
+      (TRIM(real2char(rValues(iRow,iCol))),iCol=1,size(rValues,2))
     call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER data" )
   end do
 
@@ -796,11 +796,11 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
   integer (kind=T_INT),intent(out) :: iBefore,iAfter
   real (kind=T_SGL),intent(out) :: rFrac
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rpos
+  real (kind=T_SGL) :: rColPosition
 
-  rpos = (pGrd%iNY - 1) * (pGrd%rY1 - rYval) / (pGrd%rY1 - pGrd%rY0)
+  rColPosition = (pGrd%iNY - 1) * (pGrd%rY1 - rYval) / (pGrd%rY1 - pGrd%rY0)
   rFrac = rZERO
-  iBefore = floor(rpos) + 1
+  iBefore = floor(rColPosition) + 1
   iAfter = iBefore + 1
   if ( iBefore > pGrd%iNY ) then
     iBefore = -1
@@ -811,7 +811,7 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
   else if ( iAfter > pGrd%iNY ) then
     iAfter = iBefore
   else
-    rFrac = mod(rpos,rONE)
+    rFrac = mod(rColPosition,rONE)
   end if
 
   return
@@ -875,7 +875,6 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
            (rONE-u) *       v  * pGrd%rData(ja,ib)   + &
               u  *       v  * pGrd%rData(ja,ia)
 
-  return
 end function grid_Interpolate
 !!***
 !--------------------------------------------------------------------------
@@ -930,12 +929,12 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rValue
   ! [ LOCALS ]
-  integer (kind=T_INT) :: ib,ia,istat,j
+  integer (kind=T_INT) :: ib,ia,istat,iRow
   real (kind=T_SGL) :: u,v,frac,rprev
-  real (kind=T_SGL),dimension(:),allocatable :: rcol
+  real (kind=T_SGL),dimension(:),allocatable :: rCol
   character (len=128) :: buf
 
-  allocate ( rcol(pGrd%iNY), stat=istat )
+  allocate ( rCol(pGrd%iNY), stat=istat )
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), &
      "Couldn't allocate temporary array" )
 
@@ -945,17 +944,20 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
 
   write (unit=buf,fmt=*) "Requested X value ", rXval, " out of range"
   call Assert (LOGICAL(ib>0 .and. ia>0,kind=T_LOGICAL), buf )
-  rcol = u*pGrd%rData(:,ia) + (rONE-u)*pGrd%rData(:,ib)
+
+  ! interpolate the column of values based on the columns of values
+  ! that bracket the real value rXval
+  rCol = u*pGrd%rData(:,ia) + (rONE-u)*pGrd%rData(:,ib)
   ! Fix missing values
-  do j=1,pGrd%iNY
-    if ( pGrd%rData(j,ia) == rNoData .and. pGrd%rData(j,ib) == rNoData ) then
-      rcol(j) = rNoData
-    else if ( pGrd%rData(j,ib) == rNoData .and. u>0.9_T_SGL ) then
-      rcol(j) = pGrd%rData(j,ia)
-    else if ( pGrd%rData(j,ia) == rNoData .and. u<0.1_T_SGL ) then
-      rcol(j) = pGrd%rData(j,ib)
-    else if ( pGrd%rData(j,ia) == rNoData .or. pGrd%rData(j,ib) == rNoData ) then
-      rcol(j) = rNoData
+  do iRow=1,pGrd%iNY
+    if ( pGrd%rData(iRow,ia) == rNoData .and. pGrd%rData(iRow,ib) == rNoData ) then
+      rCol(iRow) = rNoData
+    else if ( pGrd%rData(iRow,ib) == rNoData .and. u>0.9_T_SGL ) then
+      rCol(iRow) = pGrd%rData(iRow,ia)
+    else if ( pGrd%rData(iRow,ia) == rNoData .and. u<0.1_T_SGL ) then
+      rCol(iRow) = pGrd%rData(iRow,ib)
+    else if ( pGrd%rData(iRow,ia) == rNoData .or. pGrd%rData(iRow,ib) == rNoData ) then
+      rCol(iRow) = rNoData
     end if
   end do
 
@@ -963,38 +965,38 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   ! Skip MVs
   rprev = rNoData
   rValue = rNoData
-  do j=1,pGrd%iNY
-    if ( rcol(j) == rNoData ) then
+  do iRow=1,pGrd%iNY
+    if ( rCol(iRow) == rNoData ) then
       if ( rprev == rNoData ) then
         ! keep skipping missing values...
         continue
       else
         ! end of the line -- we didn't find the value, so return the limit
-        v = real(j-1) / real(pGrd%iNY-1)
+        v = real(iRow-1) / real(pGrd%iNY-1)
         rValue = (rONE-v)*pGrd%rY0 + v*pGrd%rY1
         exit
       endif
     else
       if ( rprev == rNoData ) then
-        rprev = rcol(j)
+        rprev = rCol(iRow)
       else
-        if ( sign(rONE,rcol(j)-rZval) /= sign(rONE,rprev-rZval) ) then
+        if ( sign(rONE,rCol(iRow)-rZval) /= sign(rONE,rprev-rZval) ) then
           ! Found it!
-          frac = (rZval-rcol(j-1)) / (rcol(j)-rcol(j-1))
-          ! Note: it's 'j-2' in the next expr to account for one-based indexing
-          v = ( real(j-2)+frac ) / real(pGrd%iNY-1)
+          frac = (rZval-rCol(iRow-1)) / (rCol(iRow)-rCol(iRow-1))
+          ! Note: it's 'iRow-2' in the next expr to account for one-based indexing
+          v = ( real(iRow-2)+frac ) / real(pGrd%iNY-1)
           rValue = v*pGrd%rY0 + (rONE-v)*pGrd%rY1
           exit
-        else if ( rZval < rprev .and. rcol(j) > rprev ) then
+        else if ( rZval < rprev .and. rCol(iRow) > rprev ) then
           ! Doesn't exist, choose the limit
-          v = real(j-2) / real(pGrd%iNY-1)
+          v = real(iRow-2) / real(pGrd%iNY-1)
           rValue = v*pGrd%rY0 + (rONE-v)*pGrd%rY1
           exit
-        else if ( rZval > rprev .and. rcol(j) < rprev ) then
-          v = real(j-2) / real(pGrd%iNY-1)
+        else if ( rZval > rprev .and. rCol(iRow) < rprev ) then
+          v = real(iRow-2) / real(pGrd%iNY-1)
           rValue = v*pGrd%rY0 + (rONE-v)*pGrd%rY1
           exit
-        else if ( j == pGrd%iNY ) then
+        else if ( iRow == pGrd%iNY ) then
           v = rONE
           rValue = v*pGrd%rY0 + (rONE-v)*pGrd%rY1
           exit
@@ -1003,7 +1005,7 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
     end if
   end do
 
-  deallocate ( rcol )
+  deallocate ( rCol )
 
   return
 end function grid_SearchColumn
@@ -1038,13 +1040,13 @@ function grid_LookupReal(pGrd,rXval,rYval) result(rValue)
   type ( T_GENERAL_GRID ),pointer :: pGrd
   real (kind=T_SGL),intent(in) :: rXval,rYval
   real (kind=T_SGL) :: rValue
-  integer (kind=T_INT) :: iColumnNumber,iRowNumber
+  integer (kind=T_INT) :: iCol,iRow
 
-  iRowNumber = int( pGrd%iNY * (pGrd%rY0 - rYval) / (pGrd%rY0 - pGrd%rY1) ) + 1
-  if ( iRowNumber > pGrd%iNY ) iRowNumber = pGrd%iNY
-  iColumnNumber = int( pGrd%iNX * (rXval - pGrd%rX0) / (pGrd%rX1 - pGrd%rX0) ) + 1
-  if ( iColumnNumber > pGrd%iNX ) iColumnNumber = pGrd%iNX
-  rValue = pGrd%rData(iRowNumber,iColumnNumber)
+  iRow = int( pGrd%iNY * (pGrd%rY0 - rYval) / (pGrd%rY0 - pGrd%rY1) ) + 1
+  if ( iRow > pGrd%iNY ) iRow = pGrd%iNY
+  iCol = int( pGrd%iNX * (rXval - pGrd%rX0) / (pGrd%rX1 - pGrd%rX0) ) + 1
+  if ( iCol > pGrd%iNX ) iCol = pGrd%iNX
+  rValue = pGrd%rData(iRow,iCol)
 
   return
 end function grid_LookupReal
@@ -1086,7 +1088,7 @@ function grid_GetGridX(pGrd,iColumnNumber)  result(rX)
   real (kind=T_SGL) :: rX
   integer (kind=T_INT) :: iColumnNumber
 
-  rX = pGrd%rX0 + pGrd%rGridCellSize * REAL(iColumnNumber - rHALF,kind=T_SGL)
+  rX = pGrd%rX0 + pGrd%rGridCellSize * (REAL(iColumnNumber, kind=T_SGL) - rHALF)
 
   return
 
@@ -1101,7 +1103,7 @@ function grid_GetGridY(pGrd,iRowNumber)  result(rY)
   integer (kind=T_INT) :: iRowNumber
 
   rY = pGrd%rY1 &
-          - pGrd%rGridCellSize * REAL(iRowNumber - rHALF,kind=T_SGL)
+          - pGrd%rGridCellSize * (REAL(iRowNumber, kind=T_SGL) - rHALF)
 
   return
 
