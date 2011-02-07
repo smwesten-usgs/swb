@@ -1,7 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespaceswb__grid.html#ada2d0ba491d29a4a52aae2822b888f1f" title="swb_grid::grid_Conform" alt="" coords="269,5,427,35"/>
-<area shape="rect" id="node5" href="$namespaceswb__grid.html#a961bb54be48e77d8d35cb822379f4e60" title="swb_grid::grid_Create" alt="" coords="720,109,867,139"/>
-<area shape="rect" id="node7" href="$namespaceswb__grid.html#a99ec16225afef63a0e34f4882ee3250f" title="swb_grid::grid_Read" alt="" coords="279,109,417,139"/>
-<area shape="rect" id="node9" href="$namespaceswb__grid.html#a3a3408da7876ea041fba69415cbbab94" title="swb_grid::grid_ReadArcGrid" alt="" coords="483,109,664,139"/>
-<area shape="rect" id="node12" href="$namespaceswb__grid.html#aa0df2bc020bca54470db5468f6a026a0" title="swb_grid::grid_ReadSurferGrid" alt="" coords="475,163,672,192"/>
-</map>

@@ -49,6 +49,12 @@ if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
 endif()
 
+option (OPTION__IRRIGATION_MODULE
+      "Compile the code with irrigation module support?" OFF)
+if(OPTION__IRRIGATION_MODULE)
+  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "IRRIGATION_MODULE")
+endif()
+
 option (OPTION__DEBUG_PRINT
       "Compile the code with extra debug print options enabled?" OFF )
 if(OPTION__DEBUG_PRINT)
@@ -157,8 +163,8 @@ elseif(CMAKE_HOST_UNIX)
      #------------------------------------------------------------------------
      set (Fortran_FLAGS_RELEASE "-fast -fPIC")
      set (Fortran_FLAGS_DEBUG "-O0 ")
-#     set(CMAKE_FIND_LIBRARY_PREFIXES lib)
-#     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so; so.3")
+     set(CMAKE_FIND_LIBRARY_PREFIXES lib)
+     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
 
      find_program(CMAKE_MAKE_PROGRAM make
        DOC "Find a suitable make program for building under Linux/IFORT"
@@ -259,6 +265,7 @@ message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("--------------------------------------------------------------------")
 
 include_directories(${INCLUDE_DIR})
+set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
 link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)

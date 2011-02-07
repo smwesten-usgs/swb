@@ -1,8 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespacenetcdf__support.html#a9391bb174b4eadf498d9010f483b0f48" title="netcdf_support::netcdf_create" alt="" coords="328,5,520,35"/>
-<area shape="rect" id="node7" href="$namespacenetcdf__support.html#aa64a311997b05e100af097459b0e757f" title="netcdf_support::netcdf_write_attributes" alt="" coords="301,59,547,88"/>
-<area shape="rect" id="node5" href="$namespacenetcdf__support.html#a0d68b435588c00e7f5662b237c9bc4bc" title="netcdf_support::netcdf_check" alt="" coords="595,5,787,35"/>
-<area shape="rect" id="node9" href="$namespaceswb__grid.html#a57f66bc3cc5e053d864091aef6bd9c49" title="swb_grid::grid_GetGridX" alt="" coords="611,59,771,88"/>
-<area shape="rect" id="node11" href="$namespaceswb__grid.html#ae3fe72b5a4b950efc0537af934518bd0" title="swb_grid::grid_GetGridY" alt="" coords="609,112,772,141"/>
-<area shape="rect" id="node14" href="$namespacenetcdf__support.html#a2e192070d8bd34d10591e6de4dbfbce5" title="netcdf_support::UTMtoLL" alt="" coords="608,165,773,195"/>
-</map>

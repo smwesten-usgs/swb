@@ -1,9 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespacemeteorological__functions.html#a90b4e8a09fb5c0597f52bd44adfb2e24" title="meteorological_functions::convective_heat_exchange_e" alt="" coords="243,5,584,35"/>
-<area shape="rect" id="node7" href="$namespacemeteorological__functions.html#a7144b3142f66dfaf06985f0f908400b4" title="meteorological_functions::net_longwave_radiation_Rnl" alt="" coords="248,59,579,88"/>
-<area shape="rect" id="node11" href="$namespacemeteorological__functions.html#a35ff0a37cae7cf1ff85ecf7daa47303e" title="meteorological_functions::net_shortwave_radiation_Rns" alt="" coords="243,112,584,141"/>
-<area shape="rect" id="node13" href="$namespacemeteorological__functions.html#abd07fab175427fff1c33d3dc204c385d" title="meteorological_functions::precipitation_heat_p" alt="" coords="269,165,557,195"/>
-<area shape="rect" id="node15" href="$namespacemeteorological__functions.html#af2672c6758aee047fb536dd125dce2f3" title="meteorological_functions::sensible_heat_exchange_h" alt="" coords="248,219,579,248"/>
-<area shape="rect" id="node5" href="$namespacemeteorological__functions.html#a67a6a39a9e60d4711972647406a1e6fa" title="meteorological_functions::sat_vapor_density" alt="" coords="663,5,940,35"/>
-<area shape="rect" id="node9" href="$namespacemeteorological__functions.html#abdb2c6342c1ec952d3697d89a79376b1" title="meteorological_functions::dewpoint_vapor_pressure_ea" alt="" coords="632,59,971,88"/>
-</map>

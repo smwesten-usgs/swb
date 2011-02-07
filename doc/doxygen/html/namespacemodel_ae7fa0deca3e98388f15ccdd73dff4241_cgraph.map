@@ -1,7 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespacemodel.html#ad02323b54a65796a101d7c54c188b9fd" title="model::rf_model_CellRunoff" alt="" coords="264,32,443,61"/>
-<area shape="rect" id="node5" href="$namespacemodel.html#a3d56722cb383673437a115933248370e" title="model::rf_model_CellRunoff_GreenAmpt" alt="" coords="529,5,780,35"/>
-<area shape="rect" id="node7" href="$namespacerunoff__curve__number.html#a91b397a08e97547a3fa4cee3f7fee469" title="runoff_curve_number::runoff_CellRunoff_CurveNumber" alt="" coords="491,59,819,88"/>
-<area shape="rect" id="node9" href="$namespacerunoff__curve__number.html#aa67ff881b9c177ceae2d5f9d1326c2f4" title="runoff_curve_number::runoff_UpdateCurveNumber" alt="" coords="867,59,1171,88"/>
-<area shape="rect" id="node11" href="$namespacerunoff__curve__number.html#a3845fae9f1dbb2b84cafe6ce8b0eb623" title="runoff_curve_number::prob_runoff_enhancement" alt="" coords="1219,59,1515,88"/>
-</map>

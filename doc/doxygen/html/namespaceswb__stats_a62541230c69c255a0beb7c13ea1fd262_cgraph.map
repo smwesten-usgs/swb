@@ -1,8 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespaceswb__grid.html#a961bb54be48e77d8d35cb822379f4e60" title="swb_grid::grid_Create" alt="" coords="297,5,444,35"/>
-<area shape="rect" id="node5" href="$namespaceswb__grid.html#a9d60759cd038c3d1936d912299e2f4a2" title="swb_grid::grid_WriteArcGrid" alt="" coords="279,59,463,88"/>
-<area shape="rect" id="node7" href="$namespaceswb__grid.html#aaf1f4ad8065d88804760ea3d28fb2e02" title="swb_grid::grid_WriteSurferGrid" alt="" coords="272,112,469,141"/>
-<area shape="rect" id="node9" href="$namespacegraph.html#a0d0898b2db62366093b9d8785a1b9d90" title="graph::makegraph" alt="" coords="308,165,433,195"/>
-<area shape="rect" id="node11" href="$namespace_r_l_e.html#ad4af726c9f6888eff2870258c8fb75de" title="RLE::RLE_readByte" alt="" coords="301,219,440,248"/>
-<area shape="rect" id="node13" href="$namespaceswb__stats.html#ae5f18911e97e0fc1ba46fc24975f03ed" title="Writes out the min, max, and mean of 2D variable array Second line of brief description of this routi..." alt="" coords="253,272,488,301"/>
-</map>
