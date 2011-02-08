@@ -1,0 +1,168 @@
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{
+\section{types::T\_\-GENERAL\_\-GRID Type Reference}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d}\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}}
+}
+
+
+Type that contains the data for a grid.  
+
+
+
+
+Collaboration diagram for types::T\_\-GENERAL\_\-GRID:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer(kind=\hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{T\_\-INT}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a602b452f21a1bb62e0679ee1d4242642}{iNX}
+\item 
+integer(kind=\hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{T\_\-INT}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df927ec7c6b2f6e1ca55c78fa33161b}{iNY}
+\item 
+integer(kind=\hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{T\_\-INT}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_acff6c7004f31277df73101b20d58c238}{iDataType}
+\item 
+real(kind=\hyperlink{namespacetypes_af3012489af4c138f271f1bce244b7e51}{T\_\-SGL}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac411b2b0e3ac0e4b0b70a505bf299f31}{rGridCellSize}
+\item 
+integer(kind=\hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{T\_\-INT}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_af7072f4f41c1617bc6d4483de288ecef}{iLengthUnits} = -\/99999
+\item 
+real(kind=\hyperlink{namespacetypes_a888737411068474a167b1c3e5b579c58}{T\_\-DBL}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a6c92e6d2f68058391652ed23d1ab68b0}{rX0}
+\item 
+real(kind=\hyperlink{namespacetypes_a888737411068474a167b1c3e5b579c58}{T\_\-DBL}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a7f01e90a3c37c3e735f8ec177619dc49}{rX1}
+\item 
+real(kind=\hyperlink{namespacetypes_a888737411068474a167b1c3e5b579c58}{T\_\-DBL}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aa743b65f5f84b8835d280c54fc5f6617}{rY0}
+\item 
+real(kind=\hyperlink{namespacetypes_a888737411068474a167b1c3e5b579c58}{T\_\-DBL}) \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a8f03f64e3989eb22d90f200d787fc440}{rY1}
+\item 
+integer(kind=\hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{T\_\-INT}), dimension(:,:), pointer \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeb0bc4b49c62ee70efea7dc02a641a3c}{iData}
+\item 
+real(kind=\hyperlink{namespacetypes_af3012489af4c138f271f1bce244b7e51}{T\_\-SGL}), dimension(:,:), pointer \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeef2b926ed39eb235cbb1a2478e38f4c}{rData}
+\item 
+type(\hyperlink{typetypes_1_1_t___c_e_l_l}{T\_\-CELL}), dimension(:,:), pointer \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1ae4dd93dfc3e0cb8c8d83393bbbbe7f}{Cells}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Type that contains the data for a grid. Type that contains the data for a grid. Depending on the need of the application code, the grid may contain integer, real, or cell-\/by-\/cell data. This 'generic' data type makes many data validation problems simpler, but at the cost of two unpopulated pointer variables per grid. This implements a coding mechanism comparable to templates in C++.! 
+
+Definition at line 187 of file types.F90.
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1ae4dd93dfc3e0cb8c8d83393bbbbe7f}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!Cells@{Cells}}
+\index{Cells@{Cells}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{Cells}]{\setlength{\rightskip}{0pt plus 5cm}type ({\bf T\_\-CELL}),dimension(:,:),pointer {\bf types::T\_\-GENERAL\_\-GRID::Cells}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1ae4dd93dfc3e0cb8c8d83393bbbbe7f}
+
+
+Definition at line 198 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeb0bc4b49c62ee70efea7dc02a641a3c}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!iData@{iData}}
+\index{iData@{iData}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iData}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),dimension(:,:),pointer {\bf types::T\_\-GENERAL\_\-GRID::iData}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeb0bc4b49c62ee70efea7dc02a641a3c}
+
+
+Definition at line 196 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_acff6c7004f31277df73101b20d58c238}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!iDataType@{iDataType}}
+\index{iDataType@{iDataType}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iDataType}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf types::T\_\-GENERAL\_\-GRID::iDataType}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_acff6c7004f31277df73101b20d58c238}
+
+
+Definition at line 191 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_af7072f4f41c1617bc6d4483de288ecef}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!iLengthUnits@{iLengthUnits}}
+\index{iLengthUnits@{iLengthUnits}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iLengthUnits}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf types::T\_\-GENERAL\_\-GRID::iLengthUnits} = -\/99999}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_af7072f4f41c1617bc6d4483de288ecef}
+
+
+Definition at line 193 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a602b452f21a1bb62e0679ee1d4242642}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!iNX@{iNX}}
+\index{iNX@{iNX}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iNX}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf types::T\_\-GENERAL\_\-GRID::iNX}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a602b452f21a1bb62e0679ee1d4242642}
+
+
+Definition at line 189 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df927ec7c6b2f6e1ca55c78fa33161b}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!iNY@{iNY}}
+\index{iNY@{iNY}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iNY}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf types::T\_\-GENERAL\_\-GRID::iNY}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df927ec7c6b2f6e1ca55c78fa33161b}
+
+
+Definition at line 190 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeef2b926ed39eb235cbb1a2478e38f4c}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rData@{rData}}
+\index{rData@{rData}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rData}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),dimension(:,:),pointer {\bf types::T\_\-GENERAL\_\-GRID::rData}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aeef2b926ed39eb235cbb1a2478e38f4c}
+
+
+Definition at line 197 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac411b2b0e3ac0e4b0b70a505bf299f31}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rGridCellSize@{rGridCellSize}}
+\index{rGridCellSize@{rGridCellSize}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rGridCellSize}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}) {\bf types::T\_\-GENERAL\_\-GRID::rGridCellSize}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac411b2b0e3ac0e4b0b70a505bf299f31}
+
+
+Definition at line 192 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a6c92e6d2f68058391652ed23d1ab68b0}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rX0@{rX0}}
+\index{rX0@{rX0}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rX0}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf types::T\_\-GENERAL\_\-GRID::rX0}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a6c92e6d2f68058391652ed23d1ab68b0}
+
+
+Definition at line 194 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a7f01e90a3c37c3e735f8ec177619dc49}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rX1@{rX1}}
+\index{rX1@{rX1}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rX1}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf types::T\_\-GENERAL\_\-GRID::rX1}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a7f01e90a3c37c3e735f8ec177619dc49}
+
+
+Definition at line 194 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aa743b65f5f84b8835d280c54fc5f6617}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rY0@{rY0}}
+\index{rY0@{rY0}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rY0}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf types::T\_\-GENERAL\_\-GRID::rY0}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_aa743b65f5f84b8835d280c54fc5f6617}
+
+
+Definition at line 195 of file types.F90.
+
+\hypertarget{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a8f03f64e3989eb22d90f200d787fc440}{
+\index{types::T\_\-GENERAL\_\-GRID@{types::T\_\-GENERAL\_\-GRID}!rY1@{rY1}}
+\index{rY1@{rY1}!types::T_GENERAL_GRID@{types::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rY1}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf types::T\_\-GENERAL\_\-GRID::rY1}}}
+\label{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a8f03f64e3989eb22d90f200d787fc440}
+
+
+Definition at line 195 of file types.F90.
+
+
+
+The documentation for this type was generated from the following file:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{types_8_f90}{types.F90}\end{DoxyCompactItemize}

@@ -1,0 +1,997 @@
+\hypertarget{namespacemodel}{
+\section{model Module Reference}
+\label{namespacemodel}\index{model@{model}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespacemodel_a74378024436fef2323c5d8e78ae80789}{model\_\-Solve} (pGrd, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespacemodel_a114e44d3df7dfb8dc151a50dc04b0f54}{model\_\-EndOfRun} (pGrd, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespacemodel_a2f244ceb6a9954fc0f3854eda7fe237b}{model\_\-GetDynamicLanduseValue} (pGrd, pConfig, iYear)
+\item 
+subroutine \hyperlink{namespacemodel_ac13ac612394e6b11e1396e3a8f288b9a}{model\_\-GetDailyPrecipValue} (pGrd, pConfig, rPrecip, iMonth, iDay, iYear)
+\item 
+subroutine \hyperlink{namespacemodel_af8d22bdc2b1a6d127e2a5df3e587bec6}{model\_\-GetDailyTemperatureValue} (pGrd, pConfig, rAvgT, rMinT, rMaxT, rRH, iMonth, iDay, iYear)
+\item 
+subroutine \hyperlink{namespacemodel_ab74d4dbaafe53d302dd25391d9c43a68}{model\_\-UpdateContinuousFrozenGroundIndex} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_a121eef11acd312dcdd0ea21317c127ef}{model\_\-ProcessRain} (pGrd, pConfig, iDayOfYear, iMonth)
+\item 
+subroutine \hyperlink{namespacemodel_a6f38fcc336f9a766a37edf7771cf5285}{model\_\-ProcessRainPRMS} (pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInYear)
+\item 
+subroutine \hyperlink{namespacemodel_a546c0d970e2db00e9f958a1a55f958ba}{model\_\-ProcessRunoff} (pGrd, pConfig, iDayOfYear, iMonth)
+\item 
+subroutine \hyperlink{namespacemodel_a2ea58c4ccfc2647d6db92e5ca190f79a}{model\_\-ConfigureRunoffDownhill} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_ab0f15bf6283861e18b4df7cb3ade2820}{model\_\-RunoffDownhill} (pGrd, pConfig, iDayOfYear, iMonth)
+\item 
+subroutine \hyperlink{namespacemodel_ae7fa0deca3e98388f15ccdd73dff4241}{model\_\-Runoff\_\-NoRouting} (pGrd, pConfig, iDayOfYear, iMonth)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacemodel_a6ff4163ec4cc3501c34cd52c6693b5ce}{if\_\-model\_\-RunoffIteration} (pGrd, pConfig, iDayOfYear, iMonth)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemodel_ad02323b54a65796a101d7c54c188b9fd}{rf\_\-model\_\-CellRunoff} (pConfig, cel, iDayOfYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemodel_a3d56722cb383673437a115933248370e}{rf\_\-model\_\-CellRunoff\_\-GreenAmpt} (pConfig, cel, iDayOfYear)
+\item 
+subroutine \hyperlink{namespacemodel_abcdfbaf903eadc9beb6cb1373cc689e8}{model\_\-InitializeFlowDirection} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_af029705beb69f5efe497c98df460513c}{model\_\-DownstreamCell} (pGrd, iRow, iCol, iTgt\_\-Row, iTgt\_\-Col)
+\item 
+subroutine \hyperlink{namespacemodel_afed7f38c856c81bb8ddc737e4789210d}{model\_\-ReadBasinMaskTable} (pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_a42d088fe01089d49d07e112457c71f0c}{model\_\-ReadLanduseLookupTable} (pConfig)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemodel_a0bd4839eca85d4a4a9aaebcebea25537}{rf\_\-model\_\-GetInterception} (pConfig, iType, iDayOfYear)
+\item 
+subroutine \hyperlink{namespacemodel_ac7e2bc0bbdb50b958a89ea325128c3ac}{model\_\-InitializeET} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_a1c26c5d7a1bc470655af8fe1e491721a}{model\_\-ProcessET} (pGrd, pConfig, iDayOfYear, iNumDaysInYear, rRH, rMinRH, rWindSpd, rSunPct)
+\item 
+subroutine \hyperlink{namespacemodel_a27f02a2a80a6bfde66da43255ad3bf95}{model\_\-ProcessSM} (pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
+\item 
+subroutine \hyperlink{namespacemodel_a3165f34d9843c956320ef4af2065911c}{model\_\-InitializeSM} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_a1909929d8c2992c9ab361ff0990bffea}{model\_\-InitializeMaxInfil} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacemodel_a88548b5c0028dc03fe900fc5b7aa6ce7}{model\_\-WriteGrids} (pGrd, pConfig, sMonthName, iDay, iMonth, iYear, iDayOfYear)
+\item 
+subroutine \hyperlink{namespacemodel_a1e0b3d86bd3f04da0f11d8d2eb44a18f}{model\_\-write\_\-NetCDF\_\-attributes} (pConfig, pGrd)
+\item 
+subroutine \hyperlink{namespacemodel_a3d4dfe87dab6e9b969b81dc3f41763ec}{model\_\-ReadTimeSeriesFile} (pTS)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacemodel_a86a9f30f454de7137945c61f3d8a7a8a}{iDayCtr}
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacemodel_a6427b836cffd85fb90dd0557e564b4d7}{iOrderCount}
+\item 
+integer(kind=T\_\-INT), dimension(:), allocatable \hyperlink{namespacemodel_ab88058fb18ed4c3a4d26f357e8c4d44d}{iOrderCol}
+\item 
+integer(kind=T\_\-INT), dimension(:), allocatable \hyperlink{namespacemodel_ae02f87fcf1fa7cfc9b55189633ae7f47}{iOrderRow}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemodel_af6e6b71a83c27f7935909506664b8c8f}{rStartTime}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemodel_a0543ca4ff4a5abe0454b315150c96261}{rEndTime}
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespacemodel_a6ff4163ec4cc3501c34cd52c6693b5ce}{
+\index{model@{model}!if\_\-model\_\-RunoffIteration@{if\_\-model\_\-RunoffIteration}}
+\index{if\_\-model\_\-RunoffIteration@{if\_\-model\_\-RunoffIteration}!model@{model}}
+\subsubsection[{if\_\-model\_\-RunoffIteration}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind=T\_\-INT) model::if\_\-model\_\-RunoffIteration (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a6ff4163ec4cc3501c34cd52c6693b5ce}
+
+
+Definition at line 2088 of file model.F90.
+
+
+
+Referenced by model\_\-ProcessRunoff().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a6ff4163ec4cc3501c34cd52c6693b5ce_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a2ea58c4ccfc2647d6db92e5ca190f79a}{
+\index{model@{model}!model\_\-ConfigureRunoffDownhill@{model\_\-ConfigureRunoffDownhill}}
+\index{model\_\-ConfigureRunoffDownhill@{model\_\-ConfigureRunoffDownhill}!model@{model}}
+\subsubsection[{model\_\-ConfigureRunoffDownhill}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ConfigureRunoffDownhill (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a2ea58c4ccfc2647d6db92e5ca190f79a}
+
+
+Definition at line 1649 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a2ea58c4ccfc2647d6db92e5ca190f79a_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_af029705beb69f5efe497c98df460513c}{
+\index{model@{model}!model\_\-DownstreamCell@{model\_\-DownstreamCell}}
+\index{model\_\-DownstreamCell@{model\_\-DownstreamCell}!model@{model}}
+\subsubsection[{model\_\-DownstreamCell}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-DownstreamCell (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iRow, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iCol, }
+\item[{integer (kind=T\_\-INT),intent(out)}]{iTgt\_\-Row, }
+\item[{integer (kind=T\_\-INT),intent(out)}]{iTgt\_\-Col}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_af029705beb69f5efe497c98df460513c}
+
+
+Definition at line 2460 of file model.F90.
+
+
+
+Referenced by if\_\-model\_\-RunoffIteration(), model\_\-ConfigureRunoffDownhill(), and model\_\-RunoffDownhill().
+
+\hypertarget{namespacemodel_a114e44d3df7dfb8dc151a50dc04b0f54}{
+\index{model@{model}!model\_\-EndOfRun@{model\_\-EndOfRun}}
+\index{model\_\-EndOfRun@{model\_\-EndOfRun}!model@{model}}
+\subsubsection[{model\_\-EndOfRun}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-EndOfRun (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a114e44d3df7dfb8dc151a50dc04b0f54}
+
+
+Definition at line 534 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a114e44d3df7dfb8dc151a50dc04b0f54_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ac13ac612394e6b11e1396e3a8f288b9a}{
+\index{model@{model}!model\_\-GetDailyPrecipValue@{model\_\-GetDailyPrecipValue}}
+\index{model\_\-GetDailyPrecipValue@{model\_\-GetDailyPrecipValue}!model@{model}}
+\subsubsection[{model\_\-GetDailyPrecipValue}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-GetDailyPrecipValue (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rPrecip, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ac13ac612394e6b11e1396e3a8f288b9a}
+
+
+Definition at line 700 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ac13ac612394e6b11e1396e3a8f288b9a_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_af8d22bdc2b1a6d127e2a5df3e587bec6}{
+\index{model@{model}!model\_\-GetDailyTemperatureValue@{model\_\-GetDailyTemperatureValue}}
+\index{model\_\-GetDailyTemperatureValue@{model\_\-GetDailyTemperatureValue}!model@{model}}
+\subsubsection[{model\_\-GetDailyTemperatureValue}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-GetDailyTemperatureValue (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rAvgT, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rMinT, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rMaxT, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRH, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_af8d22bdc2b1a6d127e2a5df3e587bec6}
+
+
+Definition at line 809 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_af8d22bdc2b1a6d127e2a5df3e587bec6_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a2f244ceb6a9954fc0f3854eda7fe237b}{
+\index{model@{model}!model\_\-GetDynamicLanduseValue@{model\_\-GetDynamicLanduseValue}}
+\index{model\_\-GetDynamicLanduseValue@{model\_\-GetDynamicLanduseValue}!model@{model}}
+\subsubsection[{model\_\-GetDynamicLanduseValue}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-GetDynamicLanduseValue (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a2f244ceb6a9954fc0f3854eda7fe237b}
+
+
+Definition at line 622 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a2f244ceb6a9954fc0f3854eda7fe237b_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ac7e2bc0bbdb50b958a89ea325128c3ac}{
+\index{model@{model}!model\_\-InitializeET@{model\_\-InitializeET}}
+\index{model\_\-InitializeET@{model\_\-InitializeET}!model@{model}}
+\subsubsection[{model\_\-InitializeET}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-InitializeET (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ac7e2bc0bbdb50b958a89ea325128c3ac}
+
+
+Definition at line 3043 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ac7e2bc0bbdb50b958a89ea325128c3ac_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_abcdfbaf903eadc9beb6cb1373cc689e8}{
+\index{model@{model}!model\_\-InitializeFlowDirection@{model\_\-InitializeFlowDirection}}
+\index{model\_\-InitializeFlowDirection@{model\_\-InitializeFlowDirection}!model@{model}}
+\subsubsection[{model\_\-InitializeFlowDirection}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-InitializeFlowDirection (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_abcdfbaf903eadc9beb6cb1373cc689e8}
+
+
+Definition at line 2285 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+\hypertarget{namespacemodel_a1909929d8c2992c9ab361ff0990bffea}{
+\index{model@{model}!model\_\-InitializeMaxInfil@{model\_\-InitializeMaxInfil}}
+\index{model\_\-InitializeMaxInfil@{model\_\-InitializeMaxInfil}!model@{model}}
+\subsubsection[{model\_\-InitializeMaxInfil}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-InitializeMaxInfil (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a1909929d8c2992c9ab361ff0990bffea}
+
+
+Definition at line 3237 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=342pt]{namespacemodel_a1909929d8c2992c9ab361ff0990bffea_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a3165f34d9843c956320ef4af2065911c}{
+\index{model@{model}!model\_\-InitializeSM@{model\_\-InitializeSM}}
+\index{model\_\-InitializeSM@{model\_\-InitializeSM}!model@{model}}
+\subsubsection[{model\_\-InitializeSM}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-InitializeSM (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a3165f34d9843c956320ef4af2065911c}
+
+
+Definition at line 3167 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a3165f34d9843c956320ef4af2065911c_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a1c26c5d7a1bc470655af8fe1e491721a}{
+\index{model@{model}!model\_\-ProcessET@{model\_\-ProcessET}}
+\index{model\_\-ProcessET@{model\_\-ProcessET}!model@{model}}
+\subsubsection[{model\_\-ProcessET}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ProcessET (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumDaysInYear, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRH, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rMinRH, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rWindSpd, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSunPct}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a1c26c5d7a1bc470655af8fe1e491721a}
+
+
+Definition at line 3075 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a1c26c5d7a1bc470655af8fe1e491721a_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a121eef11acd312dcdd0ea21317c127ef}{
+\index{model@{model}!model\_\-ProcessRain@{model\_\-ProcessRain}}
+\index{model\_\-ProcessRain@{model\_\-ProcessRain}!model@{model}}
+\subsubsection[{model\_\-ProcessRain}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ProcessRain (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a121eef11acd312dcdd0ea21317c127ef}
+
+
+Definition at line 1185 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a121eef11acd312dcdd0ea21317c127ef_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a6f38fcc336f9a766a37edf7771cf5285}{
+\index{model@{model}!model\_\-ProcessRainPRMS@{model\_\-ProcessRainPRMS}}
+\index{model\_\-ProcessRainPRMS@{model\_\-ProcessRainPRMS}!model@{model}}
+\subsubsection[{model\_\-ProcessRainPRMS}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ProcessRainPRMS (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumDaysInYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a6f38fcc336f9a766a37edf7771cf5285}
+
+
+Definition at line 1309 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a6f38fcc336f9a766a37edf7771cf5285_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a546c0d970e2db00e9f958a1a55f958ba}{
+\index{model@{model}!model\_\-ProcessRunoff@{model\_\-ProcessRunoff}}
+\index{model\_\-ProcessRunoff@{model\_\-ProcessRunoff}!model@{model}}
+\subsubsection[{model\_\-ProcessRunoff}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ProcessRunoff (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a546c0d970e2db00e9f958a1a55f958ba}
+
+
+Definition at line 1562 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a546c0d970e2db00e9f958a1a55f958ba_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a27f02a2a80a6bfde66da43255ad3bf95}{
+\index{model@{model}!model\_\-ProcessSM@{model\_\-ProcessSM}}
+\index{model\_\-ProcessSM@{model\_\-ProcessSM}!model@{model}}
+\subsubsection[{model\_\-ProcessSM}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ProcessSM (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a27f02a2a80a6bfde66da43255ad3bf95}
+
+
+Definition at line 3139 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a27f02a2a80a6bfde66da43255ad3bf95_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_afed7f38c856c81bb8ddc737e4789210d}{
+\index{model@{model}!model\_\-ReadBasinMaskTable@{model\_\-ReadBasinMaskTable}}
+\index{model\_\-ReadBasinMaskTable@{model\_\-ReadBasinMaskTable}!model@{model}}
+\subsubsection[{model\_\-ReadBasinMaskTable}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ReadBasinMaskTable (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_afed7f38c856c81bb8ddc737e4789210d}
+
+
+Definition at line 2524 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=388pt]{namespacemodel_afed7f38c856c81bb8ddc737e4789210d_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a42d088fe01089d49d07e112457c71f0c}{
+\index{model@{model}!model\_\-ReadLanduseLookupTable@{model\_\-ReadLanduseLookupTable}}
+\index{model\_\-ReadLanduseLookupTable@{model\_\-ReadLanduseLookupTable}!model@{model}}
+\subsubsection[{model\_\-ReadLanduseLookupTable}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ReadLanduseLookupTable (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a42d088fe01089d49d07e112457c71f0c}
+
+
+Definition at line 2656 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a42d088fe01089d49d07e112457c71f0c_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a3d4dfe87dab6e9b969b81dc3f41763ec}{
+\index{model@{model}!model\_\-ReadTimeSeriesFile@{model\_\-ReadTimeSeriesFile}}
+\index{model\_\-ReadTimeSeriesFile@{model\_\-ReadTimeSeriesFile}!model@{model}}
+\subsubsection[{model\_\-ReadTimeSeriesFile}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-ReadTimeSeriesFile (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-TIME\_\-SERIES\_\-FILE),pointer}]{pTS}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a3d4dfe87dab6e9b969b81dc3f41763ec}
+
+
+Definition at line 3484 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions(), and model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=384pt]{namespacemodel_a3d4dfe87dab6e9b969b81dc3f41763ec_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ae7fa0deca3e98388f15ccdd73dff4241}{
+\index{model@{model}!model\_\-Runoff\_\-NoRouting@{model\_\-Runoff\_\-NoRouting}}
+\index{model\_\-Runoff\_\-NoRouting@{model\_\-Runoff\_\-NoRouting}!model@{model}}
+\subsubsection[{model\_\-Runoff\_\-NoRouting}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-Runoff\_\-NoRouting (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ae7fa0deca3e98388f15ccdd73dff4241}
+
+
+Definition at line 2001 of file model.F90.
+
+
+
+Referenced by model\_\-ProcessRunoff().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ae7fa0deca3e98388f15ccdd73dff4241_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ab0f15bf6283861e18b4df7cb3ade2820}{
+\index{model@{model}!model\_\-RunoffDownhill@{model\_\-RunoffDownhill}}
+\index{model\_\-RunoffDownhill@{model\_\-RunoffDownhill}!model@{model}}
+\subsubsection[{model\_\-RunoffDownhill}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-RunoffDownhill (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ab0f15bf6283861e18b4df7cb3ade2820}
+
+
+Definition at line 1884 of file model.F90.
+
+
+
+Referenced by model\_\-ProcessRunoff().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ab0f15bf6283861e18b4df7cb3ade2820_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a74378024436fef2323c5d8e78ae80789}{
+\index{model@{model}!model\_\-Solve@{model\_\-Solve}}
+\index{model\_\-Solve@{model\_\-Solve}!model@{model}}
+\subsubsection[{model\_\-Solve}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-Solve (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a74378024436fef2323c5d8e78ae80789}
+
+
+Definition at line 72 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[height=600pt]{namespacemodel_a74378024436fef2323c5d8e78ae80789_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ab74d4dbaafe53d302dd25391d9c43a68}{
+\index{model@{model}!model\_\-UpdateContinuousFrozenGroundIndex@{model\_\-UpdateContinuousFrozenGroundIndex}}
+\index{model\_\-UpdateContinuousFrozenGroundIndex@{model\_\-UpdateContinuousFrozenGroundIndex}!model@{model}}
+\subsubsection[{model\_\-UpdateContinuousFrozenGroundIndex}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-UpdateContinuousFrozenGroundIndex (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ab74d4dbaafe53d302dd25391d9c43a68}
+
+
+Definition at line 967 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ab74d4dbaafe53d302dd25391d9c43a68_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a1e0b3d86bd3f04da0f11d8d2eb44a18f}{
+\index{model@{model}!model\_\-write\_\-NetCDF\_\-attributes@{model\_\-write\_\-NetCDF\_\-attributes}}
+\index{model\_\-write\_\-NetCDF\_\-attributes@{model\_\-write\_\-NetCDF\_\-attributes}!model@{model}}
+\subsubsection[{model\_\-write\_\-NetCDF\_\-attributes}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-write\_\-NetCDF\_\-attributes (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a1e0b3d86bd3f04da0f11d8d2eb44a18f}
+
+
+Definition at line 3447 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a1e0b3d86bd3f04da0f11d8d2eb44a18f_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a88548b5c0028dc03fe900fc5b7aa6ce7}{
+\index{model@{model}!model\_\-WriteGrids@{model\_\-WriteGrids}}
+\index{model\_\-WriteGrids@{model\_\-WriteGrids}!model@{model}}
+\subsubsection[{model\_\-WriteGrids}]{\setlength{\rightskip}{0pt plus 5cm}subroutine model::model\_\-WriteGrids (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{character (len=$\ast$),intent(in)}]{sMonthName, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a88548b5c0028dc03fe900fc5b7aa6ce7}
+
+
+Definition at line 3284 of file model.F90.
+
+
+
+Referenced by model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a88548b5c0028dc03fe900fc5b7aa6ce7_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_ad02323b54a65796a101d7c54c188b9fd}{
+\index{model@{model}!rf\_\-model\_\-CellRunoff@{rf\_\-model\_\-CellRunoff}}
+\index{rf\_\-model\_\-CellRunoff@{rf\_\-model\_\-CellRunoff}!model@{model}}
+\subsubsection[{rf\_\-model\_\-CellRunoff}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) model::rf\_\-model\_\-CellRunoff (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-CELL),pointer}]{cel, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_ad02323b54a65796a101d7c54c188b9fd}
+
+
+Definition at line 2191 of file model.F90.
+
+
+
+Referenced by if\_\-model\_\-RunoffIteration(), model\_\-Runoff\_\-NoRouting(), and model\_\-RunoffDownhill().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_ad02323b54a65796a101d7c54c188b9fd_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a3d56722cb383673437a115933248370e}{
+\index{model@{model}!rf\_\-model\_\-CellRunoff\_\-GreenAmpt@{rf\_\-model\_\-CellRunoff\_\-GreenAmpt}}
+\index{rf\_\-model\_\-CellRunoff\_\-GreenAmpt@{rf\_\-model\_\-CellRunoff\_\-GreenAmpt}!model@{model}}
+\subsubsection[{rf\_\-model\_\-CellRunoff\_\-GreenAmpt}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) model::rf\_\-model\_\-CellRunoff\_\-GreenAmpt (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-CELL),pointer}]{cel, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a3d56722cb383673437a115933248370e}
+
+
+Definition at line 2237 of file model.F90.
+
+
+
+Referenced by rf\_\-model\_\-CellRunoff().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=382pt]{namespacemodel_a3d56722cb383673437a115933248370e_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemodel_a0bd4839eca85d4a4a9aaebcebea25537}{
+\index{model@{model}!rf\_\-model\_\-GetInterception@{rf\_\-model\_\-GetInterception}}
+\index{rf\_\-model\_\-GetInterception@{rf\_\-model\_\-GetInterception}!model@{model}}
+\subsubsection[{rf\_\-model\_\-GetInterception}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) model::rf\_\-model\_\-GetInterception (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-SHORT),intent(in)}]{iType, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemodel_a0bd4839eca85d4a4a9aaebcebea25537}
+
+
+Definition at line 3007 of file model.F90.
+
+
+
+Referenced by model\_\-ProcessRain(), and model\_\-ProcessRainPRMS().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemodel_a0bd4839eca85d4a4a9aaebcebea25537_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespacemodel_a86a9f30f454de7137945c61f3d8a7a8a}{
+\index{model@{model}!iDayCtr@{iDayCtr}}
+\index{iDayCtr@{iDayCtr}!model@{model}}
+\subsubsection[{iDayCtr}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind=T\_\-INT) {\bf model::iDayCtr}}}
+\label{namespacemodel_a86a9f30f454de7137945c61f3d8a7a8a}
+
+
+Definition at line 42 of file model.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions(), and model\_\-ProcessRunoff().
+
+\hypertarget{namespacemodel_ab88058fb18ed4c3a4d26f357e8c4d44d}{
+\index{model@{model}!iOrderCol@{iOrderCol}}
+\index{iOrderCol@{iOrderCol}!model@{model}}
+\subsubsection[{iOrderCol}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind=T\_\-INT),dimension(:),allocatable {\bf model::iOrderCol}}}
+\label{namespacemodel_ab88058fb18ed4c3a4d26f357e8c4d44d}
+
+
+Definition at line 46 of file model.F90.
+
+
+
+Referenced by model\_\-ConfigureRunoffDownhill(), and model\_\-RunoffDownhill().
+
+\hypertarget{namespacemodel_a6427b836cffd85fb90dd0557e564b4d7}{
+\index{model@{model}!iOrderCount@{iOrderCount}}
+\index{iOrderCount@{iOrderCount}!model@{model}}
+\subsubsection[{iOrderCount}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind=T\_\-INT) {\bf model::iOrderCount}}}
+\label{namespacemodel_a6427b836cffd85fb90dd0557e564b4d7}
+
+
+Definition at line 45 of file model.F90.
+
+
+
+Referenced by model\_\-ConfigureRunoffDownhill(), and model\_\-RunoffDownhill().
+
+\hypertarget{namespacemodel_ae02f87fcf1fa7cfc9b55189633ae7f47}{
+\index{model@{model}!iOrderRow@{iOrderRow}}
+\index{iOrderRow@{iOrderRow}!model@{model}}
+\subsubsection[{iOrderRow}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind=T\_\-INT),dimension(:),allocatable {\bf model::iOrderRow}}}
+\label{namespacemodel_ae02f87fcf1fa7cfc9b55189633ae7f47}
+
+
+Definition at line 47 of file model.F90.
+
+
+
+Referenced by model\_\-ConfigureRunoffDownhill(), and model\_\-RunoffDownhill().
+
+\hypertarget{namespacemodel_a0543ca4ff4a5abe0454b315150c96261}{
+\index{model@{model}!rEndTime@{rEndTime}}
+\index{rEndTime@{rEndTime}!model@{model}}
+\subsubsection[{rEndTime}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-SGL) {\bf model::rEndTime}}}
+\label{namespacemodel_a0543ca4ff4a5abe0454b315150c96261}
+
+
+Definition at line 48 of file model.F90.
+
+
+
+Referenced by model\_\-EndOfRun().
+
+\hypertarget{namespacemodel_af6e6b71a83c27f7935909506664b8c8f}{
+\index{model@{model}!rStartTime@{rStartTime}}
+\index{rStartTime@{rStartTime}!model@{model}}
+\subsubsection[{rStartTime}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-SGL) {\bf model::rStartTime}}}
+\label{namespacemodel_af6e6b71a83c27f7935909506664b8c8f}
+
+
+Definition at line 48 of file model.F90.
+
+
+
+Referenced by model\_\-EndOfRun(), and model\_\-Solve().
+

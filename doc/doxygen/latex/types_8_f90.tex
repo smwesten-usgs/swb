@@ -1,0 +1,436 @@
+\hypertarget{types_8_f90}{
+\section{types.F90 File Reference}
+\label{types_8_f90}\index{types.F90@{types.F90}}
+}
+\subsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \hyperlink{typetypes_1_1_t___c_e_l_l}{types::T\_\-CELL}
+\begin{DoxyCompactList}\small\item\em Type that contains the data for an individual grid cell. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{types::T\_\-GENERAL\_\-GRID}
+\begin{DoxyCompactList}\small\item\em Type that contains the data for a grid. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___g_r_i_d___c_o_l_l_e_c_t_i_o_n}{types::T\_\-GRID\_\-COLLECTION}
+\item 
+type \hyperlink{typetypes_1_1_t___l_a_n_d_u_s_e___l_o_o_k_u_p}{types::T\_\-LANDUSE\_\-LOOKUP}
+\begin{DoxyCompactList}\small\item\em Container for land-\/use related data. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___i_r_r_i_g_a_t_i_o_n___l_o_o_k_u_p}{types::T\_\-IRRIGATION\_\-LOOKUP}
+\item 
+type \hyperlink{typetypes_1_1_t___b_a_s_i_n___m_a_s_k}{types::T\_\-BASIN\_\-MASK}
+\begin{DoxyCompactList}\small\item\em container for basin mask table data \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___s_s_f___f_i_l_e_s}{types::T\_\-SSF\_\-FILES}
+\begin{DoxyCompactList}\small\item\em container for SSF file information \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___n_e_t_c_d_f___f_i_l_e}{types::T\_\-NETCDF\_\-FILE}
+\item 
+type \hyperlink{typetypes_1_1_t___m_o_n_t_h}{types::T\_\-MONTH}
+\begin{DoxyCompactList}\small\item\em Container for calendar lookup information. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___s_t_a_t_s}{types::T\_\-STATS}
+\begin{DoxyCompactList}\small\item\em Type that contains parameters for graphings and stats calculations. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___m_o_d_e_l___c_o_n_f_i_g_u_r_a_t_i_o_n}{types::T\_\-MODEL\_\-CONFIGURATION}
+\begin{DoxyCompactList}\small\item\em Type that contains model configuration data. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___t_i_m_e___s_e_r_i_e_s___f_i_l_e}{types::T\_\-TIME\_\-SERIES\_\-FILE}
+\begin{DoxyCompactList}\small\item\em data structure to hold a line of input from the classic time-\/series file \item\end{DoxyCompactList}\item 
+type \hyperlink{typetypes_1_1_t___g_r_a_p_h___c_o_n_f_i_g_u_r_a_t_i_o_n}{types::T\_\-GRAPH\_\-CONFIGURATION}
+\begin{DoxyCompactList}\small\item\em Type that holds parameters used to create graphics with the DISLIN library. \item\end{DoxyCompactList}\item 
+interface \hyperlink{interfacetypes_1_1approx__equal}{types::approx\_\-equal}
+\end{DoxyCompactItemize}
+\subsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \hyperlink{namespacetypes}{types}
+
+
+\begin{DoxyCompactList}\small\item\em User-\/defined types for the SWB code. \item\end{DoxyCompactList}
+
+\end{DoxyCompactItemize}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespacetypes_a3fffb62907acf0b6fb805c1e93ed18d9}{types::Assert} (lCondition, sErrorMessage, sFilename, iLineNo)
+\begin{DoxyCompactList}\small\item\em General-\/purpose error-\/checking routine. \item\end{DoxyCompactList}\item 
+subroutine \hyperlink{namespacetypes_af6e75e8cc451db57eac17135489f6112}{types::Chomp} (sRecord, sItem)
+\item 
+subroutine \hyperlink{namespacetypes_a69b9c0fe76bf005ec3d97b9fd7eb9f41}{types::GetSysTimeDate} (sDateStr, sDateStrPretty)
+\item 
+subroutine \hyperlink{namespacetypes_a32b4376099e979b8ed2e52d2b7cbd1f2}{types::Chomp\_\-tab} (sRecord, sItem)
+\item 
+subroutine \hyperlink{namespacetypes_a04f9fe9c15a8f96624fb026b510f6a80}{types::Chomp\_\-slash} (sRecord, sItem)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_a43ae0de695c72e499737820794f9629e}{types::mmddyyyy2julian} (sMMDDYYYY)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_a5556730044ced12a261f38a13fe05eb8}{types::mmddyyyy2doy} (sMMDDYYYY)
+\item 
+subroutine \hyperlink{namespacetypes_a0bebcf106096e896fc12abc9b21825af}{types::Uppercase} (s)
+\item 
+subroutine \hyperlink{namespacetypes_a7fdd7b312cad86dbca730b5fc1fb205a}{types::CleanUpCsv} (s)
+\item 
+subroutine \hyperlink{namespacetypes_a52444756471a187f395929b01ec6175c}{types::CleanUpSlash} (s)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_ad041e93921c33efc5f7b8cb099c9f3df}{types::polynomial} (x, a)
+\item 
+subroutine \hyperlink{namespacetypes_a7f346956c828d5fab15a3d5d087a10a8}{types::LookupMonth} (iMonth, iDay, iYear, iDayOfYear, sMonthName, lMonthEnd)
+\item 
+logical(kind=T\_\-LOGICAL) \hyperlink{namespacetypes_a3209cf8641ab770d9f6929cd303442a6}{types::approx\_\-equal\_\-dbl} (rA, rB, rTol)
+\item 
+logical(kind=T\_\-LOGICAL) \hyperlink{namespacetypes_a60490ed5b6b7d5903a034d5e531538db}{types::approx\_\-equal\_\-sgl} (rA, rB, rTol)
+\item 
+logical(kind=T\_\-LOGICAL) \hyperlink{namespacetypes_ae89a23df854f9f89cad1ced3667b267a}{types::lf\_\-model\_\-GrowingSeason} (pConfig, iDayOfYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_a1ac08c4c46c18fd254270b91881836cd}{types::FtoC} (rF)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_adc61e2bd06f7763a41664635cd792fa8}{types::CtoF} (rC)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_a6d9d8e8b7f4594406e117e925a28ed71}{types::FtoK} (rF)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_afb2b5df966d0995a0ef41180e05a0dc1}{types::count\_\-fields} (sRecord)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_a6656bdb69c63e89fc6a5a56171dab67b}{types::mm\_\-to\_\-in} (r\_\-mm)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacetypes_a7099d6b490c7a33120d4d9976142f72c}{types::interpolate} (rXT, rYT, rX)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_a5f9e09099f47bada40db4475ee5778ae}{types::julian\_\-day} (iYear, iMonth, iDay, iOrigin)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_a9b6e5619a6384f5bf6c383f273414f55}{types::solstice} (iJD)
+\item 
+character(len=256) \hyperlink{namespacetypes_ac81e1d5f7a39f96a2b492f098c2ba2e7}{types::int2char} (iValue)
+\begin{DoxyCompactList}\small\item\em Convert an integer value into a formatted character string. \item\end{DoxyCompactList}\item 
+character(len=256) \hyperlink{namespacetypes_afcafa126194a2f1c3236f7edfb62c38d}{types::real2char} (rValue, iDec, iWidth)
+\begin{DoxyCompactList}\small\item\em Convert a real value into a formatted character string. \item\end{DoxyCompactList}\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_ab9e5596db13055bdc0bc6008dfb3b946}{types::num\_\-days\_\-in\_\-year} (iYear)
+\begin{DoxyCompactList}\small\item\em Return the number of days in the given year. \item\end{DoxyCompactList}\item 
+integer(kind=T\_\-INT) \hyperlink{namespacetypes_a08910935abbfabf0c927ac7bc6f8b36a}{types::day\_\-of\_\-year} (iJD)
+\item 
+subroutine \hyperlink{namespacetypes_ae7e76a43f7773d483dbf9814b78ed2b3}{types::gregorian\_\-date} (iJD, iYear, iMonth, iDay, iOrigin)
+\begin{DoxyCompactList}\small\item\em Convert from a Julian day number to a Gregorian date. \item\end{DoxyCompactList}\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, public \hyperlink{namespacetypes_adfa8f4f6096bb7bdbb93f36b911dcaad}{types::T\_\-LOGICAL} = 4
+\begin{DoxyCompactList}\small\item\em Define the sizes of base types used in the model. \item\end{DoxyCompactList}\item 
+integer, parameter, public \hyperlink{namespacetypes_a4e4d040a4425196c4d43be63e7e6103a}{types::T\_\-INT} = 4
+\item 
+integer, parameter, public \hyperlink{namespacetypes_af6b9654915a854564cb3f5ded061addc}{types::T\_\-SHORT} = 2
+\item 
+integer, parameter, public \hyperlink{namespacetypes_ac6380d8d9107c7fce9504b0b13552570}{types::T\_\-BYTE} = 1
+\item 
+integer, parameter, public \hyperlink{namespacetypes_a878c8056dbab71b170f5f7c4c9dd2235}{types::T\_\-SGL\_\-DISLIN} = 4
+\item 
+integer, parameter, public \hyperlink{namespacetypes_af3012489af4c138f271f1bce244b7e51}{types::T\_\-SGL} = SELECTED\_\-REAL\_\-KIND(p=6, r=37)
+\begin{DoxyCompactList}\small\item\em Define machine-\/independent sizes for base types. \item\end{DoxyCompactList}\item 
+integer, parameter, public \hyperlink{namespacetypes_a888737411068474a167b1c3e5b579c58}{types::T\_\-DBL} = SELECTED\_\-REAL\_\-KIND(p=13, r=200)
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ad3e7016ccd6fed062fbd4bf477b66a81}{types::LU\_\-STD\_\-OUT} = 6
+\begin{DoxyCompactList}\small\item\em I/O Units. \item\end{DoxyCompactList}\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_acebd133f6b8d69d9ba284172dfba9388}{types::LU\_\-CONTROL} = 100
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a47b83df3491e1221a3ac68ddffeaa66d}{types::LU\_\-GRID} = 101
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ae0b1a59e6856a4e2976c65cfe6e7829a}{types::LU\_\-LOOKUP} = 102
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ade712eb10655f5aee16cf18185a3681a}{types::LU\_\-TS} = 103
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ad52e13854a39857c28903d06b6743e5c}{types::LU\_\-TEMP} = 104
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_aa997f1b516b3fe69d84925827bb1f85f}{types::LU\_\-MSB\_\-REPORT} = 105
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_aa6744b73e58d8433783e0f423c3a1a72}{types::LU\_\-BIN\_\-FILE} = 106
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a94d564eb241f924a1114890a7e8a6901}{types::LU\_\-ROUTING} = 107
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a02191e0a119334a646624bf66c6032d0}{types::LU\_\-CSV} = 108
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a3b64a784a138287166d3c1717c8fc641}{types::LU\_\-CSV\_\-SERIES} = 109
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_afc45706ea53210eeba59fbe5b2b3856c}{types::LU\_\-CSV\_\-ANNUAL} = 110
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_adf298bd69751153dbb8bd21ec8bbc42b}{types::LU\_\-MASK} = 111
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a6fbb2101460a97abcc5f4ee9055e7e63}{types::LU\_\-MASK\_\-FILE} = 112
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_abaf10a4311ff42ab5244e8246c6a5200}{types::LU\_\-MASK\_\-STATS\_\-CSV} = 113
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a8ef944fc47b1e170df34b54eba5a9433}{types::LU\_\-PEST\_\-STATS} = 114
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_afb3d31ed372313e730716e33e42c735a}{types::LU\_\-PEST\_\-OBS} = 115
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a8897682c60c1fbc7595e60937266dfc3}{types::LU\_\-PEST\_\-INS} = 116
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a6b30bc5adf5ad8e9498b0a9081078fe5}{types::LU\_\-LOG} = 117
+\item 
+character(len=1), parameter, public \hyperlink{namespacetypes_a1aba85f347398a7d96a17c88c664c7a1}{types::sTAB} = achar(9)
+\item 
+character(len=1), parameter, public \hyperlink{namespacetypes_a7ac07dde59c21f645da2f523cc34afe1}{types::sBACKSLASH} = achar(92)
+\item 
+character(len=1), parameter, public \hyperlink{namespacetypes_a75630efc0939bd3b2b2c5913d58c55f4}{types::sFORWARDSLASH} = achar(47)
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_accfc31d1cd5f1a46b3fb99e6d1975a6b}{types::rZERO} = 0.0\_\-T\_\-SGL
+\begin{DoxyCompactList}\small\item\em Some useful typed constants (to ensure accurate computations) \item\end{DoxyCompactList}\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_af4d6e7a6f7dfdf6df6fa94bcd6af757f}{types::rD\_\-ZERO} = 0.0\_\-T\_\-DBL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a50c1fa61c229766c2a17cb7687703cdb}{types::rNEAR\_\-ZERO} = 1E-\/9\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_af161d4f0ffc44961986c81a32a2c82a7}{types::rPOINT2} = 0.2\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a496f566e809e4eaac5c2d3b6138667d1}{types::rHALF} = 0.5\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a3d2ba56f06a1f0b74066c51ebcfe3454}{types::rPOINT8} = 0.8\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a94afcebb08a1e89087d5ffb5a7585b72}{types::rONE} = 1.0\_\-T\_\-SGL
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_a90dcad5fbd0123e675aed418b5b421cf}{types::rD\_\-ONE} = 1.0\_\-T\_\-DBL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a80a8178ea4741071027cb936192002ad}{types::rFREEZING} = 32.0\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_ad2b16166ee54c6521c92846ca1867905}{types::rTEN} = 10.0\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a97b2b1d206618d3a266b45e582f7ebf3}{types::rHUNDRED} = 100.0\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_a46c52dedd7fb25f5de9fdbd1ce795aaa}{types::rTHOUSAND} = 1000.0\_\-T\_\-SGL
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_a5ff46874e183669d28f6a46080ea20b7}{types::rC\_\-PER\_\-F} = 5.0\_\-T\_\-DBL / 9.0\_\-T\_\-DBL
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_a663b1a3284266c4c5cdbcfb63753f352}{types::rF\_\-PER\_\-C} = 9.0\_\-T\_\-DBL / 5.0\_\-T\_\-DBL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_ae91353f2b870e14fa790e351b8b3f865}{types::rMM\_\-PER\_\-INCH} = 25.4\_\-T\_\-SGL
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_ab949fb6f49c2e3dfb6fa084310d81edf}{types::rCM\_\-PER\_\-INCH} = 2.54\_\-T\_\-SGL
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_a1f9e52478e9651360f7bd82fa744caa3}{types::rPI} = 3.14159265\_\-T\_\-DBL
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_ae0e7691ed560223af53b3ff28efafc11}{types::rTWOPI} = 2.0\_\-T\_\-DBL $\ast$ rPI
+\item 
+real(kind=T\_\-DBL), parameter, public \hyperlink{namespacetypes_a2f2f871f373ad3176f43993fc23103a5}{types::rSQM\_\-to\_\-SQFT} = 10.76391\_\-T\_\-DBL
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_abe11dbc06cabd68c258ab0fff0c89d26}{types::iMOVING\_\-AVG\_\-TERMS} = 5
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a42e13c9e6b0154abfab9212d6d7e6484}{types::iROUTE\_\-CELL\_\-MARKED} = -\/1
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_af9ac3dcedd1cd95154ef3208d656a7cc}{types::iROUTE\_\-DEPRESSION} = -\/999
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ae4af15bc0a450716e8e45f1d550e1401}{types::iROUTE\_\-LEFT\_\-GRID} = -\/1000
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ad9741d8d6e8a33ba13e4b3f00c94d5fa}{types::iNO\_\-DATA\_\-NCDC} = -\/99999
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a4255711de8681fefcdb67943aa2d812f}{types::iNUM\_\-DIGITS} = 3
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ac00fb4e6602e3f1826af08a6bd5bc4e7}{types::iFIELD\_\-WIDTH} = 10
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a694f00629aa7084d30ef27a0f233de5a}{types::iZERO} = 0
+\item 
+logical(kind=T\_\-LOGICAL), parameter, public \hyperlink{namespacetypes_a440f71bd0dd529ae3aaa8309171baa67}{types::lTRUE} = .true.\_\-T\_\-LOGICAL
+\item 
+logical(kind=T\_\-LOGICAL), parameter, public \hyperlink{namespacetypes_ad09a27b431e0fad201524039e6943e5b}{types::lFALSE} = .false.\_\-T\_\-LOGICAL
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ad760d56012336a0edb070999d519902f}{types::iEOF} = HUGE(iZERO)
+\item 
+real(kind=T\_\-SGL), parameter, public \hyperlink{namespacetypes_aa47fdce92f090579ada31ab06c3545ed}{types::rBIGVAL} = 1.0e20\_\-T\_\-SGL
+\item 
+integer(kind=T\_\-INT), public \hyperlink{namespacetypes_a95d527e2c66739a080d7d76bb1ae6b97}{types::iSTARTDATE\_\-POS}
+\item 
+integer(kind=T\_\-INT), public \hyperlink{namespacetypes_af25078a2a39ad338a062b8551e940824}{types::iENDDATE\_\-POS}
+\item 
+integer(kind=T\_\-INT), public \hyperlink{namespacetypes_a9ab0a4f51d8fd66826d7d3079ecfdbc4}{types::iENDHEADER\_\-POS}
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_ae36ea9f0739802b729005e07be23b389}{types::iNC\_\-INPUT} = 1
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a830e5ccbb0e18b2ee9a748baf073a047}{types::iNC\_\-OUTPUT} = 2
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a9b12c2d37849090214258503062fc8d6}{types::iNC\_\-OBSERVATION} = 3
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_abb0ecc9c9b6f0e08002fec018d71001c}{types::sRED} = char(27)//'\mbox{[}1;31m'
+\begin{DoxyCompactList}\small\item\em Define ANSI.sys-\/like text colors. \item\end{DoxyCompactList}\item 
+character(len=7), parameter \hyperlink{namespacetypes_a07437ed48493a8bc7c3f5f73bd3b09ea}{types::sGREEN} = char(27)//'\mbox{[}1;32m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_aea7cf70fa292d9310d8684a10a075b10}{types::sYELLOW} = char(27)//'\mbox{[}1;33m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_a4bb1513c56bea1b41dd352849448a56c}{types::sBLUE} = char(27)//'\mbox{[}1;34m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_a9bd2b67f7cec3b5778aa09574fa71152}{types::sCYAN} = char(27)//'\mbox{[}1;36m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_a71a8a20288478902850fec078b982946}{types::sWHITE} = char(27)//'\mbox{[}0;37m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_aefdf6f19388973d1aa8709be595c7c32}{types::sBOLDWHITE} = char(27)//'\mbox{[}1;37m'
+\item 
+character(len=7), parameter \hyperlink{namespacetypes_a92bb3d719410aa879a5823ffc5c3f647}{types::sCLRSCR} = char(27)//'\mbox{[}2J'
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_acc2ffd0be776cd4fca9ebcfe4669e82c}{types::T\_\-INT\_\-GRID} = 0
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a328c49f52da66eddb0a59f71ea4235a3}{types::T\_\-SGL\_\-GRID} = 1
+\item 
+integer(kind=T\_\-INT), parameter, public \hyperlink{namespacetypes_a540676e3b79330fe7fa26455d749cb35}{types::T\_\-CELL\_\-GRID} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_addaf796ce1bbf5d055d4b236092e0aaf}{types::iGRID\_\-LENGTH\_\-UNITS\_\-METERS} = 0
+\begin{DoxyCompactList}\small\item\em define parameter values for working with type \hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{T\_\-GENERAL\_\-GRID} \item\end{DoxyCompactList}\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a09fb47af7ad4b30ae025dd1241f3081f}{types::iGRID\_\-LENGTH\_\-UNITS\_\-FEET} = 1
+\item 
+type(T\_\-MONTH), dimension(12), target \hyperlink{namespacetypes_af6a870221fe362a59d31b23393e431b1}{types::YEAR\_\-INFO} = (/ T\_\-MONTH( 'JAN','JANUARY ', 1, 31, 1, 31), T\_\-MONTH( 'FEB','FEBRUARY ', 32, 59, 2, 29), T\_\-MONTH( 'MAR','MARCH ', 60, 90, 3, 31), T\_\-MONTH( 'APR','APRIL ', 91, 120, 4, 30), T\_\-MONTH( 'MAY','MAY ', 121, 151, 5, 31), T\_\-MONTH( 'JUN','JUNE ', 152, 181, 6, 30), T\_\-MONTH( 'JUL','JULY ', 182, 212, 7, 31), T\_\-MONTH( 'AUG','AUGUST ', 213, 243, 8, 31), T\_\-MONTH( 'SEP','SEPTEMBER', 244, 273, 9, 30), T\_\-MONTH( 'OCT','OCTOBER ', 274, 304, 10, 31), T\_\-MONTH( 'NOV','NOVEMBER ', 305, 334, 11, 30), T\_\-MONTH( 'DEC','DECEMBER ', 335, 365, 12, 31) /)
+\begin{DoxyCompactList}\small\item\em Month information. \item\end{DoxyCompactList}\item 
+character(len=256), public \hyperlink{namespacetypes_a67706eade7740303d70d3377080a9eb3}{types::sLogBuffer}
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a3fa6b4fbd911543da65649a0f5ec7ded}{types::iNUM\_\-MONTHS} = 12
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a000bcd3b779441ad55f9fa83e6522f24}{types::iNONE} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a187237a0372eaebca7e88b3c00e0c110}{types::iGRID} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a94f1aafe474b6e3e8dc2782d3d84b55f}{types::iGRAPH} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_acdb6a8e28292f829f0e39938283a434a}{types::iBOTH} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_af7f37d0a4b61a411aa5759a66973dc62}{types::iSTATS} = 4
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a9fd35718050c56c63e14d03fb07b62b3}{types::iNUM\_\-VARIABLES} = 29
+\item 
+type(T\_\-STATS), dimension(inum\_\-variables) \hyperlink{namespacetypes_a594f13f31f2b14db76202ca868ec9001}{types::STAT\_\-INFO} = (/ T\_\-STATS ('GROSS\_\-PRECIP',201,2,0,lTRUE,lTRUE, 'inches','gross precipitation', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SNOWFALL',202,0,1,lTRUE,lTRUE, 'inches','precipitation falling as snow', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SNOWCOVER',203,2,0,lFALSE,lTRUE, 'inches','water equivalent of snow cover', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('CFGI',204,2,0,lFALSE,lFALSE, 'unitless','continuous frozen ground index', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('MIN\_\-TEMP',205,2,0,lFALSE,lFALSE, 'degrees F','minimum daily air temperature', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('MAX\_\-TEMP',206,2,0,lFALSE,lFALSE, 'degrees F','maximum daily air temperature', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('AVG\_\-TEMP',207,2,0,lFALSE,lFALSE, 'degrees F','mean daily air temperature', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('CHG\_\-IN\_\-SNOW\_\-COV',208,0,-\/1,lTRUE,lTRUE, 'inches','snowfall minus snowmelt', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SNOWMELT',209,2,0,lTRUE,lTRUE, 'inches','snowmelt', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('INTERCEPTION',210,2,0,lTRUE,lTRUE, 'inches','interception', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('NET\_\-PRECIP',211,0,1,lTRUE,lTRUE, 'inches','gross precipitation minus interception', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('INFLOW',212,0,1,lTRUE,lTRUE, 'inches','incoming flow from adjacent cells', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('OUTFLOW',213,0,-\/1,lTRUE,lTRUE, 'inches','outgoing flow to adjacent cells', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('RUNOFF\_\-OUTSIDE',214,0,-\/1,lTRUE,lTRUE, 'inches','runoff leaving model domain', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('REJECTED\_\-RECHARGE',215,0,-\/1,lTRUE,lTRUE, 'inches','recharge exceeding max recharge rate', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('NET\_\-INFLOW',216,2,0,lTRUE,lTRUE, 'inches','sum of net precip and inflow', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('NET\_\-INFIL',217,2,0,lTRUE,lTRUE, 'inches','precip and inflow minus outflow', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('POT\_\-ET',218,2,0,lTRUE,lTRUE, 'inches','potential evapotranspiration', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('ACT\_\-ET',219,0,-\/1,lTRUE,lTRUE, 'inches','actual evapotranspiration', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('P\_\-MINUS\_\-PET',220,2,0,lTRUE,lFALSE, 'inches','net inflow minus potential et', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SM\_\-DEFICIT',221,2,0,lTRUE,lFALSE, 'inches','daily soil moisture deficit', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SM\_\-SURPLUS',222,2,0,lTRUE,lFALSE, 'inches','daily soil moisture surplus', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SM\_\-APWL',223,2,0,lFALSE,lFALSE, 'inches','accumulated potential water loss', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('SOIL\_\-MOISTURE',224,2,0,lFALSE,lTRUE, 'inches','daily soil moisture', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('CHG\_\-IN\_\-SOIL\_\-MOIS',225,0,-\/1,lTRUE,lTRUE, 'inches','daily change in soil moisture', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('RECHARGE',226,0,-\/1,lTRUE,lTRUE, 'inches','daily potential recharge', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('GDD',227,2,0,lFALSE,lFALSE, 'degree-\/day','growing degree day', 1.,0.0, iNONE,iNONE,iNONE,iNONE), T\_\-STATS ('IRRIGATION\_\-AMOUNT',228,0,1,lTRUE,lTRUE, 'inches','daily estimated irrigation amount', 1.,0.0, iNONE,iNONE,iNONE,iNONE) ,T\_\-STATS ('STREAM\_\-CAPTURE',229,0,-\/1,lTRUE,lTRUE, 'inches','runoff or recharge captured by a stream or fracture', 1.,0.0, iNONE,iNONE,iNONE,iNONE)/)
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a4c56fb4b9e90eaa04e36102300d88ba6}{types::iNUM\_\-STATS} = 5
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a996356f311868440012a452bc3d0a323}{types::iMIN} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a65fde77ac5f489a0498cfd5cc6578bdf}{types::iMEAN} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a2f0945d479ed3cf3287563bd4acb0f85}{types::iMAX} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a0b92a69a1b38cb0319dfe59e72f8a7fc}{types::iSUM} = 4
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a91d9c66c291dee92fc0284fa06fb6f73}{types::iLENGTH} = 5
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a3c6dbb348b35ea04c6da1808e4eeb082}{types::iGROSS\_\-PRECIP} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a216378a3ebd8c66d245fc2aca380e6c7}{types::iSNOWFALL} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a14231f76d9ab4ada50ac11d2234209c3}{types::iSNOWCOVER} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a26dd912760d99d5d582693dd2aad18b5}{types::iCFGI} = 4
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a58eba3f16f91d9339380db844925820f}{types::iMIN\_\-TEMP} = 5
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a041c6ea18472c36d80d58d451635e4dc}{types::iMAX\_\-TEMP} = 6
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a11c906ff2073a4fbe3cf9425dce415ae}{types::iAVG\_\-TEMP} = 7
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aa1bee1fd3093347686b80dcfe4d610a9}{types::iCHG\_\-IN\_\-SNOW\_\-COV} = 8
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a356a0c0b5930e94118b467d1f7b486f2}{types::iSNOWMELT} = 9
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_abbe2d030deced65481aa7f6447173269}{types::iINTERCEPTION} = 10
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a5f9046fed07889a2ac6a854e9563e96a}{types::iNET\_\-PRECIP} = 11
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a76a571421076f0030f2ecf4ab852504d}{types::iINFLOW} = 12
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ad2090785f42112bf8cf46d637279bc2c}{types::iOUTFLOW} = 13
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aab5c72102086046b4f2dbaab08ccb75b}{types::iRUNOFF\_\-OUTSIDE} = 14
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ae14eacf3547df95bf9f8678645f92a42}{types::iREJECTED\_\-RECHARGE} = 15
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a42742629ae90d31afa09e1250d647875}{types::iNET\_\-INFLOW} = 16
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a6c9ee6a446b45c2636429fb1dabdad33}{types::iNET\_\-INFIL} = 17
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a5c8388d67ca88816f13bf84e0247c604}{types::iPOT\_\-ET} = 18
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a5d7a9e58cc5060c7fdfc7466a8f52a60}{types::iACT\_\-ET} = 19
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_adbfd806dc2d35d39c7984aa32d3a9bed}{types::iP\_\-MINUS\_\-PET} = 20
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a87837f70eb7d1089df9cb4595c0f7811}{types::iSM\_\-DEFICIT} = 21
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aa8ff1cbf3a33f80c5d9a66d6eca11e11}{types::iSM\_\-SURPLUS} = 22
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a65e055348b61912a3790d7b3f4c9bf0a}{types::iSM\_\-APWL} = 23
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a71556e5a3ff6e981beafd59949100334}{types::iSOIL\_\-MOISTURE} = 24
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aebcbdc031290e54d10c818440fbf0edd}{types::iCHG\_\-IN\_\-SOIL\_\-MOIST} = 25
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_adeda65abed18e31c0f523efc82f84bde}{types::iRECHARGE} = 26
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aefc79ccbcc184af0a988b134d416fb8d}{types::iGDD} = 27
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a8fc6acfd1e8720c1ee6432e0de5ceff0}{types::iIRRIGATION} = 28
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a15ee2167fce4158f95e9d9846fda5ad5}{types::iSTREAM\_\-CAPTURE} = 29
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a4ff333366786c6aa260d0b177b01c29a}{types::STREAM\_\-INTERACTIONS\_\-MAX} = 100
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ad8ad58046e9a408cde943dcc94b88167}{types::iDAILY} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ababe8d6bc68f768e3d42595fb178ac05}{types::iMONTHLY} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a6b2dec75398d02bce486b6dd921e1807}{types::iANNUAL} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a13d2dc6a53c0611774f26d83189e45e1}{types::CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a95bb0084d2d95f85aaaf43581e2b0c43}{types::CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a7feb2433c90e8248bbe69792c9b67712}{types::CONFIG\_\-RUNOFF\_\-ITERATIVE} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_afd1849eb3a3e616a3da9bee8064421fc}{types::CONFIG\_\-RUNOFF\_\-DOWNHILL} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a322478702adcb70451718ef549d9071b}{types::CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aa00d17553b5924914a0c6101d2a3af21}{types::CONFIG\_\-ET\_\-NONE} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aa1f3f7bad7912d092d9b1a8f726e4f47}{types::CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a402a872e6930d08699d8371bd68f0247}{types::CONFIG\_\-ET\_\-TURC} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a96a773d2a9e9595b49aaee65d3618d28}{types::CONFIG\_\-ET\_\-JENSEN\_\-HAISE} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_af0221b3cca59af99efb7f293b9c19cd7}{types::CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE} = 4
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a49692bf2a330b895cc7748e71c099d36}{types::CONFIG\_\-ET\_\-HARGREAVES} = 5
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ac2eb7f45340cf35eb5bf1d5929b09f7f}{types::CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_afabf941aeacf590c7e1d6aa9aed0cbbd}{types::CONFIG\_\-PRECIP\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_abcdf72d1f81b2916cf775e1431de6b29}{types::CONFIG\_\-PRECIP\_\-SURFER\_\-GRID} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_af0fe53cfc13c9f0ce2c3a80d2732c602}{types::CONFIG\_\-PRECIP\_\-NETCDF} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a821c4b808dde869fec2b125892518a86}{types::CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a6d33c5d4a9049260961a4a2ab73ea6c1}{types::CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_af01dca6362f0a51f0e5091ef26571bc8}{types::CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a8c7057d336d6c65e7b528b189e6383ff}{types::CONFIG\_\-TEMPERATURE\_\-NETCDF} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a1bc536b5292ca49354232a3d23eb7e79}{types::CONFIG\_\-LANDUSE\_\-CONSTANT} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_adcf4488697f417e70c6730294b1d11ba}{types::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a953dbde53597b3e1676b05d1c09c89f7}{types::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a7eff03ddd24b0d84b74382dc2b48dea6}{types::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF} = 3
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a1900797780d82e576dffd4a2244c09db}{types::CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID} = 4
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_aa50ad6a9ffea3de1d907fcde9d600afa}{types::CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a37b9635b00b061613505232f7f0402e9}{types::CONFIG\_\-SNOW\_\-NEW\_\-SWB} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a67150551220cbe5b199d578709e71d15}{types::CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a36ff9b99df167660591ebadeffa4cf54}{types::CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a1e791678151ab504a924265e5f999d4e}{types::CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE} = 2
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a95a5322e516a01cb15894b055211c626}{types::CONFIG\_\-SM\_\-NONE} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ab0238e5ae5af01cbed3d4744b054f4b7}{types::CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a479612698829962978355c82816e1875}{types::CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a580e1bc2da4e4c9c9881e31d2ee11478}{types::CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a160cf0789c7288f51ba40cb7e19f46a3}{types::CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a9c39021370e43388bffb3def7c09570b}{types::CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA} = 1
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_a6a4c289d08a585bfc0dda1fa41bf2b4a}{types::OUTPUT\_\-SURFER} = 0
+\item 
+integer(kind=T\_\-INT), parameter \hyperlink{namespacetypes_ad0c670d8c4ea7e20e1ae2bcdbb37ba24}{types::OUTPUT\_\-ARC} = 1
+\end{DoxyCompactItemize}

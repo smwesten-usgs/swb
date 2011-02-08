@@ -1,0 +1,768 @@
+\hypertarget{namespaceswb__stats}{
+\section{swb\_\-stats Module Reference}
+\label{namespaceswb__stats}\index{swb\_\-stats@{swb\_\-stats}}
+}
+
+
+Calculates daily, monthly, and annual statistics for an SWB model run.  
+
+
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespaceswb__stats_a310f0f7b08aa679de6907fc3870bac76}{stats\_\-InitializeVolumeConversion} (pGrd)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a5ba844557dec513710f283c41a9a265c}{stats\_\-InitializeDailyAccumulators} ()
+\item 
+subroutine \hyperlink{namespaceswb__stats_a3d947e5ebbe4b649820b9de1e118efb0}{stats\_\-InitializeMonthlyAccumulators} ()
+\item 
+subroutine \hyperlink{namespaceswb__stats_a5fbf4ac0d23ffb2a7aa6dbe4be8c8164}{stats\_\-InitializeAnnualAccumulators} ()
+\item 
+subroutine \hyperlink{namespaceswb__stats_a07fff21d7f416822a1e78b4de9580fc7}{stats\_\-FormatTextString} (sText, rValue, pConfig, iVarNum, sFormattedText)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a7680fbd498a0bf44089b1e12baf9221a}{stats\_\-WriteDailyAccumulatorValuesCSV} (iLU, iMonth, iDay, iYear)
+\item 
+subroutine \hyperlink{namespaceswb__stats_affd85de02d34bd4608aec046a8a28a57}{stats\_\-WriteAnnualAccumulatorValuesCSV} (iLU, iYear)
+\item 
+subroutine \hyperlink{namespaceswb__stats_ae8dd9a43d8d8b6499f5b0556f4d7f374}{stats\_\-WriteDailyAccumulatorHeaderCSV} (iLU)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a702b2071b18f3bf1b5569bcf5b6bef3e}{stats\_\-WriteAnnualAccumulatorHeaderCSV} (iLU)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a0d9031a1acff05d4d1e6d46d8c4e3263}{stats\_\-DumpDailyAccumulatorValues} (iLU, pConfig)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a2d6e66544a4b71402f6bb7075d590df8}{stats\_\-DumpMonthlyAccumulatorValues} (iLU, iMonth, sMonthName, pConfig)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a65f35b2efbf53e65d819a171319d92f9}{stats\_\-DumpAnnualAccumulatorValues} (iLU, pConfig, iYear)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a6def08584e14bc099756846eab8c3fd0}{stats\_\-UpdateAllAccumulatorsByCell} (rValue, iVarNum, iMonthNum, iNumGridCells)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a35d0e8e9c65e260e0864eb01bffd2e56}{stats\_\-UpdateAllAccumulatorsByGrid} (rMin, rMean, rMax, rSum, iVarNum, iMonthNum)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a2a181014514f304c10a4823167eea79a}{stats\_\-CalcMonthlyMeans} (iMonthNum, iDaysInMonth)
+\begin{DoxyCompactList}\small\item\em Calculates and writes out monthly min, max, and mean of 2D variable array. \item\end{DoxyCompactList}\item 
+subroutine \hyperlink{namespaceswb__stats_ae5f18911e97e0fc1ba46fc24975f03ed}{stats\_\-WriteMinMeanMax} (iLU, sText, rData, iCount)
+\begin{DoxyCompactList}\small\item\em Writes out the min, max, and mean of 2D variable array. \item\end{DoxyCompactList}\item 
+subroutine \hyperlink{namespaceswb__stats_a477408383e1db8d73b78fabed1b1f805}{stats\_\-WriteMSBReport} (pGrd, iMonth, iDay, iYear, iDayOfYear)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a62541230c69c255a0beb7c13ea1fd262}{stats\_\-RewriteGrids} (iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespaceswb__stats_acd278076cc93c0919cda51b7188dab2e}{stats\_\-CalcBasinStats} (pGrd, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespaceswb__stats_ad3c6cb80a9c1928e9235d16423bf48d8}{stats\_\-CalcMeanRecharge} (pGrd, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespaceswb__stats_aaf222f82f042a1eeb3412be5e5bcd464}{stats\_\-CalcMeanRechargebyLU} (pGrd, pConfig, pGraph)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a148b78706f8169736ee3fa4a8289a319}{stats\_\-write\_\-to\_\-SSF\_\-file} (pConfig, iSSFindex, iMonth, iDay, iYear, rValue)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a59a2b9123745126691c28085080584ec}{stats\_\-OpenBinaryFiles} (pConfig, pGrd)
+\item 
+subroutine \hyperlink{namespaceswb__stats_a841f19be673726e0d221293413ddcae4}{stats\_\-CloseBinaryFiles} ()
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(kind=T\_\-DBL), public \hyperlink{namespaceswb__stats_aa4fd347bb81a4fdd52833b87d790de52}{rVolConvert}
+\item 
+real(kind=T\_\-DBL), dimension(inum\_\-months, inum\_\-stats, inum\_\-variables), public \hyperlink{namespaceswb__stats_a0b1c5339981acd4006223df2a21f1670}{rMonthly}
+\item 
+real(kind=T\_\-DBL), dimension(inum\_\-stats, inum\_\-variables), public \hyperlink{namespaceswb__stats_a8f4ae0971c0286e171999202b9e5b07f}{rDaily}
+\item 
+real(kind=T\_\-DBL), dimension(inum\_\-stats, inum\_\-variables), public \hyperlink{namespaceswb__stats_a6844e1ec4a1276cc97060f800570f8fd}{rAnnual}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Calculates daily, monthly, and annual statistics for an SWB model run. Calculates daily, monthly, and annual statistics for an SWB model run. Also contains routines to:
+\begin{DoxyItemize}
+\item Extract data from a compressed binary file in order to output grids or plots
+\item Write to a PEST $\ast$.ssf file
+\item Calculate statistics for a subset of the model domain (i.e. catchment, county)
+\item Write daily, annual, and mass balance reports 
+\end{DoxyItemize}
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespaceswb__stats_acd278076cc93c0919cda51b7188dab2e}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-CalcBasinStats@{stats\_\-CalcBasinStats}}
+\index{stats\_\-CalcBasinStats@{stats\_\-CalcBasinStats}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-CalcBasinStats}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-CalcBasinStats (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_acd278076cc93c0919cda51b7188dab2e}
+
+
+Definition at line 1108 of file stats.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_acd278076cc93c0919cda51b7188dab2e_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_ad3c6cb80a9c1928e9235d16423bf48d8}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-CalcMeanRecharge@{stats\_\-CalcMeanRecharge}}
+\index{stats\_\-CalcMeanRecharge@{stats\_\-CalcMeanRecharge}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-CalcMeanRecharge}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-CalcMeanRecharge (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_ad3c6cb80a9c1928e9235d16423bf48d8}
+
+
+Definition at line 1273 of file stats.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_ad3c6cb80a9c1928e9235d16423bf48d8_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_aaf222f82f042a1eeb3412be5e5bcd464}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-CalcMeanRechargebyLU@{stats\_\-CalcMeanRechargebyLU}}
+\index{stats\_\-CalcMeanRechargebyLU@{stats\_\-CalcMeanRechargebyLU}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-CalcMeanRechargebyLU}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-CalcMeanRechargebyLU (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_aaf222f82f042a1eeb3412be5e5bcd464}
+
+
+Definition at line 1349 of file stats.F90.
+
+
+
+Referenced by control::control\_\-setModelOptions().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_aaf222f82f042a1eeb3412be5e5bcd464_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a2a181014514f304c10a4823167eea79a}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-CalcMonthlyMeans@{stats\_\-CalcMonthlyMeans}}
+\index{stats\_\-CalcMonthlyMeans@{stats\_\-CalcMonthlyMeans}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-CalcMonthlyMeans}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-CalcMonthlyMeans (
+\begin{DoxyParamCaption}
+\item[{integer(kind=T\_\-INT),intent(in)}]{iMonthNum, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iDaysInMonth}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a2a181014514f304c10a4823167eea79a}
+
+
+Calculates and writes out monthly min, max, and mean of 2D variable array. 
+
+\begin{DoxyParagraph}{}
+
+\end{DoxyParagraph}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em iMonthNum} & Numerical index (1-\/12) of the month for which statistics are reported. \\
+\hline
+\mbox{\tt in}  & {\em iDaysInMonth} & Number of days in the reporting month. \\
+\hline
+\end{DoxyParams}
+\begin{Desc}
+\item[\hyperlink{deprecated__deprecated000001}{Deprecated}]This subroutine will be eliminated in future version of SWB. \end{Desc}
+
+
+Definition at line 528 of file stats.F90.
+
+\hypertarget{namespaceswb__stats_a841f19be673726e0d221293413ddcae4}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-CloseBinaryFiles@{stats\_\-CloseBinaryFiles}}
+\index{stats\_\-CloseBinaryFiles@{stats\_\-CloseBinaryFiles}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-CloseBinaryFiles}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-CloseBinaryFiles (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a841f19be673726e0d221293413ddcae4}
+
+
+Definition at line 1590 of file stats.F90.
+
+
+
+Referenced by model::model\_\-EndOfRun().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=366pt]{namespaceswb__stats_a841f19be673726e0d221293413ddcae4_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a65f35b2efbf53e65d819a171319d92f9}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-DumpAnnualAccumulatorValues@{stats\_\-DumpAnnualAccumulatorValues}}
+\index{stats\_\-DumpAnnualAccumulatorValues@{stats\_\-DumpAnnualAccumulatorValues}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-DumpAnnualAccumulatorValues}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-DumpAnnualAccumulatorValues (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a65f35b2efbf53e65d819a171319d92f9}
+
+
+Definition at line 383 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a65f35b2efbf53e65d819a171319d92f9_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a0d9031a1acff05d4d1e6d46d8c4e3263}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-DumpDailyAccumulatorValues@{stats\_\-DumpDailyAccumulatorValues}}
+\index{stats\_\-DumpDailyAccumulatorValues@{stats\_\-DumpDailyAccumulatorValues}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-DumpDailyAccumulatorValues}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-DumpDailyAccumulatorValues (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a0d9031a1acff05d4d1e6d46d8c4e3263}
+
+
+Definition at line 272 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a0d9031a1acff05d4d1e6d46d8c4e3263_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a2d6e66544a4b71402f6bb7075d590df8}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-DumpMonthlyAccumulatorValues@{stats\_\-DumpMonthlyAccumulatorValues}}
+\index{stats\_\-DumpMonthlyAccumulatorValues@{stats\_\-DumpMonthlyAccumulatorValues}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-DumpMonthlyAccumulatorValues}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-DumpMonthlyAccumulatorValues (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{character (len=3),intent(in)}]{sMonthName, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a2d6e66544a4b71402f6bb7075d590df8}
+
+
+Definition at line 323 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a2d6e66544a4b71402f6bb7075d590df8_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a07fff21d7f416822a1e78b4de9580fc7}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-FormatTextString@{stats\_\-FormatTextString}}
+\index{stats\_\-FormatTextString@{stats\_\-FormatTextString}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-FormatTextString}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-FormatTextString (
+\begin{DoxyParamCaption}
+\item[{character(len=$\ast$),intent(in)}]{sText, }
+\item[{real(kind=T\_\-SGL),dimension(inum\_\-stats),intent(in)}]{rValue, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iVarNum, }
+\item[{character(len=256),dimension(inum\_\-stats)}]{sFormattedText}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a07fff21d7f416822a1e78b4de9580fc7}
+
+
+Definition at line 100 of file stats.F90.
+
+
+
+Referenced by stats\_\-DumpAnnualAccumulatorValues(), stats\_\-DumpDailyAccumulatorValues(), and stats\_\-DumpMonthlyAccumulatorValues().
+
+\hypertarget{namespaceswb__stats_a5fbf4ac0d23ffb2a7aa6dbe4be8c8164}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-InitializeAnnualAccumulators@{stats\_\-InitializeAnnualAccumulators}}
+\index{stats\_\-InitializeAnnualAccumulators@{stats\_\-InitializeAnnualAccumulators}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-InitializeAnnualAccumulators}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-InitializeAnnualAccumulators (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a5fbf4ac0d23ffb2a7aa6dbe4be8c8164}
+
+
+Definition at line 93 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_a5ba844557dec513710f283c41a9a265c}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-InitializeDailyAccumulators@{stats\_\-InitializeDailyAccumulators}}
+\index{stats\_\-InitializeDailyAccumulators@{stats\_\-InitializeDailyAccumulators}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-InitializeDailyAccumulators}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-InitializeDailyAccumulators (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a5ba844557dec513710f283c41a9a265c}
+
+
+Definition at line 72 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_a3d947e5ebbe4b649820b9de1e118efb0}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-InitializeMonthlyAccumulators@{stats\_\-InitializeMonthlyAccumulators}}
+\index{stats\_\-InitializeMonthlyAccumulators@{stats\_\-InitializeMonthlyAccumulators}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-InitializeMonthlyAccumulators}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-InitializeMonthlyAccumulators (
+\begin{DoxyParamCaption}
+{}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a3d947e5ebbe4b649820b9de1e118efb0}
+
+
+Definition at line 84 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_a310f0f7b08aa679de6907fc3870bac76}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-InitializeVolumeConversion@{stats\_\-InitializeVolumeConversion}}
+\index{stats\_\-InitializeVolumeConversion@{stats\_\-InitializeVolumeConversion}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-InitializeVolumeConversion}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-InitializeVolumeConversion (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a310f0f7b08aa679de6907fc3870bac76}
+
+
+Definition at line 40 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a310f0f7b08aa679de6907fc3870bac76_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a59a2b9123745126691c28085080584ec}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-OpenBinaryFiles@{stats\_\-OpenBinaryFiles}}
+\index{stats\_\-OpenBinaryFiles@{stats\_\-OpenBinaryFiles}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-OpenBinaryFiles}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-OpenBinaryFiles (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a59a2b9123745126691c28085080584ec}
+
+
+Definition at line 1537 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=364pt]{namespaceswb__stats_a59a2b9123745126691c28085080584ec_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a62541230c69c255a0beb7c13ea1fd262}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-RewriteGrids@{stats\_\-RewriteGrids}}
+\index{stats\_\-RewriteGrids@{stats\_\-RewriteGrids}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-RewriteGrids}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-RewriteGrids (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNX, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNY, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rX0, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rY0, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rX1, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rY1, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{type (T\_\-GRAPH\_\-CONFIGURATION),dimension(:),pointer}]{pGraph}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a62541230c69c255a0beb7c13ea1fd262}
+
+
+Definition at line 694 of file stats.F90.
+
+
+
+Referenced by model::model\_\-EndOfRun().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a62541230c69c255a0beb7c13ea1fd262_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a6def08584e14bc099756846eab8c3fd0}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-UpdateAllAccumulatorsByCell@{stats\_\-UpdateAllAccumulatorsByCell}}
+\index{stats\_\-UpdateAllAccumulatorsByCell@{stats\_\-UpdateAllAccumulatorsByCell}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-UpdateAllAccumulatorsByCell}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-UpdateAllAccumulatorsByCell (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-DBL),intent(in)}]{rValue, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iVarNum, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonthNum, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumGridCells}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a6def08584e14bc099756846eab8c3fd0}
+
+
+Definition at line 434 of file stats.F90.
+
+
+
+Referenced by model::model\_\-ProcessRain(), model::model\_\-ProcessRainPRMS(), and sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a6def08584e14bc099756846eab8c3fd0_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a35d0e8e9c65e260e0864eb01bffd2e56}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-UpdateAllAccumulatorsByGrid@{stats\_\-UpdateAllAccumulatorsByGrid}}
+\index{stats\_\-UpdateAllAccumulatorsByGrid@{stats\_\-UpdateAllAccumulatorsByGrid}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-UpdateAllAccumulatorsByGrid}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-UpdateAllAccumulatorsByGrid (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-DBL),intent(in)}]{rMin, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rMean, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rMax, }
+\item[{real (kind=T\_\-DBL),intent(in)}]{rSum, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iVarNum, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonthNum}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a35d0e8e9c65e260e0864eb01bffd2e56}
+
+
+Definition at line 488 of file stats.F90.
+
+
+
+Referenced by model::model\_\-GetDailyPrecipValue().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceswb__stats_a35d0e8e9c65e260e0864eb01bffd2e56_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a148b78706f8169736ee3fa4a8289a319}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-write\_\-to\_\-SSF\_\-file@{stats\_\-write\_\-to\_\-SSF\_\-file}}
+\index{stats\_\-write\_\-to\_\-SSF\_\-file@{stats\_\-write\_\-to\_\-SSF\_\-file}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-write\_\-to\_\-SSF\_\-file}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-write\_\-to\_\-SSF\_\-file (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iSSFindex, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rValue}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a148b78706f8169736ee3fa4a8289a319}
+
+
+Definition at line 1485 of file stats.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=368pt]{namespaceswb__stats_a148b78706f8169736ee3fa4a8289a319_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceswb__stats_a702b2071b18f3bf1b5569bcf5b6bef3e}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteAnnualAccumulatorHeaderCSV@{stats\_\-WriteAnnualAccumulatorHeaderCSV}}
+\index{stats\_\-WriteAnnualAccumulatorHeaderCSV@{stats\_\-WriteAnnualAccumulatorHeaderCSV}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteAnnualAccumulatorHeaderCSV}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteAnnualAccumulatorHeaderCSV (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a702b2071b18f3bf1b5569bcf5b6bef3e}
+
+
+Definition at line 252 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_affd85de02d34bd4608aec046a8a28a57}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteAnnualAccumulatorValuesCSV@{stats\_\-WriteAnnualAccumulatorValuesCSV}}
+\index{stats\_\-WriteAnnualAccumulatorValuesCSV@{stats\_\-WriteAnnualAccumulatorValuesCSV}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteAnnualAccumulatorValuesCSV}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteAnnualAccumulatorValuesCSV (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_affd85de02d34bd4608aec046a8a28a57}
+
+
+Definition at line 206 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_ae8dd9a43d8d8b6499f5b0556f4d7f374}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteDailyAccumulatorHeaderCSV@{stats\_\-WriteDailyAccumulatorHeaderCSV}}
+\index{stats\_\-WriteDailyAccumulatorHeaderCSV@{stats\_\-WriteDailyAccumulatorHeaderCSV}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteDailyAccumulatorHeaderCSV}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteDailyAccumulatorHeaderCSV (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_ae8dd9a43d8d8b6499f5b0556f4d7f374}
+
+
+Definition at line 227 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_a7680fbd498a0bf44089b1e12baf9221a}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteDailyAccumulatorValuesCSV@{stats\_\-WriteDailyAccumulatorValuesCSV}}
+\index{stats\_\-WriteDailyAccumulatorValuesCSV@{stats\_\-WriteDailyAccumulatorValuesCSV}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteDailyAccumulatorValuesCSV}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteDailyAccumulatorValuesCSV (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a7680fbd498a0bf44089b1e12baf9221a}
+
+
+Definition at line 181 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+\hypertarget{namespaceswb__stats_ae5f18911e97e0fc1ba46fc24975f03ed}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteMinMeanMax@{stats\_\-WriteMinMeanMax}}
+\index{stats\_\-WriteMinMeanMax@{stats\_\-WriteMinMeanMax}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteMinMeanMax}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteMinMeanMax (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{character (len=$\ast$)}]{sText, }
+\item[{real (kind=T\_\-SGL),dimension(:,:)}]{rData, }
+\item[{integer (kind=T\_\-INT),optional}]{iCount}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_ae5f18911e97e0fc1ba46fc24975f03ed}
+
+
+Writes out the min, max, and mean of 2D variable array. 
+
+\begin{DoxyParagraph}{}
+
+\end{DoxyParagraph}
+
+\begin{DoxyParams}[1]{Parameters}
+\mbox{\tt in}  & {\em iLU} & Fortran logical unit number to write output to. \\
+\hline
+\mbox{\tt in}  & {\em sText} & Descriptive text associated with the statistics. \\
+\hline
+\mbox{\tt in}  & {\em rData} & 2-\/d array of values for which statistics are calculated. \\
+\hline
+\mbox{\tt in}  & {\em iCount} & {\itshape \{Optional\} User-\/supplied divisor for use in calculating the mean.\/} \\
+\hline
+\end{DoxyParams}
+
+
+Definition at line 553 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve(), stats\_\-CalcMeanRecharge(), stats\_\-RewriteGrids(), swbread(), and swbstats().
+
+\hypertarget{namespaceswb__stats_a477408383e1db8d73b78fabed1b1f805}{
+\index{swb\_\-stats@{swb\_\-stats}!stats\_\-WriteMSBReport@{stats\_\-WriteMSBReport}}
+\index{stats\_\-WriteMSBReport@{stats\_\-WriteMSBReport}!swb_stats@{swb\_\-stats}}
+\subsubsection[{stats\_\-WriteMSBReport}]{\setlength{\rightskip}{0pt plus 5cm}subroutine swb\_\-stats::stats\_\-WriteMSBReport (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceswb__stats_a477408383e1db8d73b78fabed1b1f805}
+
+
+Definition at line 587 of file stats.F90.
+
+
+
+Referenced by model::model\_\-Solve().
+
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespaceswb__stats_a6844e1ec4a1276cc97060f800570f8fd}{
+\index{swb\_\-stats@{swb\_\-stats}!rAnnual@{rAnnual}}
+\index{rAnnual@{rAnnual}!swb_stats@{swb\_\-stats}}
+\subsubsection[{rAnnual}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),dimension(inum\_\-stats,inum\_\-variables),public {\bf swb\_\-stats::rAnnual}}}
+\label{namespaceswb__stats_a6844e1ec4a1276cc97060f800570f8fd}
+
+
+Definition at line 33 of file stats.F90.
+
+
+
+Referenced by stats\_\-DumpAnnualAccumulatorValues(), stats\_\-InitializeAnnualAccumulators(), stats\_\-UpdateAllAccumulatorsByCell(), stats\_\-UpdateAllAccumulatorsByGrid(), and stats\_\-WriteAnnualAccumulatorValuesCSV().
+
+\hypertarget{namespaceswb__stats_a8f4ae0971c0286e171999202b9e5b07f}{
+\index{swb\_\-stats@{swb\_\-stats}!rDaily@{rDaily}}
+\index{rDaily@{rDaily}!swb_stats@{swb\_\-stats}}
+\subsubsection[{rDaily}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),dimension(inum\_\-stats,inum\_\-variables),public {\bf swb\_\-stats::rDaily}}}
+\label{namespaceswb__stats_a8f4ae0971c0286e171999202b9e5b07f}
+
+
+Definition at line 30 of file stats.F90.
+
+
+
+Referenced by stats\_\-DumpDailyAccumulatorValues(), stats\_\-InitializeDailyAccumulators(), stats\_\-UpdateAllAccumulatorsByCell(), stats\_\-UpdateAllAccumulatorsByGrid(), stats\_\-WriteDailyAccumulatorValuesCSV(), and stats\_\-WriteMSBReport().
+
+\hypertarget{namespaceswb__stats_a0b1c5339981acd4006223df2a21f1670}{
+\index{swb\_\-stats@{swb\_\-stats}!rMonthly@{rMonthly}}
+\index{rMonthly@{rMonthly}!swb_stats@{swb\_\-stats}}
+\subsubsection[{rMonthly}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),dimension(inum\_\-months,inum\_\-stats,inum\_\-variables),public {\bf swb\_\-stats::rMonthly}}}
+\label{namespaceswb__stats_a0b1c5339981acd4006223df2a21f1670}
+
+
+Definition at line 27 of file stats.F90.
+
+
+
+Referenced by stats\_\-DumpMonthlyAccumulatorValues(), stats\_\-InitializeMonthlyAccumulators(), stats\_\-UpdateAllAccumulatorsByCell(), and stats\_\-UpdateAllAccumulatorsByGrid().
+
+\hypertarget{namespaceswb__stats_aa4fd347bb81a4fdd52833b87d790de52}{
+\index{swb\_\-stats@{swb\_\-stats}!rVolConvert@{rVolConvert}}
+\index{rVolConvert@{rVolConvert}!swb_stats@{swb\_\-stats}}
+\subsubsection[{rVolConvert}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),public {\bf swb\_\-stats::rVolConvert}}}
+\label{namespaceswb__stats_aa4fd347bb81a4fdd52833b87d790de52}
+
+
+Definition at line 24 of file stats.F90.
+
+
+
+Referenced by stats\_\-DumpAnnualAccumulatorValues(), stats\_\-DumpMonthlyAccumulatorValues(), stats\_\-InitializeVolumeConversion(), and stats\_\-WriteMSBReport().
+

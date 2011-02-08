@@ -1,0 +1,19 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$namespacetypes.html#a1ac08c4c46c18fd254270b91881836cd" title="types::FtoC" alt="" coords="1395,191,1485,221"/>
+<area shape="rect" id="node5" href="$namespacemodel.html#a0bd4839eca85d4a4a9aaebcebea25537" title="model::rf_model_GetInterception" alt="" coords="317,493,525,522"/>
+<area shape="rect" id="node11" href="$namespacesnow.html#a0d0e799c65a90426558cbbb74b28f8c5" title="snow::snow_albedo" alt="" coords="355,546,488,575"/>
+<area shape="rect" id="node13" href="$namespacesnow.html#a7e8731b7ad525930f1c0d5018bb2785c" title="snow::snow_depth_Hedstrom" alt="" coords="1081,87,1273,117"/>
+<area shape="rect" id="node16" href="$namespacesnow.html#a82e94557e1c7361db292cd7bfb0045ac" title="snow::snow_energy_balance" alt="" coords="328,319,515,349"/>
+<area shape="rect" id="node42" href="$namespaceswb__stats.html#a6def08584e14bc099756846eab8c3fd0" title="swb_stats::stats_UpdateAllAccumulatorsByCell" alt="" coords="272,413,571,442"/>
+<area shape="rect" id="node7" href="$namespacetypes.html#a3fffb62907acf0b6fb805c1e93ed18d9" title="General&#45;purpose error&#45;checking routine." alt="" coords="740,506,839,535"/>
+<area shape="rect" id="node9" href="$namespacetypes.html#ae89a23df854f9f89cad1ced3667b267a" title="types::lf_model_GrowingSeason" alt="" coords="685,559,893,589"/>
+<area shape="rect" id="node18" href="$namespacemeteorological__functions.html#a90b4e8a09fb5c0597f52bd44adfb2e24" title="meteorological_functions::convective_heat_exchange_e" alt="" coords="619,399,960,429"/>
+<area shape="rect" id="node25" href="$namespacetypes.html#adc61e2bd06f7763a41664635cd792fa8" title="types::CtoF" alt="" coords="744,293,835,322"/>
+<area shape="rect" id="node28" href="$namespacemeteorological__functions.html#a7144b3142f66dfaf06985f0f908400b4" title="meteorological_functions::net_longwave_radiation_Rnl" alt="" coords="624,346,955,375"/>
+<area shape="rect" id="node34" href="$namespacemeteorological__functions.html#a35ff0a37cae7cf1ff85ecf7daa47303e" title="meteorological_functions::net_shortwave_radiation_Rns" alt="" coords="619,453,960,482"/>
+<area shape="rect" id="node36" href="$namespacemeteorological__functions.html#abd07fab175427fff1c33d3dc204c385d" title="meteorological_functions::precipitation_heat_p" alt="" coords="1033,191,1321,221"/>
+<area shape="rect" id="node39" href="$namespacemeteorological__functions.html#af2672c6758aee047fb536dd125dce2f3" title="meteorological_functions::sensible_heat_exchange_h" alt="" coords="1012,245,1343,274"/>
+<area shape="rect" id="node20" href="$namespacemeteorological__functions.html#a67a6a39a9e60d4711972647406a1e6fa" title="meteorological_functions::sat_vapor_density" alt="" coords="1039,402,1316,431"/>
+<area shape="rect" id="node23" href="$namespacetypes.html#a6d9d8e8b7f4594406e117e925a28ed71" title="types::FtoK" alt="" coords="1395,375,1485,405"/>
+<area shape="rect" id="node30" href="$namespacemeteorological__functions.html#abdb2c6342c1ec952d3697d89a79376b1" title="meteorological_functions::dewpoint_vapor_pressure_ea" alt="" coords="1008,298,1347,327"/>
+</map>

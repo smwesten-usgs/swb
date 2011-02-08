@@ -1,0 +1,1831 @@
+\hypertarget{namespacetest}{
+\section{test Module Reference}
+\label{namespacetest}\index{test@{test}}
+}
+\subsection*{Data Types}
+\begin{DoxyCompactItemize}
+\item 
+type \hyperlink{typetest_1_1_t___c_e_l_l}{T\_\-CELL}
+\begin{DoxyCompactList}\small\item\em Type that contains the data for an individual grid cell. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{T\_\-GENERAL\_\-GRID}
+\begin{DoxyCompactList}\small\item\em Type that contains the data for a grid. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___g_r_i_d___c_o_l_l_e_c_t_i_o_n}{T\_\-GRID\_\-COLLECTION}
+\item 
+type \hyperlink{typetest_1_1_t___l_a_n_d_u_s_e___l_o_o_k_u_p}{T\_\-LANDUSE\_\-LOOKUP}
+\begin{DoxyCompactList}\small\item\em Container for land-\/use related data. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___i_r_r_i_g_a_t_i_o_n___l_o_o_k_u_p}{T\_\-IRRIGATION\_\-LOOKUP}
+\item 
+type \hyperlink{typetest_1_1_t___b_a_s_i_n___m_a_s_k}{T\_\-BASIN\_\-MASK}
+\begin{DoxyCompactList}\small\item\em container for basin mask table data \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___s_s_f___f_i_l_e_s}{T\_\-SSF\_\-FILES}
+\begin{DoxyCompactList}\small\item\em container for SSF file information \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___n_e_t_c_d_f___f_i_l_e}{T\_\-NETCDF\_\-FILE}
+\item 
+type \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}
+\begin{DoxyCompactList}\small\item\em Container for calendar lookup information. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS}
+\begin{DoxyCompactList}\small\item\em Type that contains parameters for graphings and stats calculations. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___m_o_d_e_l___c_o_n_f_i_g_u_r_a_t_i_o_n}{T\_\-MODEL\_\-CONFIGURATION}
+\begin{DoxyCompactList}\small\item\em Type that contains model configuration data. \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___t_i_m_e___s_e_r_i_e_s___f_i_l_e}{T\_\-TIME\_\-SERIES\_\-FILE}
+\begin{DoxyCompactList}\small\item\em data structure to hold a line of input from the classic time-\/series file \item\end{DoxyCompactList}\item 
+type \hyperlink{typetest_1_1_t___g_r_a_p_h___c_o_n_f_i_g_u_r_a_t_i_o_n}{T\_\-GRAPH\_\-CONFIGURATION}
+\begin{DoxyCompactList}\small\item\em Type that holds parameters used to create graphics with the DISLIN library. \item\end{DoxyCompactList}\item 
+interface \hyperlink{interfacetest_1_1approx__equal}{approx\_\-equal}
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+integer, parameter, public \hyperlink{namespacetest_acdeac586276a7d1d394fb5eddc77fc3d}{T\_\-LOGICAL} = 4
+\item 
+integer, parameter, public \hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT} = 4
+\item 
+integer, parameter, public \hyperlink{namespacetest_a78d9db20f77ee4f9cf3ac5abfb7062b9}{T\_\-SHORT} = 2
+\item 
+integer, parameter, public \hyperlink{namespacetest_a3023425eff6a423b04bc28123a79fda5}{T\_\-BYTE} = 1
+\item 
+integer, parameter, public \hyperlink{namespacetest_ade95807442cb41fc39b288b86e82bccd}{T\_\-SGL\_\-DISLIN} = 4
+\item 
+integer, parameter, public \hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL} = SELECTED\_\-REAL\_\-KIND(p=6, r=37)
+\item 
+integer, parameter, public \hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL} = SELECTED\_\-REAL\_\-KIND(p=13, r=200)
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_ae2c473e7eff311b67b82175c92417cea}{LU\_\-STD\_\-OUT} = 6
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_ae6a297220869ce598523186f326bef7c}{LU\_\-CONTROL} = 100
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a5255cf8d0506fee4cf94c76d1bcb541d}{LU\_\-GRID} = 101
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a269ea2c4032752326f4745d24712c02f}{LU\_\-LOOKUP} = 102
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a1a6873182d00ba61beb421697cbe8662}{LU\_\-TS} = 103
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a3f833495aa697889b22b2de1d999641c}{LU\_\-TEMP} = 104
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a72b7d2a48ea511f8adea59b1392f541c}{LU\_\-MSB\_\-REPORT} = 105
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_ad2384d4c6037155a8ec2549d1d0bcfe4}{LU\_\-BIN\_\-FILE} = 106
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a70f553900e15e79d97a1515e6550c1e7}{LU\_\-ROUTING} = 107
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_ad63b2c5042d42739d03ca38d8ec6f417}{LU\_\-CSV} = 108
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_aaf67717999e2b4cc413c0fe565f31c80}{LU\_\-CSV\_\-SERIES} = 109
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a37ce335b13c6fe95c470ba7b67c88f92}{LU\_\-CSV\_\-ANNUAL} = 110
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a6d15f5ccef6a1936e7fdfa3f785a97f7}{LU\_\-MASK} = 111
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a4ef1befc57b809909da2a4f3bdb5853d}{LU\_\-MASK\_\-FILE} = 112
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a494f7cd02f5647d3dd40276d2a080e09}{LU\_\-MASK\_\-STATS\_\-CSV} = 113
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a9a71f73b35c56ff97dfc0c438945e783}{LU\_\-PEST\_\-STATS} = 114
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a3b43ad5b8d9f36d9e1cfdf94bc02d83f}{LU\_\-PEST\_\-OBS} = 115
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a0796d8d42c3fd32614b1f4ac37aa21cf}{LU\_\-PEST\_\-INS} = 116
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a6f591abb1742ac7c55e5146938c8d81f}{LU\_\-LOG} = 117
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a9bd8aefd97474e9bd8eb52d36c5d1ea2}{rZERO} = 0.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a4bd8ceae51c320c4ba797c783a5421a9}{rD\_\-ZERO} = 0.0\_\-T\_\-DBL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_ad2e23effbad4134a648b3e3694400190}{rNEAR\_\-ZERO} = 1E-\/9\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_af379bbc7038181ce0aee8712e76e9867}{rPOINT2} = 0.2\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a25c0227adf96fbd382b9cbac9600ba44}{rHALF} = 0.5\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a52a9cf25cf2fc8828b5313923217c3d8}{rPOINT8} = 0.8\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a884b235687921d6a1682ba733422bc2a}{rONE} = 1.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a0677b58c46e425be305a3733296635ad}{rD\_\-ONE} = 1.0\_\-T\_\-DBL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a31db6c3796f52bf10cc407ec22ba3e80}{rFREEZING} = 32.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a797e128f57e419a939928fd813fa5ef6}{rTEN} = 10.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_ae0e7b5cd24e302e72154de8cd84b911e}{rHUNDRED} = 100.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a09ee29fcb038648024d5f3021e2f8e05}{rTHOUSAND} = 1000.0\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a95fd1d84e61f442438a5e81b15c00185}{rC\_\-PER\_\-F} = 5.0\_\-T\_\-DBL / 9.0\_\-T\_\-DBL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_ac2670ae461db7392fc780c5fc733d06f}{rF\_\-PER\_\-C} = 9.0\_\-T\_\-DBL / 5.0\_\-T\_\-DBL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a63234032fe45a56340c75291af043fd0}{rMM\_\-PER\_\-INCH} = 25.4\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_a99c086ce41f7f593657b86272536caa1}{rCM\_\-PER\_\-INCH} = 2.54\_\-T\_\-SGL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a374cf972567d5d75483cb459084f3d4e}{rPI} = 3.14159265\_\-T\_\-DBL
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a28a64e68af4df21c5a1c16a3dad0a400}{rTWOPI} = 2.0\_\-T\_\-DBL $\ast$ rPI
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}), parameter, public \hyperlink{namespacetest_a3f71bffc4ddb3031cb85b1bbd0731823}{rSQM\_\-to\_\-SQFT} = 10.76391\_\-T\_\-DBL
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a01d23f78fddde9b4d7918751ce961815}{iMOVING\_\-AVG\_\-TERMS} = 5
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a0b4633c7ece605f3f9e541d1bb6068b1}{iROUTE\_\-CELL\_\-MARKED} = -\/1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a238a0131e776ca1d31fb18253d86fdbe}{iROUTE\_\-DEPRESSION} = -\/999
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a828d11529416772ecac92d8ca31c2056}{iROUTE\_\-LEFT\_\-GRID} = -\/1000
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a751d31358c9620f1549f1428a6a12835}{iNO\_\-DATA\_\-NCDC} = -\/99999
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a9f880ad69dfceb22317f4bd514f70921}{iNUM\_\-DIGITS} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a0255f32e18a217bf4bc1cc1ebf08a8ad}{iFIELD\_\-WIDTH} = 10
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a3014c474a511a7853327d17f396fea73}{iZERO} = 0
+\item 
+logical(kind=\hyperlink{namespacetest_acdeac586276a7d1d394fb5eddc77fc3d}{T\_\-LOGICAL}), parameter, public \hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE} = .true.\_\-T\_\-LOGICAL
+\item 
+logical(kind=\hyperlink{namespacetest_acdeac586276a7d1d394fb5eddc77fc3d}{T\_\-LOGICAL}), parameter, public \hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE} = .false.\_\-T\_\-LOGICAL
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a3d9d5da4779988c8ab638ff80ee1d75e}{iEOF} = HUGE(\hyperlink{namespacetest_a3014c474a511a7853327d17f396fea73}{iZERO})
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), parameter, public \hyperlink{namespacetest_ac6f2875c79f3dc5f3058945c798787da}{rBIGVAL} = 1.0e20\_\-T\_\-SGL
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), public \hyperlink{namespacetest_ac53c64b203e8d99ae558218e98beef9d}{iSTARTDATE\_\-POS}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), public \hyperlink{namespacetest_af29dc757927589439e32db648cb927b9}{iENDDATE\_\-POS}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), public \hyperlink{namespacetest_ae27eee462dde556ad327a954598ee9de}{iENDHEADER\_\-POS}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a47a3dcd6434015912debe4d7c32a6696}{iNC\_\-INPUT} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a0201f90a40599962ba9f170b55b2940b}{iNC\_\-OUTPUT} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a6a723368a0f10bdf178fcec29f827e5d}{iNC\_\-OBSERVATION} = 3
+\item 
+character(len=7), parameter \hyperlink{namespacetest_ad68d7758d8be0c0e11554d320e7fe361}{sRED} = char(27)//'\mbox{[}1;31m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_a51f6a60bb17f75fd328f4ebec7c8fdc9}{sGREEN} = char(27)//'\mbox{[}1;32m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_ae3efae673a64050b6961fb4a43eafe2f}{sYELLOW} = char(27)//'\mbox{[}1;33m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_a67805434e80e529c4296afa41874d705}{sBLUE} = char(27)//'\mbox{[}1;34m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_adc949307b4c1c64ca9c4680cb1772584}{sCYAN} = char(27)//'\mbox{[}1;36m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_adda4462ac95858ee3e499e1f721f4cb9}{sWHITE} = char(27)//'\mbox{[}0;37m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_a30a237c02c2640389d102030736a9a64}{sBOLDWHITE} = char(27)//'\mbox{[}1;37m'
+\item 
+character(len=7), parameter \hyperlink{namespacetest_a9400b0462b1b2636c59786f754d01c32}{sCLRSCR} = char(27)//'\mbox{[}2J'
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a6b23ea23fb5d02c95f52b7d39ab348fe}{T\_\-INT\_\-GRID} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_a60ae6ddfc7d411862eddaea30f59049f}{T\_\-SGL\_\-GRID} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter, public \hyperlink{namespacetest_afdd43703b42a2585fd3e53240e541b80}{T\_\-CELL\_\-GRID} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a136c3b9231683ffea8eae2e7920d956d}{iGRID\_\-LENGTH\_\-UNITS\_\-METERS} = 0
+\begin{DoxyCompactList}\small\item\em define parameter values for working with type \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{T\_\-GENERAL\_\-GRID} \item\end{DoxyCompactList}\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ac5e6e1cd934b6a95f6d38d6a1e1f6bac}{iGRID\_\-LENGTH\_\-UNITS\_\-FEET} = 1
+\item 
+type(\hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}), dimension(12), target \hyperlink{namespacetest_a0cc123ab400cd2007652453350776116}{YEAR\_\-INFO} = (/ \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'JAN','JANUARY ', 1, 31, 1, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'FEB','FEBRUARY ', 32, 59, 2, 29), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'MAR','MARCH ', 60, 90, 3, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'APR','APRIL ', 91, 120, 4, 30), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'MAY','MAY ', 121, 151, 5, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'JUN','JUNE ', 152, 181, 6, 30), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'JUL','JULY ', 182, 212, 7, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'AUG','AUGUST ', 213, 243, 8, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'SEP','SEPTEMBER', 244, 273, 9, 30), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'OCT','OCTOBER ', 274, 304, 10, 31), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'NOV','NOVEMBER ', 305, 334, 11, 30), \hyperlink{typetest_1_1_t___m_o_n_t_h}{T\_\-MONTH}( 'DEC','DECEMBER ', 335, 365, 12, 31) /)
+\begin{DoxyCompactList}\small\item\em Month information. \item\end{DoxyCompactList}\item 
+character(len=256), public \hyperlink{namespacetest_afa1c66465bae9135884cfa7867b9df30}{sLogBuffer}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_af0399520b5b36576c3c4e8305b487c65}{iNUM\_\-MONTHS} = 12
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ab7d5ec03d44589c79aea69862eda7b7a}{iGRID} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_abc7de6feee74a86b9aa08b5951e94d08}{iGRAPH} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_abd0173600806ba49317705aafe0c2bf3}{iBOTH} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a4ee9e6e104ab7138d29b46b35a43f499}{iSTATS} = 4
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ae9174c7998b12348b71aa854ca83add7}{iNUM\_\-VARIABLES} = 29
+\item 
+type(\hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS}), dimension(inum\_\-variables) \hyperlink{namespacetest_a66691525d314829771051bdadd26160f}{STAT\_\-INFO} = (/ \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('GROSS\_\-PRECIP',201,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','gross precipitation', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SNOWFALL',202,0,1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','precipitation falling as snow', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SNOWCOVER',203,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','water equivalent of snow cover', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('CFGI',204,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'unitless','continuous frozen ground index', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('MIN\_\-TEMP',205,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'degrees F','minimum daily air temperature', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('MAX\_\-TEMP',206,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'degrees F','maximum daily air temperature', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('AVG\_\-TEMP',207,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'degrees F','mean daily air temperature', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('CHG\_\-IN\_\-SNOW\_\-COV',208,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','snowfall minus snowmelt', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SNOWMELT',209,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','snowmelt', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('INTERCEPTION',210,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','interception', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('NET\_\-PRECIP',211,0,1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','gross precipitation minus interception', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('INFLOW',212,0,1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','incoming flow from adjacent cells', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('OUTFLOW',213,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','outgoing flow to adjacent cells', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('RUNOFF\_\-OUTSIDE',214,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','runoff leaving model domain', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('REJECTED\_\-RECHARGE',215,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','recharge exceeding max recharge rate', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('NET\_\-INFLOW',216,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','sum of net precip and inflow', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('NET\_\-INFIL',217,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','precip and inflow minus outflow', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('POT\_\-ET',218,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','potential evapotranspiration', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('ACT\_\-ET',219,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','actual evapotranspiration', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('P\_\-MINUS\_\-PET',220,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'inches','net inflow minus potential et', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SM\_\-DEFICIT',221,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'inches','daily soil moisture deficit', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SM\_\-SURPLUS',222,2,0,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'inches','daily soil moisture surplus', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SM\_\-APWL',223,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'inches','accumulated potential water loss', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('SOIL\_\-MOISTURE',224,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','daily soil moisture', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('CHG\_\-IN\_\-SOIL\_\-MOIS',225,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','daily change in soil moisture', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('RECHARGE',226,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','daily potential recharge', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('GDD',227,2,0,\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE},\hyperlink{namespacetest_ad44869e0204417021792170cd610ee25}{lFALSE}, 'degree-\/day','growing degree day', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}), \hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('IRRIGATION\_\-AMOUNT',228,0,1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','daily estimated irrigation amount', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE}) ,\hyperlink{typetest_1_1_t___s_t_a_t_s}{T\_\-STATS} ('STREAM\_\-CAPTURE',229,0,-\/1,\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE},\hyperlink{namespacetest_ab7046de13f01778d86667e4266521664}{lTRUE}, 'inches','runoff or recharge captured by a stream or fracture', 1.,0.0, \hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE},\hyperlink{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{iNONE})/)
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a2f5f426220fe1778999fe65b3c4def48}{iNUM\_\-STATS} = 5
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a5e4e66d4853b73ddeb16d8ec6d2f96ba}{iMIN} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ad573fcda72b69e8d829aaecc8702e369}{iMEAN} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a15112155670f39cbf96fd72e177d71d3}{iMAX} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_acd0b0aa61e54ac17016b3ecb8846d4fb}{iSUM} = 4
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ab20904e5281139e17cfa93af209e2996}{iLENGTH} = 5
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a54d657be83774d91310d0ad6ab3d773f}{iGROSS\_\-PRECIP} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a406398e83d202c4d496adcc1af5d6fb3}{iSNOWFALL} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a0b1f3cd89bcb139c712a36ad034b58ea}{iSNOWCOVER} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a03bfe6fa65e697740874c9436f435dfe}{iCFGI} = 4
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_adbc94b4c943a3bf4995dff5b8d7ba7c3}{iMIN\_\-TEMP} = 5
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ad4e8b276391e3cbc8cc135dfa7b10971}{iMAX\_\-TEMP} = 6
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a9b67c0e46fcbed22fc39728c65d345f9}{iAVG\_\-TEMP} = 7
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a137ea45f2f434266edd47e7fc2b17c1b}{iCHG\_\-IN\_\-SNOW\_\-COV} = 8
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a0d778816066d21ff37157e9e33ffa64d}{iSNOWMELT} = 9
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a51eed4733166940c15eaafaa291fc55b}{iINTERCEPTION} = 10
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aa863a0c7e87979b7d13b34f5afb7ecf5}{iNET\_\-PRECIP} = 11
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a47075af8f8a4e815471731dc40aa7928}{iINFLOW} = 12
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_af391688ace32e5cfa1f0e6edf6499758}{iOUTFLOW} = 13
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a4e979c97a931d097b815a1e8b62663f9}{iRUNOFF\_\-OUTSIDE} = 14
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a0e9159063b997894c4a07927cbe42140}{iREJECTED\_\-RECHARGE} = 15
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_afafe0185b588b6c2503ad2cdfaccd5a7}{iNET\_\-INFLOW} = 16
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aefca9a9826cf4312056bd27752aece6d}{iNET\_\-INFIL} = 17
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a0b4cecb0049250b0df7313899555765c}{iPOT\_\-ET} = 18
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a76800e5ee56fa8c6e4612e43dc56cb8b}{iACT\_\-ET} = 19
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a15fc27f3f9430eb7fa5343da57124560}{iP\_\-MINUS\_\-PET} = 20
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a383b6fea0fe65ad1c1832ef3f5922070}{iSM\_\-DEFICIT} = 21
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a9efe22e7483171c67675c69e02b3f2c4}{iSM\_\-SURPLUS} = 22
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a575084634243635f2b95f243548de016}{iSM\_\-APWL} = 23
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_af695837c4d2bfcaa32ecc407aad09776}{iSOIL\_\-MOISTURE} = 24
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a93ab61cb59cc0d1c60ad3b8d26b070ff}{iCHG\_\-IN\_\-SOIL\_\-MOIST} = 25
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a7cbbcc7ca182caf51d3afe6c583ee71b}{iRECHARGE} = 26
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a488c52f0f7220cd4e5dfd202048bc6dd}{iGDD} = 27
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a5143d96a60fefdc2b8959e8e0b99661b}{iIRRIGATION} = 28
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a6dc6983b645899b34f357412d47018c5}{iSTREAM\_\-CAPTURE} = 29
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ad3936bf03ae58d097cb5b10ed2afead6}{STREAM\_\-INTERACTIONS\_\-MAX} = 100
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a48081398f90bec0222d878b534da1320}{iDAILY} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ae6a20a8c4dbaebffde9b9b7c933237b4}{iMONTHLY} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a952527c86ef64f1bf77dc314ac43c14e}{iANNUAL} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aa4c0a351964701262a252e1174d8959c}{CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aaef68858ea9447158dabcb1edc0bc51c}{CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a7359910b1beaefb9b4c414836e39093b}{CONFIG\_\-RUNOFF\_\-ITERATIVE} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a27b920f67f809bcc8d0cc06a9632d4f2}{CONFIG\_\-RUNOFF\_\-DOWNHILL} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a53493938592d43a28a0b3efc51753e2d}{CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aeaf62d9982d23ab73d24f5367a32aaf7}{CONFIG\_\-ET\_\-NONE} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a10c79733bc37cb1c88dd6f84d08c2012}{CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a9281ad856dadeb5f57137bd0e6219fa9}{CONFIG\_\-ET\_\-TURC} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a2b90273702b4e7d130ec76d6e3eda6c7}{CONFIG\_\-ET\_\-JENSEN\_\-HAISE} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a30e48e6d5352a9d7b9f80946248ac7c7}{CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE} = 4
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a7eb680c826f6ef864ae366e97076e482}{CONFIG\_\-ET\_\-HARGREAVES} = 5
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a21c652de204eff57b4a764e644f1c2d6}{CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a2b72dfa965e7c91b8b844dfda4430890}{CONFIG\_\-PRECIP\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a5cd862c804720044203e177379939919}{CONFIG\_\-PRECIP\_\-SURFER\_\-GRID} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aabfd0fd8168bc7f0d7a8e12b40776c4e}{CONFIG\_\-PRECIP\_\-NETCDF} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ae5b28f5f9060952cfc4b6dd836f27bb1}{CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a608c6b33ac0a09611c41b079eb5a4608}{CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a474c230f779edba10f9928cfc29d3a9b}{CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_afbea0dcb66b0963f92f65620b40b4d85}{CONFIG\_\-TEMPERATURE\_\-NETCDF} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aee066d92ba29f5a5855e38b1ec0bf25b}{CONFIG\_\-LANDUSE\_\-CONSTANT} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ac65abaea28ba58903b2d4f2b096b661c}{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ab4d98418b10a5c419d3848523699bd61}{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_aab4a8dc605bb8e9806d7678f36996890}{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF} = 3
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a3fa05e57e81cd6db482ec5db47f0de07}{CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID} = 4
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_abb5d4895f4dc2885162f36d22c55a9df}{CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a04623d3a28add7da79b12fd14e1e1d7d}{CONFIG\_\-SNOW\_\-NEW\_\-SWB} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ad70f8862ac83e4d0577411e6342c88ea}{CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a90bf5bc96833ab6c31224335e8d67784}{CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a6cb868053790c363d532022df302490f}{CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE} = 2
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_af5783c9f337e9b31e7749b7148302fe7}{CONFIG\_\-SM\_\-NONE} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_afe87139521a8c470b4594a41125b1800}{CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a8021cee63a2d97e255d88e15f412eb56}{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ad42c9ade45d8d8085a2fd417fe22878a}{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a9cfe4d8cc45e7a6425b6484a7907ffbd}{CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a06fa73fa08fb7cb44b868aead4d77a73}{CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA} = 1
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_a19efe476537676b4902cb464d566af6f}{OUTPUT\_\-SURFER} = 0
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), parameter \hyperlink{namespacetest_ada8330c2643deca7d4e85ce248e3e941}{OUTPUT\_\-ARC} = 1
+\end{DoxyCompactItemize}
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespacetest_a06fa73fa08fb7cb44b868aead4d77a73}{
+\index{test@{test}!CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA@{CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA}}
+\index{CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA@{CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA}!test@{test}}
+\subsubsection[{CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-END\_\-IF\_\-MISSING\_\-DATA} = 1}}
+\label{namespacetest_a06fa73fa08fb7cb44b868aead4d77a73}
+
+
+Definition at line 821 of file test.F90.
+
+\hypertarget{namespacetest_a9cfe4d8cc45e7a6425b6484a7907ffbd}{
+\index{test@{test}!CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA@{CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA}}
+\index{CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA@{CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA}!test@{test}}
+\subsubsection[{CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ESTIMATE\_\-MISSING\_\-DATA} = 0}}
+\label{namespacetest_a9cfe4d8cc45e7a6425b6484a7907ffbd}
+
+
+Definition at line 820 of file test.F90.
+
+\hypertarget{namespacetest_a30e48e6d5352a9d7b9f80946248ac7c7}{
+\index{test@{test}!CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE@{CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE}}
+\index{CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE@{CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-BLANEY\_\-CRIDDLE} = 4}}
+\label{namespacetest_a30e48e6d5352a9d7b9f80946248ac7c7}
+
+
+Definition at line 779 of file test.F90.
+
+\hypertarget{namespacetest_a7eb680c826f6ef864ae366e97076e482}{
+\index{test@{test}!CONFIG\_\-ET\_\-HARGREAVES@{CONFIG\_\-ET\_\-HARGREAVES}}
+\index{CONFIG\_\-ET\_\-HARGREAVES@{CONFIG\_\-ET\_\-HARGREAVES}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-HARGREAVES}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-HARGREAVES} = 5}}
+\label{namespacetest_a7eb680c826f6ef864ae366e97076e482}
+
+
+Definition at line 780 of file test.F90.
+
+\hypertarget{namespacetest_a2b90273702b4e7d130ec76d6e3eda6c7}{
+\index{test@{test}!CONFIG\_\-ET\_\-JENSEN\_\-HAISE@{CONFIG\_\-ET\_\-JENSEN\_\-HAISE}}
+\index{CONFIG\_\-ET\_\-JENSEN\_\-HAISE@{CONFIG\_\-ET\_\-JENSEN\_\-HAISE}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-JENSEN\_\-HAISE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-JENSEN\_\-HAISE} = 3}}
+\label{namespacetest_a2b90273702b4e7d130ec76d6e3eda6c7}
+
+
+Definition at line 778 of file test.F90.
+
+\hypertarget{namespacetest_aeaf62d9982d23ab73d24f5367a32aaf7}{
+\index{test@{test}!CONFIG\_\-ET\_\-NONE@{CONFIG\_\-ET\_\-NONE}}
+\index{CONFIG\_\-ET\_\-NONE@{CONFIG\_\-ET\_\-NONE}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-NONE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-NONE} = 0}}
+\label{namespacetest_aeaf62d9982d23ab73d24f5367a32aaf7}
+
+
+Definition at line 775 of file test.F90.
+
+\hypertarget{namespacetest_a10c79733bc37cb1c88dd6f84d08c2012}{
+\index{test@{test}!CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER@{CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER}}
+\index{CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER@{CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-THORNTHWAITE\_\-MATHER} = 1}}
+\label{namespacetest_a10c79733bc37cb1c88dd6f84d08c2012}
+
+
+Definition at line 776 of file test.F90.
+
+\hypertarget{namespacetest_a9281ad856dadeb5f57137bd0e6219fa9}{
+\index{test@{test}!CONFIG\_\-ET\_\-TURC@{CONFIG\_\-ET\_\-TURC}}
+\index{CONFIG\_\-ET\_\-TURC@{CONFIG\_\-ET\_\-TURC}!test@{test}}
+\subsubsection[{CONFIG\_\-ET\_\-TURC}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-ET\_\-TURC} = 2}}
+\label{namespacetest_a9281ad856dadeb5f57137bd0e6219fa9}
+
+
+Definition at line 777 of file test.F90.
+
+\hypertarget{namespacetest_aee066d92ba29f5a5855e38b1ec0bf25b}{
+\index{test@{test}!CONFIG\_\-LANDUSE\_\-CONSTANT@{CONFIG\_\-LANDUSE\_\-CONSTANT}}
+\index{CONFIG\_\-LANDUSE\_\-CONSTANT@{CONFIG\_\-LANDUSE\_\-CONSTANT}!test@{test}}
+\subsubsection[{CONFIG\_\-LANDUSE\_\-CONSTANT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-LANDUSE\_\-CONSTANT} = 0}}
+\label{namespacetest_aee066d92ba29f5a5855e38b1ec0bf25b}
+
+
+Definition at line 796 of file test.F90.
+
+\hypertarget{namespacetest_ac65abaea28ba58903b2d4f2b096b661c}{
+\index{test@{test}!CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID}}
+\index{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-ARC\_\-GRID} = 1}}
+\label{namespacetest_ac65abaea28ba58903b2d4f2b096b661c}
+
+
+Definition at line 797 of file test.F90.
+
+\hypertarget{namespacetest_aab4a8dc605bb8e9806d7678f36996890}{
+\index{test@{test}!CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF}}
+\index{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF}!test@{test}}
+\subsubsection[{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-NETCDF} = 3}}
+\label{namespacetest_aab4a8dc605bb8e9806d7678f36996890}
+
+
+Definition at line 799 of file test.F90.
+
+\hypertarget{namespacetest_ab4d98418b10a5c419d3848523699bd61}{
+\index{test@{test}!CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER}}
+\index{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER@{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER}!test@{test}}
+\subsubsection[{CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-LANDUSE\_\-DYNAMIC\_\-SURFER} = 2}}
+\label{namespacetest_ab4d98418b10a5c419d3848523699bd61}
+
+
+Definition at line 798 of file test.F90.
+
+\hypertarget{namespacetest_a3fa05e57e81cd6db482ec5db47f0de07}{
+\index{test@{test}!CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID@{CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID}}
+\index{CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID@{CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-LANDUSE\_\-STATIC\_\-GRID} = 4}}
+\label{namespacetest_a3fa05e57e81cd6db482ec5db47f0de07}
+
+
+Definition at line 800 of file test.F90.
+
+\hypertarget{namespacetest_a2b72dfa965e7c91b8b844dfda4430890}{
+\index{test@{test}!CONFIG\_\-PRECIP\_\-ARC\_\-GRID@{CONFIG\_\-PRECIP\_\-ARC\_\-GRID}}
+\index{CONFIG\_\-PRECIP\_\-ARC\_\-GRID@{CONFIG\_\-PRECIP\_\-ARC\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-PRECIP\_\-ARC\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-PRECIP\_\-ARC\_\-GRID} = 1}}
+\label{namespacetest_a2b72dfa965e7c91b8b844dfda4430890}
+
+
+Definition at line 784 of file test.F90.
+
+\hypertarget{namespacetest_aabfd0fd8168bc7f0d7a8e12b40776c4e}{
+\index{test@{test}!CONFIG\_\-PRECIP\_\-NETCDF@{CONFIG\_\-PRECIP\_\-NETCDF}}
+\index{CONFIG\_\-PRECIP\_\-NETCDF@{CONFIG\_\-PRECIP\_\-NETCDF}!test@{test}}
+\subsubsection[{CONFIG\_\-PRECIP\_\-NETCDF}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-PRECIP\_\-NETCDF} = 3}}
+\label{namespacetest_aabfd0fd8168bc7f0d7a8e12b40776c4e}
+
+
+Definition at line 786 of file test.F90.
+
+\hypertarget{namespacetest_a21c652de204eff57b4a764e644f1c2d6}{
+\index{test@{test}!CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION@{CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION}}
+\index{CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION@{CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION}!test@{test}}
+\subsubsection[{CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-PRECIP\_\-SINGLE\_\-STATION} = 0}}
+\label{namespacetest_a21c652de204eff57b4a764e644f1c2d6}
+
+
+Definition at line 783 of file test.F90.
+
+\hypertarget{namespacetest_a5cd862c804720044203e177379939919}{
+\index{test@{test}!CONFIG\_\-PRECIP\_\-SURFER\_\-GRID@{CONFIG\_\-PRECIP\_\-SURFER\_\-GRID}}
+\index{CONFIG\_\-PRECIP\_\-SURFER\_\-GRID@{CONFIG\_\-PRECIP\_\-SURFER\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-PRECIP\_\-SURFER\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-PRECIP\_\-SURFER\_\-GRID} = 2}}
+\label{namespacetest_a5cd862c804720044203e177379939919}
+
+
+Definition at line 785 of file test.F90.
+
+\hypertarget{namespacetest_aa4c0a351964701262a252e1174d8959c}{
+\index{test@{test}!CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER@{CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER}}
+\index{CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER@{CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER}!test@{test}}
+\subsubsection[{CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-RUNOFF\_\-CURVE\_\-NUMBER} = 0}}
+\label{namespacetest_aa4c0a351964701262a252e1174d8959c}
+
+
+Definition at line 766 of file test.F90.
+
+\hypertarget{namespacetest_a27b920f67f809bcc8d0cc06a9632d4f2}{
+\index{test@{test}!CONFIG\_\-RUNOFF\_\-DOWNHILL@{CONFIG\_\-RUNOFF\_\-DOWNHILL}}
+\index{CONFIG\_\-RUNOFF\_\-DOWNHILL@{CONFIG\_\-RUNOFF\_\-DOWNHILL}!test@{test}}
+\subsubsection[{CONFIG\_\-RUNOFF\_\-DOWNHILL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-RUNOFF\_\-DOWNHILL} = 1}}
+\label{namespacetest_a27b920f67f809bcc8d0cc06a9632d4f2}
+
+
+Definition at line 771 of file test.F90.
+
+\hypertarget{namespacetest_aaef68858ea9447158dabcb1edc0bc51c}{
+\index{test@{test}!CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT@{CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT}}
+\index{CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT@{CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT}!test@{test}}
+\subsubsection[{CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-RUNOFF\_\-GREEN\_\-AMPT} = 1}}
+\label{namespacetest_aaef68858ea9447158dabcb1edc0bc51c}
+
+
+Definition at line 767 of file test.F90.
+
+\hypertarget{namespacetest_a7359910b1beaefb9b4c414836e39093b}{
+\index{test@{test}!CONFIG\_\-RUNOFF\_\-ITERATIVE@{CONFIG\_\-RUNOFF\_\-ITERATIVE}}
+\index{CONFIG\_\-RUNOFF\_\-ITERATIVE@{CONFIG\_\-RUNOFF\_\-ITERATIVE}!test@{test}}
+\subsubsection[{CONFIG\_\-RUNOFF\_\-ITERATIVE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-RUNOFF\_\-ITERATIVE} = 0}}
+\label{namespacetest_a7359910b1beaefb9b4c414836e39093b}
+
+
+Definition at line 770 of file test.F90.
+
+\hypertarget{namespacetest_a53493938592d43a28a0b3efc51753e2d}{
+\index{test@{test}!CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING@{CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING}}
+\index{CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING@{CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING}!test@{test}}
+\subsubsection[{CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-RUNOFF\_\-NO\_\-ROUTING} = 2}}
+\label{namespacetest_a53493938592d43a28a0b3efc51753e2d}
+
+
+Definition at line 772 of file test.F90.
+
+\hypertarget{namespacetest_ad70f8862ac83e4d0577411e6342c88ea}{
+\index{test@{test}!CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE@{CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE}}
+\index{CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE@{CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-CAPACITY\_\-CALCULATE} = 0}}
+\label{namespacetest_ad70f8862ac83e4d0577411e6342c88ea}
+
+
+Definition at line 807 of file test.F90.
+
+\hypertarget{namespacetest_a90bf5bc96833ab6c31224335e8d67784}{
+\index{test@{test}!CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT@{CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT}}
+\index{CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT@{CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-CAPACITY\_\-CONSTANT} = 1}}
+\label{namespacetest_a90bf5bc96833ab6c31224335e8d67784}
+
+
+Definition at line 808 of file test.F90.
+
+\hypertarget{namespacetest_a6cb868053790c363d532022df302490f}{
+\index{test@{test}!CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE@{CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE}}
+\index{CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE@{CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-CAPACITY\_\-FM\_\-TABLE} = 2}}
+\label{namespacetest_a6cb868053790c363d532022df302490f}
+
+
+Definition at line 809 of file test.F90.
+
+\hypertarget{namespacetest_ad42c9ade45d8d8085a2fd417fe22878a}{
+\index{test@{test}!CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS@{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS}}
+\index{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS@{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-HAWKINS} = 1}}
+\label{namespacetest_ad42c9ade45d8d8085a2fd417fe22878a}
+
+
+Definition at line 817 of file test.F90.
+
+\hypertarget{namespacetest_a8021cee63a2d97e255d88e15f412eb56}{
+\index{test@{test}!CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55@{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55}}
+\index{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55@{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-INIT\_\-ABSTRACTION\_\-TR55} = 0}}
+\label{namespacetest_a8021cee63a2d97e255d88e15f412eb56}
+
+
+Definition at line 816 of file test.F90.
+
+\hypertarget{namespacetest_af5783c9f337e9b31e7749b7148302fe7}{
+\index{test@{test}!CONFIG\_\-SM\_\-NONE@{CONFIG\_\-SM\_\-NONE}}
+\index{CONFIG\_\-SM\_\-NONE@{CONFIG\_\-SM\_\-NONE}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-NONE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-NONE} = 0}}
+\label{namespacetest_af5783c9f337e9b31e7749b7148302fe7}
+
+
+Definition at line 812 of file test.F90.
+
+\hypertarget{namespacetest_afe87139521a8c470b4594a41125b1800}{
+\index{test@{test}!CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER@{CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER}}
+\index{CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER@{CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER}!test@{test}}
+\subsubsection[{CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SM\_\-THORNTHWAITE\_\-MATHER} = 1}}
+\label{namespacetest_afe87139521a8c470b4594a41125b1800}
+
+
+Definition at line 813 of file test.F90.
+
+\hypertarget{namespacetest_a04623d3a28add7da79b12fd14e1e1d7d}{
+\index{test@{test}!CONFIG\_\-SNOW\_\-NEW\_\-SWB@{CONFIG\_\-SNOW\_\-NEW\_\-SWB}}
+\index{CONFIG\_\-SNOW\_\-NEW\_\-SWB@{CONFIG\_\-SNOW\_\-NEW\_\-SWB}!test@{test}}
+\subsubsection[{CONFIG\_\-SNOW\_\-NEW\_\-SWB}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SNOW\_\-NEW\_\-SWB} = 1}}
+\label{namespacetest_a04623d3a28add7da79b12fd14e1e1d7d}
+
+
+Definition at line 804 of file test.F90.
+
+\hypertarget{namespacetest_abb5d4895f4dc2885162f36d22c55a9df}{
+\index{test@{test}!CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB@{CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB}}
+\index{CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB@{CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB}!test@{test}}
+\subsubsection[{CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-SNOW\_\-ORIGINAL\_\-SWB} = 0}}
+\label{namespacetest_abb5d4895f4dc2885162f36d22c55a9df}
+
+
+Definition at line 803 of file test.F90.
+
+\hypertarget{namespacetest_a608c6b33ac0a09611c41b079eb5a4608}{
+\index{test@{test}!CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID@{CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID}}
+\index{CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID@{CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-TEMPERATURE\_\-ARC\_\-GRID} = 1}}
+\label{namespacetest_a608c6b33ac0a09611c41b079eb5a4608}
+
+
+Definition at line 790 of file test.F90.
+
+\hypertarget{namespacetest_afbea0dcb66b0963f92f65620b40b4d85}{
+\index{test@{test}!CONFIG\_\-TEMPERATURE\_\-NETCDF@{CONFIG\_\-TEMPERATURE\_\-NETCDF}}
+\index{CONFIG\_\-TEMPERATURE\_\-NETCDF@{CONFIG\_\-TEMPERATURE\_\-NETCDF}!test@{test}}
+\subsubsection[{CONFIG\_\-TEMPERATURE\_\-NETCDF}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-TEMPERATURE\_\-NETCDF} = 3}}
+\label{namespacetest_afbea0dcb66b0963f92f65620b40b4d85}
+
+
+Definition at line 792 of file test.F90.
+
+\hypertarget{namespacetest_ae5b28f5f9060952cfc4b6dd836f27bb1}{
+\index{test@{test}!CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION@{CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION}}
+\index{CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION@{CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION}!test@{test}}
+\subsubsection[{CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-TEMPERATURE\_\-SINGLE\_\-STATION} = 0}}
+\label{namespacetest_ae5b28f5f9060952cfc4b6dd836f27bb1}
+
+
+Definition at line 789 of file test.F90.
+
+\hypertarget{namespacetest_a474c230f779edba10f9928cfc29d3a9b}{
+\index{test@{test}!CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID@{CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID}}
+\index{CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID@{CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID}!test@{test}}
+\subsubsection[{CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::CONFIG\_\-TEMPERATURE\_\-SURFER\_\-GRID} = 2}}
+\label{namespacetest_a474c230f779edba10f9928cfc29d3a9b}
+
+
+Definition at line 791 of file test.F90.
+
+\hypertarget{namespacetest_a76800e5ee56fa8c6e4612e43dc56cb8b}{
+\index{test@{test}!iACT\_\-ET@{iACT\_\-ET}}
+\index{iACT\_\-ET@{iACT\_\-ET}!test@{test}}
+\subsubsection[{iACT\_\-ET}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iACT\_\-ET} = 19}}
+\label{namespacetest_a76800e5ee56fa8c6e4612e43dc56cb8b}
+
+
+Definition at line 520 of file test.F90.
+
+\hypertarget{namespacetest_a952527c86ef64f1bf77dc314ac43c14e}{
+\index{test@{test}!iANNUAL@{iANNUAL}}
+\index{iANNUAL@{iANNUAL}!test@{test}}
+\subsubsection[{iANNUAL}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iANNUAL} = 3}}
+\label{namespacetest_a952527c86ef64f1bf77dc314ac43c14e}
+
+
+Definition at line 763 of file test.F90.
+
+\hypertarget{namespacetest_a9b67c0e46fcbed22fc39728c65d345f9}{
+\index{test@{test}!iAVG\_\-TEMP@{iAVG\_\-TEMP}}
+\index{iAVG\_\-TEMP@{iAVG\_\-TEMP}!test@{test}}
+\subsubsection[{iAVG\_\-TEMP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iAVG\_\-TEMP} = 7}}
+\label{namespacetest_a9b67c0e46fcbed22fc39728c65d345f9}
+
+
+Definition at line 508 of file test.F90.
+
+\hypertarget{namespacetest_abd0173600806ba49317705aafe0c2bf3}{
+\index{test@{test}!iBOTH@{iBOTH}}
+\index{iBOTH@{iBOTH}!test@{test}}
+\subsubsection[{iBOTH}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iBOTH} = 3}}
+\label{namespacetest_abd0173600806ba49317705aafe0c2bf3}
+
+
+Definition at line 357 of file test.F90.
+
+\hypertarget{namespacetest_a03bfe6fa65e697740874c9436f435dfe}{
+\index{test@{test}!iCFGI@{iCFGI}}
+\index{iCFGI@{iCFGI}!test@{test}}
+\subsubsection[{iCFGI}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iCFGI} = 4}}
+\label{namespacetest_a03bfe6fa65e697740874c9436f435dfe}
+
+
+Definition at line 505 of file test.F90.
+
+\hypertarget{namespacetest_a137ea45f2f434266edd47e7fc2b17c1b}{
+\index{test@{test}!iCHG\_\-IN\_\-SNOW\_\-COV@{iCHG\_\-IN\_\-SNOW\_\-COV}}
+\index{iCHG\_\-IN\_\-SNOW\_\-COV@{iCHG\_\-IN\_\-SNOW\_\-COV}!test@{test}}
+\subsubsection[{iCHG\_\-IN\_\-SNOW\_\-COV}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iCHG\_\-IN\_\-SNOW\_\-COV} = 8}}
+\label{namespacetest_a137ea45f2f434266edd47e7fc2b17c1b}
+
+
+Definition at line 509 of file test.F90.
+
+\hypertarget{namespacetest_a93ab61cb59cc0d1c60ad3b8d26b070ff}{
+\index{test@{test}!iCHG\_\-IN\_\-SOIL\_\-MOIST@{iCHG\_\-IN\_\-SOIL\_\-MOIST}}
+\index{iCHG\_\-IN\_\-SOIL\_\-MOIST@{iCHG\_\-IN\_\-SOIL\_\-MOIST}!test@{test}}
+\subsubsection[{iCHG\_\-IN\_\-SOIL\_\-MOIST}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iCHG\_\-IN\_\-SOIL\_\-MOIST} = 25}}
+\label{namespacetest_a93ab61cb59cc0d1c60ad3b8d26b070ff}
+
+
+Definition at line 526 of file test.F90.
+
+\hypertarget{namespacetest_a48081398f90bec0222d878b534da1320}{
+\index{test@{test}!iDAILY@{iDAILY}}
+\index{iDAILY@{iDAILY}!test@{test}}
+\subsubsection[{iDAILY}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iDAILY} = 1}}
+\label{namespacetest_a48081398f90bec0222d878b534da1320}
+
+
+Definition at line 761 of file test.F90.
+
+\hypertarget{namespacetest_af29dc757927589439e32db648cb927b9}{
+\index{test@{test}!iENDDATE\_\-POS@{iENDDATE\_\-POS}}
+\index{iENDDATE\_\-POS@{iENDDATE\_\-POS}!test@{test}}
+\subsubsection[{iENDDATE\_\-POS}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),public {\bf test::iENDDATE\_\-POS}}}
+\label{namespacetest_af29dc757927589439e32db648cb927b9}
+
+
+Definition at line 71 of file test.F90.
+
+\hypertarget{namespacetest_ae27eee462dde556ad327a954598ee9de}{
+\index{test@{test}!iENDHEADER\_\-POS@{iENDHEADER\_\-POS}}
+\index{iENDHEADER\_\-POS@{iENDHEADER\_\-POS}!test@{test}}
+\subsubsection[{iENDHEADER\_\-POS}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),public {\bf test::iENDHEADER\_\-POS}}}
+\label{namespacetest_ae27eee462dde556ad327a954598ee9de}
+
+
+Definition at line 72 of file test.F90.
+
+\hypertarget{namespacetest_a3d9d5da4779988c8ab638ff80ee1d75e}{
+\index{test@{test}!iEOF@{iEOF}}
+\index{iEOF@{iEOF}!test@{test}}
+\subsubsection[{iEOF}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iEOF} = HUGE({\bf iZERO})}}
+\label{namespacetest_a3d9d5da4779988c8ab638ff80ee1d75e}
+
+
+Definition at line 68 of file test.F90.
+
+\hypertarget{namespacetest_a0255f32e18a217bf4bc1cc1ebf08a8ad}{
+\index{test@{test}!iFIELD\_\-WIDTH@{iFIELD\_\-WIDTH}}
+\index{iFIELD\_\-WIDTH@{iFIELD\_\-WIDTH}!test@{test}}
+\subsubsection[{iFIELD\_\-WIDTH}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iFIELD\_\-WIDTH} = 10}}
+\label{namespacetest_a0255f32e18a217bf4bc1cc1ebf08a8ad}
+
+
+Definition at line 64 of file test.F90.
+
+\hypertarget{namespacetest_a488c52f0f7220cd4e5dfd202048bc6dd}{
+\index{test@{test}!iGDD@{iGDD}}
+\index{iGDD@{iGDD}!test@{test}}
+\subsubsection[{iGDD}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iGDD} = 27}}
+\label{namespacetest_a488c52f0f7220cd4e5dfd202048bc6dd}
+
+
+Definition at line 528 of file test.F90.
+
+\hypertarget{namespacetest_abc7de6feee74a86b9aa08b5951e94d08}{
+\index{test@{test}!iGRAPH@{iGRAPH}}
+\index{iGRAPH@{iGRAPH}!test@{test}}
+\subsubsection[{iGRAPH}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iGRAPH} = 2}}
+\label{namespacetest_abc7de6feee74a86b9aa08b5951e94d08}
+
+
+Definition at line 356 of file test.F90.
+
+\hypertarget{namespacetest_ab7d5ec03d44589c79aea69862eda7b7a}{
+\index{test@{test}!iGRID@{iGRID}}
+\index{iGRID@{iGRID}!test@{test}}
+\subsubsection[{iGRID}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iGRID} = 1}}
+\label{namespacetest_ab7d5ec03d44589c79aea69862eda7b7a}
+
+
+Definition at line 355 of file test.F90.
+
+\hypertarget{namespacetest_ac5e6e1cd934b6a95f6d38d6a1e1f6bac}{
+\index{test@{test}!iGRID\_\-LENGTH\_\-UNITS\_\-FEET@{iGRID\_\-LENGTH\_\-UNITS\_\-FEET}}
+\index{iGRID\_\-LENGTH\_\-UNITS\_\-FEET@{iGRID\_\-LENGTH\_\-UNITS\_\-FEET}!test@{test}}
+\subsubsection[{iGRID\_\-LENGTH\_\-UNITS\_\-FEET}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iGRID\_\-LENGTH\_\-UNITS\_\-FEET} = 1}}
+\label{namespacetest_ac5e6e1cd934b6a95f6d38d6a1e1f6bac}
+
+
+Definition at line 190 of file test.F90.
+
+\hypertarget{namespacetest_a136c3b9231683ffea8eae2e7920d956d}{
+\index{test@{test}!iGRID\_\-LENGTH\_\-UNITS\_\-METERS@{iGRID\_\-LENGTH\_\-UNITS\_\-METERS}}
+\index{iGRID\_\-LENGTH\_\-UNITS\_\-METERS@{iGRID\_\-LENGTH\_\-UNITS\_\-METERS}!test@{test}}
+\subsubsection[{iGRID\_\-LENGTH\_\-UNITS\_\-METERS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iGRID\_\-LENGTH\_\-UNITS\_\-METERS} = 0}}
+\label{namespacetest_a136c3b9231683ffea8eae2e7920d956d}
+
+
+define parameter values for working with type \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{T\_\-GENERAL\_\-GRID} 
+
+
+
+Definition at line 189 of file test.F90.
+
+\hypertarget{namespacetest_a54d657be83774d91310d0ad6ab3d773f}{
+\index{test@{test}!iGROSS\_\-PRECIP@{iGROSS\_\-PRECIP}}
+\index{iGROSS\_\-PRECIP@{iGROSS\_\-PRECIP}!test@{test}}
+\subsubsection[{iGROSS\_\-PRECIP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iGROSS\_\-PRECIP} = 1}}
+\label{namespacetest_a54d657be83774d91310d0ad6ab3d773f}
+
+
+Definition at line 502 of file test.F90.
+
+\hypertarget{namespacetest_a47075af8f8a4e815471731dc40aa7928}{
+\index{test@{test}!iINFLOW@{iINFLOW}}
+\index{iINFLOW@{iINFLOW}!test@{test}}
+\subsubsection[{iINFLOW}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iINFLOW} = 12}}
+\label{namespacetest_a47075af8f8a4e815471731dc40aa7928}
+
+
+Definition at line 513 of file test.F90.
+
+\hypertarget{namespacetest_a51eed4733166940c15eaafaa291fc55b}{
+\index{test@{test}!iINTERCEPTION@{iINTERCEPTION}}
+\index{iINTERCEPTION@{iINTERCEPTION}!test@{test}}
+\subsubsection[{iINTERCEPTION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iINTERCEPTION} = 10}}
+\label{namespacetest_a51eed4733166940c15eaafaa291fc55b}
+
+
+Definition at line 511 of file test.F90.
+
+\hypertarget{namespacetest_a5143d96a60fefdc2b8959e8e0b99661b}{
+\index{test@{test}!iIRRIGATION@{iIRRIGATION}}
+\index{iIRRIGATION@{iIRRIGATION}!test@{test}}
+\subsubsection[{iIRRIGATION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iIRRIGATION} = 28}}
+\label{namespacetest_a5143d96a60fefdc2b8959e8e0b99661b}
+
+
+Definition at line 529 of file test.F90.
+
+\hypertarget{namespacetest_ab20904e5281139e17cfa93af209e2996}{
+\index{test@{test}!iLENGTH@{iLENGTH}}
+\index{iLENGTH@{iLENGTH}!test@{test}}
+\subsubsection[{iLENGTH}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iLENGTH} = 5}}
+\label{namespacetest_ab20904e5281139e17cfa93af209e2996}
+
+
+Definition at line 499 of file test.F90.
+
+\hypertarget{namespacetest_a15112155670f39cbf96fd72e177d71d3}{
+\index{test@{test}!iMAX@{iMAX}}
+\index{iMAX@{iMAX}!test@{test}}
+\subsubsection[{iMAX}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iMAX} = 3}}
+\label{namespacetest_a15112155670f39cbf96fd72e177d71d3}
+
+
+Definition at line 497 of file test.F90.
+
+\hypertarget{namespacetest_ad4e8b276391e3cbc8cc135dfa7b10971}{
+\index{test@{test}!iMAX\_\-TEMP@{iMAX\_\-TEMP}}
+\index{iMAX\_\-TEMP@{iMAX\_\-TEMP}!test@{test}}
+\subsubsection[{iMAX\_\-TEMP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iMAX\_\-TEMP} = 6}}
+\label{namespacetest_ad4e8b276391e3cbc8cc135dfa7b10971}
+
+
+Definition at line 507 of file test.F90.
+
+\hypertarget{namespacetest_ad573fcda72b69e8d829aaecc8702e369}{
+\index{test@{test}!iMEAN@{iMEAN}}
+\index{iMEAN@{iMEAN}!test@{test}}
+\subsubsection[{iMEAN}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iMEAN} = 2}}
+\label{namespacetest_ad573fcda72b69e8d829aaecc8702e369}
+
+
+Definition at line 496 of file test.F90.
+
+\hypertarget{namespacetest_a5e4e66d4853b73ddeb16d8ec6d2f96ba}{
+\index{test@{test}!iMIN@{iMIN}}
+\index{iMIN@{iMIN}!test@{test}}
+\subsubsection[{iMIN}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iMIN} = 1}}
+\label{namespacetest_a5e4e66d4853b73ddeb16d8ec6d2f96ba}
+
+
+Definition at line 495 of file test.F90.
+
+\hypertarget{namespacetest_adbc94b4c943a3bf4995dff5b8d7ba7c3}{
+\index{test@{test}!iMIN\_\-TEMP@{iMIN\_\-TEMP}}
+\index{iMIN\_\-TEMP@{iMIN\_\-TEMP}!test@{test}}
+\subsubsection[{iMIN\_\-TEMP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iMIN\_\-TEMP} = 5}}
+\label{namespacetest_adbc94b4c943a3bf4995dff5b8d7ba7c3}
+
+
+Definition at line 506 of file test.F90.
+
+\hypertarget{namespacetest_ae6a20a8c4dbaebffde9b9b7c933237b4}{
+\index{test@{test}!iMONTHLY@{iMONTHLY}}
+\index{iMONTHLY@{iMONTHLY}!test@{test}}
+\subsubsection[{iMONTHLY}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iMONTHLY} = 2}}
+\label{namespacetest_ae6a20a8c4dbaebffde9b9b7c933237b4}
+
+
+Definition at line 762 of file test.F90.
+
+\hypertarget{namespacetest_a01d23f78fddde9b4d7918751ce961815}{
+\index{test@{test}!iMOVING\_\-AVG\_\-TERMS@{iMOVING\_\-AVG\_\-TERMS}}
+\index{iMOVING\_\-AVG\_\-TERMS@{iMOVING\_\-AVG\_\-TERMS}!test@{test}}
+\subsubsection[{iMOVING\_\-AVG\_\-TERMS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iMOVING\_\-AVG\_\-TERMS} = 5}}
+\label{namespacetest_a01d23f78fddde9b4d7918751ce961815}
+
+
+Definition at line 58 of file test.F90.
+
+\hypertarget{namespacetest_a47a3dcd6434015912debe4d7c32a6696}{
+\index{test@{test}!iNC\_\-INPUT@{iNC\_\-INPUT}}
+\index{iNC\_\-INPUT@{iNC\_\-INPUT}!test@{test}}
+\subsubsection[{iNC\_\-INPUT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iNC\_\-INPUT} = 1}}
+\label{namespacetest_a47a3dcd6434015912debe4d7c32a6696}
+
+
+Definition at line 75 of file test.F90.
+
+\hypertarget{namespacetest_a6a723368a0f10bdf178fcec29f827e5d}{
+\index{test@{test}!iNC\_\-OBSERVATION@{iNC\_\-OBSERVATION}}
+\index{iNC\_\-OBSERVATION@{iNC\_\-OBSERVATION}!test@{test}}
+\subsubsection[{iNC\_\-OBSERVATION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iNC\_\-OBSERVATION} = 3}}
+\label{namespacetest_a6a723368a0f10bdf178fcec29f827e5d}
+
+
+Definition at line 77 of file test.F90.
+
+\hypertarget{namespacetest_a0201f90a40599962ba9f170b55b2940b}{
+\index{test@{test}!iNC\_\-OUTPUT@{iNC\_\-OUTPUT}}
+\index{iNC\_\-OUTPUT@{iNC\_\-OUTPUT}!test@{test}}
+\subsubsection[{iNC\_\-OUTPUT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iNC\_\-OUTPUT} = 2}}
+\label{namespacetest_a0201f90a40599962ba9f170b55b2940b}
+
+
+Definition at line 76 of file test.F90.
+
+\hypertarget{namespacetest_aefca9a9826cf4312056bd27752aece6d}{
+\index{test@{test}!iNET\_\-INFIL@{iNET\_\-INFIL}}
+\index{iNET\_\-INFIL@{iNET\_\-INFIL}!test@{test}}
+\subsubsection[{iNET\_\-INFIL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNET\_\-INFIL} = 17}}
+\label{namespacetest_aefca9a9826cf4312056bd27752aece6d}
+
+
+Definition at line 518 of file test.F90.
+
+\hypertarget{namespacetest_afafe0185b588b6c2503ad2cdfaccd5a7}{
+\index{test@{test}!iNET\_\-INFLOW@{iNET\_\-INFLOW}}
+\index{iNET\_\-INFLOW@{iNET\_\-INFLOW}!test@{test}}
+\subsubsection[{iNET\_\-INFLOW}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNET\_\-INFLOW} = 16}}
+\label{namespacetest_afafe0185b588b6c2503ad2cdfaccd5a7}
+
+
+Definition at line 517 of file test.F90.
+
+\hypertarget{namespacetest_aa863a0c7e87979b7d13b34f5afb7ecf5}{
+\index{test@{test}!iNET\_\-PRECIP@{iNET\_\-PRECIP}}
+\index{iNET\_\-PRECIP@{iNET\_\-PRECIP}!test@{test}}
+\subsubsection[{iNET\_\-PRECIP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNET\_\-PRECIP} = 11}}
+\label{namespacetest_aa863a0c7e87979b7d13b34f5afb7ecf5}
+
+
+Definition at line 512 of file test.F90.
+
+\hypertarget{namespacetest_a751d31358c9620f1549f1428a6a12835}{
+\index{test@{test}!iNO\_\-DATA\_\-NCDC@{iNO\_\-DATA\_\-NCDC}}
+\index{iNO\_\-DATA\_\-NCDC@{iNO\_\-DATA\_\-NCDC}!test@{test}}
+\subsubsection[{iNO\_\-DATA\_\-NCDC}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iNO\_\-DATA\_\-NCDC} = -\/99999}}
+\label{namespacetest_a751d31358c9620f1549f1428a6a12835}
+
+
+Definition at line 62 of file test.F90.
+
+\hypertarget{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}{
+\index{test@{test}!iNONE@{iNONE}}
+\index{iNONE@{iNONE}!test@{test}}
+\subsubsection[{iNONE}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iNONE} = 0}}
+\label{namespacetest_a1f50531cf0fa6afcb5cea12a45a90947}
+
+
+Definition at line 354 of file test.F90.
+
+\hypertarget{namespacetest_a9f880ad69dfceb22317f4bd514f70921}{
+\index{test@{test}!iNUM\_\-DIGITS@{iNUM\_\-DIGITS}}
+\index{iNUM\_\-DIGITS@{iNUM\_\-DIGITS}!test@{test}}
+\subsubsection[{iNUM\_\-DIGITS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iNUM\_\-DIGITS} = 3}}
+\label{namespacetest_a9f880ad69dfceb22317f4bd514f70921}
+
+
+Definition at line 63 of file test.F90.
+
+\hypertarget{namespacetest_af0399520b5b36576c3c4e8305b487c65}{
+\index{test@{test}!iNUM\_\-MONTHS@{iNUM\_\-MONTHS}}
+\index{iNUM\_\-MONTHS@{iNUM\_\-MONTHS}!test@{test}}
+\subsubsection[{iNUM\_\-MONTHS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNUM\_\-MONTHS} = 12}}
+\label{namespacetest_af0399520b5b36576c3c4e8305b487c65}
+
+
+Definition at line 352 of file test.F90.
+
+\hypertarget{namespacetest_a2f5f426220fe1778999fe65b3c4def48}{
+\index{test@{test}!iNUM\_\-STATS@{iNUM\_\-STATS}}
+\index{iNUM\_\-STATS@{iNUM\_\-STATS}!test@{test}}
+\subsubsection[{iNUM\_\-STATS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNUM\_\-STATS} = 5}}
+\label{namespacetest_a2f5f426220fe1778999fe65b3c4def48}
+
+
+Definition at line 494 of file test.F90.
+
+\hypertarget{namespacetest_ae9174c7998b12348b71aa854ca83add7}{
+\index{test@{test}!iNUM\_\-VARIABLES@{iNUM\_\-VARIABLES}}
+\index{iNUM\_\-VARIABLES@{iNUM\_\-VARIABLES}!test@{test}}
+\subsubsection[{iNUM\_\-VARIABLES}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iNUM\_\-VARIABLES} = 29}}
+\label{namespacetest_ae9174c7998b12348b71aa854ca83add7}
+
+
+Definition at line 362 of file test.F90.
+
+\hypertarget{namespacetest_af391688ace32e5cfa1f0e6edf6499758}{
+\index{test@{test}!iOUTFLOW@{iOUTFLOW}}
+\index{iOUTFLOW@{iOUTFLOW}!test@{test}}
+\subsubsection[{iOUTFLOW}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iOUTFLOW} = 13}}
+\label{namespacetest_af391688ace32e5cfa1f0e6edf6499758}
+
+
+Definition at line 514 of file test.F90.
+
+\hypertarget{namespacetest_a15fc27f3f9430eb7fa5343da57124560}{
+\index{test@{test}!iP\_\-MINUS\_\-PET@{iP\_\-MINUS\_\-PET}}
+\index{iP\_\-MINUS\_\-PET@{iP\_\-MINUS\_\-PET}!test@{test}}
+\subsubsection[{iP\_\-MINUS\_\-PET}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iP\_\-MINUS\_\-PET} = 20}}
+\label{namespacetest_a15fc27f3f9430eb7fa5343da57124560}
+
+
+Definition at line 521 of file test.F90.
+
+\hypertarget{namespacetest_a0b4cecb0049250b0df7313899555765c}{
+\index{test@{test}!iPOT\_\-ET@{iPOT\_\-ET}}
+\index{iPOT\_\-ET@{iPOT\_\-ET}!test@{test}}
+\subsubsection[{iPOT\_\-ET}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iPOT\_\-ET} = 18}}
+\label{namespacetest_a0b4cecb0049250b0df7313899555765c}
+
+
+Definition at line 519 of file test.F90.
+
+\hypertarget{namespacetest_a7cbbcc7ca182caf51d3afe6c583ee71b}{
+\index{test@{test}!iRECHARGE@{iRECHARGE}}
+\index{iRECHARGE@{iRECHARGE}!test@{test}}
+\subsubsection[{iRECHARGE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iRECHARGE} = 26}}
+\label{namespacetest_a7cbbcc7ca182caf51d3afe6c583ee71b}
+
+
+Definition at line 527 of file test.F90.
+
+\hypertarget{namespacetest_a0e9159063b997894c4a07927cbe42140}{
+\index{test@{test}!iREJECTED\_\-RECHARGE@{iREJECTED\_\-RECHARGE}}
+\index{iREJECTED\_\-RECHARGE@{iREJECTED\_\-RECHARGE}!test@{test}}
+\subsubsection[{iREJECTED\_\-RECHARGE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iREJECTED\_\-RECHARGE} = 15}}
+\label{namespacetest_a0e9159063b997894c4a07927cbe42140}
+
+
+Definition at line 516 of file test.F90.
+
+\hypertarget{namespacetest_a0b4633c7ece605f3f9e541d1bb6068b1}{
+\index{test@{test}!iROUTE\_\-CELL\_\-MARKED@{iROUTE\_\-CELL\_\-MARKED}}
+\index{iROUTE\_\-CELL\_\-MARKED@{iROUTE\_\-CELL\_\-MARKED}!test@{test}}
+\subsubsection[{iROUTE\_\-CELL\_\-MARKED}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iROUTE\_\-CELL\_\-MARKED} = -\/1}}
+\label{namespacetest_a0b4633c7ece605f3f9e541d1bb6068b1}
+
+
+Definition at line 59 of file test.F90.
+
+\hypertarget{namespacetest_a238a0131e776ca1d31fb18253d86fdbe}{
+\index{test@{test}!iROUTE\_\-DEPRESSION@{iROUTE\_\-DEPRESSION}}
+\index{iROUTE\_\-DEPRESSION@{iROUTE\_\-DEPRESSION}!test@{test}}
+\subsubsection[{iROUTE\_\-DEPRESSION}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iROUTE\_\-DEPRESSION} = -\/999}}
+\label{namespacetest_a238a0131e776ca1d31fb18253d86fdbe}
+
+
+Definition at line 60 of file test.F90.
+
+\hypertarget{namespacetest_a828d11529416772ecac92d8ca31c2056}{
+\index{test@{test}!iROUTE\_\-LEFT\_\-GRID@{iROUTE\_\-LEFT\_\-GRID}}
+\index{iROUTE\_\-LEFT\_\-GRID@{iROUTE\_\-LEFT\_\-GRID}!test@{test}}
+\subsubsection[{iROUTE\_\-LEFT\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iROUTE\_\-LEFT\_\-GRID} = -\/1000}}
+\label{namespacetest_a828d11529416772ecac92d8ca31c2056}
+
+
+Definition at line 61 of file test.F90.
+
+\hypertarget{namespacetest_a4e979c97a931d097b815a1e8b62663f9}{
+\index{test@{test}!iRUNOFF\_\-OUTSIDE@{iRUNOFF\_\-OUTSIDE}}
+\index{iRUNOFF\_\-OUTSIDE@{iRUNOFF\_\-OUTSIDE}!test@{test}}
+\subsubsection[{iRUNOFF\_\-OUTSIDE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iRUNOFF\_\-OUTSIDE} = 14}}
+\label{namespacetest_a4e979c97a931d097b815a1e8b62663f9}
+
+
+Definition at line 515 of file test.F90.
+
+\hypertarget{namespacetest_a575084634243635f2b95f243548de016}{
+\index{test@{test}!iSM\_\-APWL@{iSM\_\-APWL}}
+\index{iSM\_\-APWL@{iSM\_\-APWL}!test@{test}}
+\subsubsection[{iSM\_\-APWL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSM\_\-APWL} = 23}}
+\label{namespacetest_a575084634243635f2b95f243548de016}
+
+
+Definition at line 524 of file test.F90.
+
+\hypertarget{namespacetest_a383b6fea0fe65ad1c1832ef3f5922070}{
+\index{test@{test}!iSM\_\-DEFICIT@{iSM\_\-DEFICIT}}
+\index{iSM\_\-DEFICIT@{iSM\_\-DEFICIT}!test@{test}}
+\subsubsection[{iSM\_\-DEFICIT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSM\_\-DEFICIT} = 21}}
+\label{namespacetest_a383b6fea0fe65ad1c1832ef3f5922070}
+
+
+Definition at line 522 of file test.F90.
+
+\hypertarget{namespacetest_a9efe22e7483171c67675c69e02b3f2c4}{
+\index{test@{test}!iSM\_\-SURPLUS@{iSM\_\-SURPLUS}}
+\index{iSM\_\-SURPLUS@{iSM\_\-SURPLUS}!test@{test}}
+\subsubsection[{iSM\_\-SURPLUS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSM\_\-SURPLUS} = 22}}
+\label{namespacetest_a9efe22e7483171c67675c69e02b3f2c4}
+
+
+Definition at line 523 of file test.F90.
+
+\hypertarget{namespacetest_a0b1f3cd89bcb139c712a36ad034b58ea}{
+\index{test@{test}!iSNOWCOVER@{iSNOWCOVER}}
+\index{iSNOWCOVER@{iSNOWCOVER}!test@{test}}
+\subsubsection[{iSNOWCOVER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSNOWCOVER} = 3}}
+\label{namespacetest_a0b1f3cd89bcb139c712a36ad034b58ea}
+
+
+Definition at line 504 of file test.F90.
+
+\hypertarget{namespacetest_a406398e83d202c4d496adcc1af5d6fb3}{
+\index{test@{test}!iSNOWFALL@{iSNOWFALL}}
+\index{iSNOWFALL@{iSNOWFALL}!test@{test}}
+\subsubsection[{iSNOWFALL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSNOWFALL} = 2}}
+\label{namespacetest_a406398e83d202c4d496adcc1af5d6fb3}
+
+
+Definition at line 503 of file test.F90.
+
+\hypertarget{namespacetest_a0d778816066d21ff37157e9e33ffa64d}{
+\index{test@{test}!iSNOWMELT@{iSNOWMELT}}
+\index{iSNOWMELT@{iSNOWMELT}!test@{test}}
+\subsubsection[{iSNOWMELT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSNOWMELT} = 9}}
+\label{namespacetest_a0d778816066d21ff37157e9e33ffa64d}
+
+
+Definition at line 510 of file test.F90.
+
+\hypertarget{namespacetest_af695837c4d2bfcaa32ecc407aad09776}{
+\index{test@{test}!iSOIL\_\-MOISTURE@{iSOIL\_\-MOISTURE}}
+\index{iSOIL\_\-MOISTURE@{iSOIL\_\-MOISTURE}!test@{test}}
+\subsubsection[{iSOIL\_\-MOISTURE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSOIL\_\-MOISTURE} = 24}}
+\label{namespacetest_af695837c4d2bfcaa32ecc407aad09776}
+
+
+Definition at line 525 of file test.F90.
+
+\hypertarget{namespacetest_ac53c64b203e8d99ae558218e98beef9d}{
+\index{test@{test}!iSTARTDATE\_\-POS@{iSTARTDATE\_\-POS}}
+\index{iSTARTDATE\_\-POS@{iSTARTDATE\_\-POS}!test@{test}}
+\subsubsection[{iSTARTDATE\_\-POS}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),public {\bf test::iSTARTDATE\_\-POS}}}
+\label{namespacetest_ac53c64b203e8d99ae558218e98beef9d}
+
+
+Definition at line 70 of file test.F90.
+
+\hypertarget{namespacetest_a4ee9e6e104ab7138d29b46b35a43f499}{
+\index{test@{test}!iSTATS@{iSTATS}}
+\index{iSTATS@{iSTATS}!test@{test}}
+\subsubsection[{iSTATS}]{\setlength{\rightskip}{0pt plus 5cm}integer(kind={\bf T\_\-INT}),parameter {\bf test::iSTATS} = 4}}
+\label{namespacetest_a4ee9e6e104ab7138d29b46b35a43f499}
+
+
+Definition at line 358 of file test.F90.
+
+\hypertarget{namespacetest_a6dc6983b645899b34f357412d47018c5}{
+\index{test@{test}!iSTREAM\_\-CAPTURE@{iSTREAM\_\-CAPTURE}}
+\index{iSTREAM\_\-CAPTURE@{iSTREAM\_\-CAPTURE}!test@{test}}
+\subsubsection[{iSTREAM\_\-CAPTURE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSTREAM\_\-CAPTURE} = 29}}
+\label{namespacetest_a6dc6983b645899b34f357412d47018c5}
+
+
+Definition at line 531 of file test.F90.
+
+\hypertarget{namespacetest_acd0b0aa61e54ac17016b3ecb8846d4fb}{
+\index{test@{test}!iSUM@{iSUM}}
+\index{iSUM@{iSUM}!test@{test}}
+\subsubsection[{iSUM}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::iSUM} = 4}}
+\label{namespacetest_acd0b0aa61e54ac17016b3ecb8846d4fb}
+
+
+Definition at line 498 of file test.F90.
+
+\hypertarget{namespacetest_a3014c474a511a7853327d17f396fea73}{
+\index{test@{test}!iZERO@{iZERO}}
+\index{iZERO@{iZERO}!test@{test}}
+\subsubsection[{iZERO}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::iZERO} = 0}}
+\label{namespacetest_a3014c474a511a7853327d17f396fea73}
+
+
+Definition at line 65 of file test.F90.
+
+\hypertarget{namespacetest_ad44869e0204417021792170cd610ee25}{
+\index{test@{test}!lFALSE@{lFALSE}}
+\index{lFALSE@{lFALSE}!test@{test}}
+\subsubsection[{lFALSE}]{\setlength{\rightskip}{0pt plus 5cm}logical (kind={\bf T\_\-LOGICAL}),parameter,public {\bf test::lFALSE} = .false.\_\-T\_\-LOGICAL}}
+\label{namespacetest_ad44869e0204417021792170cd610ee25}
+
+
+Definition at line 67 of file test.F90.
+
+\hypertarget{namespacetest_ab7046de13f01778d86667e4266521664}{
+\index{test@{test}!lTRUE@{lTRUE}}
+\index{lTRUE@{lTRUE}!test@{test}}
+\subsubsection[{lTRUE}]{\setlength{\rightskip}{0pt plus 5cm}logical (kind={\bf T\_\-LOGICAL}),parameter,public {\bf test::lTRUE} = .true.\_\-T\_\-LOGICAL}}
+\label{namespacetest_ab7046de13f01778d86667e4266521664}
+
+
+Definition at line 66 of file test.F90.
+
+\hypertarget{namespacetest_ad2384d4c6037155a8ec2549d1d0bcfe4}{
+\index{test@{test}!LU\_\-BIN\_\-FILE@{LU\_\-BIN\_\-FILE}}
+\index{LU\_\-BIN\_\-FILE@{LU\_\-BIN\_\-FILE}!test@{test}}
+\subsubsection[{LU\_\-BIN\_\-FILE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-BIN\_\-FILE} = 106}}
+\label{namespacetest_ad2384d4c6037155a8ec2549d1d0bcfe4}
+
+
+Definition at line 25 of file test.F90.
+
+\hypertarget{namespacetest_ae6a297220869ce598523186f326bef7c}{
+\index{test@{test}!LU\_\-CONTROL@{LU\_\-CONTROL}}
+\index{LU\_\-CONTROL@{LU\_\-CONTROL}!test@{test}}
+\subsubsection[{LU\_\-CONTROL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-CONTROL} = 100}}
+\label{namespacetest_ae6a297220869ce598523186f326bef7c}
+
+
+Definition at line 19 of file test.F90.
+
+\hypertarget{namespacetest_ad63b2c5042d42739d03ca38d8ec6f417}{
+\index{test@{test}!LU\_\-CSV@{LU\_\-CSV}}
+\index{LU\_\-CSV@{LU\_\-CSV}!test@{test}}
+\subsubsection[{LU\_\-CSV}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-CSV} = 108}}
+\label{namespacetest_ad63b2c5042d42739d03ca38d8ec6f417}
+
+
+Definition at line 27 of file test.F90.
+
+\hypertarget{namespacetest_a37ce335b13c6fe95c470ba7b67c88f92}{
+\index{test@{test}!LU\_\-CSV\_\-ANNUAL@{LU\_\-CSV\_\-ANNUAL}}
+\index{LU\_\-CSV\_\-ANNUAL@{LU\_\-CSV\_\-ANNUAL}!test@{test}}
+\subsubsection[{LU\_\-CSV\_\-ANNUAL}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-CSV\_\-ANNUAL} = 110}}
+\label{namespacetest_a37ce335b13c6fe95c470ba7b67c88f92}
+
+
+Definition at line 29 of file test.F90.
+
+\hypertarget{namespacetest_aaf67717999e2b4cc413c0fe565f31c80}{
+\index{test@{test}!LU\_\-CSV\_\-SERIES@{LU\_\-CSV\_\-SERIES}}
+\index{LU\_\-CSV\_\-SERIES@{LU\_\-CSV\_\-SERIES}!test@{test}}
+\subsubsection[{LU\_\-CSV\_\-SERIES}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-CSV\_\-SERIES} = 109}}
+\label{namespacetest_aaf67717999e2b4cc413c0fe565f31c80}
+
+
+Definition at line 28 of file test.F90.
+
+\hypertarget{namespacetest_a5255cf8d0506fee4cf94c76d1bcb541d}{
+\index{test@{test}!LU\_\-GRID@{LU\_\-GRID}}
+\index{LU\_\-GRID@{LU\_\-GRID}!test@{test}}
+\subsubsection[{LU\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-GRID} = 101}}
+\label{namespacetest_a5255cf8d0506fee4cf94c76d1bcb541d}
+
+
+Definition at line 20 of file test.F90.
+
+\hypertarget{namespacetest_a6f591abb1742ac7c55e5146938c8d81f}{
+\index{test@{test}!LU\_\-LOG@{LU\_\-LOG}}
+\index{LU\_\-LOG@{LU\_\-LOG}!test@{test}}
+\subsubsection[{LU\_\-LOG}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-LOG} = 117}}
+\label{namespacetest_a6f591abb1742ac7c55e5146938c8d81f}
+
+
+Definition at line 36 of file test.F90.
+
+\hypertarget{namespacetest_a269ea2c4032752326f4745d24712c02f}{
+\index{test@{test}!LU\_\-LOOKUP@{LU\_\-LOOKUP}}
+\index{LU\_\-LOOKUP@{LU\_\-LOOKUP}!test@{test}}
+\subsubsection[{LU\_\-LOOKUP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-LOOKUP} = 102}}
+\label{namespacetest_a269ea2c4032752326f4745d24712c02f}
+
+
+Definition at line 21 of file test.F90.
+
+\hypertarget{namespacetest_a6d15f5ccef6a1936e7fdfa3f785a97f7}{
+\index{test@{test}!LU\_\-MASK@{LU\_\-MASK}}
+\index{LU\_\-MASK@{LU\_\-MASK}!test@{test}}
+\subsubsection[{LU\_\-MASK}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-MASK} = 111}}
+\label{namespacetest_a6d15f5ccef6a1936e7fdfa3f785a97f7}
+
+
+Definition at line 30 of file test.F90.
+
+\hypertarget{namespacetest_a4ef1befc57b809909da2a4f3bdb5853d}{
+\index{test@{test}!LU\_\-MASK\_\-FILE@{LU\_\-MASK\_\-FILE}}
+\index{LU\_\-MASK\_\-FILE@{LU\_\-MASK\_\-FILE}!test@{test}}
+\subsubsection[{LU\_\-MASK\_\-FILE}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-MASK\_\-FILE} = 112}}
+\label{namespacetest_a4ef1befc57b809909da2a4f3bdb5853d}
+
+
+Definition at line 31 of file test.F90.
+
+\hypertarget{namespacetest_a494f7cd02f5647d3dd40276d2a080e09}{
+\index{test@{test}!LU\_\-MASK\_\-STATS\_\-CSV@{LU\_\-MASK\_\-STATS\_\-CSV}}
+\index{LU\_\-MASK\_\-STATS\_\-CSV@{LU\_\-MASK\_\-STATS\_\-CSV}!test@{test}}
+\subsubsection[{LU\_\-MASK\_\-STATS\_\-CSV}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-MASK\_\-STATS\_\-CSV} = 113}}
+\label{namespacetest_a494f7cd02f5647d3dd40276d2a080e09}
+
+
+Definition at line 32 of file test.F90.
+
+\hypertarget{namespacetest_a72b7d2a48ea511f8adea59b1392f541c}{
+\index{test@{test}!LU\_\-MSB\_\-REPORT@{LU\_\-MSB\_\-REPORT}}
+\index{LU\_\-MSB\_\-REPORT@{LU\_\-MSB\_\-REPORT}!test@{test}}
+\subsubsection[{LU\_\-MSB\_\-REPORT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-MSB\_\-REPORT} = 105}}
+\label{namespacetest_a72b7d2a48ea511f8adea59b1392f541c}
+
+
+Definition at line 24 of file test.F90.
+
+\hypertarget{namespacetest_a0796d8d42c3fd32614b1f4ac37aa21cf}{
+\index{test@{test}!LU\_\-PEST\_\-INS@{LU\_\-PEST\_\-INS}}
+\index{LU\_\-PEST\_\-INS@{LU\_\-PEST\_\-INS}!test@{test}}
+\subsubsection[{LU\_\-PEST\_\-INS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-PEST\_\-INS} = 116}}
+\label{namespacetest_a0796d8d42c3fd32614b1f4ac37aa21cf}
+
+
+Definition at line 35 of file test.F90.
+
+\hypertarget{namespacetest_a3b43ad5b8d9f36d9e1cfdf94bc02d83f}{
+\index{test@{test}!LU\_\-PEST\_\-OBS@{LU\_\-PEST\_\-OBS}}
+\index{LU\_\-PEST\_\-OBS@{LU\_\-PEST\_\-OBS}!test@{test}}
+\subsubsection[{LU\_\-PEST\_\-OBS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-PEST\_\-OBS} = 115}}
+\label{namespacetest_a3b43ad5b8d9f36d9e1cfdf94bc02d83f}
+
+
+Definition at line 34 of file test.F90.
+
+\hypertarget{namespacetest_a9a71f73b35c56ff97dfc0c438945e783}{
+\index{test@{test}!LU\_\-PEST\_\-STATS@{LU\_\-PEST\_\-STATS}}
+\index{LU\_\-PEST\_\-STATS@{LU\_\-PEST\_\-STATS}!test@{test}}
+\subsubsection[{LU\_\-PEST\_\-STATS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-PEST\_\-STATS} = 114}}
+\label{namespacetest_a9a71f73b35c56ff97dfc0c438945e783}
+
+
+Definition at line 33 of file test.F90.
+
+\hypertarget{namespacetest_a70f553900e15e79d97a1515e6550c1e7}{
+\index{test@{test}!LU\_\-ROUTING@{LU\_\-ROUTING}}
+\index{LU\_\-ROUTING@{LU\_\-ROUTING}!test@{test}}
+\subsubsection[{LU\_\-ROUTING}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-ROUTING} = 107}}
+\label{namespacetest_a70f553900e15e79d97a1515e6550c1e7}
+
+
+Definition at line 26 of file test.F90.
+
+\hypertarget{namespacetest_ae2c473e7eff311b67b82175c92417cea}{
+\index{test@{test}!LU\_\-STD\_\-OUT@{LU\_\-STD\_\-OUT}}
+\index{LU\_\-STD\_\-OUT@{LU\_\-STD\_\-OUT}!test@{test}}
+\subsubsection[{LU\_\-STD\_\-OUT}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-STD\_\-OUT} = 6}}
+\label{namespacetest_ae2c473e7eff311b67b82175c92417cea}
+
+
+Definition at line 18 of file test.F90.
+
+\hypertarget{namespacetest_a3f833495aa697889b22b2de1d999641c}{
+\index{test@{test}!LU\_\-TEMP@{LU\_\-TEMP}}
+\index{LU\_\-TEMP@{LU\_\-TEMP}!test@{test}}
+\subsubsection[{LU\_\-TEMP}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-TEMP} = 104}}
+\label{namespacetest_a3f833495aa697889b22b2de1d999641c}
+
+
+Definition at line 23 of file test.F90.
+
+\hypertarget{namespacetest_a1a6873182d00ba61beb421697cbe8662}{
+\index{test@{test}!LU\_\-TS@{LU\_\-TS}}
+\index{LU\_\-TS@{LU\_\-TS}!test@{test}}
+\subsubsection[{LU\_\-TS}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::LU\_\-TS} = 103}}
+\label{namespacetest_a1a6873182d00ba61beb421697cbe8662}
+
+
+Definition at line 22 of file test.F90.
+
+\hypertarget{namespacetest_ada8330c2643deca7d4e85ce248e3e941}{
+\index{test@{test}!OUTPUT\_\-ARC@{OUTPUT\_\-ARC}}
+\index{OUTPUT\_\-ARC@{OUTPUT\_\-ARC}!test@{test}}
+\subsubsection[{OUTPUT\_\-ARC}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::OUTPUT\_\-ARC} = 1}}
+\label{namespacetest_ada8330c2643deca7d4e85ce248e3e941}
+
+
+Definition at line 825 of file test.F90.
+
+\hypertarget{namespacetest_a19efe476537676b4902cb464d566af6f}{
+\index{test@{test}!OUTPUT\_\-SURFER@{OUTPUT\_\-SURFER}}
+\index{OUTPUT\_\-SURFER@{OUTPUT\_\-SURFER}!test@{test}}
+\subsubsection[{OUTPUT\_\-SURFER}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::OUTPUT\_\-SURFER} = 0}}
+\label{namespacetest_a19efe476537676b4902cb464d566af6f}
+
+
+Definition at line 824 of file test.F90.
+
+\hypertarget{namespacetest_ac6f2875c79f3dc5f3058945c798787da}{
+\index{test@{test}!rBIGVAL@{rBIGVAL}}
+\index{rBIGVAL@{rBIGVAL}!test@{test}}
+\subsubsection[{rBIGVAL}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rBIGVAL} = 1.0e20\_\-T\_\-SGL}}
+\label{namespacetest_ac6f2875c79f3dc5f3058945c798787da}
+
+
+Definition at line 69 of file test.F90.
+
+\hypertarget{namespacetest_a95fd1d84e61f442438a5e81b15c00185}{
+\index{test@{test}!rC\_\-PER\_\-F@{rC\_\-PER\_\-F}}
+\index{rC\_\-PER\_\-F@{rC\_\-PER\_\-F}!test@{test}}
+\subsubsection[{rC\_\-PER\_\-F}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rC\_\-PER\_\-F} = 5.0\_\-T\_\-DBL / 9.0\_\-T\_\-DBL}}
+\label{namespacetest_a95fd1d84e61f442438a5e81b15c00185}
+
+
+Definition at line 51 of file test.F90.
+
+\hypertarget{namespacetest_a99c086ce41f7f593657b86272536caa1}{
+\index{test@{test}!rCM\_\-PER\_\-INCH@{rCM\_\-PER\_\-INCH}}
+\index{rCM\_\-PER\_\-INCH@{rCM\_\-PER\_\-INCH}!test@{test}}
+\subsubsection[{rCM\_\-PER\_\-INCH}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rCM\_\-PER\_\-INCH} = 2.54\_\-T\_\-SGL}}
+\label{namespacetest_a99c086ce41f7f593657b86272536caa1}
+
+
+Definition at line 54 of file test.F90.
+
+\hypertarget{namespacetest_a0677b58c46e425be305a3733296635ad}{
+\index{test@{test}!rD\_\-ONE@{rD\_\-ONE}}
+\index{rD\_\-ONE@{rD\_\-ONE}!test@{test}}
+\subsubsection[{rD\_\-ONE}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rD\_\-ONE} = 1.0\_\-T\_\-DBL}}
+\label{namespacetest_a0677b58c46e425be305a3733296635ad}
+
+
+Definition at line 46 of file test.F90.
+
+\hypertarget{namespacetest_a4bd8ceae51c320c4ba797c783a5421a9}{
+\index{test@{test}!rD\_\-ZERO@{rD\_\-ZERO}}
+\index{rD\_\-ZERO@{rD\_\-ZERO}!test@{test}}
+\subsubsection[{rD\_\-ZERO}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rD\_\-ZERO} = 0.0\_\-T\_\-DBL}}
+\label{namespacetest_a4bd8ceae51c320c4ba797c783a5421a9}
+
+
+Definition at line 40 of file test.F90.
+
+\hypertarget{namespacetest_ac2670ae461db7392fc780c5fc733d06f}{
+\index{test@{test}!rF\_\-PER\_\-C@{rF\_\-PER\_\-C}}
+\index{rF\_\-PER\_\-C@{rF\_\-PER\_\-C}!test@{test}}
+\subsubsection[{rF\_\-PER\_\-C}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rF\_\-PER\_\-C} = 9.0\_\-T\_\-DBL / 5.0\_\-T\_\-DBL}}
+\label{namespacetest_ac2670ae461db7392fc780c5fc733d06f}
+
+
+Definition at line 52 of file test.F90.
+
+\hypertarget{namespacetest_a31db6c3796f52bf10cc407ec22ba3e80}{
+\index{test@{test}!rFREEZING@{rFREEZING}}
+\index{rFREEZING@{rFREEZING}!test@{test}}
+\subsubsection[{rFREEZING}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rFREEZING} = 32.0\_\-T\_\-SGL}}
+\label{namespacetest_a31db6c3796f52bf10cc407ec22ba3e80}
+
+
+Definition at line 47 of file test.F90.
+
+\hypertarget{namespacetest_a25c0227adf96fbd382b9cbac9600ba44}{
+\index{test@{test}!rHALF@{rHALF}}
+\index{rHALF@{rHALF}!test@{test}}
+\subsubsection[{rHALF}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rHALF} = 0.5\_\-T\_\-SGL}}
+\label{namespacetest_a25c0227adf96fbd382b9cbac9600ba44}
+
+
+Definition at line 43 of file test.F90.
+
+\hypertarget{namespacetest_ae0e7b5cd24e302e72154de8cd84b911e}{
+\index{test@{test}!rHUNDRED@{rHUNDRED}}
+\index{rHUNDRED@{rHUNDRED}!test@{test}}
+\subsubsection[{rHUNDRED}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rHUNDRED} = 100.0\_\-T\_\-SGL}}
+\label{namespacetest_ae0e7b5cd24e302e72154de8cd84b911e}
+
+
+Definition at line 49 of file test.F90.
+
+\hypertarget{namespacetest_a63234032fe45a56340c75291af043fd0}{
+\index{test@{test}!rMM\_\-PER\_\-INCH@{rMM\_\-PER\_\-INCH}}
+\index{rMM\_\-PER\_\-INCH@{rMM\_\-PER\_\-INCH}!test@{test}}
+\subsubsection[{rMM\_\-PER\_\-INCH}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rMM\_\-PER\_\-INCH} = 25.4\_\-T\_\-SGL}}
+\label{namespacetest_a63234032fe45a56340c75291af043fd0}
+
+
+Definition at line 53 of file test.F90.
+
+\hypertarget{namespacetest_ad2e23effbad4134a648b3e3694400190}{
+\index{test@{test}!rNEAR\_\-ZERO@{rNEAR\_\-ZERO}}
+\index{rNEAR\_\-ZERO@{rNEAR\_\-ZERO}!test@{test}}
+\subsubsection[{rNEAR\_\-ZERO}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rNEAR\_\-ZERO} = 1E-\/9\_\-T\_\-SGL}}
+\label{namespacetest_ad2e23effbad4134a648b3e3694400190}
+
+
+Definition at line 41 of file test.F90.
+
+\hypertarget{namespacetest_a884b235687921d6a1682ba733422bc2a}{
+\index{test@{test}!rONE@{rONE}}
+\index{rONE@{rONE}!test@{test}}
+\subsubsection[{rONE}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rONE} = 1.0\_\-T\_\-SGL}}
+\label{namespacetest_a884b235687921d6a1682ba733422bc2a}
+
+
+Definition at line 45 of file test.F90.
+
+\hypertarget{namespacetest_a374cf972567d5d75483cb459084f3d4e}{
+\index{test@{test}!rPI@{rPI}}
+\index{rPI@{rPI}!test@{test}}
+\subsubsection[{rPI}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rPI} = 3.14159265\_\-T\_\-DBL}}
+\label{namespacetest_a374cf972567d5d75483cb459084f3d4e}
+
+
+Definition at line 55 of file test.F90.
+
+\hypertarget{namespacetest_af379bbc7038181ce0aee8712e76e9867}{
+\index{test@{test}!rPOINT2@{rPOINT2}}
+\index{rPOINT2@{rPOINT2}!test@{test}}
+\subsubsection[{rPOINT2}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rPOINT2} = 0.2\_\-T\_\-SGL}}
+\label{namespacetest_af379bbc7038181ce0aee8712e76e9867}
+
+
+Definition at line 42 of file test.F90.
+
+\hypertarget{namespacetest_a52a9cf25cf2fc8828b5313923217c3d8}{
+\index{test@{test}!rPOINT8@{rPOINT8}}
+\index{rPOINT8@{rPOINT8}!test@{test}}
+\subsubsection[{rPOINT8}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rPOINT8} = 0.8\_\-T\_\-SGL}}
+\label{namespacetest_a52a9cf25cf2fc8828b5313923217c3d8}
+
+
+Definition at line 44 of file test.F90.
+
+\hypertarget{namespacetest_a3f71bffc4ddb3031cb85b1bbd0731823}{
+\index{test@{test}!rSQM\_\-to\_\-SQFT@{rSQM\_\-to\_\-SQFT}}
+\index{rSQM\_\-to\_\-SQFT@{rSQM\_\-to\_\-SQFT}!test@{test}}
+\subsubsection[{rSQM\_\-to\_\-SQFT}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rSQM\_\-to\_\-SQFT} = 10.76391\_\-T\_\-DBL}}
+\label{namespacetest_a3f71bffc4ddb3031cb85b1bbd0731823}
+
+
+Definition at line 57 of file test.F90.
+
+\hypertarget{namespacetest_a797e128f57e419a939928fd813fa5ef6}{
+\index{test@{test}!rTEN@{rTEN}}
+\index{rTEN@{rTEN}!test@{test}}
+\subsubsection[{rTEN}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rTEN} = 10.0\_\-T\_\-SGL}}
+\label{namespacetest_a797e128f57e419a939928fd813fa5ef6}
+
+
+Definition at line 48 of file test.F90.
+
+\hypertarget{namespacetest_a09ee29fcb038648024d5f3021e2f8e05}{
+\index{test@{test}!rTHOUSAND@{rTHOUSAND}}
+\index{rTHOUSAND@{rTHOUSAND}!test@{test}}
+\subsubsection[{rTHOUSAND}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rTHOUSAND} = 1000.0\_\-T\_\-SGL}}
+\label{namespacetest_a09ee29fcb038648024d5f3021e2f8e05}
+
+
+Definition at line 50 of file test.F90.
+
+\hypertarget{namespacetest_a28a64e68af4df21c5a1c16a3dad0a400}{
+\index{test@{test}!rTWOPI@{rTWOPI}}
+\index{rTWOPI@{rTWOPI}!test@{test}}
+\subsubsection[{rTWOPI}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}),parameter,public {\bf test::rTWOPI} = 2.0\_\-T\_\-DBL $\ast$ rPI}}
+\label{namespacetest_a28a64e68af4df21c5a1c16a3dad0a400}
+
+
+Definition at line 56 of file test.F90.
+
+\hypertarget{namespacetest_a9bd8aefd97474e9bd8eb52d36c5d1ea2}{
+\index{test@{test}!rZERO@{rZERO}}
+\index{rZERO@{rZERO}!test@{test}}
+\subsubsection[{rZERO}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),parameter,public {\bf test::rZERO} = 0.0\_\-T\_\-SGL}}
+\label{namespacetest_a9bd8aefd97474e9bd8eb52d36c5d1ea2}
+
+
+Definition at line 39 of file test.F90.
+
+\hypertarget{namespacetest_a67805434e80e529c4296afa41874d705}{
+\index{test@{test}!sBLUE@{sBLUE}}
+\index{sBLUE@{sBLUE}!test@{test}}
+\subsubsection[{sBLUE}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sBLUE} = char(27)//'\mbox{[}1;34m'}}
+\label{namespacetest_a67805434e80e529c4296afa41874d705}
+
+
+Definition at line 84 of file test.F90.
+
+\hypertarget{namespacetest_a30a237c02c2640389d102030736a9a64}{
+\index{test@{test}!sBOLDWHITE@{sBOLDWHITE}}
+\index{sBOLDWHITE@{sBOLDWHITE}!test@{test}}
+\subsubsection[{sBOLDWHITE}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sBOLDWHITE} = char(27)//'\mbox{[}1;37m'}}
+\label{namespacetest_a30a237c02c2640389d102030736a9a64}
+
+
+Definition at line 87 of file test.F90.
+
+\hypertarget{namespacetest_a9400b0462b1b2636c59786f754d01c32}{
+\index{test@{test}!sCLRSCR@{sCLRSCR}}
+\index{sCLRSCR@{sCLRSCR}!test@{test}}
+\subsubsection[{sCLRSCR}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sCLRSCR} = char(27)//'\mbox{[}2J'}}
+\label{namespacetest_a9400b0462b1b2636c59786f754d01c32}
+
+
+Definition at line 88 of file test.F90.
+
+\hypertarget{namespacetest_adc949307b4c1c64ca9c4680cb1772584}{
+\index{test@{test}!sCYAN@{sCYAN}}
+\index{sCYAN@{sCYAN}!test@{test}}
+\subsubsection[{sCYAN}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sCYAN} = char(27)//'\mbox{[}1;36m'}}
+\label{namespacetest_adc949307b4c1c64ca9c4680cb1772584}
+
+
+Definition at line 85 of file test.F90.
+
+\hypertarget{namespacetest_a51f6a60bb17f75fd328f4ebec7c8fdc9}{
+\index{test@{test}!sGREEN@{sGREEN}}
+\index{sGREEN@{sGREEN}!test@{test}}
+\subsubsection[{sGREEN}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sGREEN} = char(27)//'\mbox{[}1;32m'}}
+\label{namespacetest_a51f6a60bb17f75fd328f4ebec7c8fdc9}
+
+
+Definition at line 82 of file test.F90.
+
+\hypertarget{namespacetest_afa1c66465bae9135884cfa7867b9df30}{
+\index{test@{test}!sLogBuffer@{sLogBuffer}}
+\index{sLogBuffer@{sLogBuffer}!test@{test}}
+\subsubsection[{sLogBuffer}]{\setlength{\rightskip}{0pt plus 5cm}character (len=256),public {\bf test::sLogBuffer}}}
+\label{namespacetest_afa1c66465bae9135884cfa7867b9df30}
+
+
+Definition at line 328 of file test.F90.
+
+\hypertarget{namespacetest_ad68d7758d8be0c0e11554d320e7fe361}{
+\index{test@{test}!sRED@{sRED}}
+\index{sRED@{sRED}!test@{test}}
+\subsubsection[{sRED}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sRED} = char(27)//'\mbox{[}1;31m'}}
+\label{namespacetest_ad68d7758d8be0c0e11554d320e7fe361}
+
+
+Definition at line 81 of file test.F90.
+
+\hypertarget{namespacetest_a66691525d314829771051bdadd26160f}{
+\index{test@{test}!STAT\_\-INFO@{STAT\_\-INFO}}
+\index{STAT\_\-INFO@{STAT\_\-INFO}!test@{test}}
+\subsubsection[{STAT\_\-INFO}]{\setlength{\rightskip}{0pt plus 5cm}type ( {\bf T\_\-STATS} ),dimension(inum\_\-variables) {\bf test::STAT\_\-INFO} = (/ {\bf T\_\-STATS} ('GROSS\_\-PRECIP',201,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','gross precipitation', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SNOWFALL',202,0,1,{\bf lTRUE},{\bf lTRUE}, 'inches','precipitation falling as snow', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SNOWCOVER',203,2,0,{\bf lFALSE},{\bf lTRUE}, 'inches','water equivalent of snow cover', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('CFGI',204,2,0,{\bf lFALSE},{\bf lFALSE}, 'unitless','continuous frozen ground index', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('MIN\_\-TEMP',205,2,0,{\bf lFALSE},{\bf lFALSE}, 'degrees F','minimum daily air temperature', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('MAX\_\-TEMP',206,2,0,{\bf lFALSE},{\bf lFALSE}, 'degrees F','maximum daily air temperature', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('AVG\_\-TEMP',207,2,0,{\bf lFALSE},{\bf lFALSE}, 'degrees F','mean daily air temperature', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('CHG\_\-IN\_\-SNOW\_\-COV',208,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','snowfall minus snowmelt', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SNOWMELT',209,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','snowmelt', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('INTERCEPTION',210,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','interception', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('NET\_\-PRECIP',211,0,1,{\bf lTRUE},{\bf lTRUE}, 'inches','gross precipitation minus interception', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('INFLOW',212,0,1,{\bf lTRUE},{\bf lTRUE}, 'inches','incoming flow from adjacent cells', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('OUTFLOW',213,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','outgoing flow to adjacent cells', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('RUNOFF\_\-OUTSIDE',214,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','runoff leaving model domain', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('REJECTED\_\-RECHARGE',215,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','recharge exceeding max recharge rate', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('NET\_\-INFLOW',216,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','sum of net precip and inflow', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('NET\_\-INFIL',217,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','precip and inflow minus outflow', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('POT\_\-ET',218,2,0,{\bf lTRUE},{\bf lTRUE}, 'inches','potential evapotranspiration', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('ACT\_\-ET',219,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','actual evapotranspiration', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('P\_\-MINUS\_\-PET',220,2,0,{\bf lTRUE},{\bf lFALSE}, 'inches','net inflow minus potential et', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SM\_\-DEFICIT',221,2,0,{\bf lTRUE},{\bf lFALSE}, 'inches','daily soil moisture deficit', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SM\_\-SURPLUS',222,2,0,{\bf lTRUE},{\bf lFALSE}, 'inches','daily soil moisture surplus', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SM\_\-APWL',223,2,0,{\bf lFALSE},{\bf lFALSE}, 'inches','accumulated potential water loss', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('SOIL\_\-MOISTURE',224,2,0,{\bf lFALSE},{\bf lTRUE}, 'inches','daily soil moisture', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('CHG\_\-IN\_\-SOIL\_\-MOIS',225,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','daily change in soil moisture', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('RECHARGE',226,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','daily potential recharge', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('GDD',227,2,0,{\bf lFALSE},{\bf lFALSE}, 'degree-\/day','growing degree day', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}), {\bf T\_\-STATS} ('IRRIGATION\_\-AMOUNT',228,0,1,{\bf lTRUE},{\bf lTRUE}, 'inches','daily estimated irrigation amount', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE}) ,{\bf T\_\-STATS} ('STREAM\_\-CAPTURE',229,0,-\/1,{\bf lTRUE},{\bf lTRUE}, 'inches','runoff or recharge captured by a stream or fracture', 1.,0.0, {\bf iNONE},{\bf iNONE},{\bf iNONE},{\bf iNONE})/)}}
+\label{namespacetest_a66691525d314829771051bdadd26160f}
+
+
+Definition at line 368 of file test.F90.
+
+\hypertarget{namespacetest_ad3936bf03ae58d097cb5b10ed2afead6}{
+\index{test@{test}!STREAM\_\-INTERACTIONS\_\-MAX@{STREAM\_\-INTERACTIONS\_\-MAX}}
+\index{STREAM\_\-INTERACTIONS\_\-MAX@{STREAM\_\-INTERACTIONS\_\-MAX}!test@{test}}
+\subsubsection[{STREAM\_\-INTERACTIONS\_\-MAX}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter {\bf test::STREAM\_\-INTERACTIONS\_\-MAX} = 100}}
+\label{namespacetest_ad3936bf03ae58d097cb5b10ed2afead6}
+
+
+Definition at line 534 of file test.F90.
+
+\hypertarget{namespacetest_adda4462ac95858ee3e499e1f721f4cb9}{
+\index{test@{test}!sWHITE@{sWHITE}}
+\index{sWHITE@{sWHITE}!test@{test}}
+\subsubsection[{sWHITE}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sWHITE} = char(27)//'\mbox{[}0;37m'}}
+\label{namespacetest_adda4462ac95858ee3e499e1f721f4cb9}
+
+
+Definition at line 86 of file test.F90.
+
+\hypertarget{namespacetest_ae3efae673a64050b6961fb4a43eafe2f}{
+\index{test@{test}!sYELLOW@{sYELLOW}}
+\index{sYELLOW@{sYELLOW}!test@{test}}
+\subsubsection[{sYELLOW}]{\setlength{\rightskip}{0pt plus 5cm}character (len=7),parameter {\bf test::sYELLOW} = char(27)//'\mbox{[}1;33m'}}
+\label{namespacetest_ae3efae673a64050b6961fb4a43eafe2f}
+
+
+Definition at line 83 of file test.F90.
+
+\hypertarget{namespacetest_a3023425eff6a423b04bc28123a79fda5}{
+\index{test@{test}!T\_\-BYTE@{T\_\-BYTE}}
+\index{T\_\-BYTE@{T\_\-BYTE}!test@{test}}
+\subsubsection[{T\_\-BYTE}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-BYTE} = 1}}
+\label{namespacetest_a3023425eff6a423b04bc28123a79fda5}
+
+
+Definition at line 9 of file test.F90.
+
+\hypertarget{namespacetest_afdd43703b42a2585fd3e53240e541b80}{
+\index{test@{test}!T\_\-CELL\_\-GRID@{T\_\-CELL\_\-GRID}}
+\index{T\_\-CELL\_\-GRID@{T\_\-CELL\_\-GRID}!test@{test}}
+\subsubsection[{T\_\-CELL\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::T\_\-CELL\_\-GRID} = 2}}
+\label{namespacetest_afdd43703b42a2585fd3e53240e541b80}
+
+
+Definition at line 164 of file test.F90.
+
+\hypertarget{namespacetest_af379b935264d350d76bf75331181e241}{
+\index{test@{test}!T\_\-DBL@{T\_\-DBL}}
+\index{T\_\-DBL@{T\_\-DBL}!test@{test}}
+\subsubsection[{T\_\-DBL}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-DBL} = SELECTED\_\-REAL\_\-KIND(p=13, r=200)}}
+\label{namespacetest_af379b935264d350d76bf75331181e241}
+
+
+Definition at line 15 of file test.F90.
+
+\hypertarget{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{
+\index{test@{test}!T\_\-INT@{T\_\-INT}}
+\index{T\_\-INT@{T\_\-INT}!test@{test}}
+\subsubsection[{T\_\-INT}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-INT} = 4}}
+\label{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}
+
+
+Definition at line 7 of file test.F90.
+
+\hypertarget{namespacetest_a6b23ea23fb5d02c95f52b7d39ab348fe}{
+\index{test@{test}!T\_\-INT\_\-GRID@{T\_\-INT\_\-GRID}}
+\index{T\_\-INT\_\-GRID@{T\_\-INT\_\-GRID}!test@{test}}
+\subsubsection[{T\_\-INT\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::T\_\-INT\_\-GRID} = 0}}
+\label{namespacetest_a6b23ea23fb5d02c95f52b7d39ab348fe}
+
+
+Definition at line 162 of file test.F90.
+
+\hypertarget{namespacetest_acdeac586276a7d1d394fb5eddc77fc3d}{
+\index{test@{test}!T\_\-LOGICAL@{T\_\-LOGICAL}}
+\index{T\_\-LOGICAL@{T\_\-LOGICAL}!test@{test}}
+\subsubsection[{T\_\-LOGICAL}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-LOGICAL} = 4}}
+\label{namespacetest_acdeac586276a7d1d394fb5eddc77fc3d}
+
+
+Definition at line 6 of file test.F90.
+
+\hypertarget{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{
+\index{test@{test}!T\_\-SGL@{T\_\-SGL}}
+\index{T\_\-SGL@{T\_\-SGL}!test@{test}}
+\subsubsection[{T\_\-SGL}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-SGL} = SELECTED\_\-REAL\_\-KIND(p=6, r=37)}}
+\label{namespacetest_a04d8b9090502de3a00046fe904bc3d99}
+
+
+Definition at line 14 of file test.F90.
+
+\hypertarget{namespacetest_ade95807442cb41fc39b288b86e82bccd}{
+\index{test@{test}!T\_\-SGL\_\-DISLIN@{T\_\-SGL\_\-DISLIN}}
+\index{T\_\-SGL\_\-DISLIN@{T\_\-SGL\_\-DISLIN}!test@{test}}
+\subsubsection[{T\_\-SGL\_\-DISLIN}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-SGL\_\-DISLIN} = 4}}
+\label{namespacetest_ade95807442cb41fc39b288b86e82bccd}
+
+
+Definition at line 10 of file test.F90.
+
+\hypertarget{namespacetest_a60ae6ddfc7d411862eddaea30f59049f}{
+\index{test@{test}!T\_\-SGL\_\-GRID@{T\_\-SGL\_\-GRID}}
+\index{T\_\-SGL\_\-GRID@{T\_\-SGL\_\-GRID}!test@{test}}
+\subsubsection[{T\_\-SGL\_\-GRID}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),parameter,public {\bf test::T\_\-SGL\_\-GRID} = 1}}
+\label{namespacetest_a60ae6ddfc7d411862eddaea30f59049f}
+
+
+Definition at line 163 of file test.F90.
+
+\hypertarget{namespacetest_a78d9db20f77ee4f9cf3ac5abfb7062b9}{
+\index{test@{test}!T\_\-SHORT@{T\_\-SHORT}}
+\index{T\_\-SHORT@{T\_\-SHORT}!test@{test}}
+\subsubsection[{T\_\-SHORT}]{\setlength{\rightskip}{0pt plus 5cm}integer,parameter,public {\bf test::T\_\-SHORT} = 2}}
+\label{namespacetest_a78d9db20f77ee4f9cf3ac5abfb7062b9}
+
+
+Definition at line 8 of file test.F90.
+
+\hypertarget{namespacetest_a0cc123ab400cd2007652453350776116}{
+\index{test@{test}!YEAR\_\-INFO@{YEAR\_\-INFO}}
+\index{YEAR\_\-INFO@{YEAR\_\-INFO}!test@{test}}
+\subsubsection[{YEAR\_\-INFO}]{\setlength{\rightskip}{0pt plus 5cm}type ( {\bf T\_\-MONTH} ),dimension(12),target {\bf test::YEAR\_\-INFO} = (/ {\bf T\_\-MONTH}( 'JAN','JANUARY ', 1, 31, 1, 31), {\bf T\_\-MONTH}( 'FEB','FEBRUARY ', 32, 59, 2, 29), {\bf T\_\-MONTH}( 'MAR','MARCH ', 60, 90, 3, 31), {\bf T\_\-MONTH}( 'APR','APRIL ', 91, 120, 4, 30), {\bf T\_\-MONTH}( 'MAY','MAY ', 121, 151, 5, 31), {\bf T\_\-MONTH}( 'JUN','JUNE ', 152, 181, 6, 30), {\bf T\_\-MONTH}( 'JUL','JULY ', 182, 212, 7, 31), {\bf T\_\-MONTH}( 'AUG','AUGUST ', 213, 243, 8, 31), {\bf T\_\-MONTH}( 'SEP','SEPTEMBER', 244, 273, 9, 30), {\bf T\_\-MONTH}( 'OCT','OCTOBER ', 274, 304, 10, 31), {\bf T\_\-MONTH}( 'NOV','NOVEMBER ', 305, 334, 11, 30), {\bf T\_\-MONTH}( 'DEC','DECEMBER ', 335, 365, 12, 31) /)}}
+\label{namespacetest_a0cc123ab400cd2007652453350776116}
+
+
+Month information. 
+
+
+
+Definition at line 313 of file test.F90.
+

@@ -1,0 +1,639 @@
+\hypertarget{namespacemeteorological__functions}{
+\section{meteorological\_\-functions Module Reference}
+\label{namespacemeteorological__functions}\index{meteorological\_\-functions@{meteorological\_\-functions}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a0228a2c9f92d212730d57a308c27d6a7}{daylight\_\-hours} (rOmega\_\-s)
+\begin{DoxyCompactList}\small\item\em Calculates the number of daylight hours at a location. \item\end{DoxyCompactList}\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a934777cd90ce18fe8fce7d7cfed5bf35}{extraterrestrial\_\-radiation\_\-Ra} (rLatitude, rDelta, rOmega\_\-s, rDsubR)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ad6b54db0b5a7ad72d029c8d4d252e0c3}{deg2rad} (rDeg)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ae644c82b94c9b7d74340c161115f5b7c}{equivalent\_\-evaporation} (rR)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a50fc95bc69ce9e9fd28b0e1696697a7d}{row\_\-latitude} (rNorthLat, rSouthLat, iNumRows, iCurrRow)
+\item 
+real(kind=T\_\-DBL) \hyperlink{namespacemeteorological__functions_af2672c6758aee047fb536dd125dce2f3}{sensible\_\-heat\_\-exchange\_\-h} (rTSnow, rTAvg, rWindSpd)
+\item 
+real(kind=T\_\-DBL) \hyperlink{namespacemeteorological__functions_a90b4e8a09fb5c0597f52bd44adfb2e24}{convective\_\-heat\_\-exchange\_\-e} (rTSnow, rTAvg, rWindSpd)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a35ff0a37cae7cf1ff85ecf7daa47303e}{net\_\-shortwave\_\-radiation\_\-Rns} (rRs, rAlbedo)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_abd07fab175427fff1c33d3dc204c385d}{precipitation\_\-heat\_\-p} (rPrecipAmount, rTAvg)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a45a598db078dc2575ce2c0ddcc2f69f0}{solar\_\-declination} (iDayOfYear, iNumDaysInYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ade7f60bc93f4411aa8c4a157341f8b4b}{rel\_\-Earth\_\-Sun\_\-dist} (iDayOfYear, iNumDaysInYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_abdb8538c50386c8a369970151f80f73d}{sunset\_\-angle} (rLatitude, rDelta)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ac17c220d158f0bde31c9f9ef399091a1}{solar\_\-radiation\_\-Hargreaves\_\-Rs} (rRa, rTMIN, rTMAX)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a48647f465f1e4cbd25c66406f4b22c56}{clear\_\-sky\_\-solar\_\-radiation\_\-Rso} (rRa, rAs\_\-in, rBs\_\-in)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a333c8237b31d94b94b0e85b8bd434db6}{clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso} (rRa, rElevation)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a3f4af0d18369a72079c3cfc0af56eb74}{solar\_\-radiation\_\-Rs} (rRa, rAs, rBs, rPctSun)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a661699aa6c8c654d6aa0ddd8175be9ef}{sat\_\-vapor\_\-pressure\_\-es} (rT)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a67a6a39a9e60d4711972647406a1e6fa}{sat\_\-vapor\_\-density} (rT)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_abdb2c6342c1ec952d3697d89a79376b1}{dewpoint\_\-vapor\_\-pressure\_\-ea} (rTMIN)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a573561cffc2aaee2f4570c4d6db0e93b}{minimum\_\-rel\_\-hum} (rTMin, rTMax)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_adfe00f4b647649a9b3134e54311d6835}{maximum\_\-rel\_\-hum} (rTMin)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a7144b3142f66dfaf06985f0f908400b4}{net\_\-longwave\_\-radiation\_\-Rnl} (rTMin, rTMax, rRs, rRso)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ac9ecb6e3268d4b67678af28b23cce215}{zenith\_\-angle} (rLatitude, rDelta)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_a6236f001864bef39fdd6a688e9c0f430}{slope\_\-sat\_\-vapor\_\-pressure\_\-curve} (rT)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacemeteorological__functions_ad8a6559646c993f06e81444054cc0076}{calc\_\-crop\_\-coefficient} (rKc\_\-Max, rK0, rGDD\_\-Kc\_\-Max, rGDD\_\-Death, rAlpha1, rGDD)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespacemeteorological__functions_ad8a6559646c993f06e81444054cc0076}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!calc\_\-crop\_\-coefficient@{calc\_\-crop\_\-coefficient}}
+\index{calc\_\-crop\_\-coefficient@{calc\_\-crop\_\-coefficient}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{calc\_\-crop\_\-coefficient}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::calc\_\-crop\_\-coefficient (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL)}]{rKc\_\-Max, }
+\item[{real (kind=T\_\-SGL)}]{rK0, }
+\item[{real (kind=T\_\-SGL)}]{rGDD\_\-Kc\_\-Max, }
+\item[{real (kind=T\_\-SGL)}]{rGDD\_\-Death, }
+\item[{real (kind=T\_\-SGL)}]{rAlpha1, }
+\item[{real (kind=T\_\-SGL)}]{rGDD}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ad8a6559646c993f06e81444054cc0076}
+
+
+Definition at line 1149 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_a333c8237b31d94b94b0e85b8bd434db6}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso@{clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso}}
+\index{clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso@{clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::clear\_\-sky\_\-solar\_\-radiation\_\-noAB\_\-Rso (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRa, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rElevation}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a333c8237b31d94b94b0e85b8bd434db6}
+
+
+Definition at line 746 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_a48647f465f1e4cbd25c66406f4b22c56}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!clear\_\-sky\_\-solar\_\-radiation\_\-Rso@{clear\_\-sky\_\-solar\_\-radiation\_\-Rso}}
+\index{clear\_\-sky\_\-solar\_\-radiation\_\-Rso@{clear\_\-sky\_\-solar\_\-radiation\_\-Rso}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{clear\_\-sky\_\-solar\_\-radiation\_\-Rso}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::clear\_\-sky\_\-solar\_\-radiation\_\-Rso (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRa, }
+\item[{real (kind=T\_\-SGL),intent(in),optional}]{rAs\_\-in, }
+\item[{real (kind=T\_\-SGL),intent(in),optional}]{rBs\_\-in}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a48647f465f1e4cbd25c66406f4b22c56}
+
+
+Definition at line 684 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_a90b4e8a09fb5c0597f52bd44adfb2e24}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!convective\_\-heat\_\-exchange\_\-e@{convective\_\-heat\_\-exchange\_\-e}}
+\index{convective\_\-heat\_\-exchange\_\-e@{convective\_\-heat\_\-exchange\_\-e}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{convective\_\-heat\_\-exchange\_\-e}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-DBL) meteorological\_\-functions::convective\_\-heat\_\-exchange\_\-e (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL)}]{rTSnow, }
+\item[{real (kind=T\_\-SGL)}]{rTAvg, }
+\item[{real (kind=T\_\-SGL),optional}]{rWindSpd}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a90b4e8a09fb5c0597f52bd44adfb2e24}
+
+
+Definition at line 344 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by snow::snow\_\-energy\_\-balance().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_a90b4e8a09fb5c0597f52bd44adfb2e24_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a0228a2c9f92d212730d57a308c27d6a7}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!daylight\_\-hours@{daylight\_\-hours}}
+\index{daylight\_\-hours@{daylight\_\-hours}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{daylight\_\-hours}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::daylight\_\-hours (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rOmega\_\-s}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a0228a2c9f92d212730d57a308c27d6a7}
+
+
+Calculates the number of daylight hours at a location. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em rOmega\_\-s} & The sunset hour angle in Radians. \\
+\hline
+\end{DoxyParams}
+\begin{DoxyReturn}{Returns}
+rN The number of daylight hours. 
+\end{DoxyReturn}
+\begin{DoxyParagraph}{}
+The distance between $(x_1,y_1)$ and $(x_2,y_2)$ is $\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$.
+\end{DoxyParagraph}
+\begin{DoxyNote}{Note}
+Implemented as equation 34, Allen and others (2006). 
+\end{DoxyNote}
+\begin{DoxyParagraph}{}
+Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56, \char`\"{}Crop Evapotranspiration (Guidelines for computing crop water
+   requirements)\char`\"{}, Food and Agriculture Organization, Rome, Italy. 
+\end{DoxyParagraph}
+
+
+Definition at line 68 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_ad6b54db0b5a7ad72d029c8d4d252e0c3}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!deg2rad@{deg2rad}}
+\index{deg2rad@{deg2rad}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{deg2rad}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::deg2rad (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rDeg}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ad6b54db0b5a7ad72d029c8d4d252e0c3}
+
+
+Definition at line 154 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_abdb2c6342c1ec952d3697d89a79376b1}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!dewpoint\_\-vapor\_\-pressure\_\-ea@{dewpoint\_\-vapor\_\-pressure\_\-ea}}
+\index{dewpoint\_\-vapor\_\-pressure\_\-ea@{dewpoint\_\-vapor\_\-pressure\_\-ea}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{dewpoint\_\-vapor\_\-pressure\_\-ea}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::dewpoint\_\-vapor\_\-pressure\_\-ea (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMIN}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_abdb2c6342c1ec952d3697d89a79376b1}
+
+
+Definition at line 896 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by maximum\_\-rel\_\-hum(), minimum\_\-rel\_\-hum(), and net\_\-longwave\_\-radiation\_\-Rnl().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_abdb2c6342c1ec952d3697d89a79376b1_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_ae644c82b94c9b7d74340c161115f5b7c}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!equivalent\_\-evaporation@{equivalent\_\-evaporation}}
+\index{equivalent\_\-evaporation@{equivalent\_\-evaporation}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{equivalent\_\-evaporation}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::equivalent\_\-evaporation (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rR}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ae644c82b94c9b7d74340c161115f5b7c}
+
+
+Definition at line 187 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+\hypertarget{namespacemeteorological__functions_a934777cd90ce18fe8fce7d7cfed5bf35}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!extraterrestrial\_\-radiation\_\-Ra@{extraterrestrial\_\-radiation\_\-Ra}}
+\index{extraterrestrial\_\-radiation\_\-Ra@{extraterrestrial\_\-radiation\_\-Ra}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{extraterrestrial\_\-radiation\_\-Ra}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::extraterrestrial\_\-radiation\_\-Ra (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rLatitude, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rDelta, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rOmega\_\-s, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rDsubR}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a934777cd90ce18fe8fce7d7cfed5bf35}
+
+
+Definition at line 115 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+\hypertarget{namespacemeteorological__functions_adfe00f4b647649a9b3134e54311d6835}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!maximum\_\-rel\_\-hum@{maximum\_\-rel\_\-hum}}
+\index{maximum\_\-rel\_\-hum@{maximum\_\-rel\_\-hum}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{maximum\_\-rel\_\-hum}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::maximum\_\-rel\_\-hum (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMin}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_adfe00f4b647649a9b3134e54311d6835}
+
+
+Definition at line 980 of file meteorological\_\-functions.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_adfe00f4b647649a9b3134e54311d6835_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a573561cffc2aaee2f4570c4d6db0e93b}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!minimum\_\-rel\_\-hum@{minimum\_\-rel\_\-hum}}
+\index{minimum\_\-rel\_\-hum@{minimum\_\-rel\_\-hum}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{minimum\_\-rel\_\-hum}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::minimum\_\-rel\_\-hum (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMin, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMax}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a573561cffc2aaee2f4570c4d6db0e93b}
+
+
+Definition at line 937 of file meteorological\_\-functions.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_a573561cffc2aaee2f4570c4d6db0e93b_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a7144b3142f66dfaf06985f0f908400b4}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!net\_\-longwave\_\-radiation\_\-Rnl@{net\_\-longwave\_\-radiation\_\-Rnl}}
+\index{net\_\-longwave\_\-radiation\_\-Rnl@{net\_\-longwave\_\-radiation\_\-Rnl}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{net\_\-longwave\_\-radiation\_\-Rnl}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-SGL) meteorological\_\-functions::net\_\-longwave\_\-radiation\_\-Rnl (
+\begin{DoxyParamCaption}
+\item[{real(kind=T\_\-SGL),intent(in)}]{rTMin, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rTMax, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rRs, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rRso}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a7144b3142f66dfaf06985f0f908400b4}
+
+
+Definition at line 1026 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by snow::snow\_\-energy\_\-balance().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_a7144b3142f66dfaf06985f0f908400b4_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a35ff0a37cae7cf1ff85ecf7daa47303e}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!net\_\-shortwave\_\-radiation\_\-Rns@{net\_\-shortwave\_\-radiation\_\-Rns}}
+\index{net\_\-shortwave\_\-radiation\_\-Rns@{net\_\-shortwave\_\-radiation\_\-Rns}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{net\_\-shortwave\_\-radiation\_\-Rns}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-SGL) meteorological\_\-functions::net\_\-shortwave\_\-radiation\_\-Rns (
+\begin{DoxyParamCaption}
+\item[{real(kind=T\_\-SGL),intent(in)}]{rRs, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rAlbedo}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a35ff0a37cae7cf1ff85ecf7daa47303e}
+
+
+Definition at line 404 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by snow::snow\_\-energy\_\-balance().
+
+\hypertarget{namespacemeteorological__functions_abd07fab175427fff1c33d3dc204c385d}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!precipitation\_\-heat\_\-p@{precipitation\_\-heat\_\-p}}
+\index{precipitation\_\-heat\_\-p@{precipitation\_\-heat\_\-p}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{precipitation\_\-heat\_\-p}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::precipitation\_\-heat\_\-p (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL)}]{rPrecipAmount, }
+\item[{real (kind=T\_\-SGL)}]{rTAvg}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_abd07fab175427fff1c33d3dc204c385d}
+
+
+Definition at line 464 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by snow::snow\_\-energy\_\-balance().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_abd07fab175427fff1c33d3dc204c385d_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_ade7f60bc93f4411aa8c4a157341f8b4b}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!rel\_\-Earth\_\-Sun\_\-dist@{rel\_\-Earth\_\-Sun\_\-dist}}
+\index{rel\_\-Earth\_\-Sun\_\-dist@{rel\_\-Earth\_\-Sun\_\-dist}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{rel\_\-Earth\_\-Sun\_\-dist}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::rel\_\-Earth\_\-Sun\_\-dist (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumDaysInYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ade7f60bc93f4411aa8c4a157341f8b4b}
+
+
+Definition at line 547 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+\hypertarget{namespacemeteorological__functions_a50fc95bc69ce9e9fd28b0e1696697a7d}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!row\_\-latitude@{row\_\-latitude}}
+\index{row\_\-latitude@{row\_\-latitude}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{row\_\-latitude}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::row\_\-latitude (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rNorthLat, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSouthLat, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumRows, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iCurrRow}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a50fc95bc69ce9e9fd28b0e1696697a7d}
+
+
+Definition at line 222 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+\hypertarget{namespacemeteorological__functions_a67a6a39a9e60d4711972647406a1e6fa}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!sat\_\-vapor\_\-density@{sat\_\-vapor\_\-density}}
+\index{sat\_\-vapor\_\-density@{sat\_\-vapor\_\-density}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{sat\_\-vapor\_\-density}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-SGL) meteorological\_\-functions::sat\_\-vapor\_\-density (
+\begin{DoxyParamCaption}
+\item[{real(kind=T\_\-SGL),intent(in)}]{rT}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a67a6a39a9e60d4711972647406a1e6fa}
+
+
+Definition at line 855 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by convective\_\-heat\_\-exchange\_\-e().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=392pt]{namespacemeteorological__functions_a67a6a39a9e60d4711972647406a1e6fa_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a661699aa6c8c654d6aa0ddd8175be9ef}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!sat\_\-vapor\_\-pressure\_\-es@{sat\_\-vapor\_\-pressure\_\-es}}
+\index{sat\_\-vapor\_\-pressure\_\-es@{sat\_\-vapor\_\-pressure\_\-es}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{sat\_\-vapor\_\-pressure\_\-es}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::sat\_\-vapor\_\-pressure\_\-es (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rT}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a661699aa6c8c654d6aa0ddd8175be9ef}
+
+
+Definition at line 838 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by maximum\_\-rel\_\-hum(), and minimum\_\-rel\_\-hum().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_a661699aa6c8c654d6aa0ddd8175be9ef_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_af2672c6758aee047fb536dd125dce2f3}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!sensible\_\-heat\_\-exchange\_\-h@{sensible\_\-heat\_\-exchange\_\-h}}
+\index{sensible\_\-heat\_\-exchange\_\-h@{sensible\_\-heat\_\-exchange\_\-h}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{sensible\_\-heat\_\-exchange\_\-h}]{\setlength{\rightskip}{0pt plus 5cm}real(kind=T\_\-DBL) meteorological\_\-functions::sensible\_\-heat\_\-exchange\_\-h (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL)}]{rTSnow, }
+\item[{real (kind=T\_\-SGL)}]{rTAvg, }
+\item[{real (kind=T\_\-SGL),optional}]{rWindSpd}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_af2672c6758aee047fb536dd125dce2f3}
+
+
+Definition at line 266 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by snow::snow\_\-energy\_\-balance().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_af2672c6758aee047fb536dd125dce2f3_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a6236f001864bef39fdd6a688e9c0f430}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!slope\_\-sat\_\-vapor\_\-pressure\_\-curve@{slope\_\-sat\_\-vapor\_\-pressure\_\-curve}}
+\index{slope\_\-sat\_\-vapor\_\-pressure\_\-curve@{slope\_\-sat\_\-vapor\_\-pressure\_\-curve}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{slope\_\-sat\_\-vapor\_\-pressure\_\-curve}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::slope\_\-sat\_\-vapor\_\-pressure\_\-curve (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rT}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a6236f001864bef39fdd6a688e9c0f430}
+
+
+Definition at line 1131 of file meteorological\_\-functions.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_a6236f001864bef39fdd6a688e9c0f430_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a45a598db078dc2575ce2c0ddcc2f69f0}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!solar\_\-declination@{solar\_\-declination}}
+\index{solar\_\-declination@{solar\_\-declination}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{solar\_\-declination}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::solar\_\-declination (
+\begin{DoxyParamCaption}
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumDaysInYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a45a598db078dc2575ce2c0ddcc2f69f0}
+
+
+Definition at line 503 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+\hypertarget{namespacemeteorological__functions_ac17c220d158f0bde31c9f9ef399091a1}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!solar\_\-radiation\_\-Hargreaves\_\-Rs@{solar\_\-radiation\_\-Hargreaves\_\-Rs}}
+\index{solar\_\-radiation\_\-Hargreaves\_\-Rs@{solar\_\-radiation\_\-Hargreaves\_\-Rs}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{solar\_\-radiation\_\-Hargreaves\_\-Rs}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::solar\_\-radiation\_\-Hargreaves\_\-Rs (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRa, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMIN, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMAX}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ac17c220d158f0bde31c9f9ef399091a1}
+
+
+Definition at line 637 of file meteorological\_\-functions.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacemeteorological__functions_ac17c220d158f0bde31c9f9ef399091a1_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_a3f4af0d18369a72079c3cfc0af56eb74}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!solar\_\-radiation\_\-Rs@{solar\_\-radiation\_\-Rs}}
+\index{solar\_\-radiation\_\-Rs@{solar\_\-radiation\_\-Rs}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{solar\_\-radiation\_\-Rs}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::solar\_\-radiation\_\-Rs (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRa, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rAs, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rBs, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rPctSun}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_a3f4af0d18369a72079c3cfc0af56eb74}
+
+
+Definition at line 793 of file meteorological\_\-functions.F90.
+
+\hypertarget{namespacemeteorological__functions_abdb8538c50386c8a369970151f80f73d}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!sunset\_\-angle@{sunset\_\-angle}}
+\index{sunset\_\-angle@{sunset\_\-angle}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{sunset\_\-angle}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::sunset\_\-angle (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rLatitude, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rDelta}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_abdb8538c50386c8a369970151f80f73d}
+
+
+Definition at line 589 of file meteorological\_\-functions.F90.
+
+
+
+Referenced by et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=380pt]{namespacemeteorological__functions_abdb8538c50386c8a369970151f80f73d_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacemeteorological__functions_ac9ecb6e3268d4b67678af28b23cce215}{
+\index{meteorological\_\-functions@{meteorological\_\-functions}!zenith\_\-angle@{zenith\_\-angle}}
+\index{zenith\_\-angle@{zenith\_\-angle}!meteorological_functions@{meteorological\_\-functions}}
+\subsubsection[{zenith\_\-angle}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) meteorological\_\-functions::zenith\_\-angle (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rLatitude, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rDelta}
+\end{DoxyParamCaption}
+)}}
+\label{namespacemeteorological__functions_ac9ecb6e3268d4b67678af28b23cce215}
+
+
+Definition at line 1083 of file meteorological\_\-functions.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=378pt]{namespacemeteorological__functions_ac9ecb6e3268d4b67678af28b23cce215_cgraph}
+\end{center}
+\end{figure}
+
+

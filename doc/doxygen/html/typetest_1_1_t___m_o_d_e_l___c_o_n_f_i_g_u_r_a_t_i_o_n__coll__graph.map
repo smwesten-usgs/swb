@@ -1,0 +1,9 @@
+<map id="G" name="G">
+<area shape="rect" id="node4" href="$typetest_1_1_t___i_r_r_i_g_a_t_i_o_n___l_o_o_k_u_p.html" title="{test::T_IRRIGATION_LOOKUP\n|+ iLandUseType\l+ rKc_Max\l+ rK0\l+ rGDD_Kc_Max\l+ rGDD_Death\l+ rAlpha1\l+ rGDD_BaseTemp\l+ rGDD_MaxTemp\l+ rMAD\l+ iBeginIrrigation\l+ iEndIrrigation\l|}" alt="" coords="473,635,671,893"/>
+<area shape="rect" id="node12" href="$typetest_1_1_t___b_a_s_i_n___m_a_s_k.html" title="container for basin mask table data" alt="" coords="1169,2317,1353,2611"/>
+<area shape="rect" id="node18" href="$typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d.html" title="Type that contains the data for a grid." alt="" coords="945,1681,1111,1957"/>
+<area shape="rect" id="node21" href="$typetest_1_1_t___c_e_l_l.html" title="Type that contains the data for an individual grid cell." alt="" coords="695,331,889,1197"/>
+<area shape="rect" id="node38" href="$typetest_1_1_t___n_e_t_c_d_f___f_i_l_e.html" title="{test::T_NETCDF_FILE\n|+ iNCID\l+ sFilename\l+ sVarName\l+ sUnits\l+ iProjID\l+ iCRSID\l+ iVarID\l+ iLatVarID\l+ iLonVarID\l+ iXVarID\l+ iYVarID\l+ iXDimID\l+ iYDimID\l+ iTimeDimID\l+ iTimeVarID\l+ iOriginMonth\l+ iOriginDay\l+ iOriginYear\l+ iOriginJulianDay\l+ iStartJulianDay\l+ iEndJulianDay\l+ rX_LowerLeft\l+ rY_LowerLeft\l+ rX_UpperRight\l+ rY_UpperRight\l+ rGridCellSize\l+ iX_NumGridCells\l+ iY_NumGridCells\l+ lInterpolate\l+ rScaleFactor\l+ rAddOffset\l+ sProjectionName\l+ sProjectionUnits\l+ rFalseEasting\l+ rFalseNorthing\l+ rLongOrigin\l+ rLatOrigin\l+ iZoneNumber\l+ sEllipsoidName\l+ iEllipsoidID\l|}" alt="" coords="1867,1438,2016,2199"/>
+<area shape="rect" id="node53" href="$typetest_1_1_t___l_a_n_d_u_s_e___l_o_o_k_u_p.html" title="Container for land&#45;use related data." alt="" coords="2677,678,2917,850"/>
+<area shape="rect" id="node64" href="$typetest_1_1_t___s_s_f___f_i_l_e_s.html" title="container for SSF file information" alt="" coords="2469,687,2603,841"/>
+</map>

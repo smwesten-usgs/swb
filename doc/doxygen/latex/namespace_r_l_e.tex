@@ -1,0 +1,69 @@
+\hypertarget{namespace_r_l_e}{
+\section{RLE Module Reference}
+\label{namespace_r_l_e}\index{RLE@{RLE}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespace_r_l_e_a2e9e849815a1bcf1205b52ab3abce6b2}{RLE\_\-writeByte} (iLU, rValue, iRLE\_\-MULT, rRLE\_\-OFFSET, iByteTotal, iVarNum)
+\item 
+subroutine \hyperlink{namespace_r_l_e_ad4af726c9f6888eff2870258c8fb75de}{RLE\_\-readByte} (iLU, iRLE\_\-MULT, rRLE\_\-OFFSET, rValue, iByteTotal, lEOF)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespace_r_l_e_ad4af726c9f6888eff2870258c8fb75de}{
+\index{RLE@{RLE}!RLE\_\-readByte@{RLE\_\-readByte}}
+\index{RLE\_\-readByte@{RLE\_\-readByte}!RLE@{RLE}}
+\subsubsection[{RLE\_\-readByte}]{\setlength{\rightskip}{0pt plus 5cm}subroutine RLE::RLE\_\-readByte (
+\begin{DoxyParamCaption}
+\item[{integer(kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iRLE\_\-MULT, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rRLE\_\-OFFSET, }
+\item[{real(kind=T\_\-SGL),dimension(ibytetotal),intent(out)}]{rValue, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iByteTotal, }
+\item[{logical(kind=T\_\-LOGICAL),intent(out)}]{lEOF}
+\end{DoxyParamCaption}
+)}}
+\label{namespace_r_l_e_ad4af726c9f6888eff2870258c8fb75de}
+
+
+Definition at line 158 of file RLE.F90.
+
+
+
+Referenced by swb\_\-stats::stats\_\-RewriteGrids(), swbread(), and swbstats().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=296pt]{namespace_r_l_e_ad4af726c9f6888eff2870258c8fb75de_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespace_r_l_e_a2e9e849815a1bcf1205b52ab3abce6b2}{
+\index{RLE@{RLE}!RLE\_\-writeByte@{RLE\_\-writeByte}}
+\index{RLE\_\-writeByte@{RLE\_\-writeByte}!RLE@{RLE}}
+\subsubsection[{RLE\_\-writeByte}]{\setlength{\rightskip}{0pt plus 5cm}subroutine RLE::RLE\_\-writeByte (
+\begin{DoxyParamCaption}
+\item[{integer(kind=T\_\-INT),intent(in)}]{iLU, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rValue, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iRLE\_\-MULT, }
+\item[{real(kind=T\_\-SGL),intent(in)}]{rRLE\_\-OFFSET, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iByteTotal, }
+\item[{integer(kind=T\_\-INT),intent(in)}]{iVarNum}
+\end{DoxyParamCaption}
+)}}
+\label{namespace_r_l_e_a2e9e849815a1bcf1205b52ab3abce6b2}
+
+
+Definition at line 32 of file RLE.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+

@@ -1,0 +1,123 @@
+\hypertarget{namespaceet__hargreaves}{
+\section{et\_\-hargreaves Module Reference}
+\label{namespaceet__hargreaves}\index{et\_\-hargreaves@{et\_\-hargreaves}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespaceet__hargreaves_aa81bd6c44c0d862bda8f0a508e6aea47}{et\_\-hargreaves\_\-configure} (pConfig, sRecord)
+\item 
+subroutine \hyperlink{namespaceet__hargreaves_a8b623d04dfb66cab6c0bc1b8ba471c89}{et\_\-hargreaves\_\-initialize} (pGrd, sFileName)
+\item 
+subroutine \hyperlink{namespaceet__hargreaves_a93c5bea9de3b762cce69fe978f75d609}{et\_\-hargreaves\_\-ComputeET} (pGrd, pConfig, iDayOfYear, iNumDaysInYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceet__hargreaves_a905bbe6d732ac8cd4ed35b59d1b1177e}{ET0\_\-hargreaves} (pConfig, rRa, rTMinF, rTMaxF)
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespaceet__hargreaves_a905bbe6d732ac8cd4ed35b59d1b1177e}{
+\index{et\_\-hargreaves@{et\_\-hargreaves}!ET0\_\-hargreaves@{ET0\_\-hargreaves}}
+\index{ET0\_\-hargreaves@{ET0\_\-hargreaves}!et_hargreaves@{et\_\-hargreaves}}
+\subsubsection[{ET0\_\-hargreaves}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) et\_\-hargreaves::ET0\_\-hargreaves (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRa, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMinF, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rTMaxF}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__hargreaves_a905bbe6d732ac8cd4ed35b59d1b1177e}
+
+
+Definition at line 146 of file et\_\-hargreaves.F90.
+
+
+
+Referenced by et\_\-hargreaves\_\-ComputeET().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=336pt]{namespaceet__hargreaves_a905bbe6d732ac8cd4ed35b59d1b1177e_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceet__hargreaves_a93c5bea9de3b762cce69fe978f75d609}{
+\index{et\_\-hargreaves@{et\_\-hargreaves}!et\_\-hargreaves\_\-ComputeET@{et\_\-hargreaves\_\-ComputeET}}
+\index{et\_\-hargreaves\_\-ComputeET@{et\_\-hargreaves\_\-ComputeET}!et_hargreaves@{et\_\-hargreaves}}
+\subsubsection[{et\_\-hargreaves\_\-ComputeET}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-hargreaves::et\_\-hargreaves\_\-ComputeET (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iNumDaysInYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__hargreaves_a93c5bea9de3b762cce69fe978f75d609}
+
+
+Definition at line 71 of file et\_\-hargreaves.F90.
+
+
+
+Referenced by model::model\_\-ProcessET().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespaceet__hargreaves_a93c5bea9de3b762cce69fe978f75d609_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceet__hargreaves_aa81bd6c44c0d862bda8f0a508e6aea47}{
+\index{et\_\-hargreaves@{et\_\-hargreaves}!et\_\-hargreaves\_\-configure@{et\_\-hargreaves\_\-configure}}
+\index{et\_\-hargreaves\_\-configure@{et\_\-hargreaves\_\-configure}!et_hargreaves@{et\_\-hargreaves}}
+\subsubsection[{et\_\-hargreaves\_\-configure}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-hargreaves::et\_\-hargreaves\_\-configure (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{character (len=$\ast$),intent(inout)}]{sRecord}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__hargreaves_aa81bd6c44c0d862bda8f0a508e6aea47}
+
+
+Definition at line 29 of file et\_\-hargreaves.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=382pt]{namespaceet__hargreaves_aa81bd6c44c0d862bda8f0a508e6aea47_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceet__hargreaves_a8b623d04dfb66cab6c0bc1b8ba471c89}{
+\index{et\_\-hargreaves@{et\_\-hargreaves}!et\_\-hargreaves\_\-initialize@{et\_\-hargreaves\_\-initialize}}
+\index{et\_\-hargreaves\_\-initialize@{et\_\-hargreaves\_\-initialize}!et_hargreaves@{et\_\-hargreaves}}
+\subsubsection[{et\_\-hargreaves\_\-initialize}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-hargreaves::et\_\-hargreaves\_\-initialize (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{character (len=$\ast$),intent(in)}]{sFileName}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__hargreaves_a8b623d04dfb66cab6c0bc1b8ba471c89}
+
+
+Definition at line 56 of file et\_\-hargreaves.F90.
+
+
+
+Referenced by model::model\_\-InitializeET().
+

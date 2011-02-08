@@ -1,0 +1,157 @@
+\hypertarget{namespaceet__jensen__haise}{
+\section{et\_\-jensen\_\-haise Module Reference}
+\label{namespaceet__jensen__haise}\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespaceet__jensen__haise_a4ac0f95d0defb2e2b4f69823a875100e}{et\_\-jh\_\-configure} (sRecord)
+\item 
+subroutine \hyperlink{namespaceet__jensen__haise_a0c56e8c8b7ba75e1e5bd834699ee5e1f}{et\_\-jh\_\-initialize} (grd, sFileName)
+\item 
+subroutine \hyperlink{namespaceet__jensen__haise_a5bea6db1809c509d28b93ea3d1f8181e}{et\_\-jh\_\-ComputeET} (pGrd, iDayOfYear, rRH, rMinRH, rWindSpd, rSunPct)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceet__jensen__haise_af549b1e8ee92983a6b3eddf4c927efcf}{rLatitude}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceet__jensen__haise_a81532a18aa4ad4afc0670a30833834ac}{rAlbedo}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceet__jensen__haise_acfcbd3abba7d349d3eaf3ab277d4428e}{rAs}
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceet__jensen__haise_a90836da6e648069d180faaf8d9f66a0e}{rBs}
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespaceet__jensen__haise_a5bea6db1809c509d28b93ea3d1f8181e}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!et\_\-jh\_\-ComputeET@{et\_\-jh\_\-ComputeET}}
+\index{et\_\-jh\_\-ComputeET@{et\_\-jh\_\-ComputeET}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{et\_\-jh\_\-ComputeET}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-jensen\_\-haise::et\_\-jh\_\-ComputeET (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rRH, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rMinRH, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rWindSpd, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSunPct}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__jensen__haise_a5bea6db1809c509d28b93ea3d1f8181e}
+
+
+Definition at line 76 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by model::model\_\-ProcessET().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=362pt]{namespaceet__jensen__haise_a5bea6db1809c509d28b93ea3d1f8181e_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceet__jensen__haise_a4ac0f95d0defb2e2b4f69823a875100e}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!et\_\-jh\_\-configure@{et\_\-jh\_\-configure}}
+\index{et\_\-jh\_\-configure@{et\_\-jh\_\-configure}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{et\_\-jh\_\-configure}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-jensen\_\-haise::et\_\-jh\_\-configure (
+\begin{DoxyParamCaption}
+\item[{character (len=$\ast$),intent(inout)}]{sRecord}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__jensen__haise_a4ac0f95d0defb2e2b4f69823a875100e}
+
+
+Definition at line 33 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=352pt]{namespaceet__jensen__haise_a4ac0f95d0defb2e2b4f69823a875100e_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespaceet__jensen__haise_a0c56e8c8b7ba75e1e5bd834699ee5e1f}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!et\_\-jh\_\-initialize@{et\_\-jh\_\-initialize}}
+\index{et\_\-jh\_\-initialize@{et\_\-jh\_\-initialize}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{et\_\-jh\_\-initialize}]{\setlength{\rightskip}{0pt plus 5cm}subroutine et\_\-jensen\_\-haise::et\_\-jh\_\-initialize (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{grd, }
+\item[{character (len=$\ast$),intent(in)}]{sFileName}
+\end{DoxyParamCaption}
+)}}
+\label{namespaceet__jensen__haise_a0c56e8c8b7ba75e1e5bd834699ee5e1f}
+
+
+Definition at line 63 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by model::model\_\-InitializeET().
+
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespaceet__jensen__haise_a81532a18aa4ad4afc0670a30833834ac}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!rAlbedo@{rAlbedo}}
+\index{rAlbedo@{rAlbedo}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{rAlbedo}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) {\bf et\_\-jensen\_\-haise::rAlbedo}}}
+\label{namespaceet__jensen__haise_a81532a18aa4ad4afc0670a30833834ac}
+
+
+Definition at line 27 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by et\_\-jh\_\-ComputeET(), and et\_\-jh\_\-configure().
+
+\hypertarget{namespaceet__jensen__haise_acfcbd3abba7d349d3eaf3ab277d4428e}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!rAs@{rAs}}
+\index{rAs@{rAs}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{rAs}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) {\bf et\_\-jensen\_\-haise::rAs}}}
+\label{namespaceet__jensen__haise_acfcbd3abba7d349d3eaf3ab277d4428e}
+
+
+Definition at line 28 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by et\_\-jh\_\-ComputeET(), and et\_\-jh\_\-configure().
+
+\hypertarget{namespaceet__jensen__haise_a90836da6e648069d180faaf8d9f66a0e}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!rBs@{rBs}}
+\index{rBs@{rBs}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{rBs}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) {\bf et\_\-jensen\_\-haise::rBs}}}
+\label{namespaceet__jensen__haise_a90836da6e648069d180faaf8d9f66a0e}
+
+
+Definition at line 29 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by et\_\-jh\_\-configure().
+
+\hypertarget{namespaceet__jensen__haise_af549b1e8ee92983a6b3eddf4c927efcf}{
+\index{et\_\-jensen\_\-haise@{et\_\-jensen\_\-haise}!rLatitude@{rLatitude}}
+\index{rLatitude@{rLatitude}!et_jensen_haise@{et\_\-jensen\_\-haise}}
+\subsubsection[{rLatitude}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) {\bf et\_\-jensen\_\-haise::rLatitude}}}
+\label{namespaceet__jensen__haise_af549b1e8ee92983a6b3eddf4c927efcf}
+
+
+Definition at line 26 of file et\_\-jensen\_\-haise.F90.
+
+
+
+Referenced by et\_\-jh\_\-ComputeET(), and et\_\-jh\_\-configure().
+

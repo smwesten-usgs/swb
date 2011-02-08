@@ -1,0 +1,46 @@
+\hypertarget{grid_8_f90}{
+\section{grid.F90 File Reference}
+\label{grid_8_f90}\index{grid.F90@{grid.F90}}
+}
+\subsection*{Modules}
+\begin{DoxyCompactItemize}
+\item 
+module \hyperlink{namespaceswb__grid}{swb\_\-grid}
+\end{DoxyCompactItemize}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+type(T\_\-GENERAL\_\-GRID), pointer \hyperlink{namespaceswb__grid_a961bb54be48e77d8d35cb822379f4e60}{swb\_\-grid::grid\_\-Create} (iNX, iNY, rX0, rY0, rX1, rY1, iDataType)
+\item 
+subroutine \hyperlink{namespaceswb__grid_a42bbda135d21221339b4b6656da28933}{swb\_\-grid::grid\_\-Destroy} (pGrd)
+\item 
+type(T\_\-GENERAL\_\-GRID), pointer \hyperlink{namespaceswb__grid_a99ec16225afef63a0e34f4882ee3250f}{swb\_\-grid::grid\_\-Read} (sFileName, sFileType, iDataType)
+\item 
+type(T\_\-GENERAL\_\-GRID), pointer \hyperlink{namespaceswb__grid_a3a3408da7876ea041fba69415cbbab94}{swb\_\-grid::grid\_\-ReadArcGrid} (sFileName, iDataType)
+\item 
+type(T\_\-GENERAL\_\-GRID), pointer \hyperlink{namespaceswb__grid_aa0df2bc020bca54470db5468f6a026a0}{swb\_\-grid::grid\_\-ReadSurferGrid} (sFileName, iDataType)
+\item 
+subroutine \hyperlink{namespaceswb__grid_a9d60759cd038c3d1936d912299e2f4a2}{swb\_\-grid::grid\_\-WriteArcGrid} (cFilename, rXmin, rXmax, rYmin, rYmax, rValues, rNoData)
+\item 
+subroutine \hyperlink{namespaceswb__grid_aaf1f4ad8065d88804760ea3d28fb2e02}{swb\_\-grid::grid\_\-WriteSurferGrid} (cFilename, rXmin, rXmax, rYmin, rYmax, rValues)
+\item 
+logical(kind=T\_\-LOGICAL) \hyperlink{namespaceswb__grid_ada2d0ba491d29a4a52aae2822b888f1f}{swb\_\-grid::grid\_\-Conform} (pGrd1, pGrd2, rTolerance)
+\item 
+subroutine \hyperlink{namespaceswb__grid_ab16578a0a4a5254a39601c1051e486d2}{swb\_\-grid::grid\_\-LookupColumn} (pGrd, rXval, iBefore, iAfter, rFrac)
+\item 
+subroutine \hyperlink{namespaceswb__grid_a20f18afc3ec94624f31f66f3641a73a8}{swb\_\-grid::grid\_\-LookupRow} (pGrd, rYval, iBefore, iAfter, rFrac)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceswb__grid_ac85aae6e574c3fb99358cf1e61fb6baf}{swb\_\-grid::grid\_\-Interpolate} (pGrd, rXval, rYval)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceswb__grid_a36a5dae5d73e58c86a5f71557e9dc7ec}{swb\_\-grid::grid\_\-SearchColumn} (pGrd, rXval, rZval, rNoData)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceswb__grid_a3309310bf2adef11b8a265a7c19faf8d}{swb\_\-grid::grid\_\-LookupReal} (pGrd, rXval, rYval)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespaceswb__grid_abc60ec733d1036ed680463fa0a715a42}{swb\_\-grid::grid\_\-GetGridColNum} (pGrd, rX)
+\item 
+integer(kind=T\_\-INT) \hyperlink{namespaceswb__grid_a9f6375304d1f9e43d3f7ea2bf27be2be}{swb\_\-grid::grid\_\-GetGridRowNum} (pGrd, rY)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceswb__grid_a57f66bc3cc5e053d864091aef6bd9c49}{swb\_\-grid::grid\_\-GetGridX} (pGrd, iColumnNumber)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespaceswb__grid_ae3fe72b5a4b950efc0537af934518bd0}{swb\_\-grid::grid\_\-GetGridY} (pGrd, iRowNumber)
+\end{DoxyCompactItemize}

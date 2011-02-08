@@ -1,0 +1,200 @@
+\hypertarget{namespacesm__thornthwaite__mather}{
+\section{sm\_\-thornthwaite\_\-mather Module Reference}
+\label{namespacesm__thornthwaite__mather}\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}}
+}
+\subsection*{Functions/Subroutines}
+\begin{DoxyCompactItemize}
+\item 
+subroutine \hyperlink{namespacesm__thornthwaite__mather_a4148064c8f4adaf87f34a3695f33063b}{sm\_\-thornthwaite\_\-mather\_\-Configure} (sRecord)
+\item 
+subroutine \hyperlink{namespacesm__thornthwaite__mather_a75c8bba39d7a0fd7bf8b7f67cfa44998}{sm\_\-thornthwaite\_\-mather\_\-Initialize} (pGrd, pConfig)
+\item 
+subroutine \hyperlink{namespacesm__thornthwaite__mather_a233ae5f65335221fe1cfeefbc50571cf}{sm\_\-thornthwaite\_\-mather\_\-UpdateSM} (pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacesm__thornthwaite__mather_affdc1e74886e00b012b8f2ddf3be6ef2}{sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage} (rSWC, rAPWL)
+\item 
+real(kind=T\_\-SGL) \hyperlink{namespacesm__thornthwaite__mather_a15c8accae90f6aec49dbb1ffcd53409c}{sm\_\-thornthwaite\_\-mather\_\-APWL} (rSWC, rSoilStorage)
+\end{DoxyCompactItemize}
+\subsection*{Variables}
+\begin{DoxyCompactItemize}
+\item 
+real(kind=T\_\-SGL), parameter \hyperlink{namespacesm__thornthwaite__mather_a3c2fee3b14d954659c5d846b6277217c}{APWL\_\-Cap} = -\/40.69\_\-T\_\-SGL
+\item 
+type(\hyperlink{typetypes_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{T\_\-GENERAL\_\-GRID}), pointer \hyperlink{namespacesm__thornthwaite__mather_afc44d31c08d31d440d84bf36d87547f4}{gWLT}
+\item 
+real(kind=T\_\-DBL), parameter \hyperlink{namespacesm__thornthwaite__mather_aacf86966e860d48ccfc3dd81a5d95386}{rTM\_\-slope\_\-term} = 0.4787691
+\item 
+real(kind=T\_\-DBL), parameter \hyperlink{namespacesm__thornthwaite__mather_a001111c742752b811654e00f9ae3fab4}{rTM\_\-exp\_\-term} = -\/1.036784
+\end{DoxyCompactItemize}
+
+
+\subsection{Function/Subroutine Documentation}
+\hypertarget{namespacesm__thornthwaite__mather_a15c8accae90f6aec49dbb1ffcd53409c}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!sm\_\-thornthwaite\_\-mather\_\-APWL@{sm\_\-thornthwaite\_\-mather\_\-APWL}}
+\index{sm\_\-thornthwaite\_\-mather\_\-APWL@{sm\_\-thornthwaite\_\-mather\_\-APWL}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{sm\_\-thornthwaite\_\-mather\_\-APWL}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-APWL (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSWC, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSoilStorage}
+\end{DoxyParamCaption}
+)}}
+\label{namespacesm__thornthwaite__mather_a15c8accae90f6aec49dbb1ffcd53409c}
+
+
+Definition at line 1122 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather\_\-Initialize(), and sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+\hypertarget{namespacesm__thornthwaite__mather_a4148064c8f4adaf87f34a3695f33063b}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!sm\_\-thornthwaite\_\-mather\_\-Configure@{sm\_\-thornthwaite\_\-mather\_\-Configure}}
+\index{sm\_\-thornthwaite\_\-mather\_\-Configure@{sm\_\-thornthwaite\_\-mather\_\-Configure}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{sm\_\-thornthwaite\_\-mather\_\-Configure}]{\setlength{\rightskip}{0pt plus 5cm}subroutine sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-Configure (
+\begin{DoxyParamCaption}
+\item[{character (len=$\ast$),intent(inout)}]{sRecord}
+\end{DoxyParamCaption}
+)}}
+\label{namespacesm__thornthwaite__mather_a4148064c8f4adaf87f34a3695f33063b}
+
+
+Definition at line 40 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacesm__thornthwaite__mather_a4148064c8f4adaf87f34a3695f33063b_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacesm__thornthwaite__mather_a75c8bba39d7a0fd7bf8b7f67cfa44998}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!sm\_\-thornthwaite\_\-mather\_\-Initialize@{sm\_\-thornthwaite\_\-mather\_\-Initialize}}
+\index{sm\_\-thornthwaite\_\-mather\_\-Initialize@{sm\_\-thornthwaite\_\-mather\_\-Initialize}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{sm\_\-thornthwaite\_\-mather\_\-Initialize}]{\setlength{\rightskip}{0pt plus 5cm}subroutine sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-Initialize (
+\begin{DoxyParamCaption}
+\item[{type ( T\_\-GENERAL\_\-GRID ),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig}
+\end{DoxyParamCaption}
+)}}
+\label{namespacesm__thornthwaite__mather_a75c8bba39d7a0fd7bf8b7f67cfa44998}
+
+
+Definition at line 68 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by model::model\_\-InitializeSM().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacesm__thornthwaite__mather_a75c8bba39d7a0fd7bf8b7f67cfa44998_cgraph}
+\end{center}
+\end{figure}
+
+
+\hypertarget{namespacesm__thornthwaite__mather_affdc1e74886e00b012b8f2ddf3be6ef2}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage@{sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage}}
+\index{sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage@{sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL) sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-soil\_\-storage (
+\begin{DoxyParamCaption}
+\item[{real (kind=T\_\-SGL),intent(in)}]{rSWC, }
+\item[{real (kind=T\_\-SGL),intent(in)}]{rAPWL}
+\end{DoxyParamCaption}
+)}}
+\label{namespacesm__thornthwaite__mather_affdc1e74886e00b012b8f2ddf3be6ef2}
+
+
+Definition at line 1104 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+\hypertarget{namespacesm__thornthwaite__mather_a233ae5f65335221fe1cfeefbc50571cf}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!sm\_\-thornthwaite\_\-mather\_\-UpdateSM@{sm\_\-thornthwaite\_\-mather\_\-UpdateSM}}
+\index{sm\_\-thornthwaite\_\-mather\_\-UpdateSM@{sm\_\-thornthwaite\_\-mather\_\-UpdateSM}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{sm\_\-thornthwaite\_\-mather\_\-UpdateSM}]{\setlength{\rightskip}{0pt plus 5cm}subroutine sm\_\-thornthwaite\_\-mather::sm\_\-thornthwaite\_\-mather\_\-UpdateSM (
+\begin{DoxyParamCaption}
+\item[{type (T\_\-GENERAL\_\-GRID),pointer}]{pGrd, }
+\item[{type (T\_\-MODEL\_\-CONFIGURATION),pointer}]{pConfig, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDayOfYear, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iDay, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iMonth, }
+\item[{integer (kind=T\_\-INT),intent(in)}]{iYear}
+\end{DoxyParamCaption}
+)}}
+\label{namespacesm__thornthwaite__mather_a233ae5f65335221fe1cfeefbc50571cf}
+
+
+Definition at line 143 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by model::model\_\-ProcessSM().
+
+
+
+Here is the call graph for this function:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{namespacesm__thornthwaite__mather_a233ae5f65335221fe1cfeefbc50571cf_cgraph}
+\end{center}
+\end{figure}
+
+
+
+
+\subsection{Variable Documentation}
+\hypertarget{namespacesm__thornthwaite__mather_a3c2fee3b14d954659c5d846b6277217c}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!APWL\_\-Cap@{APWL\_\-Cap}}
+\index{APWL\_\-Cap@{APWL\_\-Cap}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{APWL\_\-Cap}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-SGL),parameter {\bf sm\_\-thornthwaite\_\-mather::APWL\_\-Cap} = -\/40.69\_\-T\_\-SGL}}
+\label{namespacesm__thornthwaite__mather_a3c2fee3b14d954659c5d846b6277217c}
+
+
+Definition at line 26 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+\hypertarget{namespacesm__thornthwaite__mather_afc44d31c08d31d440d84bf36d87547f4}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!gWLT@{gWLT}}
+\index{gWLT@{gWLT}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{gWLT}]{\setlength{\rightskip}{0pt plus 5cm}type ( {\bf T\_\-GENERAL\_\-GRID} ),pointer {\bf sm\_\-thornthwaite\_\-mather::gWLT}}}
+\label{namespacesm__thornthwaite__mather_afc44d31c08d31d440d84bf36d87547f4}
+
+
+Definition at line 31 of file sm\_\-thornthwaite\_\-mather.F90.
+
+
+
+Referenced by sm\_\-thornthwaite\_\-mather\_\-Configure(), sm\_\-thornthwaite\_\-mather\_\-Initialize(), and sm\_\-thornthwaite\_\-mather\_\-UpdateSM().
+
+\hypertarget{namespacesm__thornthwaite__mather_a001111c742752b811654e00f9ae3fab4}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!rTM\_\-exp\_\-term@{rTM\_\-exp\_\-term}}
+\index{rTM\_\-exp\_\-term@{rTM\_\-exp\_\-term}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{rTM\_\-exp\_\-term}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),parameter {\bf sm\_\-thornthwaite\_\-mather::rTM\_\-exp\_\-term} = -\/1.036784}}
+\label{namespacesm__thornthwaite__mather_a001111c742752b811654e00f9ae3fab4}
+
+
+Definition at line 36 of file sm\_\-thornthwaite\_\-mather.F90.
+
+\hypertarget{namespacesm__thornthwaite__mather_aacf86966e860d48ccfc3dd81a5d95386}{
+\index{sm\_\-thornthwaite\_\-mather@{sm\_\-thornthwaite\_\-mather}!rTM\_\-slope\_\-term@{rTM\_\-slope\_\-term}}
+\index{rTM\_\-slope\_\-term@{rTM\_\-slope\_\-term}!sm_thornthwaite_mather@{sm\_\-thornthwaite\_\-mather}}
+\subsubsection[{rTM\_\-slope\_\-term}]{\setlength{\rightskip}{0pt plus 5cm}real (kind=T\_\-DBL),parameter {\bf sm\_\-thornthwaite\_\-mather::rTM\_\-slope\_\-term} = 0.4787691}}
+\label{namespacesm__thornthwaite__mather_aacf86966e860d48ccfc3dd81a5d95386}
+
+
+Definition at line 35 of file sm\_\-thornthwaite\_\-mather.F90.
+

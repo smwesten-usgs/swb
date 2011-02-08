@@ -1,0 +1,12 @@
+<map id="G" name="G">
+<area shape="rect" id="node3" href="$namespacetypes.html#a3fffb62907acf0b6fb805c1e93ed18d9" title="General&#45;purpose error&#45;checking routine." alt="" coords="961,132,1060,162"/>
+<area shape="rect" id="node5" href="$namespaceswb__grid.html#ada2d0ba491d29a4a52aae2822b888f1f" title="swb_grid::grid_Conform" alt="" coords="315,56,472,86"/>
+<area shape="rect" id="node7" href="$namespaceswb__grid.html#a42bbda135d21221339b4b6656da28933" title="swb_grid::grid_Destroy" alt="" coords="541,56,696,86"/>
+<area shape="rect" id="node10" href="$namespaceswb__grid.html#a99ec16225afef63a0e34f4882ee3250f" title="swb_grid::grid_Read" alt="" coords="324,198,463,227"/>
+<area shape="rect" id="node13" href="$namespaceswb__grid.html#a3a3408da7876ea041fba69415cbbab94" title="swb_grid::grid_ReadArcGrid" alt="" coords="528,236,709,266"/>
+<area shape="rect" id="node25" href="$namespaceswb__grid.html#aa0df2bc020bca54470db5468f6a026a0" title="swb_grid::grid_ReadSurferGrid" alt="" coords="520,370,717,399"/>
+<area shape="rect" id="node16" href="$namespacetypes.html#af6e75e8cc451db57eac17135489f6112" title="types::Chomp" alt="" coords="788,210,889,239"/>
+<area shape="rect" id="node18" href="$namespaceswb__grid.html#a961bb54be48e77d8d35cb822379f4e60" title="swb_grid::grid_Create" alt="" coords="765,370,912,399"/>
+<area shape="rect" id="node21" href="$namespacetypes.html#ac81e1d5f7a39f96a2b492f098c2ba2e7" title="Convert an integer value into a formatted character string." alt="" coords="785,263,892,292"/>
+<area shape="rect" id="node23" href="$namespacetypes.html#a0bebcf106096e896fc12abc9b21825af" title="types::Uppercase" alt="" coords="777,316,900,346"/>
+</map>

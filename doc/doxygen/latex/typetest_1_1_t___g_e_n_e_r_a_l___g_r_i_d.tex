@@ -1,0 +1,168 @@
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d}{
+\section{test::T\_\-GENERAL\_\-GRID Type Reference}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d}\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}}
+}
+
+
+Type that contains the data for a grid.  
+
+
+
+
+Collaboration diagram for test::T\_\-GENERAL\_\-GRID:\nopagebreak
+\begin{figure}[H]
+\begin{center}
+\leavevmode
+\includegraphics[width=400pt]{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d__coll__graph}
+\end{center}
+\end{figure}
+\subsection*{Public Attributes}
+\begin{DoxyCompactItemize}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ab2d829428a9d4d65167e08b013867361}{iNX}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad7c0013f0d2da64df776b4c6638fd11d}{iNY}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac0322d5f29700b270476636dc2624cf0}{iDataType}
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad71744edf8415af44ccc4bab330dbe5f}{rGridCellSize}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac82de5d9a252574db8745abfa189694f}{iLengthUnits} = -\/99999
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad0f63157f6f9ff937515f079f2c1af10}{rX0}
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a9483a92d88950ac9ae3fa5717118963a}{rX1}
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a35cb6a9594cace7980976521c4be9ae7}{rY0}
+\item 
+real(kind=\hyperlink{namespacetest_af379b935264d350d76bf75331181e241}{T\_\-DBL}) \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a0f137476a138c34931d99f5d839c31ca}{rY1}
+\item 
+integer(kind=\hyperlink{namespacetest_a6f91ebd89b58cfcc5da99faed9385c1e}{T\_\-INT}), dimension(:,:), pointer \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df76462828d260cc7ea860f42fc401c}{iData}
+\item 
+real(kind=\hyperlink{namespacetest_a04d8b9090502de3a00046fe904bc3d99}{T\_\-SGL}), dimension(:,:), pointer \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a56e93920405fa6405c8ab5af1e60329e}{rData}
+\item 
+type(\hyperlink{typetest_1_1_t___c_e_l_l}{T\_\-CELL}), dimension(:,:), pointer \hyperlink{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac9e367fb03b74d49eca1577e132ea89c}{Cells}
+\end{DoxyCompactItemize}
+
+
+\subsection{Detailed Description}
+Type that contains the data for a grid. Type that contains the data for a grid. Depending on the need of the application code, the grid may contain integer, real, or cell-\/by-\/cell data. This 'generic' data type makes many data validation problems simpler, but at the cost of two unpopulated pointer variables per grid. This implements a coding mechanism comparable to templates in C++.! 
+
+Definition at line 173 of file test.F90.
+
+
+
+\subsection{Member Data Documentation}
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac9e367fb03b74d49eca1577e132ea89c}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!Cells@{Cells}}
+\index{Cells@{Cells}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{Cells}]{\setlength{\rightskip}{0pt plus 5cm}type ({\bf T\_\-CELL}),dimension(:,:),pointer {\bf test::T\_\-GENERAL\_\-GRID::Cells}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac9e367fb03b74d49eca1577e132ea89c}
+
+
+Definition at line 184 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df76462828d260cc7ea860f42fc401c}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!iData@{iData}}
+\index{iData@{iData}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iData}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}),dimension(:,:),pointer {\bf test::T\_\-GENERAL\_\-GRID::iData}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a1df76462828d260cc7ea860f42fc401c}
+
+
+Definition at line 182 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac0322d5f29700b270476636dc2624cf0}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!iDataType@{iDataType}}
+\index{iDataType@{iDataType}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iDataType}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf test::T\_\-GENERAL\_\-GRID::iDataType}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac0322d5f29700b270476636dc2624cf0}
+
+
+Definition at line 177 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac82de5d9a252574db8745abfa189694f}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!iLengthUnits@{iLengthUnits}}
+\index{iLengthUnits@{iLengthUnits}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iLengthUnits}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf test::T\_\-GENERAL\_\-GRID::iLengthUnits} = -\/99999}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ac82de5d9a252574db8745abfa189694f}
+
+
+Definition at line 179 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ab2d829428a9d4d65167e08b013867361}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!iNX@{iNX}}
+\index{iNX@{iNX}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iNX}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf test::T\_\-GENERAL\_\-GRID::iNX}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ab2d829428a9d4d65167e08b013867361}
+
+
+Definition at line 175 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad7c0013f0d2da64df776b4c6638fd11d}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!iNY@{iNY}}
+\index{iNY@{iNY}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{iNY}]{\setlength{\rightskip}{0pt plus 5cm}integer (kind={\bf T\_\-INT}) {\bf test::T\_\-GENERAL\_\-GRID::iNY}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad7c0013f0d2da64df776b4c6638fd11d}
+
+
+Definition at line 176 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a56e93920405fa6405c8ab5af1e60329e}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rData@{rData}}
+\index{rData@{rData}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rData}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}),dimension(:,:),pointer {\bf test::T\_\-GENERAL\_\-GRID::rData}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a56e93920405fa6405c8ab5af1e60329e}
+
+
+Definition at line 183 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad71744edf8415af44ccc4bab330dbe5f}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rGridCellSize@{rGridCellSize}}
+\index{rGridCellSize@{rGridCellSize}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rGridCellSize}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-SGL}) {\bf test::T\_\-GENERAL\_\-GRID::rGridCellSize}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad71744edf8415af44ccc4bab330dbe5f}
+
+
+Definition at line 178 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad0f63157f6f9ff937515f079f2c1af10}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rX0@{rX0}}
+\index{rX0@{rX0}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rX0}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf test::T\_\-GENERAL\_\-GRID::rX0}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_ad0f63157f6f9ff937515f079f2c1af10}
+
+
+Definition at line 180 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a9483a92d88950ac9ae3fa5717118963a}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rX1@{rX1}}
+\index{rX1@{rX1}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rX1}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf test::T\_\-GENERAL\_\-GRID::rX1}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a9483a92d88950ac9ae3fa5717118963a}
+
+
+Definition at line 180 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a35cb6a9594cace7980976521c4be9ae7}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rY0@{rY0}}
+\index{rY0@{rY0}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rY0}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf test::T\_\-GENERAL\_\-GRID::rY0}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a35cb6a9594cace7980976521c4be9ae7}
+
+
+Definition at line 181 of file test.F90.
+
+\hypertarget{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a0f137476a138c34931d99f5d839c31ca}{
+\index{test::T\_\-GENERAL\_\-GRID@{test::T\_\-GENERAL\_\-GRID}!rY1@{rY1}}
+\index{rY1@{rY1}!test::T_GENERAL_GRID@{test::T\_\-GENERAL\_\-GRID}}
+\subsubsection[{rY1}]{\setlength{\rightskip}{0pt plus 5cm}real (kind={\bf T\_\-DBL}) {\bf test::T\_\-GENERAL\_\-GRID::rY1}}}
+\label{typetest_1_1_t___g_e_n_e_r_a_l___g_r_i_d_a0f137476a138c34931d99f5d839c31ca}
+
+
+Definition at line 181 of file test.F90.
+
+
+
+The documentation for this type was generated from the following file:\begin{DoxyCompactItemize}
+\item 
+\hyperlink{test_8_f90}{test.F90}\end{DoxyCompactItemize}
