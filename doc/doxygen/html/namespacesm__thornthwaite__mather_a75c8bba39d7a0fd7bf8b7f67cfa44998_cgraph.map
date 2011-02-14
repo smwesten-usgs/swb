@@ -1,9 +1,0 @@
-<map id="G" name="G">
-<area shape="rect" id="node3" href="$namespaceswb__grid.html#a36a5dae5d73e58c86a5f71557e9dc7ec" title="swb_grid::grid_SearchColumn" alt="" coords="504,57,699,87"/>
-<area shape="rect" id="node9" href="$namespaceswb__grid.html#a9d60759cd038c3d1936d912299e2f4a2" title="swb_grid::grid_WriteArcGrid" alt="" coords="509,111,693,140"/>
-<area shape="rect" id="node17" href="$namespacesm__thornthwaite__mather.html#a15c8accae90f6aec49dbb1ffcd53409c" title="sm_thornthwaite_mather::sm_thornthwaite_mather_APWL" alt="" coords="423,164,780,193"/>
-<area shape="rect" id="node5" href="$namespacetypes.html#a3fffb62907acf0b6fb805c1e93ed18d9" title="General&#45;purpose error&#45;checking routine." alt="" coords="877,59,976,88"/>
-<area shape="rect" id="node7" href="$namespaceswb__grid.html#ab16578a0a4a5254a39601c1051e486d2" title="swb_grid::grid_LookupColumn" alt="" coords="829,5,1024,35"/>
-<area shape="rect" id="node12" href="$namespacetypes.html#ac81e1d5f7a39f96a2b492f098c2ba2e7" title="Convert an integer value into a formatted character string." alt="" coords="1073,137,1180,167"/>
-<area shape="rect" id="node14" href="$namespacetypes.html#afcafa126194a2f1c3236f7edfb62c38d" title="Convert a real value into a formatted character string." alt="" coords="869,163,984,192"/>
-</map>
