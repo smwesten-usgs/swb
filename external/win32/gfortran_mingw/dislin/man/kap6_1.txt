@@ -1,0 +1,773 @@
+6.2 Axis Systems
+
+This section describes  subroutines  that allow the user  to
+modify axis systems.  The position  of an  axis system,  the
+size,  the scaling,  ticks,  labels  and axis titles  can be
+altered in  any way.  Some of the routines defining axis at-
+tributes can also be used with secondary axes. Routines that
+set axis attributes can be used  for one or for any combina-
+tion of axes.  The axes are identified by a character string
+that can contain the characters 'X', 'Y' and 'Z' in any com-
+bination.
+
+6.2.1 Modifying the Type
+
+                         A X S T Y P
+
+The routine AXSTYP defines the type of an axis system.  Axis
+systems  can be plotted  as rectangles or in a crossed form.
+For crossed axis systems, the scaling must be linear and the
+axis limits must contain the origin.
+
+The call is:  CALL AXSTYP (COPT)                     level 1
+
+COPT          is a character string defining the type.
+ = 'RECT'     defines a rectangular axis system. 
+ = 'CROSS'    defines a crossed axis system.
+                                     Default: COPT = 'RECT'.
+
+6.2.2 Modifying the Position and Size
+
+                         A X S P O S
+
+AXSPOS determines the position of an axis system.
+
+The call is:  CALL AXSPOS (NXA, NYA)                 level 1
+
+NXA, NYA      are  plot  coordinates  that  define the lower
+              left  corner of  an axis  system.  By default,
+              axis systems  are  centred in  the X-direction
+              while  NYA  is set to the value (page height -
+              300).
+
+                         A X S O R G
+
+AXSORG is an alternate routine for defining the position  of
+a crossed axis system.
+
+The call is:  CALL AXSORG (NX, NY)                   level 1
+
+NX, NY        are plot coordinates  that define the position
+              of the origin of a crossed axis system.
+
+                         A X S L E N
+
+AXSLEN defines the size of an axis system.
+
+The call is:  CALL AXSLEN (NXL, NYL)                 level 1
+
+NXL, NYL      are the length and height of an axis system in
+              plot coordinates.  The default values  are set
+              to 2/3 of the page length and height.
+
+                         C E N T E R
+
+A call to the routine CENTER will centre  the axis system on
+the page.  All elements of an axis system, including titles,
+axis labels and names, will be taken into consideration. The
+centralization is done by GRAF through changing the position
+of the origin. Therefore, all plotting routines called after
+GRAF will work with the new origin.
+
+The call is:  CALL CENTER                      level 1, 2, 3
+
+Notes:     -  If there are several axis systems on the page,
+              the origin  will be changed  only by the first
+              call to GRAF.
+           -  The character height of titles  should  be de-
+              fined with HTITLE if it is different  from the
+              current  character height in GRAF.
+
+6.2.3 Axis Scaling
+
+                         A X S S C L
+
+This routine sets the axis scaling to logarithmic or linear.
+
+The call is:  CALL AXSSCL (CSCL, CAX)          level 1, 2, 3
+
+CSCL = 'LIN'  denotes linear scaling.
+     = 'LOG'  denotes logarithmic scaling.
+CAX           is a character string that defines the axes.
+                                    Default: ('LIN', 'XYZ').
+
+Note:         For logarithmic scaling, the corresponding pa-
+              rameters in GRAF must be exponents of base 10.
+
+                         S E T S C L
+
+The parameters in  GRAF  will be calculated automatically by
+DISLIN  if the routine  SETSCL  is used.  In this case, GRAF
+must have dummy parameters in which  DISLIN returns the cal-
+culated values.
+
+The call is:  CALL SETSCL (XRAY, N, CAX)             level 1
+
+XRAY          is a vector  that  contains  user coordinates.
+              SETSCL calculates the minimum and maximum  va-
+              lues  of the data and  stores them in a common
+              block.
+N             is the number of points in XRAY.
+CAX           is a character string that defines the axes.
+
+Notes:     -  SETSCL can be used with linear and logarithmic
+              scaling and with all label types.
+           -  The calculation of scaling and label values is
+              done by  GRAF.  The minimum and maximum of the
+              data are  always used for the lower and  upper
+              limits of an axis while even values are calcu-
+              lated for the labels.
+           -  The number of  digits after the decimal  point
+              will be set automatically.
+           -  If the scaling of an axis is logarithmic,  la-
+              bels will be plotted with the format 'LOG'.
+
+6.2.4 Modifying Ticks
+
+                         T I C K S
+
+This routine is used to define  the number  of ticks between
+axis labels.
+
+The call is:  CALL TICKS (NTIC, CAX)           level 1, 2, 3
+
+NTIC          is the number of ticks (>= 0).
+CAX           is a character string that defines the axes.
+                                        Default: (2, 'XYZ').
+
+                         T I C P O S
+
+This routine defines the position of ticks.
+
+The call is:  CALL TICPOS (CPOS, CAX)          level 1, 2, 3
+
+CPOS          is a character string defining the position.
+  = 'LABELS'  means that  ticks will  be plotted on the same
+              side as labels.
+  = 'REVERS'  means that ticks  will be plotted inside of an
+              axis system.
+  = 'CENTER'  means that ticks  will be centred  on the axis
+              line.
+CAX           is a character string that defines the axes.
+                                 Default: ('LABELS', 'XYZ').
+
+                         T I C L E N
+
+TICLEN sets the lengths of major and minor ticks.
+
+The call is:  CALL TICLEN (NMAJ, NMIN)         level 1, 2, 3
+
+NMAJ          is the length  of major  ticks in plot coordi-
+              nates (> 0).
+NMIN          is the length  of minor  ticks in plot coordi-
+              nates (> 0).
+                                          Default: (24, 16).
+
+                         T I C M O D
+
+The routine TICMOD modifies the plotting of minor tick marks
+on calendar axes.  By default,  a major tick  is  plotted at
+each date label and no minor ticks are plotted.
+
+The call is:  CALL TICMOD (COPT, CAX)          level 1, 2, 3
+
+COPT          is a character string defining the tick marks.
+  = 'NONE'    means that no minor ticks will be plotted.
+  = 'DAYS'    means that ticks will be plotted for every
+              day.
+  = 'MONTH'   means that ticks will be plotted for every
+              month.
+  = 'DMONTH'  means that ticks will be plotted for every 
+              second month.
+  = 'QUARTER' means that ticks will be plotted on the first
+              of January, April, July and October.
+  = 'HALF'    means that ticks will be plotted on the first
+              of January and July.
+  = 'YEAR'    means that ticks will be plotted for every
+              year.
+CAX           is a character string that defines the axes.
+                                   Default: ('NONE', 'XYZ').
+
+                         L O G T I C
+
+The  appearance of minor ticks  on logarithmic axes  differs
+slightly from  linear axes.  By default,  logarithmic  minor
+ticks  are generated automatically if the label step is 1 or
+-1 and if the number of ticks in TICKS is greater than 1. If
+the step has another value, minor ticks are plotted  as spe-
+cified in TICKS. This algorithm can be modified with LOGTIC.
+
+The call is:  CALL LOGTIC (CMOD)               level 1, 2, 3
+
+CMOD          is a character string defining the  appearance
+              of logarithmic ticks.
+   = 'AUTO'   defines default ticks.
+   = 'FULL'   means that logarithmic minor ticks will be ge-
+              nerated for every cycle even if the label step
+              is not 1 but some other integer.
+                                     Default: CMOD = 'AUTO'.
+
+6.2.5 Modifying Labels
+
+                         L A B E L S
+
+LABELS  determines  which label types  will be plotted on an
+axis.
+
+The call is:  CALL LABELS (CLAB, CAX)          level 1, 2, 3
+
+CLAB          is a character string that defines the labels.
+  = 'NONE'    will suppress all axis labels.
+  = 'FLOAT'   will plot labels in floating point format.
+  = 'EXP'     will plot floating point labels in exponential
+              format where fractions range between 1 and 10.
+  = 'FEXP'    will plot  labels in the format  fEn  where  f
+              ranges between 1 and 10.
+  = 'LOG'     will plot logarithmic labels  with base 10 and
+              the corresponding exponents.
+  = 'CLOG'    is similar to 'LOG' except that the entire la-
+              bel is  centred  below  the  tick  mark;  with
+              'LOG', only the base '10' is centred.
+  = 'ELOG'    will plot  only the  logarithmic values of la-
+              bels.
+  = 'TIME'    will plot time labels in the format 'hhmm'.
+  = 'HOURS'   will plot time labels in the format 'hh'.
+  = 'SECONDS' will plot time labels in the format 'hhmmss'.
+  = 'DATE'    defines date labels.
+  = 'MAP'     defines geographical  labels which are plotted
+              as non  negative  floating point  numbers with
+              the  following characters  'W',  'E',  'N' and
+              'S'.
+  = 'LMAP'    is similar to 'MAP' except that lowercase cha-
+              racters are used.
+  = 'DMAP'    selects labels  that are  plotted as  floating
+              point numbers with degree symbols.
+  = 'MYLAB'   selects labels that are defined  with the rou-
+              tine MYLAB. 
+CAX           is a character string that defines the axes.
+                                  Default: ('FLOAT', 'XYZ').
+
+Notes:     -  The values 'LOG', 'CLOG' and 'ELOG' can be on-
+              ly used with logarithmic scaling. If these la-
+              bel types are used with linear scaling, DISLIN
+              will change them   to 'FLOAT'.
+           -  For the values  'TIME', 'HOURS' and 'SECONDS',
+              the corresponding parameters in  GRAF  must be
+              in seconds since midnight.
+           -  For the value 'DATE',  the corresponding para-
+              meters in GRAF must be  in days  since  a base
+              date.  The base date  can be  defined with the
+              routine BASDAT while the  number of days since
+              the base date can be  calculated with the rou-
+              tine INCDAT. Date labels can be modified  with
+              the routine LABMOD.
+
+                         M Y L A B
+
+MYLAB defines user labels.
+
+The call is:  CALL MYLAB (CSTR, ITICK, CAX)    level 1, 2, 3
+
+CSTR          is a character string containing  a label  (<=
+              32 characters).
+ITICK         is the tick number  where the  label  will  be
+              plotted (<= 50). Tick numbering starts with 1.
+CAX           is a character string that defines the axes.
+
+                         L A B T Y P
+
+LABTYP defines horizontal or vertical labels.
+
+The call is:  CALL LABTYP (CTYPE, CAX)         level 1, 2, 3
+
+CTYPE         is a character string defining the direction.
+   = 'HORI'   defines horizontal labels.
+   = 'VERT'   defines vertical labels.
+CAX           is a character string that defines the axes.
+                                   Default: ('HORI', 'XYZ').
+
+                         L A B P O S
+
+LABPOS defines the position of labels.
+
+The call is:  CALL LABPOS (CPOS, CAX)          level 1, 2, 3
+
+CPOS          is a character string defining the position.
+  = 'TICKS'   means  that  labels  will be  plotted at major
+              ticks.
+  = 'CENTER'  means  that labels will be centred between ma-
+              jor ticks.
+  = 'SHIFT'   means that the starting and end labels will be
+              shifted.
+CAX           is a character string that defines the axes.
+                                  Default: ('TICKS', 'XYZ').
+
+                         L A B J U S
+
+LABJUS defines the alignment of axis labels.
+
+The call is:  CALL LABJUS (CJUS, CAX)          level 1, 2, 3
+
+CJUS          is a character string  defining  the alignment
+              of labels.
+  = 'AUTO'    means that labels are automatically justified.
+  = 'LEFT'    means that labels are left-justified.
+  = 'RIGHT'   means that labels are right-justified.
+  = 'OUTW'    means that labels are  left-justified  on  the
+              left and lower axes of an axis system.  On the
+              right and upper axes,  labels are right-justi-
+              fied.
+  = 'INWA'    means that labels are  right-justified  on the
+              left and  lower axes of an axis system. On the
+              right and upper axes,  labels are  left-justi-
+              fied.
+CAX           is a character string that defines the axes.
+                                   Default: ('AUTO', 'XYZ').
+
+                         L A B D I G
+
+This routine  sets the number  of digits  after the  decimal
+point displayed in labels.
+
+The call is:  CALL LABDIG (NDIG, CAX)          level 1, 2, 3
+
+NDIG  = -2  the number of digits is automatically calculated
+      = -1  defines integer labels.
+            by DISLIN.
+      =  0  defines integer labels  followed  by  a  decimal
+            point.
+      =  n  defines the number  of digits  after the decimal
+            point. The last digit will be rounded up.
+CAX         is a character string that defines the axes.
+                                        Default: (1, 'XYZ').
+
+                         I N T A X
+
+With the routine INTAX,  all axes will be labeled with inte-
+gers.
+
+The call is:  CALL INTAX                       level 1, 2, 3
+
+                         L A B D I S
+
+This routine sets the distance between labels and ticks.
+
+The call is:  CALL LABDIS (NDIS, CAX)          level 1, 2, 3
+
+NDIS          is the distance in plot coordinates.
+CAX           is a character string that defines the axes.
+                                       Default: (24, 'XYZ').
+
+                         L A B M O D
+
+The routine  LABMOD  modifies the appearance  of date labels
+enabled with the keyword 'DATE' in the routine LABELS.  Nor-
+mally, date labels will be plotted in the form dd-mmm-yyyy.
+
+The call is:  CALL LABMOD (CKEY, CVAL, CAX)    level 1, 2, 3
+
+CKEY          is a  character string  containing  one of the 
+              following keywords:
+
+ = 'YEAR'     means that the century field will be  modified
+              in date labels.  For CKEY = 'YEAR',  CVAL  can 
+              have the values 'NONE', 'SHORT' and 'FULL'. 
+              'NONE' suppresses the year field while 'SHORT'
+              suppresses the century in the year field.  The
+              default value is 'FULL'. 
+
+ = 'DAYS'     means that the day field will be modified. 
+              CVAL  can  have  the values  'NONE',  'SHORT', 
+              'LONG', 'NAME' and 'FULL'.  For CVAL = 'NONE',
+              the day field  will be suppressed,  for CVAL =
+              'SHORT',  the day will be plotted  as a number
+              without a  leading zero.  CVAL = 'LONG'  means
+              that the day will be plotted as a  number with
+              two digits, CVAL = 'NAME' means that abbrevia-
+              tions of the weekday names will be plotted and
+              CVAL = 'FULL'  means  that  the  full  weekday
+              names will be displayed.  The default value is
+              CVAL = 'LONG'.
+
+ = 'MONTH'    means  that the  month field will be modified.
+              CVAL  can  have the  values  'NONE',  'SHORT',
+              'LONG', 'NAME', 'TINY' and 'FULL'.  
+              For  CVAL = 'NONE',  the month  field  will be
+              suppressed, for CVAL = 'SHORT', the month will
+              be plotted as a number without a leading zero.
+              CVAL = 'LONG'  means that the  month  will  be
+              plotted as a  number with two digits,   CVAL = 
+              'NAME' means that abbreviations  of  the month
+              names will  be plotted,  CVAL =  'TINY'  means
+              that only the first  character of  month names
+              will be plotted and  CVAL = 'FULL' means  that
+              the full  month names will  be displayed.  The
+              default value is CVAL = 'NAME'.
+
+ = 'LANG'     defines  the  language  used  for weekdays and
+              month names in date labels.  CVAL can have the
+              values 'ENGLISH', 'GERMAN' and 'SPANISH'.  The
+              default value for CVAL is 'ENGLISH'.
+   
+ = 'FORM'     defines the order of the date fields. CVAL can
+              have the values 'DMY',  'DYM',  'YDM',  'YMD',
+              'DYM' and 'MDY'. The default is CVAL = 'DMY'.
+  
+ = 'SEPA'     defines a separator character used in date la-
+              bels.  CVAL is a  character string  containing
+              the separator character. The default is 
+              CVAL = '-'.
+   
+ = 'CASE'     defines  if weekdays and month names are plot-
+              ted in  uppercase characters  or in  lowercase
+              characters with a leading uppercase character.
+              CVAL can have the values  'UPPER' and  'NONE'.
+              The default value is 'NONE'.
+  
+ = 'STEP'     defines a step between labels.  CVAL can  have
+              the values  'DAYS',  'MONTH', 'DMONTH', 'QUAR-
+              TER',  'HALF', 'YEAR', 'DYEAR' and 'QYEAR'. 
+              For CVAL = 'DAYS', the label step specified in
+              the routine  GRAF will be  used.  The  default
+              value  is  CVAL = 'DAYS'.
+  
+CAX           is a character string that defines the axes.
+
+                         P O L M O D
+
+The routine  POLMOD  modifies the appearance of angle labels
+plotted with the routine POLAR.
+
+The call is:  CALL POLMOD (CPOS, CDIR)         level 1, 2, 3
+
+CPOS          is a character string that defines the positi-
+              on of the first label.  CPOS can have the val-
+              ues 'RIGHT', 'TOP', 'LEFT' and 'BOTTOM'.
+CDIR          defines the direction of the labels.  CDIR can
+              have the values 'CLOCKWISE' and 'ANTICLOCK'.
+                            Default: ('RIGHT', 'ANTICLOCK').
+
+                         T I M O P T
+
+With  TIMOPT  time  labels  can  be  plotted  in the  format
+'hh:mm'. The default is 'hhmm'.
+
+The call is:  CALL TIMOPT                      level 1, 2, 3
+
+                         R G T L A B
+
+The routine RGTLAB right-justifies user labels.  By default,
+user labels are left-justified.
+
+The call is: CALL RGTLAB                       level 1, 2, 3
+
+6.2.6 Modifying Axis Titles
+
+                           N A M E
+
+NAME defines axis titles.
+
+The call is:  CALL NAME (CSTR, CAX)            level 1, 2, 3
+
+CSTR          is a character string containing the axis tit-
+              le  (<= 132 characters).
+CAX           is a character string that defines the axes.
+                                      Default: (' ', 'XYZ').
+
+                         H N A M E
+
+HNAME defines the character height for axis names.
+
+The call is:  CALL HNAME (NHNAME)              level 1, 2, 3
+
+NHNAME        is the character height in plot coordinates.
+                                        Default: NHNAME = 36
+
+                         N A M D I S
+
+NAMDIS sets the distance between axis names and labels.
+
+The call is:  CALL NAMDIS (NDIS, CAX)          level 1, 2, 3
+
+NDIS          is the distance in plot coordinates.
+CAX           is a character string that defines the axes.
+                                       Default: (30, 'XYZ').
+
+                         N A M J U S
+
+The routine NAMJUS defines the alignment of axis titles.
+
+The call is:  CALL NAMJUS (CJUS, CAX)          level 1, 2, 3
+
+CJUS          is a character string that can have the values
+              'CENT', 'LEFT' and 'RIGHT'.
+CAX           is a character string that defines the axes.
+                                   Default: ('CENT', 'XYZ').
+
+                         R V Y N A M
+
+The routine RVYNAM is used to plot names and labels on right
+Y-axes and  colour bars  at an angle of  90 degrees.  By de-
+fault, they are plotted at an angle of 270 degrees.
+
+The call is:  CALL RVYNAM                      level 1, 2, 3
+
+6.2.7 Suppressing Axis Parts
+
+                         N O L I N E
+
+After a call to  NOLINE  the plotting  of axis lines will be
+suppressed.
+
+The call is: CALL NOLINE (CAX)                 level 1, 2, 3
+
+CAX          is a character string that defines the axes.
+
+                         A X E N D S
+
+With a call to AXENDS certain labels can be suppressed.
+
+The call is:  CALL AXENDS (COPT, CAX)          level 1, 2, 3
+
+COPT          is a character string  that defines  which la-
+              bels will be suppressed.
+  = 'NONE'    means that all labels will be displayed.
+  = 'FIRST'   means  that only  the starting label  will  be
+              plotted.
+  = 'NOFIRST' means  that the  starting  label  will  not be
+              plotted.
+  = 'LAST'    means that only the ending label will be plot-
+              ted.
+  = 'NOLAST'  means that the ending label  will not be plot-
+              ted.
+  = 'ENDS'    means that only  the start and end labels will
+              be plotted.
+  = 'NOENDS'  means that start  and end labels  will be sup-
+              pressed.
+CAX           is a character string that defines the axes.
+                                   Default: ('NONE', 'XYZ').
+
+                         N O G R A F
+
+The routine  NOGRAF  suppresses the plotting of an axis sys-
+tem.
+
+The call is:  CALL NOGRAF                            level 1
+
+                         A X 2 G R F
+
+The routine  AX2GRF  suppresses the plotting of the upper X-
+and left Y-axis.
+
+The call is:  CALL AX2GRF                      level 1, 2, 3
+
+                         S E T G R F
+
+SETGRF removes a part of an axis  or a complete axis from an
+axis system.
+
+The call is:  CALL SETGRF (C1, C2, C3, C4)     level 1, 2, 3
+
+Ci            are  character  strings  corresponding  to the
+              four axes of an axis system. C1 corresponds to
+              the lower X-axis, C2 to the left Y-axis, C3 to
+              the upper X-axis  and C4 to the right  Y-axis.
+              The parameters  can have  the  values  'NONE',
+              'LINE', 'TICKS',  'LABELS'  and  'NAME'.  With
+              'NONE', complete axes will be suppressed, with
+              'LINE', only axis lines will be plotted,  with
+              'TICKS', axis lines and ticks will be plotted,
+              with  'LABELS',  axis lines,  ticks and labels
+              will be plotted and with 'NAME', all axis ele-
+              ments will be displayed.
+                Default: ('NAME', 'NAME', 'TICKS', 'TICKS').
+
+Notes:     -  By default,  GRAF plots a frame of thickness 1
+              around axis systems. Therefore, in addition to
+              the parameter 'NONE',  FRAME  should be called
+              with the parameter 0 for suppressing  complete
+              axes.
+           -  SETGRF  does not  reset  the effect of  NOGRAF
+              and NOLINE. This must be done using RESET.
+
+6.2.8 Modifying Clipping
+
+                         C L P W I N
+
+The routine  CLPWIN  defines a rectangular  clipping area on
+the page.
+
+The call is:  CALL CLPWIN (NX, NY, NW, NH)     level 1, 2, 3
+
+NX, NY        are the  plot  coordinates  of the  upper left
+              corner.
+NW, NH        are the width  and height  of the rectangle in
+              plot coordinates.
+
+                         C L P B O R
+
+The routine CLPBOR sets the clipping area to the entire page
+or to the axis system.
+
+The call is:  CALL CLPBOR (COPT)               level 1, 2, 3
+
+COPT          is a character string that can have the values
+              'PAGE' and 'AXIS'.
+                                     Default: COPT = 'PAGE'.
+
+                         N O C L I P
+
+The suppressing of lines  outside  of the borders of an axis
+system can be disabled with NOCLIP.
+
+The call is:  CALL NOCLIP                      level 1, 2, 3
+
+                         G R A C E
+
+GRACE defines a margin around axis systems  where lines will
+be clipped.
+
+The call is:  CALL GRACE (NGRA)                level 1, 2, 3
+
+NGRA          is the  width  of the  margin  in plot coordi-
+              nates.  If NGRA is  negative,  lines  will  be
+              clipped inside the axis system.
+                                          Default: NGRA = -1
+
+6.2.9 Framing Axis Systems
+
+                         F R A M E
+
+FRAME defines  the thickness  of frames plotted  by routines
+such as GRAF and LEGEND.
+
+The call is:  CALL FRAME (NFRM)                level 1, 2, 3
+
+NFRM          is the thickness  of the frame in plot coordi-
+              nates. If NFRM is negative,  the frame will be
+              thickened  from the inside.  If positive,  the
+              frame will be thickened towards the outside.
+                                           Default: NFRM = 1
+
+                         F R M C L R
+
+The colour of frames can be defined with the routine FRMCLR.
+
+The call is:  CALL FRMCLR (NCLR)               level 1, 2, 3
+
+NCLR          is a colour value.  If NCLR = -1,  the current
+              colour is used.
+                                          Default: NCLR = -1
+
+6.2.10 Setting Colours
+
+                         A X S B G D
+
+The routine AXSBGD defines a background colour for axis sys-
+tems.
+
+The call is:  CALL AXSBGD (NCLR)               level 1, 2, 3
+
+NCLR          is a  colour value.  If NCLR = -1,  the  back-
+              ground  of  an  axis system  is not  filled in 
+              GRAF.
+                                          Default: NCLR = -1
+
+                         A X C L R S
+
+AXCLRS selects colours for single parts of axes.
+
+The call is:  CALL AXCLRS (NCLR, COPT, CAX)    level 1, 2, 3
+
+NCLR          is a  colour  value.  If NCLR = -1, the actual
+              colour is used.
+COPT          is a  character string  that can  have the va-
+              lues  'LINE',  'TICKS',  'LABELS',  'NAME' and
+              'ALL'.
+CAX           is a character string that defines the axes.
+                                Default: (-1, 'ALL', 'XYZ').
+
+Note:         By default,  a frame of thickness 1 is plotted
+              around  axis systems.  This  may  overplot the 
+              colour of axis lines (see FRAME, FRMCLR).
+
+6.2.11 Axis System Titles
+
+                         T I T L I N
+
+This subroutine  defines up to four  lines of  text used for
+axis system titles. The text can be plotted with TITLE after
+a call to GRAF.
+
+The call is:  CALL TITLIN (CSTR, IZ)           level 1, 2, 3
+
+CSTR          is a character string (<= 132 characters).
+IZ            is an integer that contains a value between  1
+              and 4  or  -1 and -4.  If IZ is negative,  the
+              line will be underscored.
+                  Default: All lines are filled with blanks.
+
+                         T I T J U S
+
+The routine TITJUS defines the alignment of title lines.
+
+The call is:  CALL TITJUS (CJUS)               level 1, 2, 3
+
+CJUS          is a  character string that can  have the  va-
+              lues 'CENT', 'LEFT' and 'RIGHT'.
+                                     Default: CJUS = 'CENT'.
+
+                         L F T T I T
+
+Title lines are centred  above axis systems  by default  but
+can be left-justified  with a call to  LFTTIT.  This routine
+has the same meaning as TITJUS ('LEFT').
+
+The call is:  CALL LFTTIT                      level 1, 2, 3
+
+                         T I T P O S
+
+The routine TITPOS defines the position of title lines which
+can be plotted above or below axis systems.
+
+The call is:  CALL TITPOS (CPOS)               level 1, 2, 3
+
+CPOS          is a character string that can have the values
+              'ABOVE' and 'BELOW'.
+                                    Default: CPOS = 'ABOVE'.
+
+                         L I N E S P
+
+LINESP defines the spacing between title and legend lines.
+
+The call is:  CALL LINESP (XFAC)               level 1, 2, 3
+
+XFAC          The space  between lines is set to XFAC * cha-
+              racter height.
+                                        Default:  XFAC = 1.5
+
+                         H T I T L E
+
+HTITLE defines  the character height for titles. The charac-
+ter height defined by  HEIGHT  will be used if HTITLE is not
+called.
+
+The call is:  CALL HTITLE (NHCHAR)             level 1, 2, 3
+
+NHCHAR        is the character height in plot coordinates.
+
+                         V K Y T I T
+
+The space between titles and axis systems can be enlarged or
+reduced with VKYTIT.  By default, the space is 2 * character
+height.
+
+The call is:  CALL VKYTIT (NV)                 level 1, 2, 3
+
+NV            is an integer that determines the spacing  be-
+              tween axis systems and titles.  If NV is nega-
+              tive,  the space will be  reduced by  NV  plot
+              coordinates. If NV is positive, the space will
+              be enlarged by NV plot coordinates.
+                                             Default: NV = 0
+

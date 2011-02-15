@@ -1,0 +1,1376 @@
+                  Chapter 9: Utility Routines
+
+This chapter describes  the utilities available to transform
+coordinates,  sort data and calculate the lengths of numbers
+and character strings.
+
+9.1 Transforming Coordinates
+
+The following functions  and the subroutine  TRFREL  convert
+user coordinates to plot coordinates.
+
+The calls are:  IXP = NXPOSN (X)                  level 2, 3
+                IYP = NYPOSN (Y)                  level 2, 3
+
+Plot coordinates can also be returned as real numbers.
+
+The calls are:  XP = XPOSN (X)                    level 2, 3
+                YP = YPOSN (Y)                    level 2, 3
+
+The following two functions convert plot coordinates to user
+coordinates.
+
+The calls are:  XW = XINVRS (NXP)                 level 2, 3
+                YW = YINVRS (NYP)                 level 2, 3
+
+The functions NXPIXL and  NYPIXL convert plot coordinates to
+pixel.
+
+The calls are:  IXP = NXPIXL (IX, IY)          level 1, 2, 3
+                IYP = NYPIXL (IX, IY)          level 1, 2, 3
+
+                         T R F R E L
+
+TRFREL converts user coordinates to plot coordinates.
+
+The call is:  CALL TRFREL (XRAY, YRAY, N)         level 2, 3
+
+XRAY, YRAY    are arrays  containing  the user  coordinates.
+              After the call,  they contain  the  calculated
+              plot coordinates.
+N             is the number of points.
+
+Note:         The routines above can be used for linear  and
+              logarithmic scaling. For polar scaling, TRFREL
+              and POS2PT  can be used for getting plot coor-
+              dinates.   
+
+                         T R F C O 1
+
+The routine TRFCO1 converts one-dimensional coordinates.
+
+The call is:  CALL TRFCO1 (XRAY, N, CFROM, CTO) 
+                                            level 0, 1, 2, 3
+
+XRAY          is  an  array  containing  angles expressed in
+              radians  or degrees.  After a call to  TRFCO1,
+              XRAY contains the converted coordinates.
+N             is the number of coordinates.
+CFROM, CTO    are character strings that can have the values
+              'DEGREES' and 'RADIANS'.
+
+                         T R F C O 2
+
+The routine TRFCO2 converts two-dimensional coordinates.
+
+The call is:  CALL TRFCO2 (XRAY, YRAY, N, CFROM, CTO)
+                                            level 0, 1, 2, 3
+
+XRAY, YRAY    are arrays containing rectangular or polar co-
+              ordinates.  For  polar coordinates,  XRAY con-
+              tains  the angles measured in degrees and YRAY
+              the radii.
+N             is the number of coordinates.
+CFROM, CTO    are character strings that can have the values
+              'RECT' and 'POLAR'. 
+
+                         T R F C O 3
+
+The routine TRFCO3 converts three-dimensional coordinates.
+
+The call is:  CALL TRFCO3 (XRAY, YRAY, ZRAY, N, CFROM, CTO)
+                                            level 0, 1, 2, 3
+
+XRAY, YRAY,   are arrays  containing rectangular,  spherical
+    ZRAY      or cylindrical coordinates.  Spherical coordi-
+              nates must be in the form (longitude,latitude,
+              radius) where
+                       0 <= longitude <= 360   and
+                     -90 <= latitude  <=  90.
+              Cylindrical  coordinates  must  be in the form
+              (angle, radius, z).
+N             is the number of coordinates.
+CFROM, CTO    are character strings that can have the values
+              'RECT','SPHER' and 'CYLI'. 
+
+                         T R F M A T
+
+The routine  TRFMAT converts a matrix to another  matrix  by
+bilinear interpolation.
+
+The call is:  CALL TRFMAT (ZMAT,NX,NY,ZMAT2,NX2,NY2)
+                                            level 0, 1, 2, 3
+ZMAT          is the input matrix of the dimension (NX, NY).
+NX, NY        are the dimensions of the matrix ZMAT.
+ZMAT2         is the calculated matrix of the dimension 
+              (NX2, NY2).
+NX2, NY2      are the dimensions of the matrix ZMAT2.
+
+9.2 String Arithmetic
+
+                         N L M E S S
+
+The function NLMESS returns the length of text in plot coor-
+dinates.
+
+The call is:  NL = NLMESS (CSTR)               level 1, 2, 3
+
+CSTR          is a character string (<= 132 characters).
+NL            is the length in plot coordinates.
+
+                         T R M L E N
+
+The function  TRMLEN returns the number  of characters  in a
+character string.
+
+The call is:  NL = TRMLEN (CSTR)            level 0, 1, 2, 3
+
+CSTR          is a character string.
+NL            is the number of characters.
+
+                          U P S T R
+
+UPSTR converts a character string to uppercase letters.
+
+The call is:  CALL UPSTR (CSTR)             level 0, 1, 2, 3
+
+CSTR          is a character string to be converted.
+
+                          U T F I N T
+
+UTFINT converts an UTF8 character string to Unicode numbers.
+
+The call is:  CALL UTFINT (CSTR, IRAY, NRAY, N)
+                                            level 0, 1, 2, 3
+
+CSTR          is a character string in UTF8 format.
+IRAY          is the returned array of Unicode numbers.
+NRAY          is the dimension of IRAY.
+N             is the  returned  number of calculated Unicode 
+              numbers. If an error occurred, a negative num-
+              ber is returned.
+
+                          I N T U T F
+
+INTUTF converts an array of Unicode number to an UTF8  char-
+acter string.
+
+The call is:  CALL INTUTF (IRAY, NRAY, CSTR, NMAX, N)
+                                            level 0, 1, 2, 3
+
+IRAY          is an integer array of Unicode numbers.
+NRAY          is the number elements in IRAY.
+CSTR          is the  returned character string in UTF8 for-
+              mat. For the programming language C the string
+              is terminated by '\0'.
+NMAX          is the maximal number  of characters that CSTR 
+              can contain. 
+N             is the returned  length of CSTR.  If an  error
+              occurred, a negative number is returned.
+
+9.3 Number Arithmetic
+
+                         N L N U M B
+
+NLNUMB calculates the length of numbers in plot coordinates.
+
+The call is:  NL = NLNUMB (X, NDIG)            level 1, 2, 3
+
+X             is a real number.
+NDIG          is the number of decimal places (>= -1).
+NL            is the length in plot coordinates.
+
+                         I N T L E N
+
+INTLEN calculates the number of digits in integers.
+
+The call is:  CALL INTLEN (NX, NL)          level 0, 1, 2, 3
+
+NX            is an integer.
+NL            is the number of digits.
+
+                           F L E N
+
+FLEN calculates the number of digits in real numbers.
+
+The call is:  CALL FLEN (X, NDIG, NL)       level 0, 1, 2, 3
+
+X             is a real number.
+NDIG          is the number of decimal places (>= -1).
+NL            is the number of digits  including the decimal
+              point.  For negative numbers,  it includes the
+              minus sign.
+
+                         I N T C H A
+
+INTCHA converts integers to character strings.
+
+The call is:  CALL INTCHA (NX, NL, CSTR)    level 0, 1, 2, 3
+
+NX            is the integer to be converted.
+NL            is the number of digits in NX returned by INT-
+              CHA.
+CSTR          is the  character  string containing the inte-
+              ger.
+
+                          F C H A
+
+FCHA converts real numbers to character strings.
+
+The call is:  CALL FCHA (X, NDIG, NL, CSTR) level 0, 1, 2, 3
+
+X             is the real number to be converted.
+NDIG          is the number of decimal places to be conside-
+              red (>= -1).
+              The last digit will be rounded up.
+NL            is the number of digits returned by FCHA.
+CSTR          is the  character  string containing  the real
+              number.
+
+                        S O R T R 1
+
+SORTR1 sorts real numbers.
+
+The call is:  CALL SORTR1 (XRAY, N, COPT)   level 0, 1, 2, 3
+
+XRAY          is an array containing real numbers.
+N             is the dimension of XRAY.
+COPT          defines the sorting direction.  IF COPT = 'A',
+              the numbers will be sorted in ascending order;
+              if COPT = 'D',  they will be sorted in descen-
+              ding order.
+
+                        S O R T R 2
+
+SORTR2 sorts two-dimensional points in the X-direction.
+
+The call is:  CALL SORTR2 (XRAY, YRAY, N, COPT)
+                                            level 0, 1, 2, 3
+
+XRAY, YRAY    are arrays containing the coordinates.
+N             is the number of points.
+COPT          defines the sorting direction.  IF COPT = 'A',
+              the numbers will be sorted in ascending order;
+              if COPT = 'D',  they will be sorted in descen-
+              ding order.
+
+Note:         The Shell-algorithm is used for sorting.
+
+                        S P L I N E
+
+SPLINE  calculates splined points  used in  CURVE  to plot a
+spline.
+
+The call is:  CALL SPLINE (XRAY, YRAY, N, XSRAY, YSRAY,NSPL)
+                                               level 1, 2, 3
+XRAY, YRAY    are arrays containing points of the curve.
+N             is the dimension of XRAY and YRAY.
+XSRAY, YSRAY  are the splined points returned by SPLINE.
+NSPL          is the  number of  calculated  splined  points
+              returned by SPLINE.  By default,  NSPL has the
+              value 200.
+
+Note:         The number  of  interpolated  points  and  the
+              order of the  polynomials can be modified with
+              SPLMOD.
+
+                        B E Z I E R
+
+The routine BEZIER calculates a Bezier interpolation.
+
+The call is:  CALL BEZIER (XRAY, YRAY, N, XPRAY, YPRAY, NP)
+                                            level 0, 1, 2, 3
+XRAY, YRAY    are arrays containing points of the curve.
+N             is the dimension of  XRAY and  YRAY   (1 < N <
+              21).
+XPRAY, YPRAY  are the Bezier points returned by BEZIER.
+NP            is the number  of calculated points defined by
+              the user.
+
+                        H I S T O G
+
+The routine HISTOG calculates a histogram.
+
+The call is:  CALL HISTOG (XRAY, N, XHRAY, YHRAY, NH)
+                                            level 0, 1, 2, 3
+
+XRAY          is an array containing floating point numbers.
+N             is the dimension of XRAY.
+XHRAY, YHRAY  are arrays  containing  the calculated  histo-
+              gram. XHRAY contains distinct values from XRAY
+              sorted in ascending order.  YHRAY contains the
+              frequency of points.
+NH            is the number of points in XHRAY und YHRAY re-
+              turned by HISTOG.
+
+                        T R I A N G
+
+The routine TRIANG calculates the  Delaunay triangulation of
+an arbitrary collection of points in the plane. The Delaunay
+triangulation can directly  be used to display  surfaces and
+contour lines of irregularly distributed data points.
+
+The call is:  CALL TRIANG (XRAY, YRAY, N, I1RAY, I2RAY, 
+                        I3RAY, NMAX, NTRI)  level 0, 1, 2, 3
+
+XRAY, YRAY    are arrays containing floating point numbers.
+              The dimension of XRAY and YRAY must be greater
+              or equal N + 3.                         
+N             is the number of points in XRAY and YRAY.
+I1RAY, I2RAY, are the returned vertices for each triangle in 
+  I3RAY       a counter-clockwise order.
+NMAX          is the dimension of I1RAY, I2RAY and I3RAY.
+              NMAX must be greater of equal 2 * N + 1.
+NTRI          is the returned number of triangles.
+
+Notes:      - The Watson  algorithm is used  for calculating
+              the Delaunay triangulation.  The algorithm in-
+              creases with the number  of points as approxi-
+              mately O(N^1.5).
+            - Surfaces and contours can be directly  plotted
+              from the triangulation  with the routines CRV-
+              TRI, SURTRI and CONTRI.
+
+                        C I R C 3 P
+
+The routine  CIRC3P  calculates a circle specified by  three
+points.
+
+The call is: CALL CIRC3P (X1, Y1, X2, Y2, X3, Y3, XM, YM, R)
+                                            level 0, 1, 2, 3
+
+X1, Y1       are  the X- and Y-coordinates  of the first
+             point.
+X2, Y2       are the X- and Y-coordinates of the second 
+             point.
+X3, Y3       are the X- and Y-coordinates of the third 
+             point.
+XM, YM       are the calculated coordinates of the centre
+             point.
+R            is the calculated radius of the circle.
+
+                        P O L C L P
+
+The routine POLCLP clips a polygon against a rectangle.  The 
+Sutherland-Hodman algorithm is used by POLCLP.  This routine
+must be called four times to clip  against  all edges of the
+rectangle.
+
+The call is: CALL POLCLP (XRAY, YRAY, N, XRAY2, YRAY2, NMAX, 
+                          NOUT, XV, CEDGE)  level 0, 1, 2, 3
+
+XRAY, YRAY   are arrays containing the polygon vertices.
+N            is the number of the polygon vertices.
+XRAY2, YRAY2 are the returned clipped polygon vertices.
+NMAX         is the maximal number of allowed edges in XRAY2
+             and YRAY2.
+NOUT         is the number of vertices  in the clipped poly-
+             gon.
+XV           is the value of the current edge.
+CEDGE        is a character string that defines the edge. 
+             CEDGE can have the values  'TOP', 'LEFT', 'BOT-
+             TOM' and 'RIGHT'.
+
+9.4 Date Routine
+
+                        B A S D A T
+
+The routine  BASDAT  defines the base date.  This routine is
+necessary for plotting date labels and data  containing date
+coordinates.
+
+The call is:  CALL BASDAT (IDAY, IMONTH, IYEAR) 
+                                            level 0, 1, 2, 3
+
+IDAY          is the day number  of the date  between 1  and 
+              31.
+IMONTH        is the month number of the date between 1  and
+              12.
+IYEAR         is the four digit year number of the date.
+
+                        I N C D A T
+
+The function  INCDAT  returns the number  of days  between a
+specified date and the base date.  These calculated days can
+be passed as parameters to the routine GRAF and as coordina-
+tes to data plotting routines such as CURVE. 
+
+The call is:  N = INCDAT (IDAY, IMONTH, IYEAR)
+                                            level 0, 1, 2, 3
+
+N             is the returned number of calculated days.
+IDAY          is the day number  of the date  between 1  and 
+              31.
+IMONTH        is the month number of the date between 1  and
+              12.
+IYEAR         is the four digit year number of the date.
+
+                        T R F D A T
+
+The routine  TRFDAT calculates for a number of days the cor-
+responding date.
+
+The call is:  CALL TRFDAT (N, IDAY, IMONTH, IYEAR)
+                                            level 0, 1, 2, 3
+
+N             is the number of days.
+IDAY          is the returned day number.
+IMONTH        is the returned month number.
+IYEAR         is the returned four digit year number.
+
+                        N W K D A Y
+ 
+The function NWKDAY returns the weekday for a given date.
+
+The call is:  N =  NWKDAY (IDAY, IMONTH, IYEAR) 
+                                         level 0, 1, 2, 3
+
+N             is the returned weekday between 1 and 7 
+              (1 = Monday, 2 = Tuesday, ...).
+IDAY          is the day number  of the date  between 1  and 
+              31.
+IMONTH        is the month number of the date between 1  and
+              12.
+IYEAR         is the four digit year number of the date.
+
+9.5 Bit Manipulation  
+
+                        B I T S I 2
+
+The routine BITSI2 allows bit manipulation on 16 bit variab-
+les.
+
+The call is:  CALL BITSI2 (NBITS, NINP, IINP, NOUT, IOUT,
+                           IOPT)            level 0, 1, 2, 3
+
+NBITS         is the number of bits to be shifted.
+NINP          is a 16 bit variable from which to extract the
+              bit field.
+IINP          is the bit position of the leftmost bit of the 
+              bit field.  The bits are numbered 0 - 15 where
+              0 is the most significant bit.
+NOUT          is a 16 bit variable  into which the bit field 
+              is placed.        
+IOUT          is the  bit  position  where  to  put  the bit
+              field.
+IOPT          controls whether the bits outside of the field 
+              are set to zero or not.  If IOPT equal 0,  the
+              bits are set to zero. If IOPT not equal 0, the
+              bits are left as they are. For this case, NOUT
+              is  also  used as  input  parameter.  In the C 
+              function,  IOPT  is missing  in the  parameter 
+              list and internally used with the value 1.
+
+                        B I T S I 4
+
+The routine BITSI4 allows bit manipulation on 32 bit variab-
+les.
+
+The call is:  CALL BITSI4 (NBITS, NINP, IINP, NOUT, IOUT,
+                           IOPT)            level 0, 1, 2, 3
+
+NBITS         is the number of bits to be shifted.
+NINP          is a 32 bit variable from which to extract the
+              bit field.
+IINP          is the bit position of the leftmost bit of the 
+              bit field.  The bits are numbered 0 - 31 where
+              0 is the most significant bit.
+NOUT          is a 32 bit variable  into which the bit field 
+              is placed.        
+IOUT          is the  bit  position  where  to  put  the bit
+              field.
+IOPT          controls whether the bits outside of the field 
+              are set to zero or not.  If IOPT equal 0,  the
+              bits are set to zero. If IOPT not equal 0, the
+              bits are left as they are. For this case, NOUT
+              is  also  used as  input  parameter.  In the C 
+              function,  IOPT  is missing  in the  parameter 
+              list and internally used with the value 1.
+        
+
+9.6 Byte Swapping  
+
+                        S W A P I 2
+
+The routine SWAPI2 swaps the bytes of 16 bit integer variab-
+les.
+
+The call is:  CALL SWAPI2 (IRAY, N)         level 0, 1, 2, 3 
+ 
+IRAY          is an array containing the 16 bit variables.
+N             is the number of variables.
+    
+                        S W A P I 4
+
+The routine SWAPI4 swaps the bytes of 32 bit integer variab-
+les.
+
+The call is:  CALL SWAPI4 (IRAY, N)         level 0, 1, 2, 3 
+ 
+IRAY          is an array containing the 32 bit variables.
+N             is the number of variables.
+
+9.7 Binary I/O  
+
+This chapter describes  the utilities available to transform
+Binary I/O from Fortran can cause some problems: unformatted
+IO in Fortran  is  system-dependent  and direct  access  I/O
+needs a fixed record length.  Therefore,  DISLIN offers some
+C routines callable from Fortran.
+
+                        O P E N F L
+
+The routine OPENFL opens a file for binary I/O.
+
+The call is:  CALL OPENFL (CFILE, NLU, IRW, ISTAT)
+                                            level 0, 1, 2, 3
+  
+CFILE         is a  character  string  containing  the  file
+              name.
+NLU           is the logical unit for the I/O   (0 <= NLU <= 
+              99). The units 15 and 16 are reserved for DIS-
+              LIN. 
+IRW           defines  the  file  access  mode    (0:  READ,
+              1: WRITE, 2: APPEND).
+ISTAT         is the returned status (0: no errors). 
+    
+                        C L O S F L
+
+The routine CLOSFL closes a file.
+
+The call is:  CALL CLOSFL (NLU)             level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+    
+
+                        R E A D F L
+
+The routine READFL reads a given number of bytes.
+
+The call is:  CALL READFL (NLU, IBUF, NBYT, ISTAT) 
+                                            level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+IBUF          is an array where to read the bytes.
+NBYT          is the number of bytes. 
+ISTAT         is the number  of bytes read  (0 means  end of
+              file). 
+    
+                        W R I T F L
+
+The routine WRITFL writes a number of bytes.
+
+The call is:  CALL WRITFL (NLU, IBUF, NBYT, ISTAT) 
+                                            level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+IBUF          is an array containing the bytes.
+NBYT          is the number of bytes. 
+ISTAT         is the number of bytes written (0 means an er-
+              ror). 
+
+                        S K I P F L
+
+The routine  SKIPFL skips a number of bytes from the current
+position.
+
+The call is:  CALL SKIPFL (NLU, NBYT, ISTAT)
+                                            level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+NBYT          is the number of bytes. 
+ISTAT         is the returned status (0: OK).
+    
+                        T E L L F L
+
+The routine TELLFL returns the current position in bytes.
+
+The call is:  CALL TELLFL (NLU, NBYT)       level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+NBYT          is the  returned  position in bytes where byte
+              numbering  begins with zero.  NBYT = -1, if an
+              error occurs. 
+
+                        P O S I F L
+
+The routine  POSIFL  skips to a certain position relative to
+the start.
+
+The call is:  CALL POSIFL (NLU, NBYT, ISTAT) 
+                                            level 0, 1, 2, 3  
+
+NLU           is the logical unit.
+NBYT          defines  the  position.  Byte numbering begins
+              with zero. 
+ISTAT         is the returned status (0: OK).
+    
+9.8 Window Terminals
+
+9.8.1 Clearing the Screen
+
+                        E R A S E
+
+The routine  ERASE  clears the screen,  a graphics window or
+the page of a raster format such as TIFF,  PNG, PPM and BMP.
+In general,  this is done by  DISINI  at the beginning  of a
+plot.
+
+The call is:  CALL ERASE                       level 1, 2, 3
+
+Note:         If backing store is enabled in DISLIN with the
+              routine X11Mod,  the routine ERASE clears just
+              the pixmap  and not directly the graphics win-
+              dow.  Clearing just the pixmap  has the advan-
+              tage  that a new plot  can be  created  on the
+              pixmap  while the graphics window  remains un-
+              changed.  The pixmap can then be copied to the
+              graphics window with the routine SENDBF.  This
+              double frame buffer effect avoids flickering.
+
+9.8.2 Clearing the Output Buffer
+
+                        S E N D B F
+
+Normally, the graphical output to the screen is buffered. To
+send  the buffer  to the screen,  the routine  SENDBF can be 
+used.
+
+The call is:  CALL SENDBF                      level 1, 2, 3
+
+Note:         SENDBF  updates  also a  graphics window  with
+              the current pixmap if backing store is enabled
+              in the  routine  X11MOD.  SENDBF  can  be used
+              after DISFIN if there is still a graphics win-
+              dow  (i.e. after WINMOD ('NONE')).  
+
+                        B U F M O D
+
+The routine BUFMOD changes the behaviour of SENDBF.
+
+The call is:  CALL BUFMOD (CMOD, CKEY)         level 1, 2, 3
+
+CMOD          is a character string that can have the values
+              'ON' and 'OFF'.
+CKEY          is a character string  that can have the value
+              'SENDBF'. This keyword enables or disables the
+              internal calls of  SENDBF  in  DISLIN routines 
+              such as ENDGRF.
+                                  Default: ('ON', 'SENDBF').
+
+9.8.3 Multiple Windows
+
+The following routines allow programs to create up to 8 win-
+dows for graphics output on X11 and Windows terminals. Note,
+that multiple windows  can be used  with graphic windows but
+are not compatible with other file formats in DISLIN.
+
+                         O P N W I N
+
+The routine OPNWIN creates a new window for graphics  output
+on the screen.
+
+The call is:  CALL OPNWIN (ID)                 level 1, 2, 3
+
+ID            is the window number between 1 and 8.
+
+Notes:     -  The file format must be set to X Window emula-
+              tion in the routine METAFL (i.e. with the key-
+              word 'XWIN').
+           -  The size and position of windows can be  chan-
+              ged with the routines WINDOW and WINSIZ.
+           -  An individual page size can be defined for the
+              window with the routine PAGWIN.
+           -  Windows can be closed  and  selected  with the
+              routines CLSWIN and SELWIN.
+           -  A created window with OPNWIN is selected auto-
+              matically for graphics output.
+           -  External windows can also be used with  OPNWIN
+              if the routine SETXID is called before.
+           -  The routine  WINMOD  affects  the handling  of
+              windows in the termination routine DISFIN.
+
+                         C L S W I N
+
+The routine CLSWIN closes a window created with OPNWIN.
+
+The call is:  CALL CLSWIN (ID)                 level 1, 2, 3
+
+ID            is the window number between 1 and 8.
+
+                         S E L W I N
+
+The routine  SELWIN selects a window on the screen where the
+following graphics output will be sent to.
+
+The call is:  CALL SELWIN (ID)                 level 1, 2, 3
+
+ID            is the window number between 1 and 8.
+
+                         P A G W I N
+
+PAGWIN defines the page size for multiple windows. If PAGWIN
+is not called, the current page size defined by PAGE or SET-
+PAG is used.
+
+The call is:  CALL PAGWIN (NXP, NYP)           level 1, 2, 3
+
+NXP, NYP      are the length  and height of the page in plot
+              coordinates.  The lower  right  corner  of the
+              page is the  point (NXP-1, NYP-1).
+
+                          W I N I D
+
+The routine  WINID  returns the ID of the currently selected
+window.
+
+The call is:  CALL WINID (ID)                  level 1, 2, 3
+
+ID            is the returned window number.
+
+                         W I N T I T
+
+The routine WINTIT changes the window title of the currently
+selected window.
+
+The call is:  CALL WINTIT (CSTR)               level 1, 2, 3
+
+CSTR  is a character string containing the new window title.
+
+9.8.4 Cursor Routines
+
+The following routines  allow a user  to collect some X- and
+Y-coordinates in a graphics window with the mouse. The coor-
+dinates can be returned in pixels and in DISLIN plot coordi-
+nates. All routines are also available in  DISLIN  draw wid-
+gets.
+
+                        C S R P O S
+
+The routine  CSRPOS  sets the position  of the mouse pointer
+and returns the position  if a character key or a mouse but-
+ton is pressed. This routine can be used for cursor  naviga-
+tion.
+
+The call is:  CALL CSRPOS (NX, NY, IKEY)       level 1, 2, 3
+
+NX, NY        are integer coordinates.  On entry,  the mouse 
+              pointer is set to the position (NX, NY).  If a
+              character key is pressed,  the position of the
+              mouse is returned in NX and NY.
+IKEY          is the  returned  ASCII  code for  the pressed 
+              key. The  cursor  keys can also be used  where
+              the following  values are returned: 1 for cur-
+              sor left, 2 for cursor up, 3 for cursor right, 
+              4 for cursor down.  The value 5 is returned if
+              the  left  mouse button  is clicked,  and  the 
+              value 6 for the right mouse button. 
+              The  value -1 is returned if an error occurred
+              and the value 0 if no key is pressed.
+
+Note:         The behaviour of CSRPOS  can be  modified with
+              the routine CSRMOD.
+
+                        C S R K E Y
+
+The routine CSRKEY returns a character key.  If no character
+key is pressed, the value 0 is returned.
+
+The call is:  CALL CSRKEY (IKEY)               level 1, 2, 3
+
+IKEY          is the  returned  ASCII  code for  the pressed 
+              key. The  cursor  keys can also be used  where
+              the following  values are returned: 1 for cur-
+              sor left, 2 for cursor up, 3 for cursor right, 
+              4 for cursor down.  The value 0 is returned if
+              no key is pressed.
+
+                        C S R P T 1
+
+The routine CSRPT1 returns the position of the mouse pointer
+if  the  mouse button 1  is  pressed.  The mouse pointer  is
+changed to a cross hair  pointer  in the  graphics window if
+ CSRPT1 is active.
+
+The call is:  CALL CSRPT1 (NX, NY)             level 1, 2, 3
+
+NX, NY        are the returned  coordinates  of the  pressed
+              mouse pointer.
+
+                        C S R R E C
+
+The routine  CSRREC  returns two opposite corners of a rect-
+angle created with mouse button 1. A rubber band  is plotted
+around the rectangle.
+
+The call is:  CALL CSRREC (NX1, NY1, NX2, NY2) level 1, 2, 3
+
+NX1, NY1,     are the returned  coordinates  of two opposide
+ NX2, NY2     rectangle corners.
+
+                        C S R P T S
+
+The routine  CSRPTS returns an array of mouse positions. The
+routine is waiting for mouse button 1 clicks  and terminates
+if mouse button 2 is pressed.  The mouse pointer  is changed
+to a cross hair pointer in the graphics window.
+
+The call is:  CALL CSRPTS (NXRAY, NYRAY, NMAX, N, IRET) 
+                                               level 1, 2, 3
+
+NXRAY, NYRAY  are the returned coordinates  of the collected
+              mouse positions.
+NMAX          is  the dimension of  NXRAY  and NYRAY and de-
+              fines the maximal  number  of points that will
+              be stored in NXRAY and NYRAY.
+N             is the number  of points  that are returned in
+              NXRAY and NYRAY.
+IRET          is a returned status.  IRET not equal  0 means 
+              that not all  mouse movements  could be stored
+              in NXRAY and NYRAY. 
+
+                        C S R M O V
+
+The routine  CSRMOV returns an array of mouse movements. The
+routine collects the mouse movements  of mouse button 1  and
+terminates if mouse button 1 is released. The mouse  pointer
+is changed to a cross hair pointer in the graphics window.
+
+The call is:  CALL CSRMOV (NXRAY, NYRAY, NMAX, N, IRET)
+                                               level 1, 2, 3
+
+NXRAY, NYRAY  are the returned coordinates  of the collected
+              mouse movements.
+NMAX          is the dimension of  NXRAY  and  NYRAY and de-
+              fines  the maximal number  of points that will
+              be stored in NXRAY and NYRAY.
+N             is the number  of points  that are returned in
+              NXRAY and NYRAY.
+IRET          is a returned status.  IRET not equal  0 means 
+              that not all  mouse positions  could be stored
+              in NXRAY and NYRAY. 
+
+                        C S R M O D
+
+The routine CSRMOD modifies the behaviour of CSRPOS.
+
+The call is:  CALL CSRMOD (CMOD, CKEY)         level 1, 2, 3
+
+CMOD          is a character string that can have the values
+              'STANDARD', 'SET', 'GET' and 'READ'.  With the
+              keywords  'SET'  and 'GET' the cursor position  
+              can  be  defined  or requested without waiting  
+              for a user event.  The value 'READ' means that
+              the cursor position is not set at the entry of
+              CSRPOS. The value 'STANDARD' means the default
+              behaviour of CSRPOS.
+CKEY          is a character string  that can have the value
+              'POS'.
+                               Default: ('STANDARD', 'POS'). 
+
+                        C S R U N I
+
+The routine CSRUNI defines if pixels or plot coordinates are
+returned by the cursor routines.
+
+The call is:  CALL CSRUNI (COPT)               level 1, 2, 3
+
+COPT          is a character string that can have the values
+              'PIXEL' and 'PLOT'.    Default: COPT = 'PLOT'.
+ 
+Note:         Plot  coordinates can be converted to user co-
+              ordinates with the routines XINVRS and YINVRS.
+
+                        C S R T Y P
+
+The routine CSRTYP defines the cursor used by the cursor
+routine.
+
+The call is:  CALL CSRTYP (COPT)               level 1, 2, 3
+
+COPT          is a character string that can have the values
+              'NONE', 'CROSS', 'ARROW' and  'VARROW'. 'NONE'
+              means that the current cursor is not changed.
+                                    Default: COPT = 'CROSS'.
+
+                        S E T C S R
+
+The routine  SETCSR  defines the cursor  that is used by the 
+DISLIN graphics window.
+
+The call is:  CALL SETCSR (COPT)               level 1, 2, 3
+
+COPT          is a character string that can have the values 
+              'ARROW', 'CROSS'  and 'VARROW'. 
+		                    Default: COPT = 'ARROW'.
+
+9.9 Elementary Image Routines
+
+The following routines allow transferring of image data bet-
+ween windows, files and arrays. The output format must be an
+image format such as CONS, TIFF,  PNG, BMP and PPM,  but the
+writing of image data to  PostScript  and  PDF files is also
+supported.  If the output format  is PostScript  or PDF, the 
+size of images  and the  position  of an image on the output
+page can be defined with the routines IMGSIZ and IMGBOX.
+
+                         I M G I N I
+
+The routine  IMGINI  initializes  transferring of image data 
+with the routines RPIXEL, RPIXLS, RPXROW, WPIXEL, WPIXLS and
+WPXROW.  If the output  format is PostScript or PDF,  IMGINI
+creates a virtual image where image data can be written to.
+WPXROW.
+
+The call is:  CALL IMGINI                      level 1, 2, 3
+
+                         I M G F I N
+
+The routine  IMGFIN  terminates  transferring  of image data
+with the routines RPIXEL, RPIXLS, RPXROW, WPIXEL, WPIXLS and
+WPXROW. If the output format is PostScript or PDF,  the vir-
+tual image created in IMGINI  is copied to the PostScript or
+PDF file. 
+
+The call is:  CALL IMGFIN                      level 1, 2, 3
+
+                         R P I X E L
+
+The routine RPIXEL reads one pixel from memory.
+
+The call is:  CALL RPIXEL (IX, IY, ICLR)       level 1, 2, 3
+
+IX, IY        is the position of the pixel in screen coordi-
+              nates.
+ICLR          is the returned colour value of the pixel.
+
+                         W P I X E L
+
+The routine WPIXEL writes one pixel into memory.
+
+The call is:  CALL WPIXEL (IX, IY, ICLR)       level 1, 2, 3
+
+IX, IY        is the position of the pixel in screen coordi-
+              nates.
+ICLR          is the new colour value of the pixel.
+
+                         R P I X L S
+
+The routine  RPIXLS copies colour values from a rectangle in
+memory to an array.
+
+The call is:  CALL RPIXLS (IRAY, IX, IY, NW, NH)
+                                               level 1, 2, 3
+
+IRAY          is a byte array containing the returned colour
+              values.
+IX, IY        contain the starting point in screen coordina-
+              tes.
+NW, NH        are the  width  and height of the rectangle in
+              screen coordinates.
+
+                         W P I X L S
+
+The routine  WPIXLS  copies colour values from an array to a
+rectangle in memory.
+
+The call is:  CALL WPIXLS (IRAY, IX, IY, NW, NH)
+                                               level 1, 2, 3
+
+IRAY          is a byte array containing the colour values.
+IX, IY        contain the starting point in screen coordina-
+              tes.
+NW, NH        are the  width  and height of the rectangle in
+              screen coordinates.
+
+                         R P X R O W
+
+The routine  RPXROW  copies one line  of colour values  from
+memory to an array.
+
+The call is:  CALL RPXROW (IRAY, IX, IY, N)    level 1, 2, 3
+
+IRAY          is a byte array containing the returned colour
+              values.
+IX, IY        contain the starting point in screen coordina-
+              tes.
+N             is the number of pixels.
+
+                         W P X R O W
+
+The routine WPXROW copies colour values  from an  array to a
+line in memory.
+
+The call is:  CALL WPXROW (IRAY, IX, IY, N)    level 1, 2, 3
+
+IRAY          is a byte array containing the  colour values.
+IX, IY        contain the starting point in screen coordina-
+              tes.
+N             is the number of pixels.
+
+Note:         IMGINI  and  IMGFIN must be used with the rou-
+              tines  RPIXEL,  WPIXEL, RPIXLS, WPIXLS, RPXROW
+              and WPXROW.
+
+                         I M G M O D
+
+The routine  IMGMOD  defines palette or true colour mode for
+the routines RPIXLS, WPIXLS, RPXROW and WPXROW.  For palette
+mode,  the byte  arrays  in the  routines above must contain 
+colour indices between 0 and 255.  For true colour mode, the
+byte arrays must contain RGB values (8 bit for each value).  
+
+The call is:  CALL IMGMOD (CMOD)               level 1, 2, 3
+
+CMOD          is a character string that can have the values
+              'INDEX' and 'RGB'.
+                                    Default: CMOD = 'INDEX'.
+
+                         I M G S I Z
+
+If  the  output format  is  PostScript  or PDF,  the size of 
+images  can be defined with the routine IMGSIZ.  The routine 
+must be called before IMGINI.
+
+The call is:  CALL IMGSIZ (NW, NH)             level 1, 2, 3
+
+NW, NH        are the image width and height in pixels.
+                                        Default: (853, 603).
+
+                         I M G B O X
+
+If the  output format is  PostScript  or PDF, a rectangle on
+the output page  can be specified  where the image is copied 
+to. The routine IMGBOX must be called before IMGINI.
+
+The call is:  CALL IMGBOX (NX, NY, NW, NH)     level 1, 2, 3
+
+NX, NY        is the upper left corner  of the rectangle  on
+              the page in plot coordinates.
+NW, NH        are the width  and height  of the rectangle in
+              plot coordinates.  NW and NH  should  have the
+              same ratio  as the image that is copied to the
+              rectangle.  The default  rectangle is the full
+              page. 
+
+                         I M G T P R
+
+The routine IMGTPR defines a transparency colour for copying
+image pixels to memory.  Pixels that have the same colour as
+the colour defined by IMGTPR are not copied to memory.
+
+The call is:  CALL IMGTPR (NCLR)               level 1, 2, 3
+
+NCLR          is a colour value. If NCLR = -1, the transpar-
+              ency colour will be ignored.
+                                          Default: NCLR = -1
+
+                         R I M A G E
+
+The routine RIMAGE copies an image from memory to a file.
+
+The call is:  CALL RIMAGE (CFIL)               level 1, 2, 3
+
+CFIL          is the name  of the  output file.  A new  file
+              version  will be  created  for  existing files
+              (see FILMOD).
+
+Notes:     -  Images are stored with an  ASCII  header of 80
+              bytes  length  followed  by the  binary  image
+              data.  The format of the image data depends on
+              the  video mode and is therefore system-depen-
+              dent.
+           -  A single image file can be displayed  with the
+              routine  WIMAGE  or with  the  utility program
+              DISIMG. A sequence of image files can be  dis-
+              played with the utility program DISMOV.
+
+                         W I M A G E
+
+The routine WIMAGE copies an image from a file to memory.
+
+The call is:  CALL WIMAGE (CFIL)               level 1, 2, 3
+
+CFIL          is the name of the input file.
+
+                         R T I F F
+
+The routine  RTIFF  copies  an image  from memory to a file.
+The image is stored in the device-independent TIFF format.
+
+The call is:  CALL RTIFF (CFIL)                level 1, 2, 3
+
+CFIL          is the  name  of the output file.  A new  file
+              version  will be  created  for existing  files
+              (see FILMOD).
+
+Notes:     -  This image format can be used to export images
+              created with DISLIN  into other software pack-
+              ages  or to  transfer  them  to other computer
+              systems.
+           -  A TIFF file created by DISLIN can be displayed
+              with the routine  WTIFF  or with  the  utility
+              program DISTIF.
+
+                         W T I F F
+
+The routine WTIFF copies an TIFF file created by DISLIN from
+a file to memory.
+
+The call is:  CALL WTIFF (CFIL)                level 1, 2, 3
+
+CFIL          is the name of the input file.
+ 
+Note:         The position of the  TIFF  file and a clipping
+              window can be defined with the routines TIFORG
+              and TIFWIN.
+
+                         T I F O R G
+
+The routine  TIFORG  defines  the upper  left corner  of the
+screen where the TIFF file is copied to.
+
+The call is:  CALL TIFORG (NX, NY)             level 1, 2, 3
+
+NX, NY        is the upper left corner  in screen  coordina-
+              tes.
+
+                         T I F W I N
+
+The routine  TIFWIN  defines a clipping window  of the  TIFF
+file  that  can be  copied  with  the routine  WTIFF  to the
+screen.
+
+The call is:  CALL TIFWIN (NX, NY, NW, NH)     level 1, 2, 3
+
+NX, NY        is the upper left corner  of the clipping win-
+              dow in pixels.
+NW, NH        are the width and height  of the clipping win-
+              dow in pixels.
+
+                         R G I F
+
+The routine RGIF copies an image from memory to a GIF file.
+
+The call is:  CALL RGIF (CFIL)                 level 1, 2, 3
+
+CFIL          is  the name  of the  output file.  A new file
+              version  will be  created  for existing  files 
+              (see FILMOD).
+
+                         R P N G
+
+The routine RPNG copies an image from memory to a PNG file.
+
+The call is:  CALL RPNG (CFIL)                 level 1, 2, 3
+
+CFIL          is  the name  of the  output file.  A new file
+              version  will be  created  for existing  files 
+              (see FILMOD).
+
+                         R B F P N G
+
+The routine  RBFPNG  copies an image  from memory  as a  PNG 
+file to a buffer.
+
+The call is:  CALL RBFPNG (CBUF, NMAX, N)      level 1, 2, 3
+
+CBUF          is  a  character  buffer  where  the  image is 
+              copied to in PNG format.
+NMAX          defines how many bytes can be  copied to CBUF.
+              If NMAX = 0,  the size of the  PNG file is re-
+              turned  in N without copying the  PNG  file to
+              CBUF. 
+
+N             is the  returned length of the buffer. N <= 0, 
+              if an error occurs.
+
+                         R P P M
+
+The routine RPPM copies an image from memory to a PPM file.
+
+The call is:  CALL RPPM (CFIL)                 level 1, 2, 3
+
+CFIL          is the name  of the  output file.  A new  file 
+              version  will be  created  for existing  files 
+              (see FILMOD).
+
+                         R M B P
+
+The routine RBMP copies an image from memory to a BMP file.
+
+The call is:  CALL RBMP (CFIL)                 level 1, 2, 3
+
+CFIL          is  the name  of the  output file.  A new file
+              version will be created for existing files 
+              (see FILMOD).
+
+                        I M G C L P
+
+The routine  IMGCLP  defines  a clipping region for the rou-
+tines RTIFF,  RGIF,  RPNG,  RPPM  and  RBMP  for copying the 
+graphics window to an output file. 
+
+The call is:  CALL IMGCLP (NX, NY, NW, NH)     level 1, 2, 3
+
+NX, NY        is the upper left corner of the rectangle in
+              pixels.
+NW, NH        are the width and height of the rectangle in
+              pixels.
+
+                        P D F B U F
+
+The routine  PDFBUF copies a PDF file from memory to a  user
+buffer. The routine must be called after DISFIN and PDF buf-
+fer output must be  enabled  with the statement  CALL PDFMOD 
+('ON', 'BUFFER') before DISINI.
+
+The call is:  CALL PDFBUF (CBUF, NMAX, N)            level 0
+
+CBUF          is a character buffer where the  PDF format is
+              copied to.
+NMAX          defines how  many bytes can be copied to CBUF.
+              If NMAX = 0,  the size of the  PDF file is re-
+              turned in  N without  copying the  PDF file to 
+              CBUF. 
+N             is the returned length of the buffer. N <= 0, 
+              if an error occurs.
+
+Note:         The PDF file is deleted in memory after it is
+              copied to the buffer.
+ 
+9.10 Transparency
+
+The following routines allow transparency effects in DISLIN
+by using alpha blending. Alpha blending is only possible if
+the output format is a raster format  such as screen output
+or plotting to an image file like PNG and TIFF.
+A second restriction is that the output device must support
+the full range of RGB colours.  This means that you have to
+enable the option IMGFMT ('RGB') for image files.
+    
+                        T P R I N I
+
+The routine TPRINI initializes  transparency. All following
+plotting output until  TPRFIN  is going to a separate frame
+buffer. 
+
+The call is:  CALL TPRINI                     level 1, 2, 3
+
+                        T P R F I N
+
+The routine  TPRFIN  terminates transparency.  The separate 
+frame buffer  is mixed with the real frame buffer  by using
+alpha blending.
+
+The call is:  CALL TPRFIN                     level 1, 2, 3
+
+                        T P R V A L
+
+The routine TPRVAL defines the alpha value.
+
+The call is:  CALL TPRVAL (X)                 level 1, 2, 3
+
+X             is a  floating point value  in the range from 
+              0.0 to 1.0,  where 0.0 means a fully transpar-
+              ent colour  and 1.0 means  a fully opaque col-
+              our. 
+                                                Default: 1.0
+
+The following program code plots three circles with alpha 
+blending:
+
+      CALL TPRVAL(0.5)
+      CALL COLOR('RED')
+      CALL TPRINI 
+      CALL CIRCLE(500,500,500)
+      CALL TPRFIN
+
+      CALL COLOR('GREEN')
+      CALL TPRINI 
+      CALL CIRCLE(750,750,500)
+      CALL TPRFIN
+
+      CALL COLOR('BLUE')
+      CALL TPRINI 
+      CALL CIRCLE(1000,500,500)
+      CALL TPRFIN
+
+                        T P R M O D
+
+The routine TPRMOD defines additional options for transpar-
+ency.
+
+The call is:  CALL TPRMOD (CMOD, CKEY)        level 1, 2, 3
+
+CMOD          is a character string defining an option.
+CKEY          is a character string  that can have the val-
+              ues 'BACK' and 'FIGURE'.  For CKEY =  'BACK',
+              the  parameter  CMOD  can have the values 'O- 
+              PAQUE' and 'NOOPAQUE'.  'OPAQUE' means that a
+              transparent figure maybe mixed with the back-
+              ground  colour  black  or  white.  'NOOPAQUE'
+              means that the background  colour is  defined
+              as fully transparent.  The elementary figures
+              in  DISLIN  such as  circles,  rectangles and 
+              polygons contain already a  TPRINI/TPRFIN en-
+              vironment  that can be enabled  with the  key
+              'FIGURES' and the mode  'AUTO'.
+                               Default: ('OPAQUE', 'BACK'),
+                                     ('NOAUTO', 'FIGURES').
+
+The example above can also be written as:
+
+      CALL TPRVAL(0.5)
+      CALL TPRMOD('AUTO','FIGURES')
+      CALL COLOR('RED')
+      CALL CIRCLE(500,500,500)
+
+      CALL COLOR('GREEN')
+      CALL CIRCLE(750,750,500)
+
+      CALL COLOR('BLUE')
+      CALL CIRCLE(1000,500,500)
+
+9.11 Using Threads
+
+                         T H R I N I
+
+The routine  THRINI  initializes  threads.  THRINI  must  be 
+called before any other DISLIN routine. 
+
+The call is:  CALL THRINI (N)
+
+N             is the number of  threads that are used by the
+              program.
+
+                         T H R F I N
+
+The routine  THRFIN  terminates  threads.  THRFIN  should be 
+called after any other DISLIN routine. 
+
+The call is:  CALL THRFIN
+
+Notes:  - The thread  routines  above are only available for
+          the DISLIN C libraries.
+
+        - On Unix systems,  thread  programs  must be linked
+          with a  DISLIN library that is compiled for  Posix
+          threads.  This library may not be included  in all
+          DISLIN distributions.
+
+9.12 Plotting the MPS Logo
+
+                        M P S L O G O
+
+The routine MPSLOGO plots the MPS logo.  
+
+The call is:  CALL MPSLOGO (NX, NY, ISIZE, COPT)
+
+NX, NY        are plot  coordinates  that  define  the upper
+              left corner of the logo.
+ISIZE         defines the size of the logo in pixels.  ISIZE
+              can have the values  100,  125,  150, 175, 200
+              and 300.
+COPT          is a character string that can have the values
+              'TEXT' and 'NOTEXT'.

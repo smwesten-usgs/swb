@@ -1,0 +1,73 @@
+                  Chapter 1:  Introduction
+
+DISLIN is a library of subroutines  and functions  that dis-
+play data  graphically.  The routines  can be used  with any 
+display device capable of  drawing straight  lines  with the
+exception of  routines  that  generate  3-D colour  graphics
+which require special devices.  Fortran 77, Fortran 90 and C
+versions of the library are available.
+
+DISLIN can display graphic information  directly  on graphic
+terminals or store them in metafiles.  The supported display
+types are VGA,  X Windows,  Windows API  and Tektronix.  The
+supported file formats are  GKSLIN,  CGM, HPGL,  PostScript,
+PDF,  WMF, SVG,  PNG,  PPM,  BMP,  GIF and  and TIFF. DISLIN
+metafiles can be printed on various devices using the DISLIN
+driver program DISDRV.
+
+Chapter 2  describes the file and page formats and the over-
+all structure of DISLIN programs.
+
+Chapter 3 describes routines for the initialization,  termi-
+nation and plotting of text, numbers and symbols.
+
+Chapter 4  presents the  format of two-dimensional axis sys-
+tems.  Axes can be  linearly or  logarithmically  scaled and
+labeled with linear, logarithmic, time, map and user-defined
+formats.
+
+Chapter 5  describes the routines for plotting curves. Seve-
+ral curves  can appear in one axis system  and can be diffe-
+rentiated by colour, line style and pattern.
+
+Chapter 6 summarizes  parameter setting  routines that over-
+write default plotting parameters  such as fonts,  character
+size and angle,  colours, line styles and patterns.
+
+Chapter 7  presents routines  to request  the values of plot
+parameters.
+
+Chapter 8  describes  the routines for plotting lines, circ-
+les, ellipses, vectors and shaded regions.
+
+Chapter 9  describes  the utilities  available  to transform
+coordinates, sort data and calculate the lengths  of numbers
+and character strings.  Elementary  image routines  and some
+special routines  that are only useful  for terminal  output
+are also described in this chapter.
+
+Chapter 10  introduces  business graphic routines  to create
+bar graphs and pie charts.
+
+Chapter 11 presents  3-D colour graphics where points can be
+plotted  with coloured  or shaded rectangles.
+
+Chapter 12  describes  routines for  3-D coordinate systems.
+Axis systems, curves and surfaces can be drawn  from various
+angular perspectives.  All 2-D plotting routines can be used
+in a 3-D axis system.
+
+Chapter 13  presents 14 different methods to project geogra-
+phical coordinates onto  a plane surface.  Several base maps
+are stored in the library for map plotting.
+
+Chapter 14  describes routines for contouring three-dimensi-
+onal functions of the form Z = F(X,Y).  Contours can be fil-
+led with solid lines.
+
+Chapter 15  offers routines for  creating graphical user in-
+terfaces in Fortran and C programs.
+
+Chapter 16 presents some quick plots that are collections of
+DISLIN routines for displaying data with one statement.
+

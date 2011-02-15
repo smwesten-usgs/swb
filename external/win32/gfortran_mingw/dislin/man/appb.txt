@@ -1,0 +1,585 @@
+                    Appendix B: Examples
+
+B.1 Demonstration of CURVE
+
+            PROGRAM EXA_1
+       C    USE DISLIN        for Fortran 90
+            PARAMETER (N=301)
+            DIMENSION XRAY(N),Y1RAY(N),Y2RAY(N)
+
+            PI=3.1415926
+            FPI=PI/180.
+            STEP=360./(N-1)
+
+            DO I=1,N
+              XRAY(I)=(I-1)*STEP
+              X=XRAY(I)*FPI
+              Y1RAY(I)=SIN(X)
+              Y2RAY(I)=COS(X)
+            END DO
+
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+
+            CALL AXSPOS(450,1800)
+            CALL AXSLEN(2200,1200)
+
+            CALL NAME('X-axis','X')
+            CALL NAME('Y-axis','Y')
+
+            CALL LABDIG(-1,'X')
+            CALL TICKS(10,'XY')
+
+            CALL TITLIN('Demonstration of CURVE',1)
+            CALL TITLIN('SIN(X), COS(X)',3)
+
+            CALL GRAF(0.,360.,0.,90.,-1.,1.,-1.,0.5)
+            CALL TITLE
+
+            CALL CURVE(XRAY,Y1RAY,N)
+            CALL CURVE(XRAY,Y2RAY,N)
+
+            CALL DASH
+            CALL XAXGIT
+
+            CALL DISFIN
+            END
+
+B.2 Polar Plots
+
+            PROGRAM EXA_2
+      C     USE DISLIN         for Fortran 90!
+            PARAMETER (N=300, M=10)
+            REAL XRAY1(N),YRAY1(N),XRAY2(M),YRAY2(M)
+
+            XPI=3.1415927
+            STEP=360./(N-1)
+            DO I=1,N
+              A=(I-1)*STEP
+              A=A*XPI/180
+              YRAY1(I)=A
+              XRAY1(I)=SIN(5*A)
+            END DO
+
+            DO I=1,M
+              XRAY2(I)=I
+              YRAY2(I)=I
+            END DO
+ 
+            CALL SETPAG('DA4P')
+            CALL METAFL('CONS')
+            CALL DISINI
+            CALL PAGERA
+            CALL HWFONT
+
+            CALL TITLIN ('Polar Plots', 2)
+            CALL TICKS(3,'Y')
+            CALL AXENDS('NOENDS','X')
+            CALL LABDIG(-1,'Y')
+            CALL AXSLEN(1000,1000)
+            CALL AXSORG(1050,900)
+
+            CALL POLAR(1.,0., 0.2, 0., 30.)
+            CALL CURVE(XRAY1,YRAY1,N)
+            CALL HTITLE(50)
+            CALL TITLE
+            CALL ENDGRF
+
+            CALL LABDIG(-1,'X')
+            CALL AXSORG(1050,2250)
+            CALL LABTYP('VERT','Y')
+            CALL POLAR(10.,0.,2.,0.,30.)
+            CALL BARWTH(-5.)
+            CALL POLCRV('FBARS')
+            CALL CURVE(XRAY2,YRAY2,M)
+            CALL DISFIN
+            END
+
+B.3 Symbols
+
+            PROGRAM EXA_2
+       C    USE DISLIN        for Fortran 90
+            CHARACTER*20 CTIT,CSTR*2
+            CTIT='Symbols'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL COMPLX
+            CALL PAGERA
+            CALL PAGHDR('H. Michels  (',')',2,0)
+
+            CALL HEIGHT(60)
+
+            NL=NLMESS(CTIT)
+            CALL MESSAG(CTIT,(2100-NL)/2,200)
+
+            CALL HEIGHT(50)
+            CALL HSYMBL(120)
+
+            NY=150
+
+            DO I=0,23
+              IF(MOD(I,4).EQ.0) THEN
+                NY=NY+400
+                NXP=550
+              ELSE
+                NXP=NXP+350
+              END IF
+
+              IF(I.LT.10) THEN
+                WRITE(CSTR,'(I1)') I
+              ELSE
+                WRITE(CSTR,'(I2)') I
+              END IF
+
+              NL=NLMESS(CSTR)/2
+              CALL MESSAG(CSTR,NXP-NL,NY+150)
+              CALL SYMBOL(I,NXP,NY)
+            END DO
+
+            CALL DISFIN
+            END
+
+B.4 Logarithmic Scaling
+
+            PROGRAM EXA_3
+       C    USE DISLIN        for Fortran 90
+            CHARACTER*60 CTIT,CLAB(3)*5
+            DATA CLAB/'LOG','FLOAT','ELOG '/
+
+            CTIT='Logarithmic Scaling'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL AXSLEN(1400,500)
+
+            CALL NAME('X-axis','X')
+            CALL NAME('Y-axis','Y')
+            CALL AXSSCL('LOG','XY')
+
+            CALL TITLIN(CTIT,2)
+
+            DO I=1,3
+              NYA=2650-(I-1)*800
+              CALL LABDIG(-1,'XY')
+              IF(I.EQ.2)THEN
+                CALL LABDIG(1,'Y')
+                CALL NAME(' ','X')
+              END IF
+
+              CALL AXSPOS(500,NYA)
+              CALL MESSAG('Labels: '//CLAB(I),600,NYA-400)
+              CALL LABELS(CLAB(I),'XY')
+              CALL GRAF(0.,3.,0.,1.,-1.,2.,-1.,1.)
+
+              IF(I.EQ.3) THEN
+                CALL HEIGHT(50)
+                CALL TITLE
+              END IF
+
+              CALL ENDGRF
+            END DO
+
+            CALL DISFIN
+            END
+
+B.5 Interpolation Methods
+
+            PROGRAM EXA_4
+       C    USE DISLIN        for Fortran 90
+
+            DIMENSION X(16), Y(16)
+            CHARACTER*8 CPOL(6),CTIT*60
+
+            DATA X/0.,1.,3.,4.5,6.,8.,9.,11.,12.,12.5,13.,
+           *       15.,16.,17.,19.,20./
+           * Y/2.,4.,4.5,3.,1.,7.,2.,3.,5.,2.,2.5,2.,4.,6.,
+           *   5.5,4./
+           * CPOL/'SPLINE','STEM','BARS','STAIRS',
+           *      'STEP','LINEAR'/ NYA/2700/
+
+            CTIT='Interpolation Methods'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL INCMRK(1)
+            CALL HSYMBL(25)
+            CALL TITLIN(CTIT,1)
+            CALL AXSLEN(1500,350)
+            CALL SETGRF('LINE','LINE','LINE','LINE')
+
+            DO I=1,6
+              CALL AXSPOS(350,NYA-(I-1)*350)
+              CALL POLCRV(CPOL(I))
+              CALL MARKER(0)
+
+              CALL GRAF(0.,20.,0.,5.,0.,10.,0.,5.)
+              NX=NXPOSN(1.)
+              NY=NYPOSN(8.)
+              CALL MESSAG(CPOL(I),NX,NY)
+              CALL CURVE(X,Y,16)
+
+              IF(I.EQ.6) THEN
+                CALL HEIGHT(50)
+                CALL TITLE
+              END IF
+              CALL ENDGRF
+            END DO
+
+            CALL DISFIN
+            END
+
+B.6 Line Styles
+
+            PROGRAM EXA_5
+       C    USE DISLIN        for Fortran 90
+            DIMENSION X(2),Y(2)
+            CHARACTER*6 CTYP(8)
+            DATA X/3.,9./,
+     *           CTYP/'SOLID','DOT','DASH','CHNDSH',
+     *                'CHNDOT','DASHM','DOTL','DASHL'/
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL CENTER
+            CALL CHNCRV('LINE')
+
+            CALL NAME('X-axis','X')
+            CALL NAME('Y-axis','Y')
+
+            CALL TITLIN('Demonstration of CURVE',1)
+            CALL TITLIN('Line Styles',3)
+
+            CALL GRAF(0.,10.,0.,2.,0.,10.,0.,2.)
+            CALL TITLE
+
+            DO I=1,8
+              Y(1)=9.5-I
+              Y(2)=9.5-I
+              NY=NYPOSN(Y(1))
+              NX=NXPOSN(1.0)
+              CALL MESSAG(CTYP(I),NX,NY-20)
+              CALL CURVE(X,Y,2)
+            END DO
+
+            CALL DISFIN
+            END
+
+B.7 Legends
+
+            PROGRAM EXA_6
+       C    USE DISLIN        for Fortran 90
+            PARAMETER(N=301)
+            DIMENSION XRAY(N),Y1RAY(N),Y2RAY(N)
+            CHARACTER*14 CBUF
+
+            FPI=3.1415926/180.
+            STEP=360./(N-1)
+            DO I=1,N
+              XRAY(I)=(I-1)*STEP
+              X=XRAY(I)*FPI
+              Y1RAY(I)=SIN(X)
+              Y2RAY(I)=COS(X)
+            END DO
+
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL AXSPOS(450,1800)
+            CALL AXSLEN(2200,1200)
+
+            CALL NAME('X-axis','X')
+            CALL NAME('Y-axis','Y')
+            CALL TITLIN('Demonstration of CURVE',1)
+            CALL TITLIN('Legend',3)
+            CALL LABDIG(-1,'X')
+            CALL TICKS(10,'XY')
+
+            CALL GRAF(0.,360.,0.,90.,-1.,1.,-1.,0.5)
+            CALL TITLE
+            CALL XAXGIT
+
+            CALL CHNCRV('LINE')
+            CALL CURVE(XRAY,Y1RAY,N)
+            CALL CURVE(XRAY,Y2RAY,N)
+
+            CALL LEGINI(CBUF,2,7)    ! Legend statements
+            NX=NXPOSN(190.)
+            NY=NYPOSN(0.75)
+            CALL LEGPOS(NX,NY)
+            CALL LEGLIN(CBUF,'sin (x)',1)
+            CALL LEGLIN(CBUF,'cos (x)',2)
+            CALL LEGTIT('Legend')
+            CALL LEGEND(CBUF,3)
+
+            CALL DISFIN
+            END
+
+B.8 Shading Patterns (AREAF)
+
+            PROGRAM EXA_7
+       C    USE DISLIN        for Fortran 90
+            DIMENSION IXP(4),IYP(4),IX(4),IY(4)
+            CHARACTER*60 CTIT,CSTR*2
+            DATA IX/0,300,300,0/IY/0,0,400,400/
+
+            CTIT='Shading Patterns (AREAF)'
+
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+
+            CALL HEIGHT(50)
+            NL=NLMESS(CTIT)
+            NX=(2970-NL)/2
+            CALL MESSAG(CTIT,NX,200)
+
+            NX0=335
+            NY0=350
+
+            DO I=1,3
+              NY=NY0+(I-1)*600
+              DO J=1,6
+                NX=NX0+(J-1)*400
+                II=(I-1)*6+J-1
+                CALL SHDPAT(II)
+                WRITE(CSTR,'(I2)') II
+
+                DO K=1,4
+                  IXP(K)=IX(K)+NX
+                  IYP(K)=IY(K)+NY
+                END DO
+                CALL AREAF(IXP,IYP,4)
+
+                NL=NLMESS(CSTR)
+                NX=NX+(300-NL)/2
+                CALL MESSAG(CSTR,NX,NY+460)
+              END DO
+            END DO
+
+            CALL DISFIN
+            END
+
+B.9 Vectors
+
+            PROGRAM EXA_8
+       C    USE DISLIN        for Fortran 90
+            DIMENSION IVEC(20)
+            CHARACTER*60 CTIT,CNUM*4
+            DATA IVEC/0,1111,1311,1421,1531,1701,1911,
+           *          3111,3311,3421,3531,3703,4221,4302,
+           *          4413,4522,4701,5312,5502,5703/
+
+            CTIT='Vectors'
+
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+
+            CALL HEIGHT(60)
+            NL=NLMESS(CTIT)
+            NX=(2970-NL)/2
+            CALL MESSAG(CTIT,NX,200)
+
+            CALL HEIGHT(50)
+            NX=300
+            NY=400
+
+            DO I=1,20
+              IF(I.EQ.11) THEN
+                NX=NX+2970/2
+                NY=400
+              END IF
+
+              WRITE(CNUM,'(I4)') IVEC(I)
+              NL=NLMESS(CNUM)
+              CALL MESSAG(CNUM,NX-NL,NY-25 )
+
+              CALL VECTOR(NX+100,NY,NX+1000,NY,IVEC(I))
+              NY=NY+160
+            END DO
+
+            CALL DISFIN
+            END
+
+B.10 Shading Patterns (PIEGRF)
+
+            PROGRAM EXA_9
+       C    USE DISLIN        for Fortran 90
+            DIMENSION XRAY(18)
+            CHARACTER*60 CTIT,CBUF*36,CSTR*2
+            DATA XRAY/18*1./
+
+            CTIT='Shading Patterns (PIEGRF)'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+
+            CALL AXSPOS(250,2700)
+            CALL AXSLEN(1600,2200)
+            CALL TITLIN(CTIT,3)
+            CALL HEIGHT(50)
+
+            CALL LEGINI(CBUF,18,2)
+
+            DO I=1,18
+              WRITE(CSTR,'(I2)') I-1
+              CALL LEGLIN(CBUF,CSTR,I)
+            END DO
+
+            CALL LABELS('NONE','PIE')
+            CALL PIEGRF(CBUF,1,XRAY,18)
+            CALL TITLE
+
+            CALL DISFIN
+            END
+
+B.11 3-D Bar Graph / 3-D Pie Chart
+
+            PROGRAM EXA_10
+      C     USE DISLIN         for Fortran 90!
+            CHARACTER*80 CBUF
+            REAL XRAY(5),Y1RAY(5),Y2RAY(5)
+            INTEGER IC1RAY(5),IC2RAY(5)
+            DATA XRAY/2.,4.,6.,8.,10./,Y1RAY/0.,0.,0.,0.,0./,
+           *     Y2RAY/3.2,1.5,2.0,1.0,3.0/
+            DATA IC1RAY/50,150,100,200,175/,
+           *     IC2RAY/50,150,100,200,175/
+
+            CALL METAFL('POST')
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL HWFONT
+
+            CALL TITLIN('3-D Bar Graph / 3-D Pie Chart', 2)
+            CALL HTITLE(40)
+
+            CALL SHDPAT(16)
+            CALL AXSLEN(1500,1000)
+            CALL AXSPOS(300,1400)
+
+            CALL BARWTH(0.5)
+            CALL BARTYP('3DVERT')
+            CALL LABELS('SECOND','BARS')
+            CALL LABPOS('OUTSIDE','BARS')
+            CALL LABCLR(255,'BARS')
+            CALL GRAF(0.,12.,0.,2.,0.,5.,0.,1.)
+            CALL TITLE
+            CALL COLOR('RED')
+            CALL BARS(XRAY,Y1RAY,Y2RAY,5)
+            CALL ENDGRF
+
+            CALL SHDPAT(16)
+            CALL LABELS('DATA','PIE')
+            CALL LABCLR(255,'PIE')
+            CALL CHNPIE('NONE')
+            CALL PIECLR(IC1RAY,IC2RAY,5)
+            CALL PIETYP('3D')
+            CALL AXSPOS(300,2700)
+            CALL PIEGRF(CBUF,0,Y2RAY,5)       
+            CALL DISFIN
+            END
+
+B.12 Surface Plot (SURFUN)
+
+            PROGRAM EXA_10
+       C    USE DISLIN        for Fortran 90
+            CHARACTER*60 CTIT1,CTIT2
+            EXTERNAL ZFUN
+
+            CTIT1='Surface Plot (SURFUN)'
+            CTIT2='F(X,Y) = 2*SIN(X)*SIN(Y)'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+
+            CALL AXSPOS(200,2600)
+            CALL AXSLEN(1800,1800)
+
+            CALL NAME('X-axis','X')
+            CALL NAME('Y-axis','Y')
+            CALL NAME('Z-axis','Z')
+
+            CALL TITLIN(CTIT1,2)
+            CALL TITLIN(CTIT2,4)
+
+            CALL VIEW3D(-5.,-5.,4.,'ABS')
+            CALL GRAF3D(0.,360.,0.,90.,0.,360.,0.,90.,
+           *                            -3.,3.,-3.,1.)
+            CALL HEIGHT(50)
+            CALL TITLE
+
+            CALL SURFUN(ZFUN,1,10.,1,10.)
+
+            CALL DISFIN
+            END
+
+            FUNCTION ZFUN(X,Y)
+            FPI=3.14159/180.
+            ZFUN=2*SIN(X*FPI)*SIN(Y*FPI)
+            END
+
+B.13 Map Plot
+
+            PROGRAM EXA_11
+       C    USE DISLIN        for Fortran 90
+            DIMENSION XC(9),YC(9)
+            CHARACTER*12 CSTR(9)
+
+            DATA XC/-22.,18.,37.5,0.,2.5,12.5,23.5,-3.75,
+           *        14.25/,
+           *     YC/64.,59.6,56.,51.5,48.5,42.,38.,40.3,
+           *        50.1/,
+           *   CSTR/'Reykjavik','Stockholm','Moskau',
+           *        'London','Paris','Rom','Athen','Madrid',
+           *        'Prag'/
+
+            CALL METAFL('POST')
+            CALL DISINI
+            CALL PAGERA
+            CALL HWFONT
+
+            CALL AXSPOS(500,1850)
+            CALL AXSLEN(2200,1400)
+
+            CALL LABDIG(-1,'xy')
+            CALL TICKS(1,'xy')
+            CALL NAME('Longitude','x')
+            CALL NAME('Latitude','y')
+
+            CALL TITLIN('Map Plot',3)
+            CALL INCMRK(-1)
+
+            CALL LABELS('MAP','xy')
+            CALL PROJCT('LAMBERT')
+            CALL FRAME(3)
+            CALL GRAFMP(-40.,60.,-40.,20.,35.,70.,40.,10.)
+
+            CALL WORLD
+            CALL CURVMP(XC,YC,9)
+
+            DO I=1,9
+              CALL POS2PT(XC(I),YC(I),XP,YP)
+              NXP=XP+30
+              NYP=YP
+              CALL MESSAG(CSTR(I),NXP,NYP)
+            END DO
+
+            CALL GRIDMP(1,1)
+
+            CALL HEIGHT(50)
+            CALL TITLE
+            CALL DISFIN
+            END

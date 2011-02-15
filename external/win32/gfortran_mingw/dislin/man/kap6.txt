@@ -1,0 +1,771 @@
+           Chapter 6: Parameter Setting Routines
+
+All parameters in  DISLIN  have default  values  set by  the
+initialization routine DISINI.  This chapter summarizes sub-
+routines  that allow the user  to alter default values.  The
+following routines can be called from level 1, 2 or 3 except
+for those noted throughout the chapter. Subroutines that can
+only be called  from level 0  must appear before DISINI.  In
+general, parameter setting routines should be called between
+DISINI and the plotting routines they affect.
+
+6.1 Basic Routines
+
+6.1.1 Resetting Parameters
+
+                         R E S E T
+
+RESET sets parameters back to their default values.
+
+The call is:  CALL RESET (CNAME)               level 1, 2, 3
+
+CNAME         is a character string  containing the name  of
+              the routine whose parameters will be set  back
+              to default values. If CNAME = 'ALL', all para-
+              meters in DISLIN will be reset.
+
+6.1.2 Changing the Plot Units
+
+                         U N I T S
+
+The routine UNITS defines the plot units.
+
+The call is:  CALL UNITS (COPT)                      level 0
+
+COPT          is a character string that can have the values
+              'CM', 'INCH', 'POINTS' and 'TWIPS'. 'CM' means
+              100 points per  centimetre,  'INCH'  means 100
+              points per inch, 'POINTS' means 720 points per
+              inch and 'TWIPS' means 1440 points per inch.  
+                                       Default: COPT = 'CM'.
+
+6.1.3 Modifying the Origin
+
+                         P A G O R G
+
+The routine  PAGORG sets the origin of the page. By default,
+the page origin is located in the upper left  corner  of the
+page.
+
+The call is:  CALL PAGORG (COPT)               level 1, 2, 3 
+
+COPT          is a character string that can have the values
+              'TOP' and 'BOTTOM'. The keyword 'TOP' sets the
+              page origin to the upper left corner, 'BOTTOM'
+              to the lower left corner.
+                                      Default: COPT = 'TOP'.
+
+                         O R I G I N
+
+In DISLIN,  all lines are plotted relative to a point on the
+page which  is by default  identical  with  the page origin. 
+Modifying this point by  ORIGIN  produces a shifting of plot
+vectors on the page.
+
+The call is:  CALL ORIGIN (NX0, NY0)                 level 1
+
+NX0, NY0      are the coordinates of the origin.
+                                            Default: (0, 0).
+
+
+6.1.4 File Format Control
+
+                         M E T A F L
+
+METAFL defines the metafile format.
+
+The call is:  CALL METAFL (CFMT)                     level 0
+
+CFMT          is a  character string  that defines  the file
+              format.
+  = 'GKSL'    defines a GKSLIN metafile.
+  = 'CGM'     defines a CGM metafile.
+  = 'PS'      defines a coloured PostScript file.
+  = 'EPS'     defines an Encapsulated PostScript file. The 
+              format is nearly the same as for 'PS'.
+  = 'PDF'     defines a PDF file.
+  = 'HPGL'    defines an HPGL file.
+  = 'SVG'     defines a Scalable Vector Graphics file.  
+  = 'WMF'     defines a Windows metafile.
+  = 'GIF'     defines a GIF file.
+  = 'TIFF'    defines a TIFF file.
+  = 'PNG'     defines a PNG file.
+  = 'PPM'     defines a portable pixmap format.
+  = 'IMAG'    defines an image file.
+  = 'BMP'     defines a Windows Bitmap format.
+  = 'VIRT'    defines a virtual file.  The metafile  is hold
+              in a raster format in computer memory.
+  = 'CONS'    defines a  graphics output  on the screen.  If 
+              the screen  is a windows display,  a graphical 
+              window is used that has nearly the size of the
+              screen.
+  = 'XWIN'    defines an X Window display.  By default,  the
+              size of the window is nearly  2/3 of  the size
+              of the screen.
+  = 'GL'      defines an OpenGL window. By default, the size
+              of the window is nearly 2/3 of the size of the
+              screen.
+                                     Default: CFMT = 'GKSL'.
+
+Notes:      - The default size of GIF, TIFF, PNG, PPM,  BMP,
+              IMAGE,  SVG  and virtual files is set to 853 x
+              603 points  but can be modified  with the rou-
+              tine WINSIZ. The size of graphical windows can
+              also be defined with WINSIZ.
+            - The default  background  colour  for graphical
+              windows  and image formats such as  TIFF,  GIF
+              and PNG is black but can  be changed  to white
+              with the routine SCRMOD.
+            - The format of  VIRT, TIFF,  PNG, BMP and IMAGE
+              is by default a 8 bit palette format,  but can
+              be changed  to a true colour  format  with the 
+              parameter  'RGB'  in the  routine IMGFMT.  GIF 
+              files created by  DISLIN  have  always a 8 bit
+              palette format.
+ 
+                         S E T F I L
+
+By default, the plot file name consists of the keyword 'DIS-
+LIN' and an extension  that depends  on the file format.  An
+alternate filename can be set with SETFIL.
+
+The call is:  CALL SETFIL (CFIL)                     level 0
+
+CFIL          is a character string  that contains the file-
+              name.
+
+
+                         F I L M O D
+
+The routine  FILMOD  determines  if a new  plot file name is
+created for existing files.
+
+The call is:  CALL FILMOD (CMOD)            level 0, 1, 2, 3
+
+CMOD          is a character string containing the mode.
+  = 'COUNT'   means that a new file version will be created.
+              An increasing version number  is added  to the 
+              filename  and  the  filename  is shortened  to
+              eight characters.
+  = 'VERSION' is a similar option to  'COUNT' that creates a
+              new  file  version,  but without  shorten  the
+              filename.
+  = 'DELETE'  means that the existing file will be overwrit-
+              ten.
+  = 'BREAK'   means that  the program  will be terminated by
+              DISINI.
+                                    Default: CMOD = 'COUNT'.
+
+                         F I L O P T
+
+The routine  FILOPT modifies rules for creating file version
+names.
+
+The call is:  CALL FILOPT (COPT, CKEY)      level 0, 1, 2, 3 
+
+COPT          is a character string containing an option.
+CKEY          is a character string that can have the values
+              'SEPARATOR', 'NUMBER' and 'DIGITS'. 
+              The keyword 'SEPARATOR' defines  the separator
+              between filenames and version numbers. If CKEY 
+              = 'SEPARATOR',  COPT  can have the values 'UN-
+              DERSCORE',  'HYPHEN'  and  'NONE'.  If  CKEY = 
+              'NUMBER', COPT can have the values 'SHORT' and
+              'LONG'.  The option  'LONG' means that leading
+              zeros are used in the version number. The key-
+              word  'DIGITS'  sets the number of digits that
+              are  used  for version numbers.  For that key-
+              word, COPT can have the values  '2', '3', '4',
+              '5' and '6'. 
+                              Defaults:  ('SEPARATOR', '_'), 
+                                        ('NUMBER', 'SHORT'),
+                                            ('DIGITS', '4').     
+
+                         S C R M O D
+
+Normally,  the background of screens and image formats such
+as TIFF, GIF,  BMP and PNG is set to 'BLACK'. With the rou-
+tine SCRMOD, the back and foreground colours can be swapped.
+
+The call is:  CALL SCRMOD (CMOD)                     level 0
+
+CMOD          is a character string containing the mode.
+ = 'AUTO'     uses  a  'BLACK'  background colour for screen
+              output and images files.
+ = 'REVERS'   means  that  the  background colour  is set to
+              'WHITE' and the foreground colour to 'BLACK'.
+ = 'NOREV'    means  that  the  background  colour is set to
+              'BLACK' and the foreground colour to 'WHITE'.
+                                     Default: CMOD = 'AUTO'.
+
+                         C G M B G D
+
+The routine CGMBGD sets the background colour for CGM files.
+
+The call is:  CALL CGMBGD (XR, XG, XB)      level 0, 1, 2, 3 
+
+XR, XG, XB    are the RGB coordinates  of the background co-
+              lour in the range 0 to 1.
+                                      Default: (1., 1., 1.).
+
+                         C G M P I C
+
+The routine CGMPIC modifies the picture ID in CGM files. The
+picture ID may be referenced by some browsers.
+
+The call is:  CALL CGMPIC (CSTR)            level 0, 1, 2, 3 
+
+CSTR          is a character string  containing  the picture
+              ID  (<=  256 characters).  By default,  the ID
+              'Picture n'  is used  where  n  is the picture
+              number beginning with 1. 
+
+                         T I F M O D
+
+The routine  TIFMOD modifies the physical resolution of TIFF 
+files.
+
+The call is:  CALL TIFMOD (N, CVAL, COPT)            level 0
+         or:  void tifmod (int n, char *cval, char *copt);
+N             is an integer value  containing  the number of
+              pixels per resolution unit.
+CVAL          is a character string  containing  the resolu-
+              tion unit. CVAL can have the values 'INCH' and
+              'CM'.
+COPT          is a  character string that can have the value
+              'RESOLUTION'.
+                        Default: (100, 'INCH', 'RESOLUTION')
+
+                         B M P M O D
+
+The routine  BMPMOD modifies the physical  resolution of BMP 
+files.
+
+The call is:  CALL BMPMOD (N, CVAL, COPT)            level 0
+         or:  void bmpmod (int n, char *cval, char *copt);
+N             is an integer value  containing  the number of
+              pixels per resolution unit.
+CVAL          is a character string  containing  the resolu-
+              tion unit. CVAL can have the values 'INCH' and
+              'METER'.
+COPT          is a  character string that can have the value
+              'RESOLUTION'.
+                      Default: (2500, 'METER', 'RESOLUTION')
+
+                         W M F M O D
+
+The routine WMFMOD modifies the appearance of WMF files. 
+
+The call is:  CALL WMFMOD (CMOD, CKEY)               level 0
+
+CMOD          is a character string  containing  the  values 
+              'STANDARD' or 'PLACEABLE'. If CMOD = 'PLACEAB-
+              LE', an additional leading header  of  22 byte
+              is added to the WMF file.  The format  is also
+              known as Aldus Placeable Metafile.
+CKEY          is a character string  that can have the value
+              'FORMAT'.
+                                 Default: CMOD = 'STANDARD'.
+
+                         P D F M O D
+
+The routine  PDFMOD  selects between compressed and non com-
+pressed PDF files,  and can enable PDF buffer output instead
+of file output. 
+
+The call is:  CALL PDFMOD (CMOD, CKEY)               level 0 
+
+CMOD          is a character string that can have the values
+              'ON' and 'OFF'.
+CKEY          is a character string that can have the values 
+              'COMPRESSION and 'BUFFER'. For CKEY = 'BUFFER'
+              and CMOD = 'ON', the PDF file is hold in memo-
+              ry and can be copied to a user buffer with the
+              routine PDFBUF after DISFIN.
+                              Default: ('ON', COMPRESSION'), 
+                                          ('OFF', 'BUFFER').
+
+                         P D F M R K
+
+The routine PDFMRK writes bookmarks to PDF files. This makes
+it possible  to navigate through PDF files that contain mul-
+tiple pages.
+
+The call is: CALL PDFMRK (CSTR, COPT)          level 1 ,2 ,3 
+
+CSTR         is a character string that contains the text of
+             the bookmark.
+COPT         is a character string  that can have the values 
+             'CHAPTER', 'SECTION', 'SUBSECTION', 'PARAGRAPH'
+             and  'SUBPARAGRAPH'.  This option  defines  the
+             level of  a bookmark  in the hierarchy of book-
+             marks. A bookmark with the option 'SECTION' can
+             only be defined  if a bookmark with the  option 
+             'CHAPTER' is defined before, and so on.
+
+                         G I F M O D
+
+The routine GIFMOD enables transparency for GIF files.
+
+The call is:  CALL GIFMOD (CMOD, CKEY)               level 0 
+
+CMOD          is a character string that can have the values
+              'ON' and 'OFF'.
+CKEY          is a character string that can have the  value 
+              'TRANSPARENCY'.
+                           Default: ('OFF', 'TRANSPARENCY').
+
+
+                         P N G M O D
+
+The routine PNGMOD enables transparency for PNG files.
+
+The call is:  CALL PNGMOD (CMOD, CKEY)               level 0 
+
+CMOD          is a character string that can have the values
+              'ON' and 'OFF'.
+CKEY          is a character string that can have the  value 
+              'TRANSPARENCY'.
+                           Default: ('OFF', 'TRANSPARENCY').
+
+Note:         For indexed PNG files,  the colour table entry
+              0 is used for transparency. For RGB files, the
+              colour White is used for transparency.
+
+                         H P G M O D
+
+The routine HPGMOD defines options for HPGL files.
+
+The call is:  CALL HPGMOD (CMOD, CKEY)               level 0 
+
+CMOD          is a character string that can have the values
+              'STAN' and 'ARISTO'.  For COPT = 'ARISTO', the
+              DISLIN HPGL file will begin  with the commands
+              'IN;SP1;LT;PU'.
+CKEY          is a character string that  can have the value 
+              'PLOTTER'.
+                               Default: ('STAN', 'PLOTTER').
+
+                         I M G F M T
+
+The routine  IMGFMT  defines palette or true colour mode for
+DISLIN image formats such as TIFF, PNG, BMP and IMAGE.
+
+The call is:  CALL IMGFMT (CMOD)                     level 0 
+
+CMOD          is a character string that can have the values
+              'INDEX' and 'RGB'. For TIFF files, the additi-
+              onal keyword 'BILEVEL' is allowed for creating
+              bilevel TIFF files.
+                                    Default: CMOD = 'INDEX'.
+
+6.1.5 Page Control
+
+                         P A G E
+
+PAGE determines the size of the page.
+
+The call is:  CALL PAGE (NXP, NYP)                   level 0
+
+NXP, NYP      are the length  and height of the page in plot
+              coordinates.  The lower  right  corner  of the
+              page is the  point (NXP-1, NYP-1).
+                                      Default: (2970, 2100).
+
+                         S E T P A G
+
+SETPAG selects a predefined page format.
+
+The call is:  CALL SETPAG (CPAGE)                    level 0
+
+CPAGE         is a character  string  that defines  the page
+              format.
+
+  = 'DA4L'    DIN A4,        landscape,  2970 * 2100 points.
+  = 'DA4P'    DIN A4,        portrait,   2100 * 2970 points.
+  = 'DA3L'    DIN A3,        landscape,  4200 * 2970 points.
+  = 'DA3P'    DIN A3,        portrait,   2970 * 4200 points.
+  = 'DA2L'    DIN A2,        landscape,  5940 * 4200 points.
+  = 'DA2P'    DIN A2,        portrait,   4200 * 5940 points.
+  = 'DA1L'    DIN A1,        landscape,  8410 * 5940 points.
+  = 'DA1P'    DIN A1,        portrait,   5940 * 8410 points.
+  = 'DA0L'    DIN A0,        landscape, 11890 * 8410 points.
+  = 'DA0P'    DIN A0,        portrait,   8410 * 11890 points.
+  = 'USAL'    US size A,     landscape,  2790 * 2160 points.
+  = 'USAP'    US size A,     portrait,   2160 * 2790 points.
+  = 'USBL'    US size B,     landscape,  4320 * 2790 points.
+  = 'USBP'    US size B,     portrait,   2790 * 4320 points.
+  = 'USCL'    US size C,     landscape,  5590 * 4320 points.
+  = 'USCP'    US size C,     portrait,   4320 * 5590 points.
+  = 'USDL'    US size D,     landscape,  8640 * 5590 points.
+  = 'USDP'    US size D,     portrait,   5590 * 8640 points.
+  = 'USEL'    US size E,     landscape, 11180 * 8640 points.
+  = 'USEP'    US size E,     portrait,   8640 * 11180 points.
+  = 'PS4L'    PostScript A4, landscape,  2800 * 1950 points.
+  = 'PS4P'    PostScript A4, portrait,   1950 * 2800 points.
+  = 'HP4L'    HP-plotter A4, landscape,  2718 * 1900 points.
+  = 'HP4P'    HP-plotter A4, portrait,   1900 * 2718 points.
+  = 'HP3L'    HP-plotter A3, landscape,  3992 * 2718 points.
+  = 'HP3P'    HP-plotter A3, portrait,   2718 * 3992 points.
+  = 'HP2L'    HP-plotter A2, landscape,  5340 * 3360 points.
+  = 'HP2P'    HP-plotter A2, portrait,   3360 * 5340 points.
+  = 'HP1L'    HP-plotter A1, landscape,  7570 * 5340 points.
+  = 'HP1P'    HP-plotter A1, portrait,   5340 * 7570 points.
+                                    Default: CPAGE = 'DA4L'.
+
+                         S C L F A C
+
+SCLFAC sets the scaling factor for an entire plot.
+
+The call is:  CALL SCLFAC (XFAC)                     level 0
+
+XFAC          is the scaling factor by which the entire plot
+              is scaled up or down.
+                                          Default: XFAC = 1.
+
+                         S C L M O D
+
+The method  by which  graphics  are scaled  to the  hardware
+pages of devices such as a graphics terminal can be selected
+with the routine SCLMOD.
+
+The call is:  CALL SCLMOD (CMOD)                     level 0
+
+CMOD = 'DOWN' means that graphics will be scaled down if the
+              hardware page of a device  is smaller than the
+              plotting page.
+     = 'FULL' means that the  graphics will be scaled  up or
+              down depending  upon the size  of the hardware
+              page.
+                                     Default: CMOD = 'DOWN'.
+
+Notes:     -  The size of  a graphics screen will  be inter-
+              preted as DIN A4 landscape. This means that by
+              default graphics which are smaller than DIN A4
+              will not fill the entire screen.
+           -  SCLFAC and SCLMOD can affect each other.
+
+                         P A G M O D
+
+GKSLIN and CGM files can be rotated by 90 degrees to use the
+full  hardware page  of a device.  In general,  this is done
+automatically by the driver program.
+
+The call is:  CALL PAGMOD (CMOD)                     level 0
+
+CMOD = 'LAND' means that the metafile is not rotated.
+     = 'PORT' means that  the metafile is  rotated by 90 de-
+              grees.
+     = 'NONE' can be used to disable automatic plot file ro-
+              tation in the driver program   (i.e. for Post-
+              Script files).
+                                     Default: CMOD = 'LAND'.
+
+Figure 2 shows the effect of PAGMOD:
+                                          +--------------+
+                                          |              |
+                                          |          ^   |
+                                          |          |   |
+                                          |          |   |
+    +-----------------------+             |          |   |
+    |  ^                    |             | Portrait |X  |
+    |  |                    |             |          |   |
+    | Y|    Landscape       |             |          |   |
+    |  |                    |             |          |   |
+    |  +--------------->    |             |  <-------+   |
+    |         X             |             |     Y        |
+    +-----------------------+             +---------------
+
+                       Figure 2: PAGMOD
+
+                         N E W P A G
+
+NEWPAG creates a new page.
+
+The call is:  CALL NEWPAG                            level 1
+
+Notes:     -  PostScript,  PDF  and CGM files can store mul-
+              tiple pages.  For other output formats, NEWPAG
+              is not useful.
+           -  On X Window terminals, NEWPAG is waiting for a
+              mouse button 2  event  before  displaying  the
+              next page.  This mode can be changed  with the
+              routine WINMOD. On other terminals, NEWPAG has
+              the same effect as ERASE.                     
+
+                         H W P A G E
+
+The routine  HWPAGE defines the size of the PostScript hard-
+ware page.
+
+The call is:  CALL HWPAGE (NW, NH)                   level 0
+
+NW, NH        are the  width  and height  of the  PostScript
+              hardware page in plot coordinates.
+                                      Default: (1950, 2800).
+
+                         H W O R I G
+
+The routine  HWORIG defines the hardware origin of the Post-
+Script hardware page.
+
+The call is:  CALL HWORIG (NX, NY)                   level 0
+
+NX, NY        are the plot coordinates  of the hardware ori-
+              gin.                       Default: (75, 100).
+
+                         H W S C A L
+
+The routine HWSCAL modifies the scale operator in PostScript
+files.
+
+The call is:  CALL HWSCAL (XSCL)                     level 0
+
+XSCL          is a floating point value used  for  the scale 
+              operator.
+                                                 Default: 1.
+
+6.1.6 Error Handling
+
+                         E R R M O D
+
+The printing of warnings  and the  output of the protocol in 
+DISFIN can be disabled with the routine ERRMOD.
+
+The call is:  CALL ERRMOD (CKEY, CMOD)           level 1,2,3
+
+CKEY          is a character string that can have the values
+              'WARNINGS', 'CHECK', 'PROTOCOL' and 'ALL'.
+              'WARNINGS' means the error messages  about bad
+              parameters passed to DISLIN routines,  'CHECK'
+              the out of range check  of coordinates  passed
+              to plotting routines such as CURVE and 'PROTO-
+              COL' the output of the protocol in DISFIN.
+CMOD          is a character string that can have the values
+              'ON' and 'OFF'.  For  CKEY = 'PROTOCOL',  CMOD
+              can  have  the additional  value  'FILE'  that
+              means  that  the protocol in  DISFIN  is  also
+              written to the error file.
+                                      Default: ('ALL', 'ON')
+
+                         E R R F I L
+
+By default, the name of the error file is 'dislin.err'.
+An alternate filename can be set with ERRFIL.
+
+The call is:  CALL ERRFIL (CFIL)                     level 0
+
+CFIL          is a character string  that contains the file-
+              name.
+
+                         E R R D E V
+
+The routine  ERRDEV  defines the  output  device for  DISLIN
+warnings. By default, warnings are written to the screen.
+
+The call is:  CALL ERRDEV (COPT)                     level 0
+
+COPT          is a character string that can have the values
+              'CONS',  'FILE'  and 'APPEND'.  'APPEND' means
+              that all  error messages  are appended  to the
+              same file while for the keyword  'FILE'  a new
+              error file is  created for each  DISINI/DISFIN
+              cycle.
+                                     Default: COPT = 'CONS'.
+
+                         U N I T
+
+UNIT defines the logical unit used for printing  error  mes-
+sages and  listing data points  that lie outside of the axis
+scaling.
+
+The call is:  CALL UNIT (NU)                   level 1, 2, 3
+
+NU            is the logical unit.  If NU = 0,  all messages
+              will be suppressed.
+                                             Default: NU = 6
+
+Note:         UNIT  is an old DISLIN routine for suppressing 
+              error messages.  It should be  replaced by the
+              newer routines ERRMOD, ERRDEV and ERRFIL.
+
+                         W I N A P P
+
+The routine WINAPP defines if a  DISLIN program  should look
+like a  Windows console, or more like a Windows program.  If
+Windows mode is selected,  all  warnings  are  written to an
+error file and the protocol in disfin is displayed in a wid-
+get. 
+
+The call is:  CALL WINAPP (COPT)                     level 0
+
+COPT          is a character string that can have the values
+              'CONSOLE' and 'WINDOWS'.
+                                  Default: COPT = 'CONSOLE'.
+
+6.1.7 Viewport Control
+
+                         W I N D O W
+
+This routine defines,  for  X Window terminals,  a region on
+the screen where the graphics will be displayed. By default,
+the window size is set to 2/3 of the screen size and located
+in the lower right corner of the screen.
+
+The call is:  CALL WINDOW (NX, NY, NW, NH)  level 0, 1, 2, 3
+
+NX, NY        are the  screen  coordinates of the upper left
+              corner.
+NW, NH        are the  width  and  height  of the  window in
+              screen coordinates.
+
+Note:         In general,  the screen  size is   1280 * 1024
+              pixels.
+
+                         W I N S I Z
+
+This routine defines the size of windows  and the resolution
+of  DISLIN image formats such as  TIFF,  PNG,  BMP,  PPM and
+IMAGE.  By default,  the window size is set to  2/3  of  the
+screen size, and the resolution of  image  formats is  853 x
+603 pixels. 
+
+The call is:  CALL WINSIZ (NW, NH)          level 0, 1, 2, 3
+
+NW, NH        are  the  width  and height  of the  window in
+              pixels.
+
+
+                         C L R M O D
+
+The routine  CLRMOD defines the colour mode  used for output
+on an X Window terminal.
+
+The call is:  CALL CLRMOD (CMOD)                     level 0
+
+CMOD          is a character string defining the mode.
+  = 'NONE'    means  that  a colour table  with 256  colours
+              will  be reduced to  129  colours  to conserve
+              current screen and window colours.  The colour
+              values will be reduced by the formula   (0 <=>
+              0, i = (iclr + 1) / 2, iclr = 1, ... 255).
+  = 'FULL'    means that all 256 colours will be displayed.
+  = 'CONT'    means that  a colour table  with less than 129
+              entries will be used.
+                                     Default: CMOD = 'NONE'.
+
+                        X 1 1 M O D
+
+The routine  X11MOD  enables or disables backing store  for
+graphic windows.
+
+The call is:  CALL X11MOD (CMOD)                     level 0
+
+CMOD          is a character string containing the mode.
+ = 'NOSTORE'  means that graphical output  is send  directly
+              to the graphics window.
+ = 'STORE'    means that graphical output  is send to a pix-
+              map that  will be copied  to the graphics win-
+              dow.               
+ = 'AUTO'     means that  'NOSTORE' will be used on X11  and 
+              'STORE' on Windows terminals.
+                                    Default: CMOD = 'STORE'.
+
+                        W I N M O D
+
+The routine  WINMOD  affects the handling  of windows in the
+termination routine DISFIN.
+
+The call is:  CALL WINMOD (CMOD)               level 1, 2, 3
+
+CMOD  is a character string containing the mode.
+  = 'FULL'    means that  DISFIN is waiting for a mouse but-
+              ton 2 event.  After program continuation,  all
+              windows are deleted.
+  = 'NOHOLD'  means that  DISFIN is not waiting for a  mouse
+              button 2 event.  After a call to  DISFIN,  all
+              windows are deleted.
+  = 'NOERASE' means  that the program  is still  blocked  in
+              DISFIN  but windows  will not be deleted after
+              program continuation.
+  = 'NONE'    means that the program is not blocked in  DIS-
+              FIN and windows are not deleted.
+  = 'DELAY'   means that the program is blocked  for a short
+              time in  DISFIN  before  it is  continued. The
+              delay time  can be  defined  with  the routine
+              WINOPT.
+                                     Default: CMOD = 'FULL'.
+
+                        W I N O P T
+
+The routine WINOPT sets the delay time for the keyword  'DE-
+LAY' in WINMOD.
+
+The call is:  CALL WINOPT (IOPT, CKEY)         level 1, 2, 3
+
+IOPT          is the delay time in seconds or milliseconds.
+CKEY          is a character string that can have the values 
+              'DELAY'  and  'MDELAY'.  For  CKEY = 'MDELAY',
+              IOPT must contain milliseconds, otherwise sec-
+              onds.
+                                     Default: (10, 'DELAY').
+
+                         W I N K E Y
+
+The routine  WINKEY  enables a an additional key that can be
+used for program continuation is DISFIN. Normally, the mouse
+button 2 can be used for closing the graphics window. 
+
+The call is:  CALL WINKEY (CKEY)               level 1, 2, 3
+
+CKEY          is a character string that can have the values
+              'NONE', 'RETURN' and 'ESCAPE'.
+                                     Default: CKEY = 'NONE'.
+
+                         S E T X I D
+
+The routine  SETXID  defines an external graphics window for
+X11 and Windows displays.  All graphical output  is sent  to 
+the external window.  For X11 displays,  an external  pixmap 
+can also be defined.
+
+The call is:  CALL SETXID (ID, CTYPE)       level 0, 1, 2, 3
+
+ID            is the window or pixmap ID.
+CTYPE         is a character string that can have the values
+              'NONE',  'WINDOW', 'PIXMAP' and 'WIDGET'.  For 
+              the keyword 'WIDGET', the ID of a  DISLIN draw
+              widget can be used.
+                                       Default: (0, 'NONE').
+
+Notes:      - If an external  pixmap is used,  backing store 
+              must also be enabled with the routine X11MOD.
+            - An external window is not erased by DISINI. 
+              This can be done with the routine ERASE.
+            - External windows are not blocked in DISFIN 
+              (see WINMOD).   
+            - External windows can also be used for multiple 
+              DISLIN windows  that are defined with the rou-
+              tine OPNWIN.
+
+6.1.8 Environment
+
+A few routines in DISLIN  such as some font and map routines 
+need the path to the DISLIN installation directory for read-
+ing font and map files.  The  DISLIN  installation directory
+can either be defined outside of a program with the environ-
+ment variable DISLIN,  or within a program  with the routine
+DISENV. If none of the methods above is applied, the default
+directories c:\dislin and /usr/local/dislin are used on Win-
+dows and Linux/UNIX systems.
+
+                         D I S E N V
+
+This routine sets the  DISLIN  environment within a program. 
+If the DISLIN environment is already defined  outside of the
+program, a call to DISENV has no affect.
+        
+The call is:  CALL DISENV (CPATH)           level 0, 1, 2, 3
+
+CPATH         is a character string  that contains the  path
+              to the DISLIN installation directory.

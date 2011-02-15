@@ -1,0 +1,220 @@
+Contents
+
+0  Preface to Version 10.0
+
+1  Introduction
+
+2  Basic Concepts and Conventions
+   2.1  Page Format
+   2.2  File Format
+   2.3  Level Structure of DISLIN
+   2.4  Conventions
+   2.5  Error Messages
+   2.6  Programming in C
+   2.7  Programming in Fortran 90
+   2.8  Linking Programs
+   2.9  Utility Programs
+   2.10 WWW Homepage
+   2.11 Reporting Bugs
+   2.12 License Information
+
+3  Introductory Routines
+   3.1  Initialization and Termination
+   3.2  Plotting of Text and Numbers
+   3.3  Plotting Symbols
+   3.4  Plotting a Page Border, Background and Header
+   3.5  Sending a Metafile to a Device
+   3.6  Including Metafiles into a Graphics
+
+4  Plotting Axis Systems and Titles
+   4.1  Plotting Axis Systems
+   4.2  Termination of Axis Systems
+   4.3  Plotting Titles
+   4.4  Plotting Grid Lines
+   4.5  Plotting Additional Labels
+   4.6  Secondary Axes
+   4.7  Calculating Axis Parameters
+
+5  Plotting Curves
+   5.1  Plotting Curves
+   5.2  Plotting Legends
+   5.3  Plotting Shaded Areas between Curves
+   5.4  Plotting Error Bars
+   5.5  Plotting Vector Fields
+
+6  Parameter Setting Routines
+   6.1  Basic Routines
+        6.1.1  Resetting Parameters
+        6.1.2  Changing the Plot Units 
+        6.1.3  Modifying the Origin
+        6.1.4  File Format Control
+        6.1.5  Page Control
+        6.1.6  Error Handling
+        6.1.7  Viewport Control
+        6.1.8  Environment
+   6.2  Axis Systems
+        6.2.1  Modifying the Type
+        6.2.2  Modifying the Position and Size
+        6.2.3  Axis Scaling
+        6.2.4  Modifying Ticks
+        6.2.5  Modifying Labels
+        6.2.6  Modifying Axis Titles
+        6.2.7  Suppressing Axis Parts
+        6.2.8  Modifying Clipping
+        6.2.9  Framing Axis Systems
+        6.2.10 Setting Colours
+        6.2.11 Axis System Titles
+   6.3  Colours
+        6.3.1  Changing the Foreground Colour
+        6.3.2  Modifying Colour Tables
+        6.3.3  Utility Routines for Colours
+   6.4  Text and Numbers
+   6.5  Fonts
+   6.6  Indices and Exponents
+   6.7  Instruction Alphabet
+   6.8  TeX Instructions for Mathematical Formulas
+        6.8.1  Introduction
+        6.8.2  Enabling TeX Mode and TeX Options
+        6.8.3  Exponents and Indices
+        6.8.4  Fractions
+        6.8.5  Roots
+        6.8.6  Sums and Integrals
+        6.8.7  Greek Letters
+        6.8.8  Mathematical Symbols
+        6.8.9  Alternate Alphabets
+        6.8.10 Function Names
+        6.8.11 Accents
+        6.8.12 Lines above and below Formulas
+        6.8.13 Horizontal Spacing
+        6.8.14 Selecting Character Size in TeX Mode
+        6.8.15 Automatic Sizing of Bracket Symbols 
+        6.8.16 Manual Sizing of Bracket Symbols 
+        6.8.17 Colours in TeX Mode 
+   6.9  Curve Attributes
+   6.10 Vector Fields
+   6.11 Line Attributes
+   6.12 Shading
+   6.13 Attribute Cycles
+   6.14 Base Transformations
+   6.15 Shielded Regions
+
+7  Parameter Requesting Routines
+
+8  Elementary Plot Routines
+   8.1  Lines
+   8.2  Vectors
+   8.3  Filled Triangles
+   8.4  Wind Speed Symbols
+   8.5  Geometric Figures
+
+9  Utility Routines
+   9.1  Transforming Coordinates
+   9.2  String Arithmetic
+   9.3  Number Arithmetic
+   9.4  Date Routines
+   9.5  Bit Manipulation
+   9.6  Byte Swapping
+   9.7  Binary I/O
+   9.8  Window Terminals
+        9.8.1 Clearing the Screen
+        9.8.2 Clearing the Output Buffer
+        9.8.3 Multiple Windows
+        9.8.4 Cursor Routines
+   9.9  Elementary Image Routine
+   9.10 Transparency
+   9.11 Using Threads
+   9.12 Plotting the MPS Logo
+
+10 Business Graphics
+   10.1  Bar Graphs
+   10.2  Pie Charts
+   10.3  Examples
+
+11 3-D Colour Graphics
+   11.1  Introduction
+   11.2  Plotting Coloured Axis Systems
+   11.3  Secondary Colour Bars
+   11.4  Plotting Data Points
+   11.5  Parameter Setting Routines
+   11.6  Elementary Plot Routines
+   11.7  Conversion of Coordinates
+   11.8  Example
+
+12 3-D Graphics
+   12.1  Introduction
+   12.2  Defining View Properties
+   12.3  Plotting Axis Systems
+   12.4  Plotting a Border around the 3-D Box
+   12.5  Plotting Grids
+   12.6  Plotting Curves
+   12.7  Plotting Vector Fields
+   12.8  Plotting a Surface Grid from a Function
+   12.9  Plotting a Surface Grid from a Matrix
+   12.10 Plotting a Shaded Surface from a Matrix
+   12.11 Plotting a Shaded Surface from a Parametric Function
+   12.12 Plotting a Shaded Surface from Triangulated Data
+   12.13 Plotting Isosurfaces
+   12.14 Plotting 3-D Bars
+   12.15 Plotting 3-D Contours
+   12.16 Additional Parameter Setting Routines
+   12.17 Lighting 
+   12.18 Surfaces from Randomly Distributed Points
+   12.19 Projection of 2-D-Graphics into 3-D Space
+   12.20 Using the Z-Buffer
+   12.21 Elementary Plot Routines
+   12.22 Transformation of Coordinates
+   12.23 Examples
+
+13 Geographical Projections and Plotting Maps
+   13.1  Axis Systems and Secondary Axes
+   13.2  Defining the Projection
+   13.3  Plotting Maps
+   13.4  Plotting Data Points
+   13.5  Parameter Setting Routines
+   13.6  Conversion of Coordinates
+   13.7  User-defined Projections
+   13.8  Examples
+
+14 Contouring
+   14.1  Plotting Contours
+   14.2  Plotting Filled Contours
+   14.3  Generating Contours
+   14.4  Parameter Setting Routines
+   14.5  Examples
+
+15 Widget Routines
+   15.1  Widget Routines
+   15.2  Parameter Setting Routines
+   15.3  Requesting Routines
+   15.4  Utility Routines
+   15.5  Dialog Routines
+   15.6  Examples
+
+16 Quick Plots
+   16.1  Plotting Curves
+   16.2  Scatter Plots
+   16.3  Bar Graphs
+   16.4  Pie Charts
+   16.5  3-D Colour Plots
+   16.6  Surface Plots
+   16.7  Contour Plots
+   16.8  Setting Parameters for Quick Plots
+
+A  Short Description of Routines
+
+B  Examples
+   B.1   Demonstration of CURVE
+   B.2   Polar Plots
+   B.3   Symbols
+   B.4   Logarithmic Scaling
+   B.5   Interpolation Methods
+   B.6   Line Styles
+   B.7   Legends
+   B.8   Shading Patterns (AREAF)
+   B.9   Vectors
+   B.10  Shading Patterns (PIEGRF)
+   B.11  3-D Bar Graph / 3-D Pie Chart
+   B.12  Surface Plot (SURFUN)
+   B.13  Map Plot
+
+C  Index

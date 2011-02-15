@@ -1,0 +1,950 @@
+Name: COLOR  4
+COLOR defines the colours used for plotting text and lines.
+The call is:  CALL COLOR (CNAME)                   level 1, 2, 3
+         or:  void colour (char *cname);
+CNAME         is a  character  string  that can  have the values
+              'BLACK', 'RED', 'GREEN', 'BLUE', 'CYAN', 'YELLOW',
+              'ORANGE',  'MAGENTA',  'WHITE', 'FORE' and 'BACK'.
+              The  keyword  'FORE'  resets  the  colour  to  the 
+              default value,  while the  keyword 'BACK' sets the
+              colour  to the background colour.
+Note:         The values 'BLACK' and 'WHITE' define not absolute
+              colours. If the output format is  in reverse mode,
+              'BLACK' is interpreted as  'WHITE'  and 'WHITE' is
+              interpreted as 'BLACK'.  If  you want  to use true
+              black and true white, you can use the routine SET-
+              RGB (0., 0., 0.) and SETRGB (1., .1., 1.).
+Name: SETCLR  5
+The routine  SETCLR  sets the foreground colour where the colour
+cab be specified as a  colour table  entry or as an explicit RGB
+value.
+The call is:  CALL SETCLR (NCOL)                   level 1, 2, 3
+         or:  void setclr (int ncol);
+NCOL          is a colour value.
+                                    Default: NCOL = 255 (White).
+Name: SETRGB  5
+The routine  SETRGB defines the  foreground colour specified  in
+RGB  coordinates. 
+The call is:  CALL SETRGB (XR, XG, XB)             level 1, 2, 3
+         or:  void setrgb (float xr, float xg, float xb);
+XR, XG, XB    are the RGB coordinates  of a  colour in the range
+              0 to 1.  If the output device  cannot display true
+              colours, SETRGB sets the nearest entry in the col-
+              our table that matches the RGB coordinates.
+Name: SETVLT  5
+SETVLT selects a colour table.
+The call is:  CALL SETVLT (CVLT)                   level 1, 2, 3
+         or:  void setvlt (char *cvlt);
+CVLT          is a  character  string  that  defines  the colour
+              table.
+  = 'SMALL'   defines a small colour table with the 8 colours:
+              1 = BLACK, 2 = RED,  3 =  GREEN,  4 = BLUE,  
+              5 = YELLOW, 6 = ORANGE, 7 = CYAN and 8 = MAGENTA.
+  = 'VGA'     defines the  16 standard colours of a VGA graphics
+              card. 
+  = 'RAIN'    defines  256 colours arranged  in a rainbow  where
+              0 means black and 255 means white.
+  = 'SPEC'    defines  256 colours arranged  in a rainbow  where
+              0  means black  and  255 means white.  This colour
+              table uses more violet colours than 'RAIN'.
+  = 'GREY'    defines 256 grey scale colours where 0 means black
+              and 255 is white.
+  = 'RRAIN'   is the reverse colour table of 'RAIN'.
+  = 'RSPEC'   is the reverse colour table of 'SPEC'.
+  = 'RGREY'   is the reverse colour table of 'GREY'.
+  = 'TEMP'    defines a temperature colour table.
+                                                Default: 'RAIN'.
+Name: MYVLT   5
+The routine MYVLT changes the current colour table.
+The call is:  CALL MYVLT (XR, XG, XB, N)        level 0, 1, 2, 3
+         or:  void myvlt (float *xr, float * xg, float *xb,
+                                                          int n)
+XR, XG, XB    are arrays containing RGB coordinates in the range
+              0 to 1.   
+N             is the number of colour entries.
+Name: SETIND  5
+The routine  SETIND allows the user to change the current colour
+table.
+The call is:  CALL SETIND (INDEX, XR, XG, XB)      level 1, 2, 3
+         or:  void setind (int index, float xr, float xg, 
+                                                      float xb);
+INDEX         is an index between  0 and 255.
+XR, XG, XB    are the RGB coordinates of a colour in the range 0
+              to 1.
+Name: VLTFIL  5
+The routine VLTFIL saves the current colour table to a file,  or
+loads a colour table from a file.
+The call is:  CALL VLTFIL (CFIL, COPT)             level 1, 2, 3
+         or:  void vltfil (char *cfil, char *copt);
+CFIL          is a character string containing a filename. 
+              Colour entries are stored in the file as RGB coor-
+              dinates in the range 0 to 1.
+COPT          is a  character  string  that can  have the values 
+              'SAVE' and 'LOAD'. 
+Name: INDRGB  5
+The  function  INDRGB  returns the  nearest  entry in the colour 
+table that matches given RGB coordinates.
+The call is:  N = INDRGB (XR, XG, XB)              level 1, 2, 3
+         or:  int indrgb (float xr, float xg, float xb);    
+XR, XG, XB    are the  RGB coordinates of a colour in  the range
+              0 to 1.
+N             is the returned colour index.
+Name: INTRGB  5
+The function  INTRGB  creates  an explicit colour value from RGB
+coordinates.
+The call is:  N = INTRGB (XR, XG, XB)           level 0, 1, 2, 3
+         or:  int intrgb (float xr, float xg, float xb);    
+XR, XG, XB    are the  RGB coordinates of a colour in  the range
+              0 to 1.
+N             is the returned colour value.
+Name: HSVRGB  5
+The routine HSVRGB converts HSV coordinates to RGB coordinates.
+The call is:  CALL HSVRGB (XH, XS, XV, XR, XG, XB) level 1, 2, 3
+         or:  void hsvrgb (float  xh, float  xs, float  xv,
+                           float *xr, float *xg, float *xb);  
+XH, XS, XV    are the hue, saturation and value of a colour.  XH
+              must be in the range 0 to 360 degrees while XS and
+              XV can have values  between  0 and 1.  In the  HSV
+              model,  colours lie  in a spectral order on a six-
+              sided pyramid  where red corresponds  to the angle
+              0, green to 120 and blue to 240 degrees.
+XR, XG, XB    are the RGB coordinates in the range 0 to 1 calcu-
+              lated by HSVRGB.
+Name: RGBHSV  5
+The routine RGBHSV converts RGB coordinates to HSV coordinates.
+The call is:  CALL RGBHSV (XR, XG, XB, XH, XS, XV) level 1, 2, 3
+         or:  void rgbhsv (float  xr, float  xg, float  xb,
+                           float *xh, float *xs, float *xv);
+XR, XG, XB    are the RGB coordinates in the range 0 to 1
+XH, XS, XV    are the HSV coordinates calculated by RGBHSV  (see
+              also HSVRGB).
+Name: HEIGHT  3
+HEIGHT defines the character height.
+The call is:  CALL HEIGHT (NHCHAR)                 level 1, 2, 3
+         or:  void height (int nhchar);
+NHCHAR        is the character height in plot coordinates.
+                                            Default: NHCHAR = 36
+Name: ANGLE   3
+This routine  modifies  the direction  of text  plotted with the
+routines MESSAG, NUMBER, PSMESS, RLMESS and RLNUMB.
+The call is:  CALL ANGLE (NDEG)                    level 1, 2, 3
+         or:  void angle (int ndeg);
+NDEG          is  an angle  measured  in degrees and  a counter-
+              clockwise direction. 
+                                               Default: NDEG = 0
+Name: TXTJUS  3
+The routine  TXTJUS  defines the alignment  of text plotted with
+the routines MESSAG and NUMBER.
+The call is:  CALL TXTJUS (CJUS)                   level 1, 2, 3
+         or:  void txtjus (char *cjus);
+CJUS          is a  character  string  that can have  the values
+              'LEFT',  'RIGHT' and 'CENT'. The starting point of
+              text  and numbers  will be  interpreted  as  upper
+              left, upper right and upper centre point.
+                                         Default: CJUS = 'LEFT'.
+Name: FRMESS  3
+FRMESS  defines the thickness  of frames around text  plotted by
+MESSAG.
+The call is:  CALL FRMESS (NFRM)                   level 1, 2, 3
+         or:  void frmess (int nfrm);
+NFRM          is the thickness  of frames  in plot  coordinates.
+              If NFRM is negative, frames will be thickened from
+              the inside. If positive,  frames will be thickened
+              towards the outside.             Default: NFRM = 0
+Name: FRMCLR  3 
+The colour of frames can be defined with the routine FRMCLR.
+The call is:  CALL FRMCLR (NCLR)                   level 1, 2, 3
+          or: void frmclr (int nclr);
+NCLR          is a colour value.  If NCLR = -1, the current col-
+              our is used.
+                                              Default: NCLR = -1
+Name: NUMFMT  3
+NUMFMT  modifies the format  of numbers  plotted by  NUMBER  and
+RLNUMB.
+The call is:  CALL  NUMFMT (COPT)                  level 1, 2, 3
+         or:  void  numfmt (char *copt);
+COPT          is a character string defining the format.
+  = 'FLOAT'   will plot numbers in floating point format.
+  = 'EXP'     will  plot  numbers  in  exponential  format where
+              fractions range between 1 and 10.
+  = 'FEXP'    will plot numbers in the format fEn where f ranges
+              between 1 and 10.
+  = 'LOG'     will plot numbers logarithmically with base 10 and
+              the corresponding exponents. The exponents must be
+              passed to NUMBER and RLNUMB. 
+                                        Default: COPT = 'FLOAT'.
+Note:         SETEXP and  SETBAS alter  the position and size of
+              exponents.
+Name: NUMODE  3
+NUMODE  alters the appearance  of numbers plotted  by NUMBER and
+RLNUMB.
+The call is:  CALL NUMODE (CDEC, CGRP, CPOS, CFIX) level 1, 2, 3
+         or:  void numode (char *cdec, char *cgrp, char *cpos, 
+                                                    char *cfix);
+CDEC          is a character string that defines the decimal no-
+              tation.
+  = 'POINT'   defines a point.
+  = 'COMMA'   defines a comma.
+ CGRP         is a  character string  that defines  the grouping
+              of 3 digits.
+  = 'NONE'    means no grouping.
+  = 'SPACE'   defines a space as separator.
+  = 'POINT'   defines a point as separator.
+  = 'COMMA'   defines a comma as separator.
+ CPOS         is a character string  that defines  the sign pre-
+              ceding positive numbers.
+  = 'NONE'    means no preceding sign.
+  = 'SPACE'   defines a space as a preceding sign.
+  = 'PLUS'    defines a plus as a preceding sign.
+ CFIX         is a  character string  specifying character spa-
+              cing.
+  = 'NOEQUAL' is used for proportional spacing.
+  = 'EQUAL'   is used for non-proportional spacing.
+                  Default: ('POINT', 'NONE', 'NONE', 'NOEQUAL').
+Name: CHASPC  3
+CHASPC affects inter character spacing.
+The call is:  CALL CHASPC (XSPC)                   level 1, 2, 3
+         or:  void chaspc (float xspc);
+XSPC          is a real number  that contains  a multiplier.  If
+              XSPC < 0, the inter character spacing  will be re-
+              duced by XSPC * NH  plot coordinates  where NH  is
+              the  current character  height.  If XSPC > 0,  the
+              spacing  will be enlarged by  XSPC * NH plot coor-
+              dinates.                        Default: XSPC = 0.
+Name: CHAWTH  3
+CHAWTH affects the width of characters.
+The call is:  CALL CHAWTH (XWTH)                   level 1, 2, 3
+         or:  void chawth (float xwth);
+XWTH          is a real number between 0 and 2. If XWTH < 1, the
+              character width will be reduced. If XWTH > 1,  the
+              character width will be enlarged. 
+                                              Default: XWTH = 1.
+Name: CHAANG  3
+CHAANG defines an inclination angle for characters.
+The call is:  CALL CHAANG (ANGLE)                  level 1, 2, 3
+         or:  void chaang (float angle);
+ANGLE         is the inclination angle  between  characters  and
+              the vertical direction in degrees (-60 <= ANGLE <=
+              60).                           Default: ANGLE = 0.
+Name: FIXSPC  3
+All fonts in DISLIN  except for  the default font are proportio-
+nal.  After a call to  FIXSPC  the characters  of a proportional
+font will also be plotted with a constant character width.
+The call is:  CALL FIXSPC (XFAC)                   level 1, 2, 3
+         or:  void fixspc (float xfac);
+XFAC          is a real number containing a scaling factor. Cha-
+              racters  will be centred  in a box of width XFAC * 
+              XMAX  where XMAX is the largest character width of
+              the current font.
+Name: DISALF  4
+DISALF defines the default font.
+The call is:  CALL DISALF                          level 1, 2, 3
+         or:  void disalf ();
+Name: SIMPLX  4
+SIMPLX defines a single stroke font.
+The call is:  CALL SIMPLX                          level 1, 2, 3
+         or:  void simplx ();
+Name: COMPLX  4
+COMPLX defines a complex font.
+The call is:  CALL COMPLX                          level 1, 2, 3
+         or:  void complx ();
+Name: DUPLX   4
+DUPLX defines a double stroke font.
+The call is:  CALL DUPLX                           level 1, 2, 3
+         or:  void duplx ();
+Name: TRIPLX  4
+TRIPLX defines a triple stroke font.
+The call is:  CALL TRIPLX                          level 1, 2, 3
+         or:  void triplx ();
+Name: GOTHIC  4
+GOTHIC defines a gothic font.
+The call is:  CALL GOTHIC                          level 1, 2, 3
+         or:  void gothic ();
+Name: SERIF   4
+SERIF defines a complex shaded stroke font.
+The call is:  CALL SERIF                           level 1, 2, 3
+         or:  void serif ();
+Name: HELVE   4
+HELVE defines a shaded font.
+The call is:  CALL HELVE                           level 1, 2, 3
+         or:  void helve ();
+Name: HELVES  4
+HELVES defines a shaded font with small characters.
+The call is:  CALL HELVES                          level 1, 2, 3
+         or:  void helves ();
+Name: SHDCHA  4
+With a call to SHDCHA,  characters of the fonts SERIF, HELVE and
+HELVES
+will be shaded.
+The call is:  CALL SHDCHA                          level 1, 2, 3
+         or:  void shdcha ();
+Name: PSFONT  4
+PSFONT defines a PostScript font.
+The call is:  CALL PSFONT (CFONT)                  level 1, 2, 3
+         or:  void psfont (char *cfont);
+CFONT         is a character  string containing  the font. Stan-
+              dard font names in PostScript are:
+
+           Times-Roman                    Courier
+           Times-Bold                     Courier-Bold
+           Times-Italic                   Courier-Oblique
+           Times-BoldItalic               Courier-BoldOblique
+           Helvetica                      AvantGarde-Book
+           Helvetica-Bold                 AvantGarde-Demi
+           Helvetica-Oblique              AvantGarde-BookOblique
+           Helvetica-BoldOblique          AvantGarde-DemiOblique
+           Helvetica-Narrow               Bookman-Light
+           Helvetica-Narrow-Bold          Bookman-LightItalic
+           Helvetica-Narrow-Oblique       Bookman-Demi
+           Helvetica-Narrow-BoldOblique   Bookman-DemiItalic
+           NewCenturySchlbk-Roman         Palatino-Roman
+           NewCenturySchlbk-Italic        Palatino-Italic
+           NewCenturySchlbk-Bold          Palatino-Bold
+           NewCenturySchlbk-BoldItalic    Palatino-BoldItalic
+           ZapfChancery-MediumItalic      Symbol
+           ZapfDingbats
+Notes:      - The file format  must be set to 'PS', 'EPS', 'PDF'
+              or 'SVG'  with the routine  METAFL. For SVG files,
+              the Times,  Helvetica  and  Courier  fonts  can be
+              used. 
+            - Font names cannot be shortened. Some printers pro-
+              vide additional  non-standard fonts.  These  fonts
+              should  be specified  exactly in  upper  and lower
+              characters  as they are described  in the  printer
+              manuals.  PostScript  suppresses  any graphics  if
+              there is a syntax error in the font name. Standard
+              font names are not case-sensitive.
+            - A call to a DISLIN font resets PostScript fonts.
+Name: WINFNT  4
+WINFNT defines a TrueType font  for screen output on Windows
+displays.
+The call is:  CALL WINFNT (CFONT)                  level 1, 2, 3
+         or:  void winfnt (char *cfont);
+CFONT         is a  character  string  containing  the font. The 
+              following fonts can normally be used on a  Windows
+              operating system:
+
+              Courier New
+              Courier New Bold
+              Courier New Italic
+              Courier New Bold Italic
+              Times New Roman
+              Times New Roman Bold
+              Times New Roman Italic
+              Times New Roman Bold Italic
+              Arial
+              Arial Bold
+              Arial Italic
+              Arial Bold Italic
+
+Note:         The coding of a Windows font should  correspond to
+              the character coding defined with CHACOD. 
+              For example,  if the character coding in CHACOD is
+              set  to   'STANDARD'  or  'ISO1',  an  ISO-Latin-1
+              should be used.  If the character coding is set to
+              'UTF8', an Unicode font should be loaded.  
+Name: X11FNT  4
+X11FNT  defines an X11 font  for screen output on  X11 displays. 
+The call is:  CALL X11FNT (CFONT, COPT)            level 1, 2, 3
+         or:  void x11fnt (char *cfont, char *copt);
+CFONT         is a character  string  containing  the first part
+              of an X11 font.
+COPT          is a character string containing the last part  of
+              an  X11 font. IF COPT = 'STANDARD', the value 
+              '-*-*-*-*-iso8859-1' is used for the last  part of
+              an X11 font.
+Notes:      - CFONT  must  begin  and end with the separator '-'
+              and must  contain  the first five fields of an X11
+              font. DISLIN adds then the point size and a trans-
+              formation matrix to the font.  IF COPT has not the
+              value 'STANDARD', it must begin with the character
+              '-'  and contain the last 6 fields of an X11 font.
+            - Here are  some  examples for the  contents  of 
+              CFONT:  -Adobe-Times-Medium-R-Normal-
+                      -Adobe-Times-Bold-R-Normal-
+                      -Adobe-Times-Bold-I-Normal-
+                      -Adobe-Helvetica-Bold-R-Normal-
+                      -Adobe-Courier-Medium-R-Normal-
+            - The coding of the  X11  font should  correspond to 
+              the coding defined with CHACOD (see WINFNT).
+Name: BMPFNT  4
+BMPFNT defines a DISLIN bitmap font that can be used  for screen
+output and raster formats such as PNG and TIFF. 
+The call is:  CALL BMPFNT (CFONT)                  level 1, 2, 3
+         or:  void bmpfnt (char *cfont);
+CFONT         is a  character  string  that can  have the values
+              'COMPLX', 'SIMPLX' and 'HELVE'.
+Note:         DISLIN  bitmap  fonts  are  added  to increase the 
+              quality of directly created raster formats such as
+              PNG and TIFF where  X11 and  TrueType fonts cannot  
+              be used.
+Name: HWFONT  4
+The routine  HWFONT  sets a standard hardware  font  if hardware
+fonts are supported by the current file format.  For example, if
+the file format is PostScript,  the font  'Times Roman' is used,
+if the file format is  'CONS'  or  'XWIN',  'Times New Roman' is 
+used for Windows and '-*-Times-Bold-R-Normal-'  is used for X11.
+If no hardware fonts are supported, COMPLX is used.
+The call is:  CALL HWFONT                          level 1, 2, 3
+         or:  void hwfont ();
+Name: CHACOD  4
+The routine CHACOD defines the coding of characters.  
+The call is:  CALL CHACOD (COPT)                   level 1, 2, 3
+         or:  void chacod (char *copt);
+COPT          is a  character  string  that can have  the values
+              'STANDARD',   'ISO1',   'ISO2',   'ISO3',  'ISO5',
+              'ISO7',  'KOI8' and 'UTF8'. The keyword 'STANDARD'
+              means the DISLIN coding of characters as displayed
+              in the figures  6.4 to  6.10 of the DISLIN manual. 
+              'ISO5'  and  'KOI8'  are  encodings  for  Cyrillic
+              characters  while  'ISO7'  is  a coding  for Greek
+              characters. 'UTF8' is a coding for Unicode charac-
+              ters. If COPT  is not  'STANDARD',  the  coding is
+              mapped to the available DISLIN characters.  
+                                            Default: 'STANDARD'.
+Name: BASALF  4
+BASALF defines the base alphabet.
+The call is:  CALL BASALF (CALPH)                  level 1, 2, 3
+         or:  void basalf (char *calph);
+CALPH         is a  character string  that  can have  the values
+              'STANDARD', 'ITALIC', 'GREEK', 'SCRIPT', 'RUSSIAN'
+              and 'MATHEMATIC'. These alphabets can be used with
+              all fonts.                    Default: 'STANDARD'.
+Name: SMXALF  4
+SMXALF defines shift characters to shift between the base and an
+alternate alphabet.
+The call is:  CALL SMXALF (CALPH, C1, C2, N)       level 1, 2, 3
+         or:  void smxalf (char *calph, char *c1, char *c2,
+                                                         int n);
+CALPH         is a character string  containing an alphabet.  In
+              addition  to the  names in  BASALF, CALPH can have
+              the value 'INSTRUCTION'.
+ C1           is a character that shifts to the alternate alpha-
+              bet.
+ C2           is a character that shifts back to the base alpha-
+              bet.  C1 and C2  may be identical.  After the last
+              plotted character  of a character  string,  DISLIN
+              automatically shifts back to the base alphabet.
+ N            is an integer between 1 and 6.  Up to 6  alternate
+              alphabets can be defined.
+Name: PSMODE  4
+The routine PSMODE sets PostScript options.
+The call is:  CALL PSMODE (COPT)                level 0, 1, 2, 3
+         or:  void psmode (char *copt);
+COPT          is a  character  string that can  have  the values
+              'NONE',  'GREEK',  'ITALIC',  'BOTH', 'SINGLE' and 
+              'MULTI'. The options 'GREEK', 'ITALIC' and  'BOTH'
+              enable Greek and Italic PostScript characters.  If
+              they are disabled,  DISLIN  vector  characters are
+              used. PSMODE must be called in level 1, 2 or 3 for
+              this options.
+              The option  'SINGLE'  defines  an old-style  Post-
+              Script  format  without  PostScript  commands  for
+              multiple pages.  PSMODE must be  called in level 0
+              for the options 'SINGLE' and 'MULTI'.
+                                      Defaults: 'NONE', 'MULTI'.
+Name: EUSHFT  4
+EUSHFT defines a shift character  to plot special  European cha-
+racters.
+The call is:  CALL EUSHFT (CNAT, C)                level 1, 2, 3
+         or:  void eushft (char *cnat, char *c);
+CNAT          is a  character string  that can  have  the values
+              'GERMAN', 'FRENCH', 'SPANISH', 'DANISH',  'ACUTE',
+              'GRAVE', 'CIRCUM' and 'TURKISH'.
+C             is a  shift  character.  For example  with  CNAT =
+              'GERMAN',  the characters  A, O, U, a, o, u  and s
+              placed directly after C will be plotted as Ae, Oe,
+              Ue, ae, oe, ue and ss.  With CNAT = 'DANISH',  the
+              characters A, O, E, a, o  and e will be plotted as
+              A-ring, O-slash, AE, a-ring, o-slash and ae.
+Notes:      - Shift characters can be defined multiple where the
+              characters must be different.
+           -  The Turkish  characters are only supported by COM-
+              PLX and  by the bitmap  fonts defined with BITMAP.
+              The other  European characters are also  supported
+              by PostScript.
+           -  If the shift  characters  should  be  plotted in a
+              text string, they must be doubled.
+           -  European  characters  are  not  available  for the
+              character codings 'ISO5', 'ISO7' and 'KOI8'.
+Name: MIXALF  3
+Indices and exponents can be plotted by using control characters
+in characters strings.  The routine  MIXALF instructs  DISLIN to
+search for control characters in character strings.
+The call is:  CALL MIXALF                          level 1, 2, 3
+         or:  void mixalf ();
+Note:         The predefined character
+
+        [     is used for exponents. The character height is re-
+              duced by the scaling factor  FEXP  and the  pen is
+              moved up  FBAS * NH  plot coordinates  where NH is
+              the current character height.
+        ]     is used for indices. The pen is moved down  FBAS *
+              NH  plot coordinates  and  the character height is
+              reduced by the scaling factor FEXP.
+        $     is used  to move  the pen  back  to the base-line.
+              This will  automatically  be done  at the end of a
+              character string.
+
+FBAS and FEXP have the default values 0.6 and 0.8, respectively,
+these values can be changed with the routines SETBAS and SETEXP.
+Name: SETBAS  3
+SETBAS defines the position of indices and exponents.  This rou-
+tine also affects logarithmic axis labels.
+The call is:  CALL SETBAS (FBAS)                   level 1, 2, 3
+         or:  void setbas (float fbas);
+FBAS          is a real number used as a scaling factor. The pen
+              will be moved up or down by  FBAS * NH  plot coor-
+              dinates to  plot exponents  or indices.  NH is the
+              current  character height.
+                                            Default:  FBAS = 0.6
+Name: SETEXP  3
+SETEXP sets the character height of indices and exponents.
+The call is:  CALL SETEXP (FEXP)                   level 1, 2, 3
+         or:  void setexp (float fexp);
+FEXP          is a  real number  used as  a scaling factor.  The
+              character height of indices and  exponents  is set
+              to  FEXP * NH  where NH  is the current  character
+              height.                       Default:  FEXP = 0.8
+Name: NEWMIX  3
+NEWMIX defines an alternate set of control characters  for plot-
+ting indices and exponents.  The default characters '[', ']' and
+'$' are replaced by '~', '_' and '%'.
+The call is:  CALL NEWMIX                          level 1, 2, 3
+         or:  void newmix ();
+Name: SETMIX  3
+SETMIX  defines global  control characters for plotting  indices
+and exponents.
+The call is:  CALL SETMIX (C, CMIX)                level 1, 2, 3
+         or:  void setmix (char *c, char *cmix);
+C             is a new control character.
+CMIX          is a character string that defines the function of
+              the  control character.  CMIX can have  the values
+              'EXP',  'IND',  'RES',  'LEG'  and 'TEX' for expo-
+              nents, indices,  resetting the base-line,  newline
+              and TeX commands. 
+Note:         The routines  NEWMIX  and SETMIX  only modify  the
+              control characters.  A call to  MIXALF  is  always
+              necessary to plot indices and exponents.
+Name: TEXMOD  3
+The routine TEXMOD can be used to enable TeX mode in DISLIN.  In 
+TeX mode,  all character strings passed to  DISLIN  routines can 
+contain  TeX instructions for plotting mathematical formulas.
+The call is:  CALL TEXMOD (CMODE)                  level 1, 2, 3 
+         or:  void texmod (char *cmode);
+CMODE         is a character string  that  can have  the  values
+              'ON' and 'OFF'.  CMODE = 'ON' enables TeX mode and 
+              CMODE = 'OFF' disables TeX mode.
+                                         Default: CMODE = 'OFF'.
+Name: TEXOPT  3
+The routine TEXOPT sets some TeX options.
+The call is:  CALL TEXOPT (COPT, CTYPE)            level 1, 2, 3 
+COPT          is a character string that defines an option.
+CTYPE         is a  character  string  containing a keyword.
+ = 'LIMITS'   means that the  limits for sums and integrals will
+              be placed  above  and below  the  sum and integral
+              signs  instead  of  following  them. COPT can have
+              the values 'ON' and 'OFF'.
+ = 'ITALIC'   means  that for math mode variables will be put in
+              italics.  COPT  can  also have the values 'ON' and 
+              'OFF'.
+ = 'BRACK'    means that the Dislin Mathematical vector font can
+              be used  for  bracket symbols  even if a  hardware
+              font is enabled.  COPT  can have the values 'STAN-
+              DARD' and 'VECTOR'.    
+                    Default: ('ON', 'LIMITS'), ('ON', 'ITALIC'),
+                                          ('BRACK', 'STANDARD').
+Name: TEXVAL  3
+The routine  TEXVAL  defines  some  scaling and  shifting values
+that are used in TeX formulas.
+The call is:  CALL TEXVAL (X, COPT)                level 1, 2, 3 
+X             is a floating point variable containing the value.
+COPT          is a character string.
+  = 'KEY'     defines a factor  for the  size of indices and ex-
+              ponents.
+  = 'H1BR'    sets  additional spaces  that  are  plotted  after
+              bracket symbols  defined  with  \left  and  before
+              bracket symbols defined with \right. 
+  = 'H2BR'    sets  additional  spaces  that are plotted  before
+              bracket  symbols  defined  with  \left  and  after
+              bracket symbols defined with \right. 
+  = 'VBRACK'  defines a scaling factor for the  size of  bracket
+              symbols.
+  = 'WBRACK'  defines a scaling factor for the width of  bracket
+              symbols. This option is useful for big brackets in
+              PostScript fonts.
+              Defaults:              (1.0, 'EXP'), (0.0, 'H1BR),
+                   (0.0, 'H2BR), (1.0, 'VBRACK), (1.0, 'WBRACK).
+Name: CHNCRV  10
+CHNCRV  defines attributes that will be automatically changed by
+CURVE after a certain number of calls to the routine CURVE.
+The call is:    CALL CHNCRV (CATT)                 level 1, 2, 3
+         or:    void chnvrv (char *catt);
+CATT = 'NONE'   means that CURVE changes no attributes.
+     = 'COLOR'  means that colours will be changed.
+     = 'LINE'   means that line styles will be changed.
+     = 'BOTH'   means that colours and line styles will be chan-
+                ged.                     Default: CATT = 'NONE'.
+Note:           The sequence  of colours is   WHITE/BLACK,  RED,
+                GREEN, YELLOW, BLUE, ORANGE, CYAN and MAGENTA.
+                The sequence of line styles is SOLID, DOT, DASH,
+                CHNDSH, CHNDOT, DASHM, DOTL and DASHL.
+                The symbol number is always changed.  It will be
+                incremented by 1  starting with the current sym-
+                bol defined by MARKER.
+Name: INCCRV  10
+INCCRV defines the number of calls after which  CURVE will auto-
+matically change attributes.
+The call is:  CALL INCCRV (NCRV)                   level 1, 2, 3
+         or:  void inccrv (int ncrv);
+NCRV          is the number of curves  that will be plotted with
+              identical attributes.
+                                               Default: NCRV = 1
+Name: CHNATT  10
+CHNATT is an alternative routine to  INCCRV.  It is useful  when
+the number of curves  plotted with identical attributes  varies.
+CHNATT defines new attributes  that will be used by CURVE during
+the next call.
+The call is:  CALL CHNATT                          level 1, 2, 3
+         or:  void chnatt ();
+Notes:      - CHNATT changes only attributes specified with CHN-
+              CRV.
+            - Attributes  cannot be skipped  by  calling  CHNATT
+              several times;  the order of  the attribute cycles
+              must be changed.
+Name: RESATT  10
+In general,  curve attributes will  be repeated after 8 changes.
+With the routine RESATT, the attributes can be reset earlier.
+The call is:  CALL RESATT                          level 1, 2, 3
+         or:  void resatt ();
+Name: INCMRK  10
+INCMRK selects line or symbol mode for CURVE.
+The call is:  CALL INCMRK (NMRK)                   level 1, 2, 3
+         or:  void incmrk (int nmrk);
+NMRK = -n     means that  CURVE plots  only symbols.  Every n-th
+              point will be marked by a symbol.
+     =  0     means that CURVE connects points with lines.
+     =  n     means that CURVE  plots lines and marks every n-th
+              point with a symbol.
+                                               Default: NMRK = 0
+Name: MARKER  10
+The symbols used to plot points can be selected with the routine
+MARKER. The symbol number will be  incremented by 1 after a cer-
+tain number of calls to CURVE defined by INCCRV.
+The call is:  CALL MARKER (NSYM)                   level 1, 2, 3
+         or:  void marker (int nsym);
+NSYM          is the symbol number between 0 and 21.
+                                               Default: NSYM = 0
+Name: MRKCLR  10
+The routine  MRKCLR sets the colour of symbols plotted by CURVE,
+so that different colours for curves and symbols can be used. 
+The call is:  CALL MRKCLR (NCLR)                   level 1, 2, 3
+         or:  void mrkclr (int nclr);
+NCLR          is a colour value.  If NCLR = -1, the current col-
+              our is selected for symbols in curves.
+                                              Default: NCLR = -1
+Name: HSYMBL  5
+HSYMBL defines the size of symbols.
+The call is:  CALL HSYMBL (NHSYM)                  level 1, 2, 3
+         or:  void hsymbl (int nhsym);
+NHSYM         is the size of symbols in plot coordinates.
+                                             Default: NHSYM = 35
+Name: MYSYMB  5
+MYSYMB sets a user-defined symbol.
+The call is:  CALL MYSYMB (XRAY, YRAY, N, ISYM, IFLAG)
+                                                   level 1, 2, 3
+         or:  void mysymb (float *xray, float *yray, int n,
+                           int isym, int iflag);
+XRAY, YRAY    are the X- and Y-coordinates  of the symbol in the
+              range -1 and 1.
+N             is the number of coordinates in XRAY and YRAY.
+ISYM          is a non negative number that will be used as sym-
+              bol number.
+IFLAG         is an  Integer  that can have the values 0 and  1.
+              If IFLAG = 1, the symbol will be filled.
+Note:         The number of points in  MYSYMB is limited  to 100
+              for Fortran 77.  There is no  limitation for the C
+              and Fortran 90 versions of DISLIN. 
+Name: THKCRV  10
+THKCRV defines the thickness of curves.
+The call is:  CALL THKCRV (NTHK)                   level 1, 2, 3
+         or:  void thkcrv (int nthk);
+NTHK          is the thickness of curves in plot coordinates.
+                                          Default:      NTHK = 1
+Name: GAPCRV  10
+GAPCRV defines a data gap used in the routine CURVE. If the dis-
+tance between two neightbouring  X coordinates  is greater  than
+the gap value, CURVE will not connect these data points.  
+The call is:  CALL GAPCRV (XGAP)                   level 1, 2, 3
+         or:  void gapcrv (float xgap);
+XGAP          is the gap value.
+Name: POLCRV  10
+The routine POLCRV defines an interpolation method used by CURVE
+to connect points.
+The call is:   CALL POLCRV (CPOL)                  level 1, 2, 3
+         or:   void polcrv (char *cpol); 
+CPOL           is a character string containing  the  interpola-
+               tion method.
+  = 'LINEAR'   defines linear interpolation.
+  = 'STEP'     defines step interpolation.
+  = 'STAIRS'   defines step interpolation.
+  = 'BARS'     defines bar interpolation.
+  = 'FBARS'    defines filled bar interpolation.
+  = 'STEM'     defines stem interpolation.
+  = 'SPLINE'   defines spline interpolation.
+  = 'PSPLINE'  defines parametric spline interpolation.
+                                       Default: CPOL = 'LINEAR'.
+Notes:       - The width of bars can be set with BARWTH.
+             - For spline interpolation,  the X-coordinates must
+               have different values  and be in ascending order.
+               There is no  restriction for a parametric spline.
+               The order of spline polynomials and the number of
+               interpolated points can be modified with SPLMOD.
+Name: SPLMOD  10
+SPLMOD defines the order of polynomials and the number of inter-
+polated points  used for the interpolation methods  'SPLINE' and
+'PSPLINE'.
+The call is:   CALL  SPLMOD (NGRAD, NPTS)          level 1, 2, 3
+         or:   void  splmod (int ngrad, int npts); 
+NGRAD          is the order of the spline polynomials  (2 - 10).
+               It affects the number of points accepted by CURVE
+               which is determined by the formula   (2 * NGRAD +
+               1) * N <= 1000. For example, with a cubic spline,
+               up to 142 points can be passed to CURVE.
+NPTS           is the number  of points that will be  interpola-
+               ted in the range XRAY(1) to XRAY(N).
+                                              Default: (3, 200).
+Name: BARWTH  10
+BARWTH sets the width of bars plotted by CURVE.
+The call is:  CALL BARWTH (XWTH)                   level 1, 2, 3
+         or:  void barwth (float xwth);
+XWTH          defines  the bar width. If positive,  the absolute
+              value of XWTH * (XRAY(1)-XRAY(2)) is used.
+              If negative,  the absolute value of  XWTH is  used
+              where XWTH is specified in plot coordinates.
+                                            Default: XWTH = 0.75
+Note:         If XWTH is positive and polar  scaling is enabled,
+              the absolute value of  XWTH * (YRAY(2) -  YRAY(1))
+              defines the width of bars. If XWTH is negative for
+              polar scaling, the absolute value of XWTH  is used
+              where  XWTH must be specified in degrees.
+Name: NEGLOG  10
+For a  logarithmic scaling,  the routine  CURVE  suppresses  the
+plotting of curves if some of the data have non positive values.
+With a call to NEGLOG,  non positive values  will be interpreted
+positive. 
+The call is:  CALL NEGLOG (EPS)                    level 1, 2, 3
+         or:  void neglog (float eps);
+EPS           is a  positive  user coordinate  used for negative
+              coordinates.     
+Name: NOCHEK  10
+The routine  NOCHEK can be used to suppress the listing of curve
+points that lie outside of the axis scaling.
+The call is:  CALL NOCHEK                          level 1, 2, 3
+         or:  void nochek ();
+Name: STMMOD  10
+The routine STMMOD modifies the behaviour of streamlines.
+The call is:  CALL STMMOD (CMOD, CKEY)             level 1, 2, 3 
+         or:  void stmmod (char *cmod, char *ckey);
+CMOD          is a character string that defines a mode.
+CKEY          is a  character  string that  can have  the values 
+              'INTEGRATION', 'ARROWS' and 'CLOSED'. The  keyword
+              'INTEGRATION'  defines the integration method used
+              for streamlines.  For this keyword,  CMOD can have
+              the values  'EULER',  'RK2'  and 'RK4'.  'RK2' and
+              'RK4' mean  Runke-Kutta integration of  second and
+              fourth order.
+              For the keywords  'ARROWS' and 'CLOSED',  COPT can 
+              have the values  'ON' and 'OFF'.  'ARROWS' enables
+              arrows  at streamlines  and the  keyword  'CLOSED'
+              means that  DISLIN  tries to detect closed stream-
+              lines.  A good integration  method  such as  'RK4'
+              should be used fro this mode.  
+                               Defaults: ('RK2', 'INTEGRATION'),
+                           ('OFF', 'ARROWS'), ('OFF', 'CLOSED').
+Name: STMOPT  10
+The routine STMOPT defines some streamline options.
+The call is:  CALL STMOPT (N, CKEY)                level 1, 2, 3 
+         or:  void stmopt (int n, char *ckey);
+N             is an integer option.
+CKEY          is a character string  containing  one of the fol-
+              lowing keywords:
+ = 'POINTS'   defines the number of points after that the calcu-
+              lation of streamlines will be terminated.  The de-
+              fault value is 1000 points.
+ = 'ARROW'    specifies  the form of  arrows that can be plotted
+              at streamlines.                  Default: N = 1201
+ = 'STREAMS'  defines  the number  of starting  points  around a
+              seedpoint  that  are  used for finding new stream-
+              lines  if automatic  streamline  generation is en-
+              abled for the routine STREAM3D. (N >= 4).
+                                                  Default: N = 4
+ = 'HITS'     sets  the  number of minimal hits for the fast LIC
+              algorithm  that are required for each  image pixel
+              (N >= 1).                           Default: N = 1
+ = 'LICL'     sets the filter length for the fast LIC algorithm.
+              The total filter length is: 2*N+1. 
+                                                 Default: N = 10
+ = 'LICM'     defines the length of a  streamline in points that
+              is  used to calculate multiple image pixels in the
+              fast LIC algorithm. 
+                                                Default: N = 100
+Name: STMVAL  10
+The  routine  STMVAL  defines  some  floating point  options for 
+streamlines.
+The call is:  CALL STMVAL (X, CKEY)                level 1, 2, 3 
+         or:  void stmval (float x, char *ckey); 
+X             is a floating point option.
+CKEY          is a character string  containing  one of the fol-
+              lowing keywords:
+ = 'STEP'     defines  the  integration  step.  The size  of the
+              integration  step  is  X * (XPMAX - XPMIN),  where 
+              XPMIN  and  XPMAX  are  the  minimum  and  maximum 
+              values of the array XPRAY in STREAM or STREAM3D.
+                                              Default: X = 0.01.
+ = 'DISTANCE' sets  the  distance  of  streamlines  for  evenly-
+              spaced streamlines. The distance is calculated
+              as  X * (XPMAX - XPMIN). The distance value should
+               be greater than the integration step.
+                                              Default: X = 0.02.
+ = 'ARROWS'   defines  the  space  between  arrows   plotted  at
+              streamlines. The used space between arrows is:
+              X * X-axis length.                  Default: 0.25.
+ = 'TEST'     defines  a test value  for  evenly-spaced  stream-
+              lines.  The  calculation  of a  new streamline  is 
+              stopped if the distance to any already  calculated
+              streamlines is lower than X * distance, where dis-
+              tance is the value for the keyword 'DISTANCE'.
+                                               Default: X = 0.5.
+ = 'CLOSED'   sets  a  distance  value  for  detecting a  closed 
+              streamline.  The  calculation  of a  streamline is
+              terminated if the distance  of a new seedpoint  to
+              the  starting point is closer than this value. The
+              used distance is  X *  (XPMAX - XPMIN).
+                                             Default: X = 0.005.
+ = 'LICSTEP'  defines the integration step  for streamlines that
+              are calculated in the LIC algorithm  used  by  the
+              routine LICPTS.
+                                               Default: X = 0.5.     
+Name: LICMOD  10
+The routine  LICMOD modifies  the behaviour of the Line Integral
+Convolution algorithm in the routine LICPTS.
+The call is:  CALL LICMOD (CMOD, CKEY)             level 1, 2, 3 
+         or:  void stmmod (char *cmod, char *ckey);
+CMOD          is a  character  string  that can  have the values
+              'ON' and 'OFF'.
+CKEY          is a  character  string that  can have  the values 
+              'FAST' and 'SCALE'. The keyword 'FAST' enables  or
+              disables the fast  LIC  algorithm  where a  single
+              streamline  is  used to  calculate  multiple image  
+              pixels.  The image  pixels  can be scaled with the
+              vectors lengths  if the keyword  'SCALE'  is  used
+              with the mode 'ON'.
+                                        Defaults: ('ON', 'FAST',
+                                               ('OFF', 'SCALE').
+Name: SOLID   12
+The routine SOLID defines a solid line style.
+The call is:  CALL SOLID                           level 1, 2, 3
+         or:  void solid ();
+Name: DOT     12
+The routine DOT defines a dotted line style.
+The call is:  CALL DOT                             level 1, 2, 3
+         or:  void dot ();
+Name: DASH    12
+The routine DASH defines a dashed line style.
+The call is:  CALL DASH                            level 1, 2, 3
+         or:  void dash ();
+Name: CHNDSH  12
+The routine CHNDSH defines a dashed-dotted line style.
+The call is:  CALL CHNDSH                          level 1, 2, 3
+         or:  void chndsh ();
+Name: CHNDOT  12
+The routine CHNDOT defines a dotted-dashed line style.
+The call is:  CALL CHNDOT                          level 1, 2, 3
+         or:  void chndot ();
+Name: DOTL    12
+The routine DOTL defines a long-dotted line style.
+The call is:  CALL DOTL                            level 1, 2, 3
+         or:  void dotl ();
+Name: DASHL   12
+The routine DASHL defines a long-dashed line style.
+The call is:  CALL DASHL                           level 1, 2, 3
+         or:  void dashl ();
+Name: DASHM   12
+The routine DASHM defines a medium-dashed line style.
+The call is:  CALL DASHM                           level 1, 2, 3
+         or:  void dashm ();
+Name: LINTYP  12
+The routine LINTYP defines a line style.
+The call is:  CALL LINTYP (NTYP)                   level 1, 2, 3
+         or:  void lintyp (int ntyp);
+NTYP          is an integer  that can have  the values 0: SOLID,
+              1: DOT, 2: DASH, 3: CHNDSH,  4: CHNDOT,  5: DASHM,
+              6: DOTL and 7: DASHL.
+                                               Default: NTYP = 0
+Name: MYLINE  12
+MYLINE defines a global line style.
+The call is:  CALL MYLINE (NRAY, N)                level 1, 2, 3
+         or:  void myline (int *nray, int n);
+NRAY          is an array  of  positive integers  characterizing
+              the line style.  Beginning with  pen-down,  a pen-
+              down and pen-up will be done alternately according
+              to the specified lengths in NRAY. The lengths must
+              be given in plot coordinates.
+N             is the number of elements in NRAY.
+Examples:     The values of NRAY for the predefined  line styles
+              are given below:
+
+              SOLID :        NRAY = {1}
+              DOT   :        NRAY = {1, 10}
+              DASH  :        NRAY = {10, 10}
+              CHNDSH:        NRAY = {30, 15, 10, 15}
+              CHNDOT:        NRAY = {1, 15, 15, 15}
+              DASHM :        NRAY = {20, 15}
+              DOTL  :        NRAY = {1, 20}
+              DASHL :        NRAY = {30, 20}
+Name: LINWID  12
+The routine LINWID sets the line width.
+The call is:   CALL LINWID (NWIDTH)                level 1, 2, 3
+         or:   void linwid (int nwidth); 
+NWIDTH         is the line width in plot coordinates.
+                                             Default: NWIDTH = 1
+Note:          DISLIN tries  to use  hardware  features  for the
+               line width.  This can be disabled with the option
+               HWMODE ('OFF', 'LINE'). 
+Name: PENWID  12
+The routine PENWID sets the pen width.  PENWID has the same mea-
+ning as  LINWID  but can be used  to define a smaller line width
+than 1 (i.e. for PostScript files).
+   
+The call is:   CALL PENWID (XWIDTH)                level 1, 2, 3
+         or:   void penwid (float xwidth); 
+XWIDTH         is the pen width in plot coordinates.
+                                            Default: XWIDTH = 1.
+Name: LNCAP   12
+The routine LNCAP sets the current line cap parameter.
+The call is:   CALL LNCAP (CAP)                    level 1, 2, 3
+         or:   void lncap (char *cap); 
+CAP            is a character string defining the line cap.
+  = 'ROUND'    defines rounded caps.
+  = 'CUT'      defines square caps.
+  = 'LONG'     defines  square caps  where  stroke  ends will be
+               continued equal to half the line width. 
+                                          Default: CAP = 'LONG'.
+Name: LNJOIN  12
+The routine LNJOIN sets the current line join parameter.
+The call is:   CALL LNJOIN (CJOIN)                 level 1, 2, 3
+         or:   void lnjoin (char *cjoin); 
+CJOIN          is a  character  string containing the line join.
+  = 'SHARP'    defines sharp corners between path segments.
+  = 'TRUNC'    defines truncated corners between path segments.
+                                        Default: CJOIN = 'TRUNC'
+Name: LNMLT   12
+The routine  LNMLT  sets the current miter limit parameter. This
+routine can be useful if the line join is set to 'SHARP'. 
+The call is:   CALL LNMLT (XFC)                    level 1, 2, 3
+         or:   void lnmlt (float xfc); 
+XFC            is a floating point number where XFC * line width
+               will be used as the miter limit. The miter length
+               is the  distance  between  the inner and  outside
+               edge of a path corner.    

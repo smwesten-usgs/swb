@@ -1,0 +1,499 @@
+Name: GRAFMP  24
+The routine GRAFMP plots a geographical axis system.
+The call is:  CALL GRAFMP (XA, XE, XOR, XSTP, YA, YE, YOR, YSTP)
+         or:  void grafmp (
+                     float xa, float xe, float xor, float xstp, 
+                     float ya, float ye, float yor, float ystp);
+XA, XE        are the lower and upper limits of the X-axis.
+XOR, XSTP     are the  first X-axis label  and the step  between
+              labels.
+YA, YE        are the lower and upper limits of the Y-axis.
+YOR, YSTP     are the  first Y-axis label  and the step  between
+              labels.
+Notes:      - GRAFMP  must be  called  from level 1 and sets the
+              level to 2.
+            - The axes  must  be linear and scaled in  ascending
+              order.  In general, X-axes must be scaled  between
+              -180 and 180 degrees and Y-axes between -90 and 90
+              degrees.
+            - For  elliptical  projections,  the plotting  of an
+              axis system will be suppressed.  This will also be
+              done for azimuthal projections with YE - YA > 90.
+            - The statement  CALL GRIDMP (I, J) overlays an axis
+              system with a grid of longitude and latitude where
+              I and J  are the number  of grid lines between la-
+              bels in the X- and Y-direction.
+Name: GRIDMP  24
+The routine GRIDMP overlays an  axis system with a longitude and
+latitude grid.
+The call is:  CALL GRIDMP (I, J)                   level 1, 2, 3
+         or:  void gridmp (int i, int j);
+I, J          are the number of grid lines between labels in the
+              X- and Y-direction.
+Name: XAXMAP  24
+The routine XAXMAP plots a secondary X-axis.
+The call is:  CALL XAXMAP (A, B, OR, STEP, CSTR, NT, NY) level 2
+         or:  void xaxmap (float a, float b, float or, 
+                        float step, char *cstr, int nt, int ny);
+A, B          are the lower and upper limits of the X-axis.
+OR, STEP      are the first label and the step between labels.
+CSTR          is a character string containing the axis name.
+NT            indicates how ticks, labels  and the axis name are
+              plotted.  If NT = 0, they are plotted  in a clock-
+              wise direction.  If NT = 1,  they are plotted in a
+              counter-clockwise direction.
+NY            defines the horizontal  position  of the X-axis. A
+              secondary  axis  must be located  inside  the axis
+              system.
+Name: YAXMAP  24
+The routine YAXMAP plots a secondary Y-axis.
+The call is:  CALL YAXMAP (A, B, OR, STEP, CSTR, NT, NX) level 2
+         or:  void yaxmap (float a, float b, float or, 
+                        float step, char *cstr, int nt, int nx);
+A, B          are the lower and upper limits of the Y-axis.
+OR, STEP      are the first label and the step between labels.
+CSTR          is a character string containing the axis name.
+NT            indicates how ticks,  labels and the axis name are
+              plotted.  If NT = 0,  they are plotted in a clock-
+              wise direction.  If NT = 1,  they are plotted in a
+              counter-clockwise direction.
+NX            defines  the  vertical  position  of the Y-axis. A
+              secondary  axis  must be  located  inside the axis
+              system.
+Name: PROJCT  24
+The routine PROJCT selects the geographical projection.
+The call is:  CALL PROJCT (CTYPE)                        level 1
+         or:  void projct (char *ctype);
+CTYPE         is a character string defining the projection.
+  = 'CYLI'    defines a cylindrical equidistant projection.
+  = 'MERC'    selects the Mercator projection.
+  = 'EQUA'    defines a cylindrical equal-area projection.
+  = 'HAMM'    defines the elliptical projection of Hammer.
+  = 'AITO'    defines the elliptical projection of Aitoff.
+  = 'WINK'    defines the elliptical projection of Winkel.
+  = 'SANS'    defines the elliptical Mercator-Sanson projection.
+  = 'CONI'    defines a conical equidistant projection.
+  = 'ALBE'    defines a conical equal-area projection (Albers).
+  = 'CONF'    defines a conical conformal projection.
+  = 'AZIM'    defines an azimuthal equidistant projection.
+  = 'LAMB'    defines an azimuthal equal-area projection.
+  = 'STER'    defines an azimuthal stereographic projection.
+  = 'ORTH'    defines an azimuthal orthographic projection.
+  = 'MYPR'    defines a user-defined projection.
+                                        Default: CTYPE = 'CYLI'.
+Notes:      - For cylindrical equidistant projections,  the sca-
+              ling parameters in GRAFMP must be in the range:
+                         -540 <= XA <= XE <= 540
+                         -180 <= YA <= YE <= 180
+              For Mercator procektions:
+                         -540 <= XA <= XE <= 540
+                         - 85 <= YA <= YE <=  85
+              For cylindrical equal-area projections:
+                         -540 <= XA <= XE <= 540
+                         - 90 <= YA <= YE <=  90
+              For elliptical projections:
+                         -540 <= XA <= XE <= 540
+                            XE - XA <= 360
+                         - 90 <= YA <= YE <=  90
+              For conical projections:
+                         -540 <= XA <= XE <= 540
+                            0 <= YA <= YE <=  90  or
+                         - 90 <= YA <= YE <=   0
+              For azimuthal projections with  YE - YA > 90,  the
+              hemisphere around the map pole is projected onto a
+              circle. Therefore,  the hemisphere can be selected
+              with the map pole. The plotting of the axis system
+              will be  suppressed.
+              If YE - YA <= 90, the part of the globe defined by
+              the  axis scaling  is projected  onto a rectangle.
+              The map pole will be set by GRAFMP to  ((XA+XE)/2,
+              (YE+YA)/2).  The scaling parameters must be in the
+              range:
+                         -180 <= XA <= XE <= 180 and
+                                 XE -  XA <= 180
+                         - 90 <= YA <= YE <=  90
+          -   For all projections except the default projection,
+              longitude and latitude coordinates will be projec-
+              ted  with the same scaling factor  for the X-  and
+              Y-axis.  The scaling factor is  determined  by the
+              scaling of the  Y-axis  while the  scaling  of the
+              X-axis  is used  to centre the map.  The longitude
+              (XA+XE)/2  always lies  in the centre  of the axis
+              system.
+Name: WORLD   24
+The routine  WORLD plots coastlines  and lakes or political bor-
+ders.  Coastlines  and lakes  are plotted by default,  political 
+borders can be enabled with the routine MAPOPT.
+The call is:  CALL WORLD                                 level 2
+         or:  void world ();
+Name: SHDMAP  24
+The routine SHDMAP plots shaded continents.
+The call is:  CALL SHDMAP (CMAP)                         level 2
+         or:  void shdmap (char *cmap);
+CMAP          is a character string defining the continent.
+  = 'AFRI'    means Africa.
+  = 'ANTA'    means the Antarctic.
+  = 'AUST'    means Australia.
+  = 'EURA'    means Europe and Asia.
+  = 'NORT'    means North America.
+  = 'SOUT'    means South America.
+  = 'ALL'     means all continents.
+Note:         Shading patterns  can be selected with  SHDPAT and
+              MYPAT.  Colours can be defined with COLOR and SET-
+              CLR.
+Name: SHDAFR  24
+The routine SHDAFR plots shaded African countries.
+The call is:  CALL SHDAFR (INRAY, IPRAY, ICRAY, N)   level 2
+         or:  void shdafr (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an integer array containing the countries to be
+              shaded. INRAY can have the following values:
+
+        1: Algeria           19: Gabon          37: Nigeria
+        2: Angola            20: Gambia         38: Ruanda
+        3: Benin             21: Ghana          39: Senegal
+        4: Botswana          22: Guinea         40: Seychelles
+        5: Burkina Faso      23: Guinea Bissau  41: Sierra Leone
+        6: Burundi           24: Kenya          42: Somalia
+        7: Cameroon          25: Lesotho        43: South Africa
+        8: Central Afr. Rep. 26: Liberia        44: Sudan 
+        9: Chad              27: Libya          45: Swaziland
+       10: Comoros           28: Madagascar     46: Tanzania
+       11: Congo, Dem. Rep.  29: Malawi         47: Togo        
+       12: Congo, Rep.       30: Mali           48: Tunisia
+       13: Cote d'Ivoire     31: Mauritania     49: Uganda
+       14: Djibouti          32: Mauritius      50: West Sahara
+       15: Egypt             33: Morocco        51: Zambia 
+       16: Equatorial Guinea 34: Mozambique     52: Zimbawe
+       17: Eritrea           35: Namibia       
+       18: Ethiopia          36: Niger           0: Africa
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of countries to be shaded.
+Name: SHDASI  24
+The routine SHDASI plots shaded Asiatic countries.
+The call is:  CALL SHDASI (INRAY, IPRAY, ICRAY, N)       level 2
+         or:  void shdasi (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an integer array containing the countries to be
+              shaded. IRAY can have the following values:
+
+    1: Afghanistan     19: Jordan         37: Saudiarab  
+    2: Armenia         20: Kazakhstan     38: Scrilanka  
+    3: Azerbaijan      21: Korea (North)  39: Singapore 
+    4: Bangladesh      22: Korea (South)  40: Spratly  
+    5: Bhutan          23: Kuwait         41: Syria 
+    6: Brunei          24: Kyrgyzstan     42: Taiwan 
+    7: Burma           25: Laos           43: Tajikistan  
+    8: Cambodia        26: Lebanon        44: Thailand 
+    9: China           27: Malaysia       45: Turkey 
+   10: Emirates        28: Maldives       46: Turkmenistan
+   11: Gaza            29: Mongolia       47: Uzbekistan
+   12: Georgia         30: Nepal          48: Vietnam
+   13: India           31: Oman           49: Westbank  
+   14: Indonesia       32: Pakistan       50: Yemen 
+   15: Iran            33: Paracel       
+   16: Irak            34: Philippines   
+   17: Israel          35: Quatar        
+   18: Japan           36: Russia          0: All
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of countries to be shaded.
+Name: SHDAUS  24
+The routine SHDAUS  plots shaded countries of Australia and Oce-
+ania.
+The call is:  CALL SHDAUS (INRAY, IPRAY, ICRAY, N)       level 2
+         or:  void shdaus (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an integer array containing the countries to be
+              shaded. INRAY can have the following values:
+
+    1: Australia       6: Nauru            11: Solomon  
+    2: Fiji            7: Newcaledonia     12: Tonga  
+    3: Kiribati        8: Newsealand       13: Tuvalu 
+    4: Marshall        9: Papanewguinea    14: Vanuatu
+    5: Micronesia     10: Samoa             0: All
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of countries to be shaded.
+Name: SHDEUR  24
+The routine SHDEUR plots shaded European countries.
+The call is:  CALL SHDEUR (INRAY, IPRAY, ICRAY, N)       level 2
+         or:  void shdeur (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an integer array containing the countries to be
+              shaded. INRAY can have the following values:
+             1: Albania         17: Luxembourg    33: Belarus
+             2: Andorra         18: Malta         34: Bosnia 
+             3: Belgium         19: Netherlands   35: Croatia
+             4: Bulgaria        20: North Ireland 36: Czech 
+             5: Germany         21: Norway        37: Estonia
+             6: Denmark         22: Austria       38: Latvia
+             7: Cyprus          23: Poland        39: Lithuania
+             8: United Kingdom  24: Portugal      40: Macedonia
+             9: Finland         25: Romania       41: Moldavia
+            10: France          26: Sweden        42: Russia
+            11: Greece          27: Switzerland   43: Serbia         
+            12: Ireland         28: Spain         44: Slovakia
+            13: Iceland         29: CSFR          45: Slovenia
+            14: Italy           30: Turkey        46: Ukraine
+            15: Yugoslavia      31: USSR          
+            16: Liechtenstein   32: Hungary        0: Europe
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of countries to be shaded.
+Name: SHDNOR  24
+The routine  SHDNOR  plots shaded countries of North and Central
+America.
+The call is:  CALL SHDNOR (INRAY, IPRAY, ICRAY, N)       level 2
+         or:  void shdnor (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an  integer array containing the  states to  be
+              shaded.  INRAY  can have  the following values:
+       1: Alaska           13: El Salvador  25: Nicaragua
+       2: Antigua, Barbuda 14: Greenland    26: Panama
+       3: Bahamas          15: Grenada      27: Puerto Rico
+       4: Barbados         16: Guadeloupe   28: St. Kitts, Nevis
+       5: Belize           17: Guatemala    29: St. Lucia
+       6: British Virgin   18: Haiti        30: St. Vincent
+       7: Caiman Islands   19: Honduras     31: Trinidad
+       8: Canada           20: Jamaica      32: USA
+       9: Costa Rica       21: Martinique      
+      10: Cuba             22: Mexico        0: All 
+      11: Dominica         23: Montserrat      
+      12: Dominican Rep.   24: Neth. Antilles
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of states to be shaded.
+Name: SHDSOU  24
+The routine SHDSOU plots shaded states of South America.
+The call is:  CALL SHDSOU (INRAY, IPRAY, ICRAY, N)       level 2
+         or:  void shdsou (int *inray, long *ipray, int *icray,
+INRAY         is an  integer array containing the  states to  be
+              shaded. INRAY  can have  the following values:
+         1: Argentina    6: Ecuador         11: Suriname
+         2: Bolivia      7: French Guyana   12: Uruguay
+         3: Brazil       8: Guyana          13: Venezuela
+         4: Chile        9: Paraguay         
+         5: Colombia    10: Peru             0: All
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of states to be shaded.
+Name: SHDUSA  24
+The routine SHDUSA plots shaded USA states.
+The call is:  CALL SHDUSA (INRAY, IPRAY, ICRAY, N)      level 2
+         or:  void shdusa (int *inray, long *ipray, int *icray,
+                                                         int n);
+INRAY         is an  integer array containing the  states to  be
+              shaded. INRAY  can have  the following values:
+            1: Alabama     19: Maine          37: Oregon 
+            2: Alaska      20: Maryland       38: Pennsylvania
+            3: Arizona     21: Massachusetts  39: Rhode Island
+            4: Arkansas    22: Michigan       40: South Carolina
+            5: California  23: Minnesota      41: South Dakota
+            6: Colorado    24: Mississippi    42: Tennessee
+            7: Connecticut 25: Missouri       43: Texas
+            8: Delaware    26: Montana        44: Utah
+            9: Florida     27: Nebraska       45: Vermont 
+           10: Georgia     28: Nevada         46: Virginia
+           11: Hawaii      29: New Hampshire  47: Washington
+           12: Idaho       30: New Jersey     48: West Virginia
+           13: Illinois    31: New Mexico     49: Wisconsin
+           14: Indiana     32: New York       50: Wyoming
+           15: Iowa        33: North Carolina 51: Washington DC 
+           16: Kansas      34: North Dakota   
+           17: Kentucky    35: Ohio           
+           18: Louisiana   36: Oklahoma        0: USA
+IPRAY         is an integer array containing shading patterns.
+ICRAY         is an integer array containing colour numbers.
+N             is the number of states to be shaded.
+Name: MAPIMG  24
+The routine MAPIMG  plots a BMP  or  GIF raster image to an axis
+system.  Some parameters  which describe the location, scale and
+rotation of  the map  are passed to  MAPIMG. The parameters have
+the  same  meaning  as  the attributes of the  ESRI  World  File 
+Format.   
+The call is:  CALL MAPIMG (CFIL, X1, X2, X3, X4, X5, X6) level 2
+         or:  void mapimg (char *cfil float x1, float x2, 
+                        float x3, float x4, float x5, float x6); 
+CFIL          is a character string that  contains the name of a
+              BMP or GIF file.
+X1            is the  pixel size in the X-direction in map units
+              per pixel.
+X2            is the rotation about the Y-axis.
+X3            is the rotation about the X-axis.
+X4            is the  pixel size in the Y-direction in map units
+              per pixel.  This  value  is  normally  a  negative 
+              number.
+X5            is the  X-coordinate  of  the  centre of the upper
+              left pixel.
+X6            is the  Y-coordinate  of  the  centre of the upper
+              left pixel.
+Name: CURVMP  24
+The routine  CURVMP  plots curves  through data points  or marks
+them with symbols.
+The call is:  CALL CURVMP (XRAY, YRAY, N)                level 2
+         or:  void curvmp (float *xray, float *yray, int n);
+XRAY, YRAY    are real arrays containing the data points.
+N             is the number of data points.
+Notes:      - CURVMP  is similar to  CURVE  except  that  only a
+              linear interpolation can be used.
+            - In general, a line between two points on the globe
+              will not be projected as  a straight line.  There-
+              fore,  CURVMP interpolates lines linearly by small
+              steps.  An alternate plotting mode can be set with
+              MAPMOD.
+Name: MAPBAS  24
+The routine MAPBAS defines the map data file used in the routine
+WORLD. An internal DISLIN map file, some external map files com-
+piled by Paul Wessel and map files in Mapgen format can be used.
+The map  files  compiled by  Paul Wessel  can be copied  via FTP 
+anonymous from the servers
+
+   ftp://ftp.ngdc.noaa.gov/MGG/shorelines/
+   ftp://kiawe.soest.hawaii.edu/pub/wessel/gshhs/
+
+The external map files 'gshhs_l.b', 'gshhs_i.b', 'gshhs_h.b' and
+'gshhs_f.b' must be copied to the map subdirectory of the DISLIN
+directory.
+
+Map files in  Mapgen format  are  available  from the  Coastline
+Extractor:
+
+   http://rimmer.ngdc.noaa.gov/
+
+The call is:  CALL MAPBAS (CBAS)                      level 1, 2
+         or:  void mapbas (char *cbas);
+CBAS          is a character string defining the map data file:
+ = 'DISLIN'   defines the DISLIN base map.
+ = 'GSHL'     defines 'gshhs_l.b' as base map.
+ = 'GSHI'     defines 'gshhs_i.b' as base map.
+ = 'GSHH'     defines 'gshhs_h.b' as base map.
+ = 'GSHF'     defines 'gshhs_f.b' as base map.
+ = 'MAPFIL'   defines an external map file  as base map  that is
+              specified with the routine MAPFIL.
+                                      Default:  CBAS = 'DISLIN'.
+Name: MAPFIL  24
+The routine  MAPFIL  defines  an external map file. The map file
+can be used as base map if the routine MAPBAS is called with the
+parameter 'MAPFIL'.
+The call is:  CALL MAPFIL (CFIL, COPT)                level 1, 2
+         or:  void mapfil (char *cfil, char *copt);
+CFIL          is a character string  containing the filename  of
+              the external map file.
+COPT          is a character string describing the format of the
+               map coordinates. COPT can have the values 'GSHHS'
+              and 'MAPGEN'.
+Name: MAPLEV  24
+The routine  MAPLEV  defines land, lake or river coordinates for
+WORLD  if the external map files  from  Paul Wessel are used.
+The call is:  CALL MAPLEV (COPT)                      level 1, 2
+COPT          is a  character string  that  can have  the values
+              'BOTH',  'LAND', 'LAKE' and 'RIVERS'.  The keyword
+              'BOTH' means 'LAND' and 'LAKE'. 
+              If  COPT = 'RIVERS',  the  WDB  rivers distributed 
+              with the GSHHS coordinates are plotted.
+                                        Default:  COPT = 'BOTH'.
+Name: MAPPOL  24
+MAPPOL defines the map pole used for azimuthal projections.
+The call is:  CALL MAPPOL (XPOL, YPOL)                   level 1
+         or:  void mappol (float xpol, float ypol);
+XPOL, YPOL    are the longitude and latitude  coordinates in de-
+              grees where:
+                         -180 <= XPOL <= 180 and
+                         - 90 <= YPOL <=  90
+                                               Default: (0., 0.)
+Note:         For an  azimuthal  projection with  YE - YA <= 90,
+              the map pole will be set by GRAFMP to  ((XA+XE)/2,
+              (YA+YE)/2).
+Name: MAPSPH  24
+For an azimuthal projection with YE - YA > 90, DISLIN  automati-
+cally projects a hemisphere around the map pole on a circle. The
+hemisphere can be reduced using MAPSPH.
+The call is:  CALL MAPSPH (XRAD)                         level 1
+         or:  void mapshd (float xrad);
+XRAD          defines the region  around the map pole  that will
+              be projected onto a circle (0 < XRAD <= 90).
+                                             Default: XRAD = 90.
+Name: MAPREF  24
+The routine MAPREF defines,  for conical projections,  two lati-
+tudes where the cone intersects or touches the globe.
+The call is:  CALL MAPREF (YLW, YUP)                     level 1
+         or:  void mapref (float ylw, float yup); 
+YLW, YUP      are the lower and upper latitudes where:
+                      0 <= YLW <= YUP <= 90     or
+                   - 90 <= YLW <= YUP <=  0
+                           Default:  YLW = YA + 0.25 * (YE - YA)
+                                     YUP = YA + 0.75 * (YE - YA)
+Note:         YLW and YUP can have identical values and lie out-
+              side of the axis scaling.
+Name: MAPLAB  24
+The routine  MAPLAB enables axis system labels for azimuthal and
+elliptical projections.
+
+The call is:  CALL MAPLAB (COPT, CKEY)                level 1, 2
+
+COPT          is a character string that can contain the options
+              'NONE', 'LEFT', 'RIGHT' and 'BOTH'.  
+CKEY          is  a  character  string  containing  the  keyword
+              'LATITUDE'.
+                                  Default: ('NONE', 'LATITUDE').
+Name: MAPMOD  24
+The routine  MAPMOD determines how data points will be connected
+by CURVMP.
+The call is:    CALL MAPMOD (CMODE)                level 1, 2, 3
+         or:    void mapmod (char *cmode);
+CMODE           is a  character  string  defining the connection
+                mode.
+  = 'STRAIGHT'  defines straight lines.
+  = 'INTER'     means that lines will be interpolated linearly.
+  = 'GREAT'     means Great Circle interpolation.
+                                      Default:  CMODE = 'INTER'.
+Name: MAPOPT  24
+The routine  MAPOPT  enables  political  borders  plotted by the
+routine  WORLD,  or sets  an option  to adjust the length of the
+X-axis to the scaling.
+The call is:  CALL MAPOPT (COPT, CKEY)                level 1, 2
+         or:  void mapopt (char *copt, char *ckey);
+COPT          is a character string containing an option.
+CKEY          is a character string containing a keyword:
+ = 'WORLD'    If  CKEY = 'WORLD',   COPT  can  have  the  values 
+              'COAST',  'BORDERS'  and 'BOTH'. The default value
+              is COPT = 'COAST'.
+ = 'XAXIS'    If  CKEY  = 'XAXIS',  COPT  can  have  the  values
+              'STANDARD' and 'AUTO'. Normally, longitude and la-
+              titude coordinates will be projected with the same
+              scaling factor  where the scaling factor is deter-
+              mined by the scaling of the Y-axis while  the sca-
+              ling  of the  X-axis  is used to centre  the  map.
+              For  COPT = 'AUTO',  DISLIN  tries the  change the
+              length of the X-axis, so that the axis length cor-
+              responds to the scaling  parameters in  GRAFMP for
+              the X-axis.  
+              The default value is COPT = 'STANDARD'.  
+Name: POS2PT  24
+The routine POS2PT converts map coordinates to plot coordinates.
+The call is:  CALL POS2PT (XLONG, YLAT, XP, YP)       level 2, 3
+         or:  void pos2pt (float xlong, float ylat, 
+                                        float *xp, float *yp); 
+XLONG, YLAT   are the map coordinates in degrees.
+XP, YP        are the plot coordinates calculated by POS2PT.
+Name: X2DPOS  24
+The funtion X2DPOS converts map coordinates to plot coordinates.
+The call is:  XP  = X2DPOS (XLONG, YLAT)              level 2, 3
+         or:  float x2dpos (float xlong, float ylat);
+XP            is the plot coordinate calculated by X2DPOS.
+XLONG, YLAT   are the map coordinates in degrees.
+Name: Y2DPOS  24
+The funtion Y2DPOS converts map coordinates to plot coordinates.
+The call is:  YP  = Y2DPOS (XLONG, YLAT)              level 2, 3
+         or:  float y2dpos (float xlong, float ylat);
+YP            is the plot coordinate calculated by Y2DPOS.
+XLONG, YLAT   are the map coordinates in degrees.
+Name: SETCBK  24
+The routine SETCBK defines a user written callback routine.
+The call is:  CALL SETCBK (ROUTINE, 'MYPR')     level 0, 1, 2, 3
+         or:  void setcbk (void (*routine) (float *x, float *y),
+                                                        "MYPR");
+ROUTINE       is the name of a  routine  defined by the user. In
+              Fortran, the routine must be declared as EXTERNAL.

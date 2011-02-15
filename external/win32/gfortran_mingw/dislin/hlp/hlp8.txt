@@ -1,0 +1,259 @@
+Name: XMOVE   17
+The routine XMOVE moves the pen to a point.
+The call is:  CALL XMOVE (X, Y)                    level 1, 2, 3
+         or:  void xmove (float x, float y);
+X, Y          are absolute page coordinates.
+Name: XDRAW   17
+The routine XDRAW draws a line to a point.         level 1, 2, 3
+The call is:  CALL XDRAW (X, Y)
+         or:  void xdraw (float x, float y);
+X, Y          are absolute page coordinates.
+Name: STRTPT  17
+The routine STRTPT moves the pen to a point.
+The call is:  CALL STRTPT (X, Y)                   level 1, 2, 3
+         or:  void strtpt (float x, float y);
+X, Y          are real numbers containing the plot coordinates.
+Name: CONNPT  17
+The routine CONNPT draws a line to a point.  Different line sty-
+les can be used.
+The call is:  CALL CONNPT (X, Y)                   level 1, 2, 3
+         or:  void connpt (float x, float y);
+X, Y          are real numbers containing the plot coordinates.
+Name: RLSTRT  17
+The routine RLSTRT moves the pen to a point (user coordinates).
+The call is:  CALL RLSTRT (X, Y)                      level 2, 3
+         or:  void rlstrt (float x, float y);
+X, Y          are real numbers containing the user coordinates.
+Name: RLCONN  17
+The routine RLCONN draws a line to a point (user coordinates).
+The call is:  CALL RLCONN (X, Y)                      level 2, 3
+         or:  void rlconn (float x, float y);
+X, Y          are real numbers containing the user coordinates.
+Name: LINE    17
+LINE joins two points with a line.  Different line styles can be
+used.
+The call is:  CALL LINE (NX, NY, NU, NV)           level 1, 2, 3
+         or:  void line (int nx, int ny, int nu, int nv);
+NX, NY        are the plot coordinates of the first point.
+NU, NV        are the plot coordinates of the second point.
+Name: RLINE   17
+RLINE is the corresponding routine to LINE for user coordinates.
+The call is:  CALL RLINE (X, Y, U, V)                 level 2, 3
+         or:  void rline (float x, float y, float u, float v);
+X, Y          are the user coordinates of the first point.
+U, V          are the user coordinates of the second point.
+Note:         RLINE  draws only that part of the line lying  in-
+              side  the  axis system.  If  NOCHEK  is not  used,
+              points  lying  outside  the  axis scaling  will be
+              listed.
+Name: WINDBR  17
+The routine WINDBR plots wind speed symbols.
+The call is:  CALL WINDBR (X, NXP, NYP, NW, A)     level 1, 2, 3
+         or:  void windbr (float x, int nxp, int nyp, int nw,
+                                                       float a);
+X             is the wind speed in knots.
+NXP, NYP      are the plot coordinates of the lower left  corner
+              of the wind speed symbol.
+NW            is the length of the symbol in plot coordinates.
+A             is the wind direction in degrees.
+Name: RLWIND  17
+RLWIND is the corresponding routine to  WINDBR  for user coordi-
+nates.
+The call is:  CALL RLWIND (X, XP, YP, NW, A)          level 2, 3
+         or:  void rlwind (float x, float xp, float yp, int nw,
+                                                       float a);
+Name: TRIFLL  17
+The routine TRIFLL plots solid filled triangles.
+The call is:  CALL TRIFLL (XRAY, YRAY)             level 1, 2, 3
+         or:  void trifll (float *xray, float *yray);
+XRAY, YRAY    are floating point  arrays  containing  the  three
+              corners of a triangle.
+Name: VECTOR  17
+VECTOR plots vectors with none, one or two arrow heads.
+The call is:  CALL VECTOR (IX, IY, IU, IV, IVEC)   level 1, 2, 3
+         or:  void vector (int ix, int iy, int iu, int iv,
+                                                      int ivec);
+IX, IY        are the plot coordinates of the start point.
+IU, IV        are the plot coordinates of the end point.
+IVEC          is an integer number  that defines the form of the
+              arrow heads.  If IVEC = -1, the arrow head  can be
+              defined with the routine VECOPT.  Otherwise,  IVEC
+              can contain a four digit number 'wxyz'  specifying
+              the arrow  heads where the digits have the follow-
+              ing meaning:
+       w:     determines the ratio of width and length (0 - 9).
+       x:     determines the size (0 - 9).
+       y:     determines the form:
+         = 0  filled
+         = 1  not filled
+         = 2  opened
+         = 3  closed
+       z:     determines the position:
+         = 0  no arrow heads are plotted
+         = 1  at end points
+         = 2  at start and end points.
+         = 3  at start and end points and in the same direction.
+Name: RLVEC   17
+RLVEC is the version of VECTOR for user coordinates.
+The call is:  CALL RLVEC (X, Y, U, V, IV)             level 2, 3
+         or:  void rlvec (float x, float y, float u, float v,
+                                                        int iv);
+X, Y          are the coordinates of the start point.
+U, V          are the coordinates of the end point.
+IV            specifies the arrow head (see VECTOR).
+Name: RECTAN  17
+RECTAN plots rectangles.
+The call is:  CALL RECTAN (NX, NY, NW, NH)         level 1, 2, 3
+         or:  void rectan (int nx, int ny, int nw, int nh);
+NX, NY        are the plot coordinates of the upper left corner.
+NW, NH        are the width and height in plot coordinates.
+Name: VECCLR  17
+VECCLR  defines  the colour  of arrow heads,  or enables  colour
+scaling in the routines FIELD, VECFLD, FIELD3D and VECF3D.
+The call is:  CALL VECCLR (ICLR)                   level 1, 2, 3
+         or:  void vecclr (int iclr);
+ICLR          is a  colour  number.  If ICLR  has  the value -2, 
+              colour scaling is enabled in vector fields.
+              If ICLR = -1, arrow heads are plotted in the fore-
+              ground colour.  Otherwise, arrow heads are plotted
+              in the colour ICLR.
+Name: VECOPT  17
+VECOPT  defines  some  vector options  such as the size of arrow
+heads and the appearance of user-defined arrows that are enabled
+with  the vector number -1  in VECTOR and RLVEC. The routine can
+also disable automatic scaling of vectors in vector fields.
+The call is:  CALL VECOPT (XOPT, CKEY)             level 1, 2, 3
+         or:  void vecopt (float xopt, char *ckey); 
+XOPT          contains a floating point option.
+CKEY          is a  character  string  that can have  one of the
+              following values:
+ = 'ANGLE'    defines  the  angle  in degrees  that is used  for 
+              arrow heads plotted with the vector number -1.   
+ = 'LENGTH'   defines  the ratio  of the  arrow head  and vector
+              length for vectors plotted with the number -1.
+ = 'SCALE'    sets a  scaling factor that is used for the vector
+              length in vector field routines such as VECFLD and
+              VECMAT. If XOPT = 0, automatic scaling is enabled.
+ = 'SIZE'     defines  a scaling  factor  for the size  of arrow
+              heads.
+                     Defaults: (20., 'ANGLE'), (0.25, 'LENGTH'),
+                                  (0., 'SCALE'),  (1.0, 'SIZE').
+Name: RNDREC  17
+RNDREC plots an rectangle where the corners will be rounded.
+The call is:  CALL RNDREC (NX, NY, NW, NH, IOPT)   level 1, 2, 3
+         or:  void rndrec (int nx, int ny, int nw, int nh,
+                                                      int iopt);
+NX, NY        are the plot coordinates of the upper left corner.
+NW, NH        are the width and height in plot coordinates.
+IOPT          defines the rounding of corners (0 <= IOPT <= 9).
+              For IOPT = 0, rounding is disabled.               
+Name: CIRCLE  17
+CIRCLE plots circles.
+The call is:  CALL CIRCLE (NX, NY, NR)             level 1, 2, 3
+         or:  void circle (int nx, int ny, int nr);
+NX, NY        are the plot coordinates of the centre point.
+NR            is the radius in plot coordinates.
+Name: ELLIPS  17
+ELLIPS plots ellipses.
+The call is:  CALL ELLIPS (NX, NY, NA, NB)         level 1, 2, 3
+         or:  void ellips (int nx, int ny, int na, int nb);
+NX, NY        are the plot coordinates of the centre point.
+NA, NB        are the radii in plot coordinates.
+Name: PIE     17
+PIE plots pie segments.
+The call is:  CALL PIE (NX, NY, NR, A, B)          level 1, 2, 3
+         or:  void pie (int nx, int ny, int nr, float a,
+                                                       float b);
+NX, NY        are the plot coordinates of the centre point.
+NR            is the radius in plot coordinates.
+A, B          are the  start  and end angles measured in degrees
+              in a counter-clockwise direction.
+Name: ARCELL  17
+ARCELL plots elliptical arcs where the arcs can be rotated.
+                                                   level 1, 2, 3
+The call is:  CALL ARCELL (NX, NY, NA, NB, ALPHA, BETA, THETA)
+         or:  void arcell (int nx, int ny, int na, float nb,
+                          float alpha, float beta, float theta);
+NX, NY        are the plot coordinates of the centre point.
+NA, NB        are the radii in plot coordinates.
+ALPHA, BETA   are the  start and end angles  measured in degrees
+              in a counter-clockwise direction.
+THETA         is  the  rotation  angle measured  in degrees in a
+              counter-clockwise direction.
+Name: AREAF   17
+AREAF draws polygons.
+The call is:  CALL AREAF (NXRAY, NYRAY, N)         level 1, 2, 3
+         or:  void areaf (int *nxray, int *nyray, int n);
+NXRAY, NYRAY  are arrays containing  the plot coordinates of the
+              corner points.  Start and end points can be diffe-
+              rent.
+N             is the number of points.
+Name: RLREC   17
+RLREC plots rectangles specified in user coordinates.
+The call is:   CALL RLREC (X, Y, WIDTH, HGHT)         level 2, 3
+         or:   void rlrec (float x, float y, float width,
+                                                    float hght);
+X, Y           are the  user coordinates  of the upper left cor-
+               ner.
+WIDTH, HGHT    are the width and height in user coordinates.
+Name: RLRND   17
+RLRND  plots rectangles  specified in user coordinates where the
+corners will be rounded.
+The call is:   CALL RLRND (X, Y, WIDTH, HEIGHT, IOPT) level 2, 3
+         or:   void rlrnd (float x, float y, float width,
+                                        float height, int iopt);
+X, Y           are  the user coordinates  of the upper left cor-
+               ner.
+WIDTH, HEIGHT  are the width and height in user coordinates.
+IOPT           defines the rounding of corners (0 <= IOPT <= 9).
+               For IOPT = 0, rounding is disabled.               
+Name: RLCIRC  17
+The routine RLCIRC plots circles specified in user coordinates.
+The call is:  CALL RLCIRC (XM, YM, R)                 level 2, 3
+         or:  void rlcir (float xm, float ym, float r);
+XM, YM        are the user coordinates of the centre point.
+R             is the radius in user coordinates.
+Name: RLELL   17
+The routine RLELL plots ellipses specified in user coordinates.
+The call is:  CALL RLELL (XM, YM, A, B)               level 2, 3
+         or:  void rlell (float xm, float ym, float a, float b);
+XM, YM        are the user coordinates of the centre point.
+A, B          are the radii in user coordinates.
+Name: RLPIE   17
+The routine RLPIE plots pie segments specified in user coordina-
+tes.
+The call is:  CALL RLPIE (XM, YM, R, ALPHA, BETA)     level 2, 3
+         or:  void rlpie (float xm, float ym, float r,
+                                       float alpha, float beta);
+XM, YM        are the user coordinates of the centre point.
+R             is the radius in user coordinates.
+ALPHA, BETA   are the  start and  end angles measured in degrees
+              in a counter-clockwise direction.
+Name: RLARC   17
+The routine  RLARC plots elliptical arcs specified in user coor-
+dinates.
+The call is:  CALL RLARC (XM, YM, A, B, ALPHA, BETA, THETA)
+                                                      level 2, 3
+         or:  void rlarc (float xm, float ym, float a, float b,
+                          float alpha, float beta, float theta);
+XM, YM        are the user coordinates of the centre point.
+A, B          are the radii in user coordinates.
+ALPHA, BETA   are the  start and  end angles measured in degrees
+              in a counter-clockwise direction.
+THETA         is the  rotation  angle  measured  in degrees in a
+              counter-clockwise direction.
+Name: RLAREA  17
+The routine RLAREA plots polygons specified in user coordinates.
+The call is:  CALL RLAREA (XRAY, YRAY, N)             level 2, 3
+         or:  void rlarea (float *xray, float *yray, int n);
+XRAY, YRAY    are arrays containing  the user coordinates of the
+              corner points.  Start and end points can be diffe-
+              rent.
+N             is the number of points.
+Name: CIRCSP  17
+The routine  CIRCSP  affects the  interpolation  of circles  and
+ellipses.
+The call is:  CALL CIRCSP (NSPC)                   level 1, 2, 3
+         or:  void cirspc (int nspc);
+NSPC          is the  arc length  in  plot coordinates  by which
+              circles and ellipses are interpolated.  

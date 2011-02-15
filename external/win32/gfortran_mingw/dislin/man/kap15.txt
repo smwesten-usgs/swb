@@ -1,0 +1,1668 @@
+                 Chapter 15: Widget Routines
+
+DISLIN offers some routines for creating  graphical user in-
+terfaces in Fortran and C programs.  The routines are called
+widget routines and use the  Motif  widget libraries for X11
+and the API functions for Windows.
+
+There are sets of  routines in  DISLIN  for creating  single
+widgets, for setting parameters, for requesting current wid-
+get values selected by the user and for creating dialogs.
+
+Routines for creating single widgets begin  with the charac-
+ters 'WG',  parameter setting routines  with the  characters
+'SWG',  requesting  routines  with the characters  'GWG' and
+dialog routines with the characters 'DWG'.
+
+Normally,  creating widget  and parameter  setting  routines
+should be used  between the routines  WGINI and  WGFIN while
+requesting routines can be called after WGFIN, or in a call-
+back routine. Dialog routines can be used independently from
+the routines WGINI and WGFIN.
+
+15.1 Widget Routines
+
+                          W G I N I
+
+The routine  WGINI initializes the widget routines and crea-
+tes a main widget.
+
+The call is:  CALL  WGINI  (COPT, ID)
+
+COPT          is a character string  that defines  how chil-
+              dren  widgets are laid out in the main widget:
+  = 'VERT'    means that children  widgets are  laid out  in
+              columns from top to bottom.
+  = 'HORI'    means that  children widgets are  laid out  in
+              rows from left to right.
+  = 'FORM'    means that the  position  and size of children
+              widgets is defined by the user with the routi-
+              nes SWGPOS, SWGSIZ and SWGWIN.
+ID            is the returned widget index.  It can  be used
+              as a  parent  widget  index  in  other  widget
+              calls.
+
+
+                          W G F I N
+
+WGFIN terminates  the widget routines.  The widgets  will be
+displayed on the screen. After choosing OK in the Exit menu,
+all widgets are deleted  and the program  is continued after
+WGFIN.  After choosing Quit in the Exit menu, the program is
+terminated.
+
+The call is:  CALL  WGFIN
+
+                          W G B A S
+
+The routine WGBAS creates a container widget. It can be used
+as a parent widget for other widgets.
+
+The call is:  CALL  WGBAS  (IP, COPT, ID)
+
+IP            is the index of the parent widget.
+COPT          is a character string that can have the values
+              'HORI',  'VERT' and 'FORM'.  It determines how
+              children widgets are laid out in the container
+              widget (s. WGINI).
+ID            is the returned  widget index.  It can be used
+              as  a  parent  widget  index  in other  widget
+              calls.
+
+                          W G P O P
+
+The routine  WGPOP  creates a popup menu  in the menu bar of
+the main widget, or a popup submenu of a popup menu. Entries
+in the popup menu must be created with WGAPP.
+
+The call is:  CALL WGPOP (IP, CLAB, ID)
+
+IP            is the index of a widget created by WGINI,  or
+              the index of another popup widget. 
+CLAB          is a character  string containing the title of
+              the popup menu.
+ID            is the  returned widget index.  It can be used
+              as a parent widget index for WGAPP. 
+
+                          W G A P P
+
+The routine WGAPP creates an entry in a popup menu. The pop-
+up menu be created with the routine WGPOP.
+
+The call is:  CALL WGAPP (IP, CLAB, ID)
+      
+IP            is the  index  of a  popup  menu  created with 
+              WGPOP.
+CLAB          is a character string containing a label.
+ID            is the  returned  widget  index.  It should be
+              connected with a callback routine (see SWGCBK)
+
+                          W G L A B
+
+The routine WGLAB creates a label widget.  The widget can be
+used to display a character string.
+
+The call is:  CALL  WGLAB  (IP, CSTR, ID)
+IP            is the index of the parent widget.
+CSTR          is  a  character  string  that  should be dis-
+              played.
+ID            is the returned widget index.
+
+                          W G B U T
+
+The routine WGBUT creates a button widget. The widget repre-
+sents a labeled button  that the user can turn on  or off by
+clicking.
+
+The call is:  CALL  WGBUT  (IP, CLAB, IVAL, ID)
+IP            is the index of the parent widget.
+CLAB          is a character string  that will be used  as a
+              label.
+IVAL          can have the values 0 (off)  and 1 (on) and is
+              used to initialize the button.
+ID            is the returned widget index.
+
+                          W G T X T
+
+The routine WGTXT creates a text widget.  The widget  can be
+used to get text from the keyboard.
+
+The call is:  CALL  WGTXT  (IP, CSTR, ID)
+
+IP            is the index of the parent widget.
+CSTR          is a character string  that will  be displayed
+              in the text widget (<= 256 characters).
+ID            is the returned widget index.
+
+                          W G L T X T
+
+The routine WGLTXT creates a labeled text widget. The widget
+can be used get text from the keyboard.
+
+The call is:  CALL WGLTXT (IP, CLAB, CSTR, NWTH, ID)
+
+IP            is the index of the parent widget.
+CLAB          is a character  string containing  a label. It
+              will be displayed on the left side of the wid-
+              get.
+CSTR          is a character string  that will be  displayed
+              in the text widget (<= 256 characters).
+NWTH          defines the width of the text field (0 <= NWTH 
+              <= 100). For example, NWTH = 30 means that the 
+              width of the text field is 0.3 * widget width.  
+ID            is the returned widget index.
+
+                          W G S T X T
+
+The routine  WGSTXT  creates a  scrolled widget  that can be 
+used for text output. The text cannot not be modified.  Text
+entries in the widget can be made with the routine SWGTXT.
+
+The call is:  CALL WGSTXT (IP, NSIZE, NMAX, ID)
+
+IP            is the index of the parent widget.
+NSIZE         defines the vertical size of the widget in 
+              text rows.
+NMAX          defines the  maximal  number  of displayed en-
+              tries in the  scrolled widget.  If this number
+              is reached and a new entry is made,  the first
+              entry in the widget is deleted.   
+ID            is the returned widget index.
+
+                          W G F I L
+
+The routine  WGFIL creates a file widget.  The widget can be
+used to get a  filename from the keyboard.  The filename can
+be typed  directly  into the  file field  or can be selected
+from a file selection box  if an entry  in the File menu  is
+chosen.
+
+The call is:  CALL  WGFIL  (IP, CLAB, CFIL, CMASK, ID)
+
+IP            is the index of the parent widget.
+CLAB          is a character string used for an entry in the
+              File menu.
+CFIL          is a character string  that will  be displayed
+              in the file widget (<= 256 characters).
+CMASK         specifies the search pattern  used in determi-
+              ning the  files  to be displayed  in the  file
+              selection box.
+ID            is the returned widget index.
+
+                          W G L I S
+
+The routine WGLIS creates a list widget. This widget is used
+whenever an application  must present  a list of  names from
+which the user can choose.
+
+The call is:  CALL  WGLIS  (IP, CLIS, ISEL, ID)
+
+IP            is the index of the parent widget.
+CLIS          is a character string  that contains  the list
+              elements.  Elements  must be separated  by the 
+              character '|'.
+ISEL          defines the pre-selected element (>= 0). 
+              ISEL = 0 means that no element is selected.
+ID            is the returned widget index.
+
+                          W G D L I S
+
+The routine WGDLIS creates a dropping list widget. This wid-
+get is used whenever an application  must present  a list of
+names from which the user can choose.
+
+The call is:  CALL  WGDLIS  (IP, CLIS, ISEL, ID)
+
+IP            is the index of the parent widget.
+CLIS          is a character string  that contains  the list
+              elements.  Elements  must be separated  by the 
+              character '|'.
+ISEL          defines the pre-selected element (>= 0). 
+              ISEL = 0 means no selection.
+ID            is the returned widget index.
+
+                          W G B O X
+
+The routine  WGBOX creates a list widget where the list ele-
+ments are displayed as toggle buttons.
+
+The call is:  CALL  WGBOX  (IP, CLIS, ISEL, ID)
+
+IP            is the index of the parent widget.
+CLIS          is a character string  that contains  the list
+              elements. Elements  must be separated  by  the
+              character '|'.
+ISEL          defines the pre-selected element (>= 0).
+              ISEL = 0 means no selection.
+ID            is the returned widget index.
+
+                          W G S C L
+
+The routine  WGSCL creates a scale widget. The widget can be
+displayed in horizontal or vertical direction.
+
+The call is:  CALL  WGSCL  (IP, CLAB, XMIN, XMAX, XVAL,
+                                                   NDEZ, ID)
+IP            is the index of the parent widget.
+CLAB          is a character string used for a label.
+XMIN          is a  floating point  value  that defines  the
+              minimal value of the scale widget.
+XMAX          is a  floating point  value  that defines  the
+              maximal value of the scale widget.
+XVAL          defines the value of the scale widget.
+NDEZ          is the number of digits used in the scale wid-
+              get.
+ID            is the returned widget index.
+
+Note:         A step parameter  for scale widgets can be de-
+              fined with the routine SWGSTP. 
+
+                          W G P B A R
+
+The routine WGPBAR  creates progress bars. The widget can be
+displayed in horizontal or vertical direction.
+
+The call is:  CALL  WGPBAR  (IP, XMIN, XMAX, XSTP, ID)
+IP            is the index of the parent widget.
+XMIN          is a  floating point  value  that defines  the
+              minimal value of the progress bar.
+XMAX          is a  floating point  value  that defines  the
+              maximal value of the progress bar.
+XSTP          defines the step size.  XSTP is used to calcu-
+              late the maximal number of rectangles  in non-
+              smoothed progress bars.  XSTP is  ignored  for
+              smoothed progress bars.
+ID            is the returned widget index.
+
+Note:         The appearance  of  progress bars can be modi-
+              fied with the routines SWGCLR, SWGOPT and SWG-
+              TYP.  The value  of progress bars  can  be set
+              with SWGVAL. 
+
+                          W G D R A W
+
+The routine  WGDRAW  creates a  draw widget that can be used 
+for graphical output from DISLIN plot routines. To send out-
+put from  DISLIN plot routines to the draw widget,  you have
+to request  the windows  ID of the draw widget with the rou-
+tine GWGXID and pass it to DISLIN with the routine SETXID.
+
+The call is:  CALL  WGDRAW  (IP, ID)
+
+IP            is the index of the parent widget.
+ID            is the returned widget index.
+
+Notes:  - The returned  widget  ID  of a draw widget  can be 
+          used in the routine SETXID for setting the graphi-
+          cal output of  DISLIN routines to the draw widget. 
+          For X11,  SETXID  should be  called if the widgets 
+          are already realized.  Normally,  SETXID should be
+          called in a callback routine.
+
+        - By default, the height of a draw widget is identi-
+          cal width the width of the widget. The  height  of
+          draw widgets can be modified with the routine SWG-
+          DRW.
+
+        - Draw widgets  can have  scroll bars  if SWGTYP  is 
+          called before with the options ('SCROLL', 'DRAW').
+          For that case, the size of the graphics can be de-
+          fined with the routine WINSIZ before SETXID. 
+
+                          W G T B L
+
+The routine  WGTBL  creates a table widget  that can be used 
+for data input and output.
+
+The call is:  CALL WGTBL (IP, NROWS, NCOLS, ID)      
+
+IP            is the index of the parent widget.
+NROWS, NCOLS  are the number of rows and columns of the 
+              table.
+ID            is the returned widget index.
+
+Notes:  - The values of the table cells  can be defined with
+          the routines SWGTBL, SWGTBF, SWGTBI and SWGTBS for
+          setting float, integer and character values.  CELL
+          values can be requested  with the routines GWGTBL,
+          GWGTBF, GWGTBI and GWGTBS.
+
+        - Table cells  can be  editable  if this mode is en-
+          abled with the routines SWGOPT or SWGTBS.  The set
+          of possible  input characters  for editable  table
+          cells may be restricted with the  'VERIFY'  option
+          in SWGOPT and SWGTBS.
+   
+        - The width  of table columns  can be modified  with
+          the routine SWGRAY.
+
+        - Fore- and background colours of table cells can be
+          defined with SWGTBI.
+
+        - The routine  SWGCB2  defines callback routines for
+          table widgets.
+
+                          W G O K
+
+The routine WGOK creates a push button widget where the but-
+ton has the same meaning as the  OK  entry in the Exit menu.
+If the button is pressed,  all widgets are  deleted  and the
+program is continued after WGFIN.
+
+The call is:  CALL  WGOK  (IP, ID)
+
+IP            is the index of the parent widget.
+ID            is the returned widget index.
+
+                         W G Q U I T
+
+The routine  WGQUIT  creates a push button widget  where the
+button has the same meaning as the  QUIT  entry  in the Exit
+menu. If the button is pressed, the program is terminated.
+
+The call is:  CALL WGQUIT (IP, ID)
+
+IP            is the index of the parent widget.
+ID            is the returned widget index.
+
+                         W G P B U T
+
+The routine WGPBUT creates a push button widget. 
+
+The call is:  CALL WGPBUT (IP, CLAB, ID)
+
+IP            is the index of the parent widget.
+CLAB          is a character string  that will  be used as a
+              label.
+ID            is the  returned  widget  index.  It should be  
+              connected with a callback routine.
+
+Note:         The status of a push button  (if it is pressed
+              or not) can be requested with GWGBUT.
+
+                          W G C M D
+
+The routine WGCMD creates a push button widget. A correspon-
+ding system will be executed if the button is pressed. 
+
+The call is:  CALL WGCMD (IP, CLAB, CMD, ID)
+ 
+IP            is the index of the parent widget.
+CLAB          is a character  string  that will be used as a
+              label.
+CMD           is a character string containing a system com-
+              mand.
+ID            is the  returned  widget  index.  It should be 
+              connected with a callback routine.
+
+                         W G S E P
+
+The routine WGSEP separates widgets by drawing horizontal or
+vertical lines. 
+
+The call is:  CALL WGSEP (IP, ID)
+
+IP            is the index of the parent widget.
+ID            is the returned widget index.
+
+Notes:  - WGSEP draws by default horizontal lines.  Vertical
+          lines can be defined with the routine SWGTYP. 
+
+        - Several line drawing  styles  can be selected with 
+          the routine SWGOPT.
+
+15.2 Parameter Setting Routines
+
+                          S W G W T H
+
+The routine  SWGWTH sets the default width of horizontal and 
+parent/base widgets.
+
+The call is:  CALL SWGWTH (NWTH)
+
+NWTH          is an integer containing a positive  number of
+              characters or a negative number between -1 and
+              -100. If NWTH < 0, the widget width  is set to
+              ABS(NWTH) * NWIDTH / 100  where  NWIDTH is the
+              screen width.
+                                         Default: NWTH = 20.
+
+                          S W G D R W
+
+The routine  SWGDRW modifies the height of draw widgets.
+
+The call is:  CALL SWGDRW (XF)
+
+XF            is  a  positive  floating  point  number.  The 
+              height  of a  draw  widget  is set to  XF * NW
+              where NW is the widget width.
+                                            Default: XF = 1.
+ 
+
+                          S W G C L R
+
+The routine SWGCLR defines colours for widgets.
+
+The call is:  CALL SWGCLR (XR, XG, XB, COPT)
+
+XR, XG, XB    are RGB values between 0 and 1. 
+COPT          is a character string that can have the values
+              'BACK', 'FORE', 'SCROLL', 'LTEXT' and 'PBAR'. 
+              The keywords 'BACK' and  'FORE'  define  back-
+              and  foreground colours,  'SCROLL'  and 'PBAR'
+              define the colour of  the slider in scale wid-
+              gets and progress bars,  and  'LTEXT' sets the
+              background colour of the edit window in label-
+              ed text widgets.
+
+Notes:      - Colours can not be  defined  for  push  button 
+              widgets.  This is a restriction in the Windows
+              API.
+            - Multiple draw widgets must have the same back-
+              ground colour  since  they belong  to the same
+              widget class.  The same  is valid for multiple 
+              main widgets created by WGINI. 
+
+                          S W G F N T
+
+The routine SWGFNT defines fonts for widgets.
+
+The call is:  CALL SWGFNT (CFNT, NTPS)
+
+CFNT          is a character string containing the font.
+              For Windows,  CFNT can contain a TrueType font
+              (see WINFNT),  or one  of the  Windows  raster
+              fonts such as System, FixedSys, Terminal, Cou-
+              rier,  MS Serif  and  MS Sans Serif.  For X11, 
+              CFNT can contain an X11 font.
+              CNFT = 'STANDARD'  resets  the font to the de-
+              fault value.
+
+NPTS          is  the  font  size  in  points   (72 points = 
+              1 inch).  Note that  only a few different font
+              sizes are available for Windows raster fonts.
+              For X11,  the parameter  NPTS will  be ignored 
+              since the font size  is already  part  of  the 
+              font name.
+
+                          S W G F O C
+
+The routine  SWGFOC sets the keyboard focus to the specified
+widget.
+
+The call is:  CALL SWGFOC (ID)
+
+ID            is  the widget index.
+
+                          S W G O P T
+
+The routine SWGOPT sets widget options.
+
+The call is:  CALL SWGOPT (COPT, CKEY)
+
+COPT          is a character string containing an option. 
+CKEY          is a character string containing a keyword:
+
+ = 'BORDER'   This  keyword  defines  borders  around  table
+              cells.  COPT  can  have  the  values   'NONE', 
+              'COLUMNS',  'ROWS' and 'BOTH'. The default va-
+              lue is 'BOTH'.
+ = 'CALLBACK' The behaviour of  callback  routines  for text
+              widgets can be modified with this keyword.
+              COPT  can have the values  'RETURN',  'CHANGE'
+              and 'BOTH'. For 'RETURN', the callback routine
+              is only  called  if a return  is given  in the
+              text field, for 'CHANGE, the  callback routine
+              is called for each change in the text field.
+              The default value is 'RETURN'.
+ = 'CLOSE'    This  keyword  changes  the behaviour  of  the 
+              close button of the main widget. 
+              For COPT = 'QUIT',  the program will be termi-
+              nated.  For COPT = 'OK',  the  main  widget is
+              deleted  and  the  program  is continued after
+              WGFIN.  
+ = 'EDIT'     This  keyword  defines if table cells are edi-
+              table or not.  COPT can have the values  'OFF'
+              and 'ON'.
+ = 'FRAME'    Enables or disables  a frame around table wid-
+              gets. COPT can have the values 'OFF' and 'ON'.
+ = 'HEADER'   This  keyword  enables  header  cells in table 
+              widgets.  COPT  can  have  the  values 'NONE', 
+              'COLUMNS', 'ROWS' and 'BOTH'.
+ = 'MASK'     If CKEY = 'MASK',  COPT  can  have  the values 
+              'STANDARD' and 'USER'. For COPT = 'USER',  the
+              mask entry  in the routines  WGFIL and  DWGFIL 
+              can be controlled completely by the user.  For
+              that case,  the  mask  parameter in  WGFIL and 
+              DWGFIL can have the following syntax:  it con-
+              tains of a pair of strings separated  by a '+'
+              sign. The first string contains the label, the
+              second string the search filter.  For example:
+              'Data (*.dat)+*.dat'.   'Data (*.dat)'  is the
+              label while '*.dat' the filter. Multiple pairs
+              of strings for the mask are also possible.
+ = 'PBAR'     This option changes the appearance of progress
+              bars. COPT can have the values 'SMOOTH',  'NO-
+              SMOOTH', 'BACK', 'NOBACK', 'LABEL',' NOLABEL',
+              'FRAME' and 'NOFRAME'.  The defaults are  'NO-
+              SMOOTH', 'BACK', 'NOLABEL' and 'FRAME'.
+ = 'POSITION' If CKEY = 'POSITION', COPT can have the values
+              'STANDARD' and 'CENTER'. For COPT = 'CENTER',
+              the main widget will be centred on the screen.
+              The default position of the main widget is the
+              upper left corner of the screen.
+ = 'SCROLL'   This option changes the behaviour  of callback
+              routines  for  scroll  widgets.  COPT can have
+              the values  'TRACK',  'BUTTON'  and  'END'. If
+              COPT = 'TRACK', the callback routine is called
+              for each change of the scroll value. If COPT = 
+              'BUTTON', the callback routine is  only called
+              if a user releases the mouse button.  For COPT
+              = 'END', the callback routine is called at the
+              end of the scroll action. 
+ = 'VERIFY'   The keyword 'VERIFY' enables a  check of input
+              characters in text and  table cells.  COPT can
+              have the values  'NONE',  'INTEGER',  'FLOAT',
+              'EFLOAT', 'DFLOAT', 'ALPHA', 'NALPHA', 'TIME',
+              'DATE', 'EMAIL', 'PHONE', 'HEXA'  and 'OCTAL'. 
+              The default value is COPT = 'NONE'. A table of
+              the  possible characters correspondig  to  the
+              verify options is given below.
+ = 'SEPARATOR'  This option selects a line style for  WGSEP.
+              COPT can have the values 'STANDARD', 'SINGLE',
+              'DOUBLE', 'DASH' and 'DDASH'.
+ 
+                               Defaults: ('BOTH', 'BORDER'),
+                                     ('RETURN', 'CALLBACK'),
+                                          ('QUIT', 'CLOSE'),
+                                            ('OFF', 'EDIT'),
+                                            ('ON', 'FRAME'),
+                                         ('NONE', 'HEADER'),
+                                       ('STANDARD', 'MASK'),
+                                   ('STANDARD', 'POSITION'),
+                                       ('BUTTON', 'SCROLL'),
+                                         ('NONE', 'VERIFY'),
+                                  ('STANDARD', 'SEPARATOR').
+  
+Note:         Some  X11 Window managers  ignore the position
+              of the main widget.
+
+The following  table shows  the possible  characters for the
+different 'VERIFY' options in SWGOPT:
+
+    -----------------------------------------------------
+    |    NONE     |         all characters              |
+    -----------------------------------------------------
+    |  INTEGER    |         0 - 9, '+', '-'             |
+    -----------------------------------------------------
+    |   FLOAT     |      0 - 9, '.', '+', '-'           |
+    -----------------------------------------------------
+    |   DFLOAT    |   0 - 9, '.', '+', '-', 'd', 'D'    |
+    -----------------------------------------------------
+    |   EFLOAT    |   0 - 9, '.', '+', '-', 'e', 'E'    |
+    -----------------------------------------------------
+    |   DIGITS    |             0 - 9                   |
+    -----------------------------------------------------
+    |   ALPHA     |          a - z, A - Z, ' '          |
+    -----------------------------------------------------
+    |   NALPHA    |       a - z, A - Z, 0 - 9, ' '      |
+    -----------------------------------------------------
+    |   EMAIL     | a - z, A - Z, 0 - 9, '.', '@', '-'  |
+    -----------------------------------------------------
+    |    TIME     |            0 - 9, ':'               |
+    -----------------------------------------------------
+    |    DATE     |         0 - 9, '.', '/'             |
+    -----------------------------------------------------
+    |   PHONE     |         0 - 9, '-', ' ', '/'        |
+    -----------------------------------------------------
+    |    HEXA     |    0 - 9, A - E, a - e, 'x', 'X'    |
+    -----------------------------------------------------
+    |   OCTAL     |           0 - 7, 'o, 'O'            |
+    -----------------------------------------------------
+
+                          S W G I O P
+
+The routine SWGIOP sets integer options for widgets.
+
+The call is:  CALL SWGIOP (N, CKEY)
+
+N             is an integer option.
+CKEY          is a character string containing a keyword:
+
+ = 'TABLE'    means that N defines the number of  visible
+              rows in scrolled table widgets.
+ = 'LIST'     means that N defines the number of  visible
+              entries in scrolled list widgets.
+                                  Defaults: (8, 'TABLE').
+                                             (8, 'LIST'). 
+ 
+                          S W G P O P
+
+The routine  SWGPOP modifies the appearance of the popup me-
+nubar.
+
+The call is:  CALL SWGPOP (COPT)
+
+COPT          is a character string containing an option:
+ = 'NOOK'     suppresses the 'OK' entry in the  'EXIT' menu.
+ = 'NOQUIT'   suppresses the  'QUIT'  entry  in  the  'EXIT'
+              menu.
+ = 'NOHELP'   suppresses the 'HELP' button in the menu bar.
+ = 'OK'       enables the 'OK' entry in the 'EXIT' menu (de-
+              fault).
+ = 'QUIT'     enables the  'QUIT'  entry in the  'EXIT' menu
+              (default).
+ = 'HELP'     enables the 'HELP' button in the menu bar (de-
+              fault).
+
+                          S W G T I T
+
+The routine  SWGTIT  defines  a title  displayed in the main
+widget.
+
+The call is:  CALL  SWGTIT  (CTIT)
+
+CTIT          is a character string containing the title.
+
+                          S W G H L P
+
+The routine SWGHLP sets a character string that will be dis-
+played if the Help menu is clicked by the user.
+
+The call is:  CALL SWGHLP (CSTR)
+
+CSTR          is a character string  that will be  displayed
+              in the help box. The character '|' can be used
+              as a newline character.
+
+                          S W G S I Z
+
+The routine SWGSIZ defines the size of widgets.
+
+The call is:  CALL  SWGSIZ  (NW, NH)
+
+NW, NH        are the  width  and  height  of the  widget in
+              pixels.
+
+                          S W G P O S
+
+The routine SWGPOS defines the position of widgets.
+
+The call is:  CALL SWGPOS (NX, NY)
+
+NX, NY        are the  upper  left  corner  of the widget in
+              pixels.  The point  is relative  to  the upper 
+              left corner of the parent widget.
+
+                          S W G W I N
+
+The routine SWGWIN defines the position and size of widgets.
+
+The call is:  CALL SWGWIN (NX, NY, NW, NH)
+
+NX, NY        are the  upper  left  corner  of the widget in
+              pixels.  The point  is relative  to  the upper
+              left corner of the parent widget.
+NW, NH        are the  width  and  height  of the  widget in
+              pixels.
+
+                          S W G T Y P
+
+The routine  SWGTYP  modifies the appearance of certain wid-
+gets.
+
+The call is:  CALL SWGTYP (CTYPE, CLASS)
+
+CTYPE         is a character string containing a keyword:
+  = 'VERT'    means that box widgets, scale widgets and pro-
+              gress  bars  will  be  displayed  in  vertical 
+              direction. Lines plotted by  WGSEP will have a
+              vertical orientation.
+  = 'HORI'    means that box widgets, scale widgets and pro-
+              gress  bars  will  be  displayed in horizontal
+              direction. Lines plotted by  WGSEP will have a
+              horizontal orientation.
+  = 'SCROLL'  means that scrollbars will be created in list,
+              table and draw widgets.
+  = 'NOSCR'   means that  no scrollbars  will  be created in
+              list, table and draw widgets.
+  = 'VSCROLL' means that  just  a vertical scrollbar is cre-
+              ated in list widgets.
+  = 'AUTO'    means that scrollbars  will be created in list
+              widgets  if the number  of elements is greater
+              than 8.
+  = 'OPEN'    means that a file selection  box  for  reading
+              files is defined.
+  = 'SAVE'    means that a  file selection  box  for  saving
+              files is defined.
+
+CLASS         is a character  string  containing  the widget
+              class where  CLASS can have the values 'LIST',
+              'BOX',  'SCALE',  'PBAR',   'TABLE',   'DRAW', 
+              'FILE' and 'SEPARATOR'.  
+              If CLASS = 'LIST',  CTYPE can have  the values
+              'AUTO', 'SCROLL' and 'NOSCROLL'.  
+              If CLASS has one of the values 'BOX', 'SCALE', 
+              'PBAR'  and  'SEPARATOR',  CTYPE  can have the
+              values 'VERT' and 'HORI'.
+              The class 'TABLE' can have the options 'AUTO',
+              'SCROLL' and 'NOSCROLL'.
+              For CLASS = 'DRAW', CTYPE can have the  values
+              'SCROLL'  and  'NOSCROLL'.  The size of a gra-
+              phics in  draw widgets with scroll bars can be
+              defined with the routine WINSIZ before SETXID.
+              If CLASS = 'FILE',  CTYPE can have  the values
+              'OPEN' and 'SAVE'.
+                                Defaults:   ('VERT', 'BOX'),
+                                          ('HORI', 'SCALE'),
+                                           ('HORI', 'PBAR'),
+                                      ('HORI', 'SEPARATOR'),
+                                           ('AUTO', 'LIST'),
+                                          ('AUTO', 'TABLE'),
+                                       ('NOSCROLL', 'DRAW'),
+                                           ('OPEN', 'FILE').
+
+                          S W G J U S
+
+The routine  SWGJUS defines the alignment of labels in label
+and button widgets and of cell values in table widgets.
+
+The call is:  CALL SWGJUS (CJUS, CLASS)
+
+CJUS          is a character string defining the alignment:
+
+  = 'LEFT'    means left-justified.
+  = 'CENTER'  means centred.
+  = 'RIGHT'   means right-justified.
+CLASS         is a  character  string  defining  the  widget
+              class.   CLASS  can have  the values  'LABEL',
+              'BUTTON' and 'TABLE'.
+                               Defaults:  ('LEFT', 'LABEL'),
+                                       ('CENTER', 'BUTTON'),
+                                        ('CENTER', 'TABLE').
+
+
+                          S W G S P C
+
+The routine  SWGSPC  defines  horizontal  and vertical space 
+between widgets.
+
+The call is:  CALL SWGSPC (XSPC, YSPC)
+
+XSPC, YSPC    are floating point numbers defining  the space
+              between widgets.  For non negative values, the
+              spaces  XSPC * NWCHAR  and   YSPC * NHCHAR are
+              used where  NWCHAR and  NHCHAR are the current
+              character  width and height.  For negative va-
+              lues,  the horizontal and vertical  spaces are
+              set to ABS(XSPC) * NWIDTH / 100 and ABS (YSPC) 
+              * NHEIGHT  where  NWIDTH  and  NHEIGHT are the 
+              width and height of the screen.
+                                        Default: (4.0, 0.5).
+
+                          S W G S T P
+
+The routine  SWGSTP defines a step value for scale widgets.
+
+The call is:  CALL SWGSTP (XSTP)
+
+XSTP          is a  positive floating point number  defining
+              the step value. The default value is 
+              (MAX - MIN) / 100.
+
+                          S W G M R G
+
+The routine SWGMRG defines margins for widgets.
+
+The call is:  CALL SWGMRG (IVAL, CMRG)
+
+IVAL          is the margin value in pixels.
+CMRG          is a character string that can have the values
+              'LEFT',  'TOP',  'RIGHT'  and 'BOTTOM'. By de-
+              fault, all margins are zero.
+
+                          S W G M I X
+
+The routine SWGMIX defines control characters for separating
+elements in list strings.
+
+The call is:  CALL SWGMIX (CHAR, CMIX)
+
+CHAR          is a new control character.
+CMIX          is a  character string  that defines the func-
+              tion  of the control character.  CMIX can have
+              the value 'SEP'.
+
+                          S W G C B K
+
+The routine  SWGCBK  connects  a widget with a callback rou-
+tine.  The callback routine is called  if the status  of the
+widget is changed.  Callback routines be defined for button,
+push-button, file, list, box, scale, table and text widgets,
+and  for popup  menu entries.  Since the  syntax of callback 
+routines for  table widgets is different,  they must be  de-
+fined with SWGCB2. 
+  
+The call is:  CALL SWGCBK (ID, ROUTINE)
+
+ID            is a widget ID.
+ROUTINE       is the name  of a routine defined by the user. 
+              In Fortran,  the routine  must be declared  as
+              EXTERNAL. The only parameter that is passed to
+              the callback routine is the widget ID.
+               
+Note:         See section 15.6 for examples. 
+
+                           S W G C B 2
+
+The routine  SWGCB2 defines callback routines for table wid-
+gets.
+  
+The call is:  CALL SWGCB2 (ID, ROUTINE)
+
+ID            is a widget ID.
+ROUTINE       is the name of a routine defined  by the user. 
+              In Fortran,  the routine must be  declared  as
+              EXTERNAL.  The parameters  passed to the call-
+              back routine are the widget ID, the row number
+              and the column number  of the table cell  that
+              has invoked the callback routine.                
+
+                          S W G A T T
+
+The routine SWGATT sets widget attributes.
+
+The call is:  CALL SWGATT (ID, CATT, COPT)
+
+ID            is a widget ID.
+CATT          is a character string containing an attribute.
+              If COPT = 'STATUS',  CATT can have  the values
+              'ACTIVE', 'INACTIVE' and 'INVISIBLE'. 
+              The option  'CLOSE'  can  have  the attributes
+              'ACTIVE' and 'INACTIVE'.  It allows a user  to
+              disable the close button of the main widget. 
+              If COPT = 'LIST',  CATT can have new list ele-
+              ments for a list widget.  In that  case,  CATT 
+              has the same meaning as the parameter  CLIS in
+              WGLIS.
+COPT          is a character string that can have the values 
+              'STATUS', 'LIST' and 'CLOSE'. 
+
+                          S W G B U T
+
+The routine  SWGBUT  sets the status of a button widget.  If 
+the widget is a push button widget,  the connected  callback
+routine will be executed if the status 1  is passed to  SWG-
+BUT.
+
+The call is:  CALL SWGBUT (ID, IVAL)
+
+ID            is a widget ID of a button widget.
+IVAL          can have the values 0 and 1.
+
+                          S W G L I S
+
+The routine SWGLIS changes the selection in a list widget.
+
+The call is:  CALL SWGLIS (ID, ISEL)
+
+ID            is a widget ID of a list widget.
+ISEL          defines the selected element (>= 1).
+
+                          S W G B O X
+
+The routine SWGBOX changes the selection in a box widget.
+
+The call is:  CALL SWGBOX (ID, ISEL)
+
+ID            is a widget ID of a box widget.
+ISEL          defines the selected element (>= 1).
+
+                          S W G T X T
+
+The routine SWGTXT changes the value of a text widget and
+the label text in label widgets.
+
+The call is:  CALL SWGTXT (ID, CVAL)
+
+ID            is a widget ID of a text widget.
+CVAL          is a character string containing the new text.
+
+                          S W G I N T
+
+The routine SWGINT changes the value of a text widget.
+
+The call is:  CALL SWGTXT (ID, IV)
+
+ID            is a widget ID of a text widget.
+IV            is an integer  number which will be displayed
+              in a text widget.
+
+                          S W G F L T
+
+The routine SWGFLT changes the value of a text widget.
+
+The call is:  CALL SWGFLT (ID, XV, NDIG)
+
+ID            is a widget ID of a text widget.
+XV            is a floating point number which will  be dis-
+              played in a text widget.
+NDIG          is the number of digits  displayed  after  the
+              decimal point. (>= -2).  NDIG = -2  means that
+              the number  of digits is calculated by DISLIN.
+
+                          S W G F I L
+
+The routine SWGFIL changes the value of a file widget.
+
+The call is:  CALL SWGFIL (ID, CFIL)
+
+ID            is a widget ID of a file widget.
+CFIL          is a character string containing the new file-
+              name.
+
+                          S W G S C L
+
+The routine SWGSCL changes the value of a scale widget.
+
+The call is:  CALL SWGSCL (ID, XVAL)
+
+ID            is a widget ID of a scale widget.
+XVAL          is a floating point number  containing the new 
+              value of the scale widget.
+
+                          S W G V A L
+
+The routine SWGVAL changes the value of a progress bar.
+
+The call is:  CALL SWGVAL (ID, XVAL)
+
+ID            is a widget ID of a progress bar.
+XVAL          is a floating point number  containing the new 
+              value of the progress bar.
+
+                          S W G T B F
+          
+The routine  SWGTBF  sets  floating  point  values  in table
+cells.
+
+The call is:  CALL SWGTBF (ID, XVAL, NDIG, IROW, ICOL, COPT)
+
+ID            is a widget ID of a table widget.
+XVAL          is a floating point number  which will be dis-
+              played in a table widget.
+NDIG          is the number of digits  displayed  after  the
+              decimal point (>= -2).  NDIG = -2  means  that
+              the number  of digits is calculated by DISLIN.
+IROW, ICOL    are the row  and column  indices  of the table
+              cell (>= -1).  The value -1  means that a com-
+              plete row  or column  is filled with  XVAL and
+              the index 0 corresponds to header cells. 
+COPT          is a character string  that can have the value
+              'VALUE'.
+
+                          S W G T B I
+
+The routine  SWGTBI sets integers in table cells, or defines
+fore- and background colours for table cells.
+
+The call is:  CALL SWGTBI (ID, IVAL, IROW, ICOL, COPT)
+
+ID            is a widget ID of a table widget.
+IVAL          is an integer that contains the cell or a col-
+              our value.  Colour  values  can be  calculated
+              from RGB values with the function INTRGB. 
+IROW, ICOL    are the row  and column  indices  of the table
+              cell (>= -1).  The value -1  means that a com-
+              plete row  or column  is filled with  XVAL and
+              the index 0 corresponds to header cells. 
+COPT          is a character string that defines the meaning
+              of IVAL.  COPT  can  have  the values 'VALUE',
+              'BACK',   'FORE'   and  'SYSTEM'.  The options 
+              'BACK' and 'FORE' are used for back- and fore-
+              ground colours. The option 'SYSTEM' resets the
+              colours in table cells back to system values.   
+
+                          S W G T B L
+
+The routine  SWGTBL passes an array of floating point values
+to a table widget.
+
+The call is:  CALL SWGTBL (ID, XRAY, N, NDIG, IDX, COPT)
+
+ID            is a widget ID of a table widget.
+XRAY          is an array of floating point numbers.
+N             is the number of elements in XRAY.
+NDIG          is the number  of digits  displayed  after the
+              decimal  point  (>= -2)  for XRAY.   NDIG = -2 
+              means that the number  of digits is calculated
+              by DISLIN.
+IDX           is the index of a table row or column (>= 1). 
+              IDX may be ignored for some options in COPT.
+COPT          is a character string that can have the values 
+              'ROW',  'COLUMN',  'RTABLE'  and 'CTABLE'. The
+              keyword 'ROW' means that a table row is filled
+              with XRAY.  'COLUMN'  means  that  a column is
+              used. For COPT = 'RTABLE',  the complete table
+              is  filled  with  XRAY by rows and for  COPT = 
+              'CTABLE', the table is filled by columns.   
+
+                          S W G T B S
+
+The routine  SWGTBS  sets character values  and  options for
+single table cells.
+
+The call is:  CALL SWGTBS (ID, CVAL, IROW, ICOL, COPT)
+
+ID            is a widget ID of a table widget.
+CVAL          is a  character  string that  contains the new
+              cell  value  or a  character option.  Up to 80
+              characters are accepted by table cells.
+IROW, ICOL    are the row  and column  indices  of the table
+              cell (>= -1).  The value -1  means that a com-
+              plete row  or column  is filled with  XVAL and
+              the index 0 corresponds to header cells. 
+COPT          is a character string that defines the meaning
+              of CVAL.  COPT  can  have the values  'VALUE',
+              'EDIT' and 'ALIGN'.  The option 'EDIT' enables
+              or  disables edit  mode for table cells  where
+              the corresponding option in  CVAL can have the
+              values 'ON' and 'OFF'.  The default  behaviour
+              is  'OFF'.  'ALIGN' defines  the alignment  in
+              table cells  where CVAL can have  the keywords
+              'LEFT',  'CENTER' and 'RIGHT'. The default va-
+              lue is 'RIGHT'.         
+
+                          S W G R A Y
+
+The routine  SWGRAY  sets  the  width  of  table columns. It
+should be called before WGTBL.
+
+The call is:  CALL SWGRAY (XRAY, N, COPT)
+
+XRAY          is an array of floating point numbers. A posi-
+              tive  value  is  interpreted  as characters, a
+              negative  number  as  percent  from the widget
+              width.  If a  table contains  a header column, 
+              the first index of  XRAY is used for that col-
+              umn.  
+N             is the number of elements in XRAY.
+COPT          is a character string that can have  the value
+              'TABLE'.
+
+15.3 Requesting Routines
+
+Requesting routines  can be used to request the current wid-
+get values selected by the user. The routines must be called
+after WGFIN.
+
+                          G W G B U T
+
+The routine  GWGBUT  returns the status  of a button or push
+button widget.
+
+The call is:  CALL  GWGBUT  (ID, IVAL)
+
+ID            is the index of the button widget.
+IVAL          is the  returned status  where  IVAL = 0 means
+              off and IVAL = 1 means on.
+
+                          G W G T X T
+
+The routine GWGTXT returns the input of a text widget.
+
+The call is:  CALL  GWGTXT  (ID, CSTR)
+
+ID            is the index of the text widget.
+CSTR          is the returned character string that can have
+              up to 256 characters.
+
+                          G W G I N T
+
+The routine GWGINT returns the input of a text widget as an
+integer value.
+
+The call is:  CALL  GWGINT  (ID, IV)
+
+ID            is the index of the text widget.
+IV            is the returned integer number.
+
+                          G W G F L T
+
+The routine GWGFLT returns the input of a  text widget as a
+floating point value.
+
+The call is:  CALL  GWGFLT  (ID, XV)
+
+ID            is the index of the text widget.
+XV            is the returned floating point number.
+
+                          G W G F I L
+
+The routine GWGFIL returns the input of a file widget.
+
+The call is:  CALL GWGFIL (ID, CFIL)
+
+ID            is the index of the file widget.
+CFIL          is the returned filename that can have up to 
+              256 characters.
+
+                          G W G L I S
+
+The routine  GWGLIS  returns the selected element  of a list
+widget.
+
+The call is:  CALL GWGLIS (ID, ISEL)
+
+ID            is the index of the list widget.
+ISEL          is the  selected list element returned by GWG-
+              LIS.
+
+                          G W G B O X
+
+The routine  GWGBOX  returns  the selected  element of a box
+widget.
+
+The call is:  CALL GWGBOX (ID, ISEL)
+
+ID            is the index of the box widget.
+ISEL          is the selected element returned by GWGBOX.
+
+                          G W G S C L
+
+The routine GWGSCL returns the value of a scale widget.
+
+The call is:  CALL GWGSCL (ID, XVAL)
+
+ID            is the index of the scale widget.
+XVAL          is the returned value.
+
+                          G W G T B F
+
+The routine  GWGTBF  returns  the value  of a table cell  as
+floating point number.
+
+The call is:  CALL GWGTBF (ID, IROW, ICOL, XVAL)
+
+ID            is a widget ID of a table widget.
+IROW, ICOL    are the row and column  indices  of the  table
+              cell (>= 1).
+XVAL          is the returned floating point number.
+
+                          G W G T B I
+
+The routine  GWGTBI  returns  the value  of a table cell  as
+integer number.
+
+The call is:  CALL GWGTBI (ID, IROW, ICOL, IVAL)
+
+ID            is a widget ID of a table widget.
+IROW, ICOL    are the row and column  indices  of the  table
+              cell (>= 1).
+IVAL          is the returned integer number.
+
+                          G W G T B L
+
+The routine  GWGTBL  fills a floating point user array  with
+table values.
+
+The call is:  CALL GWGTBL (ID, XRAY, N, IDX, COPT)
+
+ID            is a widget ID of a table widget.
+XRAY          is  a  floating point  array that will contain
+              the cell values after the call to GWGTBL.
+N             is the number of elements in XRAY.
+IDX           is the index of  a table row or column (>= 1),
+              or may be ignored.
+COPT          is a character string that can have the values 
+              'ROW',  'COLUMN',  'RTABLE'  and 'CTABLE'. The
+              keywords have the same meaning as in SWGTBL.
+
+                          G W G T B S
+
+The routine  GWGTBS  returns  the value  of a table cell  as
+character string.
+
+The call is:  CALL GWGTBS (ID, IROW, ICOL, CVAL)
+
+ID            is a widget ID of a table widget.
+IROW, ICOL    are the row and column  indices  of the  table
+              cell (>= 1).
+CVAL          is the returned character string that can have
+              up to 80 characters.
+
+                          G W G A T T
+
+The routine GWGATT returns a widget attribute.
+
+The call is:  CALL GWGATT (ID, IATT, COPT)
+
+ID            is a widget ID.
+IATT          is a returned  attribute.  If COPT = 'STATUS', 
+              IATT can have the values 0 for 'ACTIVE', 1 for
+              'INACTIVE' and 2 for 'INVISIBLE'.
+COPT          is a character string  that can have the value 
+              'STATUS'. 
+
+                          G W G X I D
+
+The routine  GWGXID  returns the window ID  for  a specified 
+widget ID.
+
+The call is:  CALL GWGXID (ID, IWINID)
+
+ID            is the widget ID.
+IWINID        is the returned window ID.
+
+Note:  For X11, the window ID of a widget can only be calcu-
+       lated  if the widget is already realized.  This means
+       that  GWGXID  should be called in a callback  routine
+       and not directly  behind a widget.  For X11,  widgets
+       are realized in the routine WGFIN.
+
+15.4 Utility Routines
+
+                          I T M S T R
+
+The routine  ITMSTR  extracts  a list  element  from  a list
+string.
+
+The call is:  CALL ITMSTR (CLIS, IDX, CITEM)
+
+CLIS          is a character  string  that contains the list
+              elements (s. WGLIS).
+IDX           is the index of the element that should be ex-
+              tracted from CLIS (beginning with 1).
+CITEM         is a character string containing the extracted
+              list element. For C, the returned string is an
+              allocated pointer  via malloc and can be freed
+              by a user.
+
+                          I T M C N T
+
+The routine  ITMCNT returns the number of elements in a list
+string.
+
+The call is:  N = ITMCNT (CLIS)
+
+CLIS          is a  character string  that contains the list
+              elements (s. WGLIS).
+N             is the calculated number of elements in CLIS.
+
+                          I T M C A T
+
+The routine ITMCAT concatenates an element to a list string.
+
+The call is:  CALL ITMCAT (CLIS, CITEM)
+
+CLIS          is a character string  that contains  the list
+              elements (s. WGLIS).
+CITEM         is a character string  that will be concatena-
+              ted to CLIS.  If CLIS is blank,  CITEM will be
+              the first element in CLIS.
+
+Note:         Trailing blanks is CLIS and CITEM  will be ig-
+              nored.
+
+                          M S G B O X
+
+The routine  MSGBOX  displays a message  in form of a dialog
+widget.  It can be used to display messages in callback rou-
+tines.
+
+The call is:  CALL MSGBOX (CSTR)
+
+CSTR          is a character string containing a message.
+
+                          R E A W G T
+
+The routine REAWGT realizes a widget tree. Since the windows
+ID of a widget can only be calculated for  X11 if the widget
+is already realized, this routine is useful  if the  windows
+ID of a widget is needed before WGFIN.  Normally, the widget
+tree is realized in WGFIN.
+
+The call is:  CALL REAWGT
+
+                          S E N D O K
+
+The routine SENDOK has the same meaning as when the OK entry
+in the Exit menu is pressed. All widgets are deleted and the
+program is continued after WGFIN.
+
+The call is:  CALL SENDOK
+
+                          S E N D M B
+
+The routine  SENDMB sends a mouse button 2 event to the DIS-
+LIN routine DISFIN.  It can be used for closing the graphics
+window.
+
+The call is:  CALL SENDMB
+
+                          D O E V N T
+
+The routine  DOEVNT processes the pending events in the wid-
+get event queue. This routine should be called during a time
+intensive calculation to give a user the chance  to interact
+with the widget program.  For  example  to check if the user  
+has canceled the calculation.
+
+The call is:  CALL DOEVNT
+
+15.5 Dialog Routines
+
+Dialog routines are collections of widgets  that can be used
+to display messages,  to get text strings,  to get filenames
+from a file selection box  and to get selections from a list
+of items. Dialog routines can be used independently from the
+routines WGINI and WGFIN.
+
+                          D W G M S G
+
+The routine DWGMSG displays a message.
+
+The call is:  CALL DWGMSG (CSTR)
+
+CSTR          is a character string  that will  be displayed
+              in a message box.  Multiple lines can be sepa-
+              rated by the character '|'.
+
+                          D W G B U T
+
+The routine  DWGBUT  displays a message that can be answered
+by the user with 'Yes' or 'No'.
+
+The call is:  CALL DWGBUT (CSTR, IVAL)
+
+CSTR          is a character string  that will  be displayed
+              in a message box.  Multiple lines can be sepa-
+              rated by the character '|'.
+IVAL          is the returned answer  of the user.  IVAL = 1
+              means 'Yes', IVAL = 0 means 'No'. IVAL is also 
+              used to initialize the button. 
+
+
+                          D W G T X T
+
+The routine  DWGTXT creates a dialog widget that can be used
+to prompt the user for input.
+
+The call is:  CALL DWGTXT (CLAB, CSTR)
+
+CLAB          is a character string  that will  be displayed
+              in the dialog widget.
+CSTR          is a  character string that is used to initia-
+              lize the text field. After the call to DWGTXT,
+              CSTR returns the user input.  For the  C  Rou- 
+              tine,  the user input is  returned as function
+              value.  The returned  pointer  is allocated by
+              malloc and can be freed by a user.
+
+                          D W G F I L
+
+The routine  DWGFIL creates a file selection box that can be
+used to get a filename.
+
+The call is:  CALL DWGFIL (CLAB, CFIL, CMASK)
+
+CLAB          is a character string  that will  be displayed
+              in the dialog widget.
+CFIL          is the returned filename selected by the user.
+              The variable can also be used  to pre-define a
+              filename. For the C Routine, the user input is
+              returned as function value. The returned poin-
+              ter is allocated by malloc and can be freed by
+              a user.
+CMASK         specifies the search pattern  used in determi-
+              ning  the files  to be displayed  in the  file
+              selection box.
+
+                          D W G L I S
+
+The routine  DWGLIS creates a dialog widget that can be used
+to get a selection from a list of items.
+
+The call is:  CALL DWGLIS (CLAB, CLIS, ISEL)
+
+CLAB          is a character string  that will be  displayed 
+              in the dialog widget.
+CLIS          is a character string  that contains  the list
+              elements.  Elements  must  be separated by the
+              character '|'.
+ISEL          defines the  pre-selected element and contains
+              the selected  element  after  return.  Element
+              numbering begins with the number 1.
+
+                          D W G E R R
+
+The routine DWGERR returns a status for the routines DWGFIL,
+DWGTXT and DWGLIS. The routine can be used to check directly
+after the routines above  if the OK button is pressed in the
+routines.
+
+The call is:  CALL DWGERR (ISTAT)
+
+ISTAT         is a  returned status.  If  ISTAT = 0,  the OK 
+              button in the routines DWGFIL, DWGTXT and DWG-
+              LIS is pressed. Otherwise, the  CANCEL  button 
+              is pressed, or an error occured.
+
+15.6 Examples
+
+The following  short  program  creates  some widgets and re-
+quests values of the widgets.
+
+      PROGRAM EXA1 
+      CHARACTER*80 CL1,CFIL
+
+      CL1='Item1|Item2|Item3|Item4|Item5'
+      CFIL=' '
+
+      CALL SWGTIT ('EXAMPLE 1')
+      CALL WGINI  ('VERT', IP)
+
+      CALL WGLAB  (IP, 'File Widget:', ID)
+      CALL WGFIL  (IP, 'Open File', CFIL, '*.c', ID_FIL)
+
+      CALL WGLAB  (IP, 'List Widget:', ID)
+      CALL WGLIS  (IP, CL1, 1, ID_LIS)
+
+      CALL WGLAB  (IP, 'Button Widgets:', ID)
+      CALL WGBUT  (IP, 'This is Button 1', 0, ID_BUT1)
+      CALL WGBUT  (IP, 'This is Button 2', 1, ID_BUT2)
+
+      CALL WGLAB  (IP, 'Scale Widget:', ID)
+      CALL WGSCL  (IP, ' ', 0., 10., 5., 1, ID_SCL)
+
+      CALL WGOK   (IP, ID_OK)
+      CALL WGFIN
+
+      CALL GWGFIL (ID_FIL, CFIL)
+      CALL GWGLIS (ID_LIS, ILIS)
+      CALL GWGBUT (ID_BUT1, IB1)
+      CALL GWGBUT (ID_BUT2, IB2)
+      CALL GWGSCL (ID_SCL, XSCL)
+      END
+
+
+The  next  example  displays some widgets packed in two col-
+umns.
+   
+      PROGRAM EXA2 
+      CHARACTER*80 CL1,CSTR
+
+      CL1='Item1|Item2|Item3|Item4|Item5'
+      CSTR=' '
+
+      CALL SWGTIT ('EXAMPLE 2')
+      CALL WGINI  ('HORI', IP)
+      CALL WGBAS  (IP, 'VERT', IPL)
+      CALL WGBAS  (IP, 'VERT', IPR)
+
+      CALL WGLAB  (IPL, 'Text Widget:', ID)
+      CALL WGTXT  (IPL, CSTR, ID_TXT1)
+      CALL WGLAB  (IPL, 'List Widget:', ID)
+      CALL WGLIS  (IPL, CL1, 1, ID_LIS)
+      CALL WGLAB  (IPR, 'Labeled Text Widget:', ID)
+      CALL WGLTXT (IPR, 'Give Text:', CSTR, 40, ID_TXT2)
+      CALL WGLAB  (IPR, 'Box Widget:', ID)
+      CALL WGBOX  (IPR, CL1, 1, ID_BOX)
+
+      CALL WGQUIT (IPL, ID_OK)
+      CALL WGOK   (IPL, ID_OK)
+      CALL WGFIN
+      END
+
+
+The following example explains the use of callback routines.
+A list widget is created  and the  selected list element  is 
+displayed in a text widget.
+
+      PROGRAM EXA3
+      COMMON /MYCOM1/ ID_LIS,ID_TXT
+      COMMON /MYCOM2/ CLIS
+      CHARACTER*80 CLIS
+      EXTERNAL MYSUB
+
+      CLIS = 'Item 1|Item 2|Item 3|Item 4|Item 5'
+
+      CALL WGINI  ('VERT', IP)
+      CALL WGLIS  (IP, CLIS, 1, ID_LIS)
+      CALL SWGCBK (ID_LIS, MYSUB)
+      CALL WGTXT  (IP, ' ', ID_TXT)
+      CALL WGFIN
+      END
+
+      SUBROUTINE MYSUB (ID)
+C     ID   is the widget ID of WGLIS ( = ID_LIS)
+
+      COMMON /MYCOM1/ ID_LIS,ID_TXT
+      COMMON /MYCOM2/ CLIS
+      CHARACTER*80 CLIS, CITEM
+
+      CALL GWGLIS (ID_LIS, ISEL)
+      CALL ITMSTR (CLIS, ISEL, CITEM)
+      CALL SWGTXT (ID_TXT, CITEM)
+      END
+
+The C coding of example 3 is given below:
+
+#include <stdio.h>
+#include "dislin.h"
+
+void mysub (int ip);
+
+static int id_lis, id_txt;
+static char clis[] = "Item 1|Item 2|Item 3|Item 4|Item 5";
+
+main()
+{ int  ip;
+
+  swgtit ("Example 3");
+
+  ip      = wgini  ("VERT");
+  id_lis  = wglis (ip, clis, 1);
+  swgcbk (id_lis, mysub);
+  id_txt = wgtxt (ip, " ");
+  wgfin ();
+}
+
+void mysub (int id)
+{ int isel;
+  char *citem;
+
+  isel = gwglis (id_lis);
+  citem = itmstr (clis, isel);
+  swgtxt (id_txt, citem);
+}
+
+Here is a Fortran 90 coding of example 3:
+
+      MODULE GLBVAR
+        IMPLICIT NONE
+        INTEGER :: ID_TXT
+        CHARACTER (LEN=80) :: CLIS
+      END MODULE GLBVAR
+
+      PROGRAM EXA3
+      USE DISLIN
+      USE GLBVAR
+      IMPLICIT NONE
+
+      INTERFACE
+        SUBROUTINE MYSUB (ID)
+          IMPLICIT NONE
+          INTEGER, INTENT (IN) :: ID
+        END SUBROUTINE MYSUB
+      END INTERFACE   
+
+      INTEGER :: IP,ID_LIS
+
+      CLIS = 'Item 1|Item 2|Item 3|Item 4|Item 5'
+      CALL WGINI  ('VERT', IP)
+      CALL WGLIS  (IP, CLIS, 1, ID_LIS)
+      CALL SWGCBK (ID_LIS, MYSUB)
+      CALL WGTXT  (IP, ' ', ID_TXT)
+      CALL WGFIN  ()
+      STOP
+      END PROGRAM EXA3
+
+      SUBROUTINE MYSUB (ID)
+      USE DISLIN
+      USE GLBVAR
+      IMPLICIT NONE
+
+      INTEGER, INTENT (IN) :: ID
+
+      INTEGER :: ISEL
+      CHARACTER (LEN=80) :: CITEM 
+
+      CALL GWGLIS (ID, ISEL)
+      CALL ITMSTR (CLIS, ISEL, CITEM)
+      CALL SWGTXT (ID_TXT, CITEM)
+      RETURN
+      END SUBROUTINE MYSUB
+
+The last example creates a table widget:
+
+      PROGRAM EXA4
+      REAL XRAY(50),XWRAY(6)
+      CHARACTER*80 CSTR
+      DATA XWRAY/-10.,-18.,-18.,-18.,-18.,-18./
+
+      DO I=1,50
+        XRAY(I)=I
+      END DO
+ 
+      CALL SWGWTH (100)
+      CALL SWGTIT ('DISLIN Table Widget')
+
+      CALL WGINI ('VERT',IP)
+
+      CALL SWGOPT ('BOTH','HEADER') 
+      CALL SWGTYP ('NOSCROLL', 'TABLE')
+      CALL SWGRAY (XWRAY, 6, 'TABLE')
+      CALL WGTBL (IP,10,5,ID_TBL)
+
+      CALL SWGTBS (ID_TBL, 'Table', 0, 0, 'VALUE')
+
+      DO I=1,10
+        IF (I.EQ.10) THEN
+          WRITE(CSTR, '(A,I2)') 'R',I
+        else
+          WRITE(CSTR,'(A,I1)') 'R',I
+        END IF
+        CALL SWGTBS (ID_TBL, CSTR, I, 0, 'VALUE')
+      END DO
+
+      DO I=1,5
+        WRITE(CSTR, '(A,I1)') 'C',I
+        CALL SWGTBS (ID_TBL, CSTR, 0, I, 'VALUE')
+      END DO
+
+      CALL SWGTBL(ID_TBL, XRAY, 50, 2, 0, 'CTABLE')
+
+      CALL WGOK (IP, ID_OK)
+      CALL WGFIN
+      END

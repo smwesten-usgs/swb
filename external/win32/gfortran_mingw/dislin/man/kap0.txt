@@ -1,0 +1,46 @@
+                   Preface to Version 10.0
+
+This manual  describes  the  data  plotting  library  DISLIN 
+written in the programming languages Fortran and C. The name
+DISLIN is an abbreviation  for  Device-Independent  Software
+LINdau since applications  were designed to run on different
+computer systems without  any changes.  The library contains
+subroutines and functions for displaying data graphically as
+curves, bar graphs, pie charts,  3-D colour plots, surfaces,
+contours and maps.
+
+DISLIN is intended to be a powerful and easy to use software
+package for programmers and scientists that does not require
+knowledge of hardware features of  output devices.  The rou-
+tines in the graphics library are the result  of my own work
+on many projects with different computers and many  plotting
+packages.  There are  only a few  graphics  routines  with a
+short parameter list needed to display the desired graphical
+output.  A large variety  of parameter setting  routines can
+then be called to create individually customized graphics.
+
+Since the first version of DISLIN was released in Dec. 1986,
+many changes and corrections have been made and new features
+and standards have been added  to the  software. Some of the
+new features are elementary image routines, a graphical user
+interface, filled contour lines, flat and smooth shaded sur-
+and a C interface for reading binary data from  Fortran pro-
+grams.  DISLIN supports now several hardware platforms, ope-
+rating systems and compilers.  A real Fortran 90  library is
+available for most Fortran 90 compilers.
+
+Although nearly all  the routines and utilities of the soft-
+ware package are written  by myself, DISLIN  would  not have
+been possible  without the help of many people. I would like
+to thank  several people at  the Max-Planck-Institut in Lin-
+dau. First, Dr. W. Degenhardt, Dr. H. J. Mueller and  Dr. I.
+Pardowitz who gave their  friendly  assistance.  To all  the
+users of DISLIN, I am grateful for your helpful  suggestions
+and comments.  I would especially  like to thank the members
+of the computer center, Friederich Both, Terry Ho,  Godehard
+Monecke and Michael Bruns  for their co-operation.  Finally,
+I am grateful to Linda See and Erika Eschebach who corrected
+the English  and German  manuals with great carefulness.  To
+all of them, my sincere thanks.
+
+H. Michels                               Lindau,  15.12.2009

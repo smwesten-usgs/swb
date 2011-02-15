@@ -1,0 +1,691 @@
+                 Chapter 10: Business Graphics
+
+This chapter  presents  business graphic routines  to create
+bar graphs and pie charts.
+
+10.1 Bar Graphs
+
+                            B A R S
+
+BARS plots bar graphs.
+
+The call is:  CALL BARS (XRAY, Y1RAY, Y2RAY, N)   level 2, 3
+
+XRAY          is an array of  user coordinates  defining the
+              position of the bars on the X-axis.
+Y1RAY         is an array of user coordinates containing the
+              start points of the bars on the Y-axis.
+Y2RAY         is an array of user coordinates containing the
+              end points of the bars on the Y-axis.
+N             is the number of bars.
+
+Notes:     -  Shading patterns of bars can be selected  with
+              SHDPAT or MYPAT. Shading  numbers will be  in-
+              cremented by 1 after every call to BARS.
+           -  Legends can be plotted for bar graphs.
+
+                           F B A R S
+
+FBARS  plots  financial  bars for open, high,  low and close
+prices.  The bars are displayed  as line bars or candlestick
+bars.
+
+The call is:  CALL FBARS (XRAY,  Y1RAY, Y2RAY, Y3RAY, Y4RAY, 
+                          N)                      level 2, 3
+
+XRAY          is an array of  user coordinates  defining the
+              position of the bars on the X-axis.
+Y1RAY         is an array of user coordinates containing the
+              open prices.
+Y2RAY         is an array of user coordinates containing the
+              high prices.
+Y3RAY         is an array of user coordinates containing the
+              low prices.
+Y4RAY         is an array of user coordinates containing the
+              close prices.
+N             is the number of bars.
+
+Notes:     -  The type of the financial bars can be selected
+              with the routine BARTYP.
+           -  BARCLR sets colours for finacial bars.
+
+The following routines modify the appearance of bar graphs.
+
+                         B A R T Y P
+
+The routine BARTYP defines vertical or horizontal bars.
+
+The call is:  CALL BARTYP (CTYP)               level 1, 2, 3
+
+CTYP          is a character string defining the bar type.
+   = 'VERT'   means that vertical bars will be plotted.
+   = 'HORI'   means that horizontal bars will be plotted. If
+              this parameter is used, XRAY defines the posi-
+              tion of the bars on the Y-axis while Y1RAY and
+              Y2RAY define  the position  of the bars on the
+              X-axis.
+   = '3DVERT' defines vertical 3-D bars.
+   = '3DHORI' defines horizontal 3-D bars.
+   = 'CANDLE' defines candlestick bars for financial bars.
+   = 'TICKS'  defines financial line bars with tick marks.
+                          Defaults: CTYP = 'VERT', 'CANDLE'.
+
+                         C H N B A R
+
+CHNBAR modifies colours and shading patterns for single 
+bars.
+ 
+The call is:  CALL CHNBAR (CATT)               level 1, 2, 3
+
+CATT          is a character string defining bar attributes.
+ = 'NONE'     means that  all bars will  be plotted with the 
+              current colour and shading pattern.
+ = 'COLOR'    means that the colour is changed for each bar.
+ = 'PATTERN'  means that the shading pattern is changed  for
+              each bar.
+ = 'BOTH'     means  that  the colour and shading pattern is
+              changed for each bar.
+                                     Default: CATT = 'NONE'.
+
+Notes:      - The sequence of colours is:  WHITE/BLACK, RED,
+              GREEN, YELLOW, BLUE, ORANGE, CYAN, MAGENTA.
+              The sequence of shading patterns is 0 - 17.
+              Colour and  pattern cycles can be changed with
+              CLRCYC and PATCYC.
+            - If the routine BARCLR is used, the changing of
+              colours will be ignored.
+
+                         B A R W T H
+
+BARWTH defines the width of the bars.
+
+The call is:  CALL BARWTH (XWTH)               level 1, 2, 3
+
+XWTH          is a real number  defining the width.  If XWTH
+              is positive, the bar width is the absolute va-
+              lue of   XWTH * (XRAY(1)-XRAY(2)).  If XWTH is
+              negative, the absolute value of  XWTH is  used
+              where XWTH must be specified in plot coordina-
+              tes.
+                                        Default: XWTH = 0.75
+
+                         B A R M O D
+
+BARMOD modifies the width of bars.
+
+The call is:  CALL BARMOD (CMOD, COPT)         level 1, 2, 3
+
+CMOD          is a character string that can have the values 
+              'FIXED' and 'VARIABLE'.  If CMOD = 'VARIABLE',
+              the width of bars plotted by  the routine BARS
+              will  be variable.  In that case,  XWTH should 
+              have a  positive  value in  BARWTH  since  the  
+              width  of bars  is calculated in a similar way
+              as described in BARWTH.
+
+COPT          is a  character  string that must  contain the
+              value 'WIDTH'.
+                                Default: ('FIXED', 'WIDTH').
+
+                         B A R P O S
+
+The position  of the  bars is  determined  by the parameters
+XRAY, Y1RAY  and Y2RAY.  The routine  BARPOS  can be used to
+select predefined positions. The parameters  XRAY, Y1RAY and
+Y2RAY will contain the calculated positions.
+
+The call is:  CALL BARPOS (COPT)               level 1, 2, 3
+
+COPT          is a character string that defines the positi-
+              on of the bars.
+  = 'NONE'    means that  the positions  are defined only by
+              the parameters in BARS.
+  = 'TICKS'   means  that the bars  will be centred at major
+              ticks. XRAY must be a dummy vector.
+  = 'AXIS'    means that  vertical bars start at the  X-axis
+              and horizontal bars at the Y-axis.  Y1RAY must
+              be a dummy vector.
+  = 'BOTH'    activates the options 'TICKS' and 'AXIS'. XRAY
+              and Y1RAY must be dummy arrays.
+                                     Default: COPT = 'NONE'.
+
+Bars can be  plotted on top of  one another  if the  routine
+BARS is called several times.  To plot bars  side by side in
+groups, the routine BARGRP can be used.
+
+                         B A R G R P
+
+The routine  BARGRP  puts bars with  the same  axis position
+into groups. The number of group elements should be the same
+as the number of calls to the routine BARS.
+
+The call is:  CALL BARGRP (NGRP, GAP)          level 1, 2, 3
+
+NGRP          is the number of bars defining one group.
+GAP           defines the spacing between group bars. If GAP
+              is positive, the value GAP * W is used where W
+              is the width of a single bar.  If GAP is nega-
+              tive, the positive value of GAP  is used where
+              GAP must be specified in plot coordinates.
+
+                         B A R C L R
+
+The routine  BARCLR  defines  the colours of bars. Different 
+colours can be defined for the sides of 3-D bars.
+
+The call is:  CALL BARCLR (IC1, IC2, IC3)      level 1, 2, 3
+
+IC1, IC2, IC3 are colour values for the front, side and  top
+              planes  of 3-D bars.  The value -1  means that
+              the corresponding  plane  is plotted  with the 
+              current colour.
+              For financial bars, IC1 is  the colour  of the
+              line bars,  IC2 the  colour  of the open ticks 
+              and IC3 the colour of the close ticks. 
+                                      Default: (-1, -1, -1).
+
+                         B A R B O R
+
+The routine  BARBOR  defines the colour  of borders  plotted
+around the bars.  By default, a border in the current colour
+is plotted around 2-D bars,  and borders  in the  foreground
+colour are plotted around 3-D bars.
+
+The call is:  CALL BARBOR (IC)                 level 1, 2, 3
+ 
+IC            is a colour value. If IC = -1, the bar borders
+              will be plotted with the current colour.
+                                            Default: IC = -1
+
+                         B A R O P T
+
+The routine BAROPT modifies the appearance of 3-D bars.
+
+The call is:  CALL BAROPT (XF, ANG)            level 1, 2, 3
+
+XF            is  a floating point  number  that defines the 
+              depth of bars.  IF XF = -1.,  the bar width is
+              used for the bar depth.  IF XF > 0., XF is in-
+              terpreted as the  bar depth specified  in plot
+              coordinates.
+
+ANG           defines an  angle measured  in degrees between
+              the front and side planes of 3-D bars.
+                                        Default: (-1., 45.).
+
+                         L A B E L S
+
+The routine LABELS defines labels for bar graphs.
+
+The call is:  CALL LABELS (CLAB, 'BARS')       level 1, 2, 3
+
+CLAB          is a character defining the labels.
+   = 'NONE'   means that no labels will be plotted.
+   = 'SECOND' means that Y2RAY is used for labels.
+   = 'FIRST'  means that Y1RAY is used for labels.
+   = 'DELTA'  means  that  the  difference  vector  (Y2RAY -
+              Y1RAY) is used for labels.
+                                     Default: CLAB = 'NONE'.
+
+                         L A B P O S
+
+The routine LABPOS defines the position of the labels.
+
+The call is:  CALL LABPOS (CPOS, 'BARS')       level 1, 2, 3
+
+CPOS          is a character string that defines the positi-
+              on of the labels.
+ = 'INSIDE'   means inside at the end of a bar.
+ = 'OUTSIDE'  means outside at the end of a bar.
+ = 'LEFT'     defines the upper left side.
+ = 'RIGHT'    defines the upper right side.
+ = 'CENTER'   selects the centre of a bar.
+ = 'AUTO'     means  'INSIDE' if labels are smaller than the
+              bar width, otherwise 'OUTSIDE'.
+                                     Default: CPOS = 'AUTO'.
+
+                         L A B D I G
+
+The routine  LABDIG  defines the number of decimal places in
+the labels.
+
+The call is:  CALL LABDIG (NDIG, 'BARS')       level 1, 2, 3
+
+NDIG          is the number of decimal places (>= -2).
+                                           Default: NDIG = 1
+
+                         L A B C L R
+
+The routine LABCLR defines the colour of labels.
+
+The call is:  CALL LABCLR (NCLR, 'BARS')       level 1, 2, 3
+
+NCLR          is  a colour value.  If NCLR = -1, the bar la-
+              bels will be plotted with the current colour.
+                                          Default: NCLR = -1
+
+10.2 Pie Charts
+
+                         P I E G R F
+
+PIEGRF plots pie charts.
+
+The call is:  CALL PIEGRF (CBUF, NLIN, XRAY, NSEG)   level 1
+
+CBUF          is a  character string  containing  text lines
+              for segment labels.  More than one line can be
+              defined for labels.  CBUF must be created with
+              LEGLIN after calling LEGINI.  If NLIN is 0  in
+              the parameter list,  CBUF can be a dummy vari-
+              able.
+NLIN          is the number of text lines  used for one seg-
+              ment label.
+XRAY          is an array of user coordinates.
+NSEG          is the dimension of XRAY.
+
+Notes:     -  The centre  and the  size of  pies is  defined
+              by a region  that can be changed with the rou-
+              tines AXSPOS and AXSLEN.
+           -  PIEGRF sets the level to 2. Titles and legends
+              can be plotted after PIEGRF is called.
+           -  Segment labels  can  contain several  lines of
+              text and  the data values specified in PIEGRF.
+              Data values  can also  be converted to percent
+              values.
+           -  Segment  labels  are  contained  within  a box
+              where the thickness of the border can be chan-
+              ged with FRAME.
+
+The following routines modify the appearance of pie charts.
+
+                         P I E T Y P
+
+The routine PIETYP defines 2-D or 3-D pie charts.
+
+The call is:  CALL PIETYP (CTYP)               level 1, 2, 3
+
+CTYP          is a character string defining the pie type.
+  = '2D'      defines a 2-D pie chart.
+  = '3D'      defines a 3-D pie chart.
+                                       Default: CTYP = '2D'.
+
+                         C H N P I E
+
+CHNPIE defines colours and shading patterns for pie graphs.
+
+The call is:  CALL CHNPIE (CATT)               level 1, 2, 3
+
+CATT          is a character string  defining segment attri-
+              butes.
+  = 'NONE'    means that  all  pie segments  will be plotted
+              with the current colour and shading pattern.
+  = 'COLOR'   means that every segment will have a different
+              colour.
+  = 'PATTERN' means that every segment will have a different
+              shading pattern.
+  = 'BOTH'    means that every segment will have both a dif-
+              ferent colour and shading pattern.
+                                  Default: CATT = 'PATTERN'.
+
+Note:         The sequence of colours is:  WHITE/BLACK, RED,
+              GREEN, YELLOW, BLUE, ORANGE, CYAN, MAGENTA.
+              The sequence of shading patterns is 0 - 17.
+              Colour and  pattern cycles can be changed with
+              CLRCYC and PATCYC.
+
+                         L A B E L S
+
+LABELS selects  data or percent values  used for segment la-
+bels.
+
+The call is:  CALL LABELS (CLAB, 'PIE')        level 1, 2, 3
+
+CLAB          is a character string that defines  the values
+              used for segment labels.
+  = 'NONE'    means that data values will not be displayed.
+  = 'PERCENT' means that values will be plotted as percenta-
+              ges.
+  = 'DATA'    means that the data values specified in PIEGRF
+              will be plotted.
+  = 'BOTH'    means both 'PERCENT' and 'DATA'.
+                                  Default: CDOC = 'PERCENT'.
+
+                         L A B P O S
+
+LABPOS determines the position of segment labels.
+
+The call is:  CALL LABPOS (CPOS, 'PIE')        level 1, 2, 3
+
+CPOS          is a character string defining the position of
+              labels.
+ = 'INTERNAL' means that  labels will  be plotted inside pie
+              segments.  If labels are too big, they will be
+              plotted outside.
+ = 'EXTERNAL' means that segment labels will be plotted out-
+              side pie segments.
+ = 'ALIGNED'  means that segment labels will be plotted out-
+              side pie segments and aligned.
+                                 Default: CPOS = 'INTERNAL'.
+
+                         L A B T Y P
+
+LABTYP defines the position of text lines in segment labels.
+
+The call is:  CALL LABTYP (CTYP, 'PIE')        level 1, 2, 3
+
+CTYP          is a  character string  that defines  how text
+              lines are justified.
+ = 'CENTER'   centres text lines.
+ = 'LEFT'     left-justifies text lines.
+ = 'RIGHT'    right-justifies text lines.
+ = 'OUTWARDS' left-justifies text lines on the  left side of
+              pies  and right-justifies  text  lines  on the
+              right side of pies.
+  = 'INWARDS' right-justifies text lines on the left side of
+              pies  and  left-justifies  text  lines  on the
+              right side of pies.
+                                   Default: CTYP = 'CENTER'.
+
+                         L A B D I G
+
+The routine LABDIG defines the number of decimal places used
+in segment labels.
+
+The call is:  CALL LABDIG (NDIG, CDIG)         level 1, 2, 3
+
+NDIG          is the number of decimal places (>= -2).
+CDIG          is a  character string  selecting the data va-
+              lues.
+  = 'PIE'     defines the number of  decimal places used for
+              percent and data values.
+  = 'PERCENT' defines the number of decimal places  used for
+              percent values.
+  = 'DATA'    defines the number of decimal places  used for
+              data values.
+                                        Default: (1, 'PIE').
+
+                         L A B C L R
+
+The routine LABCLR defines the colour of labels.
+
+The call is:  CALL LABCLR (NCLR, 'PIE') n      level 1, 2, 3
+
+NCLR          is  a colour value.  If NCLR = -1, the pie la-
+              bels will be plotted with  the current colour. 
+                                          Default: NCLR = -1
+
+                         P I E C L R
+
+The routine  PIECLR  defines colours  for single pies.  Dif-
+ferent colours can be defined for the top and front sides of
+3-D pies.  PIECLR has no effect  if the  routine  CHNPIE  is 
+called with the parameters 'COLOR' or 'BOTH'.
+
+The call is:  CALL PIECLR (NC1RAY, NC2RAY, N)  level 1, 2, 3
+
+NC1RAY,       are integer  arrays containing  colour  values 
+  NC2RAY      for the top and front sides of pies. The value
+              -1 means that the current colour is used.
+N             is the dimension of NC1RAY and NC2RAY.
+
+                         P I E B O R
+
+The routine  PIEBOR  defines  the colour  of borders plotted
+around the pies.  By default, a border in the current colour
+is plotted around 2-D pies,  and borders  in the  foreground
+colour are plotted around 3-D pies.
+
+The call is:  CALL PIEBOR (IC)                 level 1, 2, 3
+
+IC            is a colour value.
+                                            Default: IC = -1
+
+                         P I E O P T
+
+The routine PIEOPT modifies the appearance of 3-D pies.
+
+The call is:  CALL PIEOPT (XF, ANG)            level 1, 2, 3
+
+XF            is a scaling number that defines the thickness
+              of pies. The thickness is set to XF * radius.
+ANG           defines an view angle measured in degrees.
+                                        Default: (0.2, 45.).
+
+                         P I E L A B
+
+The routine  PIELAB  defines character strings  that can  be
+plotted on the left or right side of data values within seg-
+ment labels.
+
+The call is:  CALL PIELAB (CLAB, CPOS)         level 1, 2, 3
+
+CLAB          is a character string displayed in segment la-
+              bels.
+CPOS          is a character string that defines the positi-
+              on of CLAB.
+  = 'LEFT'    means that  CLAB  will be plotted  on the left
+              side of data values.
+  = 'RIGHT'   means that  CLAB will be plotted  on the right
+              side of data values.
+
+Note:         If percent and data values are plotted in seg-
+              ment labels,  PIELAB is only used for data va-
+              lues.
+
+                         P I E E X P
+
+Pie segments will be offset by 8% of the radius if PIEEXP is
+called.
+
+The call is:  CALL PIEEXP                      level 1, 2, 3
+
+Note:         Single segments  will be offset if the corres-
+              ponding values in PIEGRF are negative.
+
+                         P I E R O T
+
+The routine PIEROT defines a rotation angle for 2-D pies.
+
+The call is:  CALL PIEROT (ANGLE)              level 1, 2, 3
+
+ANGLE         is the rotation angle in degrees.  The 2-D pie 
+              is  rotated  in a counter-clockwise direction.
+
+                         P I E V A L
+
+The routine  PIEVAL  affects the distance of external labels
+for the pie.
+
+The call is:  CALL PIEVAL (X, CKEY)            level 1, 2, 3
+
+X             is a  floating point variable  containing  the
+              value.
+CKEY          is a character string that can have the values
+              'GAP' and 'DISTANCE'. The keyword 'GAP'  means
+              the gap in plot coordinates between the arrows
+              and the pie. The keyword 'DISTANCE'  defines a
+              scaling factor for the  distance of  the label
+              boxes from the pie.
+                                      Default: (20., 'GAP'),
+                                          (1.0, 'DISTANCE').
+
+                         P I E V E C
+
+PIEVEC modifies the arrows plotted between segments  and la-
+bels that lie outside of segments.
+
+The call is:  CALL PIEVEC (IVEC, COPT)         level 1, 2, 3
+
+IVEC          defines the arrow head (see VECTOR).
+COPT          is a character string  that defines the vector
+              plotted between segments and labels.
+ = 'NONE'     suppresses vectors.
+ = 'STRAIGHT' means that straight vectors will be plotted.
+ = 'BROKEN'   means that broken vectors will be plotted.
+                                  Default: (2301, 'BROKEN').
+
+                         P I E C B K
+
+The routine  PIECBK defines a user written callback  routine
+that is called by PIEGRF for each segment. The callback rou-
+tine allows the modification of pie charts  such as suppres-
+sing certain labels.
+
+The call is:  CALL PIECBK (Routine)            level 1, 2, 3
+
+ROUTINE       is the name of a routine  defined by the user. 
+              In Fortran,  the routine  must  be declared as 
+              EXTERNAL. 
+
+The syntax of the callback routine is:
+
+SUBROUTINE    Routine (ISEG, XDAT, XPER,  NRAD, NOFF, ANGLE,
+                       NVX, NVY, IDRW, IANN)      
+
+where:
+
+ISEG          is the segment index (starting with 1).
+XDAT          is the data value  of the segment as specified
+              in PIEGRF.
+XPER          is the percent value of XDAT.
+NRAD          is the segment radius in plot coordinates.
+NOFF          is the segment offset in plot coordinates (de-
+              fault: 0).
+ANGLE         is the offset angle measured  in degrees  in a
+              counter-clockwise direction. The default value
+              is the angle which bisects the segment.
+NVX           shifts the segment label in the X-direction by
+              NVX plot coordinates.
+NVY           shifts the segment label in the Y-direction by
+              NVY plot coordinates.
+IDRW          defines the plotting of segments. If IDRW = 0,
+              plotting will be suppressed (default: 1).
+IANN          defines the  plotting of labels.  If IANN = 0,
+              labels will be suppressed (default: 1).
+
+Notes:     -  The first 3 parameters in the callback routine
+              are  only given for information  and cannot be
+              changed by the user.
+           -  The callback  routine is a replacement for the
+              user written routine USRPIE that can still  be
+              used,  but  is not  working for  shareable and
+              DISLIN wrapper libraries.  USRPIE has the same
+              syntax  as the callback routine,  but  without
+              the parameter NVX.
+                 
+10.3 Examples
+
+            PROGRAM EX10_1   !  Bar Graphs
+            DIMENSION X(9),Y(9),Y1(9),Y2(9),Y3(9)
+            CHARACTER*60 CTIT,CBUF*24
+
+            DATA  X/1.,2.,3.,4.,5.,6.,7.,8.,9./ Y/9*0./
+           *     Y1/1.,1.5,2.5,1.3,2.0,1.2,0.7,1.4,1.1/
+           *     Y2/2.,2.7,3.5,2.1,3.2,1.9,2.0,2.3,1.8/
+           *     Y3/4.,3.5,4.5,3.7,4.,2.9,3.0,3.2,2.6/
+
+            NYA=2700
+            CTIT='Bar Graphs (BARS)'
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL TICKS(1,'X')
+            CALL INTAX
+            CALL AXSLEN(1600,700)
+            CALL TITLIN(CTIT,3)
+
+            CALL LEGINI(CBUF,3,8)
+            CALL LEGLIN(CBUF,'FIRST',1)
+            CALL LEGLIN(CBUF,'SECOND',2)
+            CALL LEGLIN(CBUF,'THIRD',3)
+            CALL LEGTIT(' ')
+
+            CALL SHDPAT(5)
+            DO I=1,3
+              IF(I.GT.1) CALL LABELS('NONE','X')
+              CALL AXSPOS(300,NYA-(I-1)*800)
+
+              CALL GRAF(0.,10.,0.,1.,0.,5.,0.,1.)
+
+              IF(I.EQ.1) THEN
+                CALL BARGRP(3,0.15)
+                CALL BARS(X,Y,Y1,9)
+                CALL BARS(X,Y,Y2,9)
+                CALL BARS(X,Y,Y3,9)
+                CALL RESET('BARGRP')
+              ELSE IF(I.EQ.2) THEN
+                CALL HEIGHT(30)
+                CALL LABELS('DELTA','BARS')
+                CALL LABPOS('CENTER','BARS')
+                CALL BARS(X,Y,Y1,9)
+                CALL BARS(X,Y1,Y2,9)
+                CALL BARS(X,Y2,Y3,9)
+                CALL HEIGHT(36)
+              ELSE IF(I.EQ.3) THEN
+                CALL LABELS('SECOND','BARS')
+                CALL LABPOS('OUTSIDE','BARS')
+                CALL BARS(X,Y,Y1,9)
+              END IF
+
+              IF(I.NE.3) CALL LEGEND(CBUF,7)
+
+              IF(I.EQ.3) THEN
+                CALL HEIGHT(50)
+                CALL TITLE
+              END IF
+
+              CALL ENDGRF
+            END DO
+
+            CALL DISFIN
+            END
+
+
+            PROGRAM EX10_2     !  Pie Charts
+            DIMENSION XRAY(5)
+            CHARACTER*60 CTIT,CBUF*40
+            DATA XRAY/1.,2.5,2.,2.7,1.8/
+
+            CTIT='Pie Charts (PIEGRF)'
+            NYA=2800
+
+            CALL SETPAG('DA4P')
+            CALL DISINI
+            CALL PAGERA
+            CALL COMPLX
+            CALL AXSLEN(1600,1000)
+            CALL TITLIN(CTIT,2)
+
+            CALL LEGINI(CBUF,5,8)
+            CALL LEGLIN(CBUF,'FIRST',1)
+            CALL LEGLIN(CBUF,'SECOND',2)
+            CALL LEGLIN(CBUF,'THIRD',3)
+            CALL LEGLIN(CBUF,'FOURTH',4)
+            CALL LEGLIN(CBUF,'FIFTH',5)
+
+      C     Selecting shading patterns
+            CALL PATCYC(1,7)
+            CALL PATCYC(2,4)
+            CALL PATCYC(3,13)
+            CALL PATCYC(4,3)
+            CALL PATCYC(5,5)
+
+            DO I=1,2
+              CALL AXSPOS(250,NYA-(I-1)*1200)
+              IF(I.EQ.2) THEN
+                CALL LABELS('DATA','PIE')
+                CALL LABPOS('EXTERNAL','PIE')
+              END IF
+
+              CALL PIEGRF(CBUF,1,XRAY,5)
+
+              IF(I.EQ.2) THEN
+                CALL HEIGHT(50)
+                CALL TITLE
+              END IF
+              CALL ENDGRF
+            END DO
+            CALL DISFIN
+            END

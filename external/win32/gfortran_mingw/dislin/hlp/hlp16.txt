@@ -1,0 +1,69 @@
+Name: QPLOT   30
+QPLOT connects data points with lines.
+The call is:  CALL QPLOT (XRAY, YRAY, N)              level 0, 1
+         or:  void qplot (float *xray, float *yray, int n);
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+Name: QPLCRV  30
+QPLCRV is a similar routine to  QPLOT,  but can display multiple
+curves.
+The call is:  CALL QPLCRV (XRAY, YRAY, N, COPT)       level 0, 1
+         or:  void qplcrv (float *xray, float *yray, int n,
+                           char *copt);
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+COPT          is a  character  string that describes the meaning
+              of the  curve. COPT can  have  the values 'FIRST',
+              'NEXT' and 'LAST'.
+Name: QPLSCA  30
+QPLSCA marks data points with symbols.
+The call is:  CALL QPLSCA (XRAY, YRAY, N)             level 0, 1
+         or:  void qplsca (float *xray, float *yray, int n);
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+Name: QPLBAR  30
+QPLBAR plots a bar graph.
+The call is:  CALL QPLBAR (XRAY, N)                   level 0, 1
+         or:  void qplbar (float *xray, int n);
+XRAY          is an  array containing data points.
+N             is the number of data points.
+Name: QPLPIE  30
+QPLPIE plots a pie chart.
+The call is:  CALL QPLPIE (XRAY, N)                   level 0, 1
+         or:  void qplpie (float *xray, int n);
+XRAY          is an  array containing data points.
+N             is the number of data points.
+Name: QPLCLR  30
+QPLCLR makes a 3-D colour plot of a matrix.
+The call is:  CALL QPLCLR (ZMAT, IXDIM, IYDIM)        level 0, 1
+         or:  void qplclr (float *zmat, int ixdim, int iydim);
+ZMAT          is a matrix  with the dimension  (IXDIM, IYDIM)
+              containing the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+Name: QPLSUR  30
+QPLSUR makes a surface plot of a matrix.
+The call is:  CALL QPLSUR (ZMAT, IXDIM, IYDIM)        level 0, 1
+         or:  void qplsur (float *zmat, int ixdim, int iydim);
+ZMAT          is a matrix  with the dimension  (IXDIM, IYDIM)
+              containing the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+Name: QPLCON  30
+QPLCON makes a contour plot of a matrix.
+The call is:  CALL QPLCON (ZMAT, IXDIM, IYDIM, NLEV)  level 0, 1
+         or:  void qplcon (float *zmat, int ixdim, int iydim,
+                                                      int nlev);
+ZMAT          is a matrix with the dimension (IXDIM, IYDIM) con-
+              taining the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+NLEV          is the number of contour levels that should be ge-
+              nerated.
+Name: QPLSCL  30
+QPLSCL overwrites the automatic scaling of quick plots.
+The call is:  CALL QPLSCL (A, E, OR, STEP, CAX)       level 0, 1
+         or:  void qplscl (float a, float e, float or, 
+                           float step, char *cax);
+A, E          are the lower and upper limits  of the axis.
+OR, STEP      are  the first  axis label  and the  step  between
+              labels.
+CAX           is a  character  string that defines the axes. CAX
+              can contain the characters 'X', 'Y' and 'Z'.

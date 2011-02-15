@@ -1,0 +1,223 @@
+                       The Graphics Software DISLIN
+                    ----------------------------------
+
+
+Introduction
+------------
+
+DISLIN is a high-level library of subroutines  and functions  that display
+data graphically. It is intended to be a powerful and easy to use software
+package for programmers and scientists  that does not require knowledge of
+hardware features. The software is available for the programming languages
+C, Fortran 77, Fortran 90, Perl, Python and Java.
+
+DISLIN can  display graphic information  directly on graphic terminals  or
+store them in metafiles.  The supported display types are VGA,  X Windows,
+Windows API  and Tektronix.  The supported file formats are  GKSLIN,  CGM,
+HPGL, PostScript, PDF, SVG, WMF, PNG, BMP, GIF and TIFF.  DISLIN metafiles
+can either be printed on various devices using the  DISLIN driver  program
+DISDRV or imported into third party products such as TeX and MS Word.
+
+The library contains the following features:
+
+  -  9 software fonts where each font provides 6 alphabets. Hardware fonts
+     for PostScript  printers,  X11 fonts  for  X11 displays  and TrueType
+     fonts for Windows displays and WMF files can also be used.
+     The different aphabets contain  Roman,  Greek,  Russian, mathematical 
+     and special European characters.  Plotting of  mathematical  formulas
+     with TeX instructions.
+
+  -  Plotting of two- and three-dimensional axis systems.  Axes can be li-
+     nearly or  logarithmically scaled and labeled with linear,  logarith-
+     mic, date, time, map and user-defined formats.
+
+  -  Plotting of curves. Several curves can  appear in one axis system and
+     can be  differentiated  by colour,  line style and pattern.  Multiple
+     axis systems can be displayed on a page.
+
+  -  Plotting of legends.
+
+  -  Visualization of vector fields and plotting of streamlines. 
+
+  -  Elementary  plot routines  for lines,  vectors and outlined or filled
+     regions such as rectangles, circles, arcs, ellipses and polygons.
+
+  -  Shielded regions can be defined.
+
+  -  Business graphics.
+
+  -  3-D colour graphics.
+
+  -  3-D graphics.
+
+  -  Elementary image routines.
+
+  -  Geographical projections and plotting of maps.
+
+  -  Contouring.
+
+  -  Graphical user interface (GUI) routines based on Motif and
+     Windows API functions. 
+
+  -  Some quick plots for displaying data with one statement.
+ 
+
+Hard- and Software Requirements
+-------------------------------
+
+
+At the moment, DISLIN versions are available for the following hard- 
+and software components:
+
+   ----------------------------------------------------------------
+   |   Hardware       | Operating Syst. |        Compiler         |
+   ----------------------------------------------------------------
+   | IBM-PC           | MS-DOS          |  gcc  (DJGPP)           |
+   |                  |                 |  g77  (DJGPP)           |
+   ----------------------------------------------------------------
+   | IBM-PC           | Windows         |  MS Visual C++          |
+   |                  |                 |  Digital Visual Fortran |
+   |                  |                 |                5.x, 6.0 |
+   |                  |                 |  Absoft F77, F90        |
+   |                  |                 |  Intel icl, ifort       |
+   |                  |                 |  Lahey LF90 3.x, 4.x,   |
+   |                  |                 |             ELF90 4.0   |
+   |                  |                 |  Lahey LF95 5.x         |
+   |                  |                 |  Portland Group pgf77,  |
+   |                  |                 |                 pgf90   |
+   |                  |                 |  Salford-FTN77, FTN90,  |
+   |                  |                 |                 FTN95   |
+   |                  |                 |  gcc/g77/g95 Cygwin     |
+   |                  |                 |  gcc/g77/g95 Mingw      |
+   |                  |                 |  GFortran               |
+   |                  |                 |  Borland C++ 5.x, 6.0   |
+   |                  |                 |  LCC-Win32              |
+   |                  |                 |  Watcom wcl, wfl 1.2    |
+   |                  |                 |  Perl 5.6.1, 5.8.0      |
+   |                  |                 |             ActiveState |
+   |                  |                 |  Python 2.3, 2.4, 2.5   |
+   |                  |                 |  Java 1.2, 1.3, 1.4     |
+   ----------------------------------------------------------------
+   | IBM-PC           | Linux           |  gcc, f2c, g77,         |
+   |                  |                 |  Java, Perl, Python     |
+   |                  |                 |  g95                    |
+   |                  |                 |  Absoft F77, F90        |
+   |                  |                 |  Imagine F compiler     |
+   |                  |                 |  Intel ifc/icc          |
+   |                  |                 |  Lahey LF95             |
+   |                  |                 |  NAG f90/f95            |
+   |                  |                 |  PGF77, PGF90           |
+   ----------------------------------------------------------------
+   | IBM-PC           | FreeBSD         |  gcc, f2c, g77,         |
+   |                  |                 |  Java, Perl, Python     |
+   ----------------------------------------------------------------
+   | IBM-PC           | .NET            |  csc, Visual C++ .NET,  |
+   |                  |                 |  Visual Basic .NET      |
+   ----------------------------------------------------------------
+   | IBM-PC           | Solaris 10, x86 |  cc, f77, f90,          |
+   |                  |                 |  Java, Perl, Python     |
+   ----------------------------------------------------------------
+   | AMD64            | Solaris 10, x86 |  cc, f77, f90,          |
+   |                  |                 |  Java, Perl, Python     |
+   ----------------------------------------------------------------
+   | AMD64,           | Linux 64-bit    |  gcc, g77, gfortran,    |
+   | Opteron,         |                 |  g95, pgf77, pgf90,     |
+   | Intel EM64T      |                 |  Intel icc, ifort,      |
+   |                  |                 |  Java, Perl, Python     |
+   ----------------------------------------------------------------
+   | IA64             | Linux           |  gcc, g77               |
+   |                  | Linux           |  Intel efc, ecc 6.0     |
+   ----------------------------------------------------------------
+   | IA64             | HP-UX 11iv3     |  f77, cc, f90           |
+   ----------------------------------------------------------------
+   | Mac PPC          | Darwin / Mac OSX|  gcc, g77, Perl, Python |
+   ----------------------------------------------------------------
+   | Mac Intel        | Darwin / Mac OSX|  gcc, g77, g95,         |
+   |                  |                 |  Intel icc, ifort,      |
+   |                  |                 |  Perl, Python           |
+   ----------------------------------------------------------------
+   | DEC-ALPHA        | OpenVMS 6.x, 7.x|  FOR, CC, F90           |
+   ----------------------------------------------------------------
+   | DEC-ALPHA        | OSF1/Tru64      |  f77, cc, f90,          |
+   |                  |                 |  Java, Perl, Python     |
+   ----------------------------------------------------------------
+   | HP 9000/7xx      | HP-UX 10.20     |  f77, cc, f90,          |
+   |                  |                 |  Perl, Python           |
+   ----------------------------------------------------------------
+   | SUN SPARC        | SunOS 5.x       |  f77, cc, f90,          |
+   |                  |                 |  Java, Perl, Python     |
+   ---------------------------------------------------------------- 
+   | SUN SPARC        | Linux           |  gcc, g77, Perl         |
+   ---------------------------------------------------------------- 
+
+
+License Information
+-------------------
+
+DISLIN is free for non-commercial use. Commercial licenses for selling
+programs linked with DISLIN or for using DISLIN in an environment 
+related to business are available from the site http://www.dislin.de.
+
+The payment of DISLIN licenses is managed by Max-Planck-Innovation 
+which is a special part of the Max Planck Society. The address of 
+Max-Planck-Innovation is:  
+
+      Max-Planck-Innovation GmbH, D-80539 Muenchen, Marstallstr. 8, 
+      Phone: +49 89 290919-0, Fax: +49 89 290919-99
+      E-mail: info@max-planck-innovation.de
+      http://www.max-planck-innovation.de
+
+The following DISLIN licenses are available for commercial use:
+
+       ----------------------------------------------------
+       |   License     |      Euro        |    US Dollar  |
+       ----------------------------------------------------
+       |   PC          |  120,- EUR + tax |      $180     |
+       ----------------------------------------------------
+       |   Workstation |  360,- EUR + tax |      $540     |
+       ----------------------------------------------------
+       |   Campus      |  800,- EUR + tax |     $1200     |
+       ----------------------------------------------------
+
+Notes:
+
+     - All prices are unique payments and include future DISLIN up-
+       grades that can be downloaded from the site http://www.dislin.de.
+ 
+     - A CD-ROM with the current  DISLIN software and documentation 
+       is included in the prices above. The source code of DISLIN and 
+       script files for recompiling DISLIN are also on the CD-ROM.
+ 
+     - A DISLIN PC license means that all DISLIN PC distributions can 
+       be used on a single PC. Several DISLIN distributions can be 
+       installed on the PC at the same time. The Linux and FreeBSD
+       distributions of DISLIN are classified as PC distributions. 
+
+     - A workstation license  can be used for the UNIX and VMS ver- 
+       sions of DISLIN installed on a single workstation.  The num-
+       ber of users is unlimited. 
+
+     - A campus license allows  DISLIN  installations on all compu-
+       ters of an institute. 
+
+
+Author
+------
+
+        Helmut Michels, MPI fuer Sonnensystemforschung, 
+        Max-Planck-Str. 2, D-37191 Katlenburg-Lindau,
+        Tel.: +49 5556 979 334, Fax: +49 5556 979 240, 
+        Mail: michels@mps.mpg.de
+
+Web Sites
+---------
+
+DISLIN is available via ftp anonymous from the following site:
+
+  ftp://ftp.gwdg.de/pub/grafik/dislin 
+
+The DISLIN Home Page is:
+
+  http://www.dislin.de
+
+

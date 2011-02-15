@@ -1,0 +1,1099 @@
+Name: RESET   2
+RESET sets parameters back to their default values.
+The call is:  CALL RESET (CNAME)                   level 1, 2, 3
+         or:  void reset (char *cname);
+CNAME         is a character string  containing the  name of the
+              routine whose parameters  will be set  back to de-
+              fault values. If CNAME = 'ALL',  all parameters in
+              DISLIN will be reset.
+Name: UNIT    1
+UNIT defines the  logical unit used for printing  error messages
+and listing data points that lie outside of the axis scaling.
+The call is:  CALL UNIT (NU)                       level 1, 2, 3
+         or:  void unit (FILE *nu);
+NU            is the logical unit. If NU = 0, all messages  will
+              be suppressed.        Default: NU = 6 (or: stdout)
+Name: UNITS   1
+The routine UNITS defines the plot units.
+The call is:  CALL UNITS (COPT)                          level 0
+         or:  void units (char *copt);
+COPT          is a character string  that  can  have  the values
+              'CM', 'INCH', 'POINTS' and 'TWIPS'. 'CM' means 100
+              points per  centimetre,  'INCH'  means 100  points
+              per inch, 'POINTS' means 720 points per  inch  and
+              'TWIPS' means 1440 points per inch.  
+                                           Default: COPT = 'CM'.
+Name: PAGORG  1
+The routine  PAGORG sets the origin of the page. By default, the
+page origin is located in the upper left  corner  of the page.
+The call is:  CALL PAGORG (COPT)                   level 1, 2, 3 
+         or:  void pagorg (char *copt);
+COPT          is a  character string  that can  have  the values
+              'TOP'  and  'BOTTOM'.  The keyword  'TOP' sets the
+              page origin to the upper left corner,  'BOTTOM' to
+              the lower left corner.
+                                          Default: COPT = 'TOP'.
+Name: ORIGIN  1
+In DISLIN,  all lines are plotted  relative to the  origin which
+is a point located in the upper left corner of  the page.  Modi-
+fying this point by  ORIGIN  produces a shifting of plot vectors
+on the page.
+The call is:  CALL ORIGIN (NX0, NY0)                     level 1
+         or:  void origin (int nx0, int ny0);
+NX0, NY0      are the X- and Y-coordinates of the point.
+                                                Default: (0, 0).
+Name: PAGE    1
+PAGE determines the size of the page.
+The call is:  CALL PAGE (NXP, NYP)                       level 0
+         or:  void page (int nxp, int nyp);
+NXP, NYP      are the length and height of  the page in plot co-
+              ordinates. The lower right  corner of the  page is
+              the point (NXP-1, NYP-1).   Default: (2970, 2100).
+Name: SETPAG  1
+SETPAG selects a predefined page format.
+The call is:    CALL SETPAG (CPAGE)                      level 0
+         or:    void setpag (char *cpage);  
+CPAGE           is a character string that defines the page for-
+                mat.
+   = 'DA4L'     DIN A4,         landscape,   2970 * 2100 Punkte.
+   = 'DA4P'     DIN A4,         portrait,    2100 * 2970 Punkte.
+   = 'DA3L'     DIN A3,         landscape,   4200 * 2970 Punkte.
+   = 'DA3P'     DIN A3,         portrait,    2970 * 4200 Punkte.
+   = 'DA2L'     DIN A2,         landscape,   5940 * 4200 Punkte.
+   = 'DA2P'     DIN A2,         portrait,    4200 * 5940 Punkte.
+   = 'DA1L'     DIN A1,         landscape,   8400 * 5940 Punkte.
+   = 'DA1P'     DIN A1,         portrait,    5940 * 8400 Punkte.
+   = 'DA0L'     DIN A0,         landscape,  11890 * 8410 points.
+   = 'DA0P'     DIN A0,         portrait,    8410 * 11890 points.
+   = 'USAL'     US size A,      landscape,   2790 * 2160 points.
+   = 'USAP'     US size A,      portrait,    2160 * 2790 points.
+   = 'USBL'     US size B,      landscape,   4320 * 2790 points.
+   = 'USBP'     US size B,      portrait,    2790 * 4320 points.
+   = 'USCL'     US size C,      landscape,   5590 * 4320 points.
+   = 'USCP'     US size C,      portrait,    4320 * 5590 points.
+   = 'USDL'     US size D,      landscape,   8640 * 5590 points.
+   = 'USDP'     US size D,      portrait,    5590 * 8640 points.
+   = 'USEL'     US size E,      landscape,  11180 * 8640 points.
+   = 'USEP'     US size E,      portrait,    8640 * 11180 points.
+   = 'PS4L'     PostScript A4,  landscape,   2800 * 1950 Punkte.
+   = 'PS4P'     PostScript A4,  portrait,    1950 * 2800 Punkte.
+   = 'HP4L'     HP-Plotter A4,  landscape,   2718 * 1900 Punkte.
+   = 'HP4P'     HP-Plotter A4,  portrait,    1900 * 2718 Punkte.
+   = 'HP3L'     HP-Plotter A3,  landscape,   3992 * 2718 Punkte.
+   = 'HP3P'     HP-Plotter A3,  portrait,    2718 * 3992 Punkte.
+   = 'HP2L'     HP-Plotter A2,  landscape,   5340 * 3360 Punkte.
+   = 'HP2P'     HP-Plotter A2,  portrait,    3360 * 5340 Punkte.
+   = 'HP1L'     HP-Plotter A1,  landscape,   7570 * 5340 Punkte.
+   = 'HP1P'     HP-Plotter A1,  portrait,    5340 * 7570 Punkte.
+                                        Default: CPAGE = 'DA4L'.
+Name: METAFL  1
+METAFL defines the metafile format.
+The call is:  CALL METAFL (CFMT)                         level 0
+         or:  void metafl (char *cfmt);
+CFMT          is a character string  that defines  the file for-
+              mat.
+   = 'GKSL'   defines a GKSLIN metafile.
+   = 'CGM'    defines a CGM metafile.
+   = 'PS'     defines a coloured PostScript file.
+   = 'EPS'    defines an  Encapsulated PostScript file. The for-
+              mat is nearly the same as for 'PS'.
+   = 'PDF'    defines a PDF file.
+   = 'HPGL'   defines an HPGL file.
+   = 'WMF'    defines a Windows metafile.
+   = 'SVG'    defines a SVG file.
+   = 'GIF'    defines a GIF file.
+   = 'TIFF'   defines a TIFF file.
+   = 'PNG'    defines a PNG file.
+   = 'PPM'    defines a portable pixmap format.
+   = 'IMAG'   defines an image file.
+   = 'BMP'    defines a Windows Bitmap format.
+   = 'VIRT'   defines a virtual file. The metafile  is hold in a
+              raster format in computer memory.
+   = 'CONS'   defines a  graphics output  on the screen.  If the
+              screen is a windows display, a graphical window is
+              used that has nearly the size of the screen.
+   = 'XWIN'   defines an X Window display.  By default, the size
+              of the window  is nearly  2/3 of  the size  of the
+              screen.
+   = 'GL'     defines an OpenGL window.  By default, the size of
+              the window is nearly 2/3 of the screen size.
+                                         Default: CFMT = 'GKSL'.
+Name: SETFIL  1
+By default, the plot file consists of the keyword  'DISLIN'  and
+an extension that depends on the file format. An alternate file-
+name can be set with SETFIL.
+The call is:  CALL SETFIL (CFIL)                         level 0
+         or:  void setfil (char *cfil);
+CFIL          is a character string that contains the filename.
+Name: SCLFAC  1
+SCLFAC sets the scaling factor for an entire plot.
+The call is:  CALL SCLFAC (XFAC)                         level 0
+         or:  void sclfac (float xfac);
+XFAC          is the scaling factor  by which the entire plot is
+              scaled up or down.
+                                              Default: XFAC = 1.
+Name: SCLMOD  1
+The method by which  graphics are scaled to the hardware page of
+devices  such as a  graphics terminal  can be  selected with the
+routine SCLMOD.
+The call is:   CALL SCLMOD (CMOD)                        level 0
+         or:   void sclmod (char *cmod); 
+CMOD = 'DOWN'  means  that graphics  will be scaled down  if the
+               hardware  page  of a device  is smaller  than the
+               plotting page.
+     = 'FULL'  means that the graphics will be scaled up or down
+               depending upon the size of the hardware page.
+                                         Default: CMOD = 'DOWN'.
+Name: FILMOD  1
+The routine FILMOD determines if a new plot file name is created
+for existing files.
+The call is:    CALL FILMOD (CMOD)              level 0, 1, 2, 3
+         or:    void filmod (char *cmod); 
+CMOD            is a character string containing the mode.
+   = 'COUNT'    means that  a new file version  will be created.
+                An  increasing  version number  is added  to the 
+                filename and  the filename is shortened to eight
+                characters.
+   = 'VERSION'  is a  similar  option to  'COUNT' that creates a
+                new file version, but without  shorten the file-
+                name.
+   = 'DELETE'   means that  the existing  file will be overwrit-
+                ten.
+   = 'BREAK'    means that  the program  will be  terminated  by
+                DISINI.
+                                        Default: CMOD = 'COUNT'.
+Name: FILOPT  1
+The routine  FILOPT  modifies  rules  for creating  file version
+names.
+The call is:  CALL FILOPT (COPT, CKEY)          level 0, 1, 2, 3 
+         or:  void filopt (char *copt, char *ckey);
+COPT          is a character string containing an option.
+CKEY          is a character  string  that  can have  the values
+              'SEPARATOR', 'NUMBER' and 'DIGITS'. 
+              The keyword 'SEPARATOR' defines  the separator be-
+              tween filenames  and  version  numbers.  If CKEY = 
+              'SEPARATOR',  COPT  can  have  the values  'UNDER-
+              SCORE',  'HYPHEN'  and 'NONE'. If CKEY = 'NUMBER',
+              COPT can have  the values 'SHORT' and 'LONG'.  The
+              option  'LONG'  means that leading  zeros are used
+              in the version number. The keyword  'DIGITS'  sets
+              the  number  of digits  that  are used for version 
+              numbers.  For  that  keyword,  COPT  can  have the 
+              values  '2', '3', '4', '5' and '6'. 
+                                  Defaults:  ('SEPARATOR', '_'), 
+                                            ('NUMBER', 'SHORT'),
+                                                ('DIGITS', '4').
+Name: PAGMOD  1
+GKSLIN and CGM files can be  rotated by  90 degrees  to use  the
+full hardware page of a device.  In general,  this is done auto-
+matically by the driver program.
+The call is:    CALL PAGMOD (CMOD)                       level 0
+         or:    void pagmod (char *cmod); 
+CMOD = 'LAND'   means that the metafile is not rotated.
+     = 'PORT'   means  that the  metafile  is rotated  by 90 de-
+                grees.
+     = 'NONE'   can be used to disable automatic plot file rota-
+                tion in the driver program  (i.e. for PostScript
+                files).     
+                                         Default: CMOD = 'LAND'.
+Name: SCRMOD  1
+Normally,  the background  of screens  and image formats such as
+TIFF, GIF, BMP and PNG is set to 'BLACK'. With the routine SCR-
+MOD, the back and foreground colours can be swapped.
+The call is:  CALL SCRMOD (CMOD)                         level 0
+         or:  void scrmod (char *cmod); 
+CMOD          is a character string containing the mode.
+ = 'AUTO'     uses  a 'BLACK'  background colour for screen out-
+              put and image files.
+ = 'REVERS'   means that the background colour is set to 'WHITE'
+              and the foreground colour to 'BLACK'.
+ = 'NOREV'    means that the background colour is set to 'BLACK'
+              and the foreground colour to 'WHITE'.
+                                         Default: CMOD = 'AUTO'.
+Name: CGMBGD  1
+The routine CGMBGD sets the background colour for CGM files.
+The call is:  CALL CGMBGD (XR, XG, XB)          level 0, 1, 2, 3 
+         or:  void cgmbgd (float xr, float xg, float xb);
+XR, XG, XB    are the  RGB coordinates  of the background colour 
+              in the range 0 to 1.
+                                          Default: (1., 1., 1.).
+Name: CGMPIC  1
+The routine  CGMPIC  modifies the picture  ID in CGM files.  The
+picture ID may be referenced by some browsers.
+The call is:  CALL CGMPIC (CSTR)                level 0, 1, 2, 3 
+         or:  void cgmpic (char *cstr);
+CSTR          is a character string  containing  the picture  ID
+              (<=  256 characters). By default,  the ID 
+              'Picture n'  is used where n is the picture number
+              beginning with 1. 
+Name: TIFMOD 1
+The routine  TIFMOD  modifies  the  physical resolution of  TIFF 
+files.
+The call is:  CALL TIFMOD (N, CVAL, COPT)                level 0
+         or:  void tifmod (int n, char *cval, char *copt);
+N             is an integer value  containing the number of pix-
+              els per resolution unit.
+CVAL          is a  character string  containing  the resolution 
+              unit. CVAL can have the values 'INCH' and 'CM'.
+COPT          is a  character string  that  can  have  the value
+              'RESOLUTION'.
+                            Default: (100, 'INCH', 'RESOLUTION')
+Name: BMPMOD 1
+The routine  BMPMOD  modifies  the  physical  resolution of  BMP 
+files.
+The call is:  CALL BMPMOD (N, CVAL, COPT)                level 0
+         or:  void bmpmod (int n, char *cval, char *copt);
+N             is an integer value  containing the number of pix-
+              els per resolution unit.
+CVAL          is a  character string  containing  the resolution 
+              unit. CVAL can have the values 'INCH' and 'METER'.
+COPT          is a  character string  that  can  have  the value
+              'RESOLUTION'.
+                          Default: (2500, 'METER', 'RESOLUTION')
+Name: WMFMOD 1
+The routine WMFMOD modifies the appearance of WMF files. 
+The call is:  CALL WMFMOD (CMOD, CKEY)                   level 0
+         or:  void wmfmod (char *cmod, char *ckey);
+CMOD          is a character string containing the values 'STAN-
+              DARD' or 'PLACEABLE'.  If CMOD =  'PLACEABLE',  an
+              additional leading header  of  22 byte is added to
+              the WMF file.  The format  is also  known as Aldus
+              Placeable Metafile.
+CKEY          is a  character string  that  can  have  the value
+              'FORMAT'.
+                                     Default: CMOD = 'STANDARD'.
+Name: PDFMOD  1
+The routine PDFMOD selects between compressed and non compressed
+PDF files, and can enable PDF buffer output instead of file out-
+put. 
+The call is:  CALL PDFMOD (CMOD, CKEY)                   level 0 
+         or:  void pdfmod (char *cmod, char *ckey);
+CMOD          is  a  character  string  that can have the values 
+              'ON' and 'OFF'.
+CKEY          is a character  string  that can  have  the values 
+              'COMPRESSION and 'BUFFER'. For CKEY = 'BUFFER' and
+              CMOD = 'ON',  the PDF file  is hold  in memory and 
+              can be  copied  to a  user buffer with the routine
+              PDFBUF after DISFIN.
+                                  Default: ('ON', COMPRESSION'), 
+                                              ('OFF', 'BUFFER').
+Name: PDFMRK  1
+The routine PDFMRK writes bookmarks to PDF files.  This makes it
+possible  to navigate  through  PDF files  that contain multiple
+pages.
+The call is:  CALL PDFMRK (CSTR, COPT)             level 1 ,2 ,3 
+         or:  void pdfmrk (char *cstr, char *copt);
+CSTR         is a character string that contains the text of the
+             bookmark.
+COPT         is a  character  string  that  can  have the values 
+             'CHAPTER',  'SECTION',  'SUBSECTION',   'PARAGRAPH'
+             and  'SUBPARAGRAPH'. This option defines the  level
+             of  a bookmark  in the hierarchy of bookmarks.
+             A bookmark with the option  'SECTION'  can only  be
+             defined if a bookmark with the  option 'CHAPTER' is
+             defined before, and so on.
+Name: GIFMOD  1
+The routine GIFMOD enables transparency for GIF files.
+The call is:  CALL GIFMOD (CMOD, CKEY)                   level 0 
+         or:  void gifmod (char *cmod, char *ckey);
+CMOD          is a character string that can have the values 
+              'ON' and 'OFF'.
+CKEY          is a character string that can have the  value 
+              'TRANSPARENCY'.
+                               Default: ('OFF', 'TRANSPARENCY').
+Name: PNGMOD  1
+The routine PNGMOD enables transparency for PNG files.
+The call is:  CALL PNGMOD (CMOD, CKEY)                   level 0 
+         or:  void pngmod (char *cmod, char *ckey);
+CMOD          is a character string that can have the values 
+              'ON' and 'OFF'.
+CKEY          is a character string that can have the  value 
+              'TRANSPARENCY'.
+                               Default: ('OFF', 'TRANSPARENCY').
+Note:         For indexed PNG files, the colour table entry 0 is
+              used  for transparency.  For RGB files, the colour 
+              White is used for transparency.
+Name: HPGMOD  1
+The routine HPGMOD defines options for HPGL files.
+The call is:  CALL HPGMOD (CMOD, CKEY)                   level 0 
+         or:  void hpgmod (char *cmod, char *ckey);
+CMOD          is a character  string  that can  have  the values
+              'STAN' and  'ARISTO'.   For  COPT = 'ARISTO',  the
+              DISLIN HPGL  file  will  begin  with  the commands
+              'IN;SP1;LT;PU'.
+CKEY          is a  character  string  that  can have  the value 
+             'PLOTTER'.
+                                   Default: ('STAN', 'PLOTTER').
+Name: IMGFMT  1
+The routine  IMGFMT defines palette or true colour mode for DIS-
+LIN image formats such as TIFF, PNG, BMP and IMAGE.
+The call is:  CALL IMGFMT (CMOD)                         level 0 
+         or:  void imgfmt (char *cmod);
+CMOD          is a character  string  that  can have  the values
+              'INDEX' and 'RGB'.  For TIFF files, the additional
+              keyword 'BILEVEL' is allowed for creating  bilevel
+              TIFF files.
+                                        Default: CMOD = 'INDEX'.
+Name: NEWPAG  1
+NEWPAG creates a new page.
+The call is:  CALL NEWPAG                                level 1
+         or:  void newpag ();
+Notes:     -  PostScript,  PDF and CGM files can store  multiple
+              pages.  For other  output formats,  NEWPAG  is not 
+              useful.
+           -  On X Window  terminals,  NEWPAG  is waiting  for a
+              mouse button 2  event  before  displaying the next
+              page.  This mode can be changed  with the  routine
+              WINMOD.  On other terminals,  NEWPAG  has the same 
+              effect as ERASE. 
+Name: WINDOW  1
+This routine defines for  X Window  terminals a  region  on  the
+screen  where the  graphics will be  displayed.  By default, the
+window size is set to  2/3 of the screen size and located in the
+lower right corner of the screen.
+The call is:  CALL WINDOW (NX, NY, NW, NH)      level 0, 1, 2, 3
+         or:  void window (int nx, int ny, int nw, int nh);
+NX, NY        are the  screen coordinates of the upper left cor-
+              ner.
+NW, NH        are the width  and height  of the window in screen
+              coordinates.
+Note:         In general, the screen size is 1280 * 1024 pixels.
+Name: WINSIZ  1
+This routine  defines the size of windows  and the resolution of
+DISLIN image formats such as  TIFF,  PNG,  BMP,  PPM  and IMAGE.
+By default,  the window size is set to  2/3  of the screen size,
+and the resolution of  image  formats is  853 x 603 pixels. 
+The call is:  CALL WINSIZ (NW, NH)              level 0, 1, 2, 3
+         or:  void winsiz (int nw, int nh);
+NW, NH        are the width  and height of the window in pixels.
+Name: HWPAGE  1
+The routine  HWPAGE  defines the size of the PostScript hardware
+page.
+The call is:  CALL HWPAGE (NW, NH)                       level 0
+         or:  void hwpage (int nw, int nh);
+NW, NH        are the width and height  of the  PostScript hard-
+              ware page in plot coordinates.
+                                          Default: (1950, 2800).
+Name: HWORIG  1
+The routine HWORIG defines the hardware origin of the PostScript
+hardware page.
+The call is:  CALL HWORIG (NX, NY)                       level 0
+         or:  void hworig (int nx, int ny);
+NX, NY        are the plot coordinates of the hardware origin.
+                                             Default: (75, 100).
+Name: HWSCAL  1
+The routine  HWSCAL  modifies  the scale operator  in PostScript
+files.
+The call is:  CALL HWSCAL (XSCL)                         level 0
+XSCL          is a floating point value used for the scale oper-
+              ator.
+                                                     Default: 1.
+Name: ERRMOD  1
+The printing of warnings  and the output of the protocol in DIS-
+FIN can be disabled with the routine ERRMOD.
+The call is:  CALL ERRMOD (CKEY, CMOD)               level 1,2,3
+         or:  void errmod (char *ckey, char *cmod);
+CKEY          is a  character string  that can  have  the values
+              'WARNINGS', 'CHECK',  'PROTOCOL' and 'ALL'. 'WARN-
+              INGS'  means the error messages  about bad parame-
+              ters passed to DISLIN routines, 'CHECK' the out of
+              range  check  of coordinates  passed  to  plotting
+              routines such as CURVE and  'PROTOCOL'  the output
+              of the protocol in DISFIN.
+CMOD          is a character  string  that  can have  the values
+              'ON' and 'OFF'.  For  CKEY = 'PROTOCOL',  CMOD can
+              have the additional value  'FILE'  that means that
+              the protocol in  DISFIN is also written to the er-
+              ror file.
+                                          Default: ('ALL', 'ON')
+Name: ERRFIL  1
+By default, the name of the error file is 'dislin.err'.
+An alternate filename can be set with ERRFIL.
+The call is:  CALL ERRFIL (CFIL)                         level 0
+         or:  void errfil (char *cfil);
+CFIL          is a character string  that contains the filename.
+Name: ERRDEV  1
+The routine  ERRDEV defines the output device for  DISLIN  warn-
+ings. By default, warnings are written to the screen.
+The call is:  CALL ERRDEV (COPT)                         level 0
+         or:  void errdev (char *copt);
+COPT          is a  character string  that can  have  the values
+              'CONS', 'FILE' and 'APPEND'.  'APPEND' means  that
+              all error messages  are appended  to the same file
+              while for the keyword  'FILE' a new error file  is
+              created for each DISINI/DISFIN cycle.
+                                         Default: COPT = 'CONS'.
+Name: UNIT    1
+UNIT defines the  logical unit used for printing  error messages
+and listing data points that lie outside of the axis scaling.
+The call is:  CALL UNIT (NU)                       level 1, 2, 3
+         or:  void unit (FILE *nu);
+NU            is the logical unit. If NU = 0, all messages  will
+              be suppressed.        Default: NU = 6 (or: stdout)
+Name: WINAPP  1
+The routine WINAPP defines if a  DISLIN program should look like
+a  Windows console, or more like a  Windows program.  If Windows
+mode is selected, all warnings are written to an  error file and
+the protocol in disfin is displayed in a widget. 
+The call is:  CALL WINAPP (COPT)                         level 0
+         or:  void winapp (char *copt);
+COPT          is a  character string  that can  have  the values
+              'CONSOLE' and 'WINDOWS'.
+                                      Default: COPT = 'CONSOLE'.
+Name: CLRMOD  1
+The routine CLRMOD defines the colour mode used for output on an
+X Window terminal.
+The call is:  CALL CLRMOD (CMOD)                         level 0
+         or:  void clrmod (char *cmod);        
+CMOD = 'NONE' means that a colour table with 256 colours will be
+              reduced to 129 colours  to conserve current screen
+              and window colours. The colour values will  be re-
+              duced by the formula (0 <=> 0, i = (iclr + 1) / 2, 
+              iclr = 1,..,255).  
+     = 'FULL' means that all 256 colours will be displayed.
+     = 'CONT' means that a colour table  with less than  129 en-
+              tries will be used.
+                                         Default: CMOD = 'NONE'.    
+Name: WINMOD  1
+The routine WINMOD affects the handling of windows in the termi-
+nation routine  DISFIN. 
+The call is:  CALL WINMOD (CMOD)                   level 1, 2, 3
+         or:  void winmod (char *cmod);
+CMOD          is a character string containing the mode.
+  = 'FULL'    means that DISFIN is waiting  for a mouse button 2
+              event. After program continuation, all windows are
+              deleted.
+  = 'NOHOLD'  means that  DISFIN is not waiting for a mouse but-
+              ton 2 event.  After a call to  DISFIN, all windows
+              are deleted.
+  = 'NOERASE' means that the program is still blocked in  DISFIN
+              but windows will not be deleted after program con-
+              tinuation.
+  = "NONE'    means  that the program  is not blocked in  DISFIN
+              and windows are not deleted.
+  = 'DELAY'   means that the program is blocked for a short time
+              in  DISFIN  before it is continued. The delay time
+              can be defined with the routine WINOPT.
+                                         Default: CMOD = 'FULL'.
+Name: WINOPT  1
+The routine  WINOPT sets the delay time for the keyword  'DELAY'
+in WINMOD.
+The call is:  CALL WINOPT (IOPT, CKEY)             level 1, 2, 3
+         or:  winopt (int iopt, char *ckey);
+IOPT          is the delay time in seconds or milliseconds.
+CKEY          is a  character string  that  can have  the values 
+              'DELAY' and 'MDELAY'.  For  CKEY = 'MDELAY',  IOPT
+              must contain milliseconds, otherwise seconds.
+                                         Default: (10, 'DELAY').
+Name: WINKEY  1
+The routine  WINKEY enables a an additional key that can be used
+for program continuation is DISFIN. Normally, the mouse button 2
+can be used for closing the graphics window. 
+The call is:  CALL WINKEY (CKEY)                   level 1, 2, 3
+         or:  void winkey (char *ckey);
+CKEY          is a character  string  that  can have  the values
+              'NONE', 'RETURN' and 'ESCAPE'.
+                                         Default: CKEY = 'NONE'.
+Name: X11MOD  1
+The routine X11MOD enables backing store for graphical output on
+X Window terminals.
+The call is:  CALL X11MOD (CMOD)                         level 0
+         or:  void x11mod (char *cmod);
+CMOD          is a character string containing the mode.
+  = 'STORE'   means  that graphical output  is saved in a pixmap
+              that will be copied to the output window.
+  = 'NOSTORE' means  that the graphical  output is send directly 
+              to the output window.
+  = 'AUTO'    means that  'NOSTORE'  will  be  used on  X11  and 
+              'STORE' on Windows terminals.
+ =  'PIXMAP'  means  that  only a pixmap  is used.  The graphics
+              window will be invisible.
+                                        Default: CMOD = 'STORE'.
+Name: SETXID  1
+The routine  SETXID  defines an external graphics window for X11
+and Windows displays. All graphical output is sent to the exter-
+nal window.  For X11 displays,  an external  pixmap  can also be
+defined.
+The call is:  CALL SETXID (ID, CTYPE)           level 0, 1, 2, 3 
+         or:  void setxid (int id, char *ctype);
+ID            is the window or pixmap ID.
+CTYPE         is a character string  that  can  have  the values
+              'NONE, 'WINDOW',  'PIXMAP'  and 'WIDGET'.  For the
+              keyword 'WIDGET', the  ID of a  DISLIN draw widget
+              can be used.                 Default: (0, 'NONE').
+Notes:      - If an external  pixmap is used, backing store must
+              also be enabled with the routine X11MOD.
+            - An external window is not erased by DISINI. 
+              This can be done with the routine ERASE.
+            - External windows are not blocked in DISFIN 
+              (see WINMOD).   
+            - External  windows  can also be used  for  multiple 
+              DISLIN windows  that are defined  with the routine
+              OPNWIN.
+Name: DISENV  1
+A few routines in DISLIN such as some font and map routines need
+the path to the  DISLIN  installation directory for reading font
+and map files.  The  DISLIN installation directory can either be
+defined outside  of a program with the environment variable DIS-
+LIN,  or within a program  with the routine DISENV.  If none  of
+the methods  above is applied, the default directories c:\dislin
+and  /usr/local/dislin  are used on  Windows and Linux/UNIX sys-
+tems.  If the DISLIN environment  is already defined  outside of
+the program, a call to DISENV has no affect.
+The call is:  CALL DISENV (CPATH)               level 0, 1, 2, 3
+         or:  void disenv (char *cpath);
+CPATH         is a character  string  that  contains the path to
+              the DISLIN installation directory.
+Name: AXSTYP  6
+The routine  AXSTYP  defines  the type  of an axis system.  Axis
+systems  can be plotted as rectangles or in a crossed form.  For
+crossed axis systems,  the scaling  must be linear  and the axis
+limits must contain the origin.
+The call is:  CALL AXSTYP (COPT)                   level 1, 2, 3
+         or:  void axstyp (char *copt); 
+CPOS          is a character string defining the type.
+ = 'RECT'     defines a rectangular axis system. 
+ = 'CROSS'    defines a crossed axis system.
+                                         Default: COPT = 'RECT'.
+Name: AXSPOS  6
+AXSPOS determines the position of an axis system.
+The call is:  CALL AXSPOS (NXA, NYA)                     level 1
+         or:  void axspos (int nxa, int nya);
+NXA, NYA      are plot coordinates that define lower left corner
+              of an  axis system.  By default,  axis systems are
+              centred  in the X-direction  while  NYA is set  to
+              the  value (page height - 300).
+Name: AXSORG  6
+AXSORG is  an alternate  routine  for defining the position of a
+crossed axis system.
+The call is:  CALL AXSORG (NX, NY)                       level 1
+         or:  void axsorg (int nx, int ny);
+NX, NY        are plot coordinates  that define the position  of
+              the origin of a crossed axis system.
+Name: AXSLEN  6
+AXSLEN defines the size of an axis system.
+The call is:  CALL AXSLEN (NXL, NYL)                     level 1
+         or:  void axslen (int nxl, int nyl);
+NXL, NYL      are the  length  and height  of an axis  system in
+              plot coordinates.  The default values  are  2/3 of
+              the page length and height.
+Name: CENTER  6
+A call to the routine CENTER will centre the axis system  on the
+page. All elements of an axis system, including the title,  axis
+labels and names, will be taken into consideration.  The centra-
+lisation is done by  GRAF  through changing  the position of the
+origin.  Therefore, all plotting routines called after GRAF will
+work with the new origin.
+The call is:  CALL CENTER                          level 1, 2, 3
+         or:  void center ();
+Name: AXSSCL   8
+This routine sets the axis scaling to logarithmic or linear.
+The call is:  CALL AXSSCL (CSCL, CAX)               level 1, 2, 3
+         or:  void AXSSCL (char *cscl, char *cax);
+CSCL = 'LIN'  denotes linear scaling.
+     = 'LOG'  denotes logarithmic scaling.
+CAX           is a character string that defines the axes.
+                                        Default: ('LIN', 'XYZ').
+Note:         For logarithmic scaling, the corresponding parame-
+              ters in GRAF must be exponents of base 10.
+Name: SETSCL  6
+The parameters in  GRAF will be calculated automatically by DIS-
+LIN if the routine SETSCL is used.  In this case, GRAF must have
+dummy parameters in which DISLIN returns the calculated values.
+The call is:  CALL SETSCL (XRAY, N, CAX)                 level 1
+         or:  void setscl (float *xray, int n, char *cax);
+XRAY          is a vector that contains user coordinates. SETSCL
+              calculates  the minimum and  maximum values of the
+              data and stores them in a common block.
+ N            is the number of points in XRAY.
+ CAX          is a character string that defines the axes.
+ Notes:     - SETSCL  can be used  with linear  and  logarithmic
+              scaling and with all label types.
+            - The calculation  of scaling  and label  values  is
+              done by GRAF. The minimum and maximum of the  data
+              are always used for the lower and upper  limits of
+              an axis  while even values  are calculated for the
+              labels.
+            - The number of digits  after the decimal point will
+              be set automatically.
+            - If the scaling of an axis  is logarithmic,  labels
+              will be plotted with the format 'LOG'.
+Name: TICKS   8
+This routine is used to  define the number of ticks between axis
+labels.
+The call is:  CALL TICKS (NTIC, CAX)               level 1, 2, 3
+         or:  void ticks (int ntic, char *cax);
+NTIC          is the number of ticks (>= 0).
+ CAX          is a character string that defines the axes.
+                                            Default: (2, 'XYZ').
+Name: TICPOS  8
+This routine defines the position of ticks.
+The call is:  CALL TICPOS (CPOS, CAX)              level 1, 2, 3
+         or:  void ticpos (char *cpos, char *cax);
+CPOS          is a character string defining the position.
+  = 'LABELS'  means that ticks  will be plotted on the same side
+              as labels.
+  = 'REVERS'  means that ticks will be plotted inside of an axis
+              system.
+  = 'CENTER'  means that ticks will be centred on the axis line.
+CAX           is a character string that defines the axes.
+                                      Default: ('LABELS', 'XYZ).
+Name: TICLEN  8
+TICLEN sets the lengths of major and minor ticks.
+The call is:  CALL TICLEN (NMAJ, NMIN)             level 1, 2, 3
+         or:  void ticlen (int nmaj, int nmin);
+NMAJ          is the length  of major ticks  in plot coordinates
+              (> 0).
+NMIN          is the length  of minor ticks  in plot coordinates
+              (> 0).
+                                              Default: (24, 16).
+Name: TICMOD  8
+The routine  TICMOD modifies the plotting of minor tick marks on
+calendar axes.  By default, a major tick is plotted at each date
+label and no minor ticks are plotted.
+The call is:  CALL TICMOD (COPT, CAX)              level 1, 2, 3
+         or:  void ticmod (char *copt, char *cax);
+COPT          is a character string defining the tick marks.
+  = 'NONE'    means that no minor ticks will be plotted.
+  = 'DAYS'    means that ticks will be plotted for every day.
+  = 'MONTH'   means that ticks will be plotted for every month.
+  = 'DMONTH'  means that ticks will be plotted for every 
+              second month.
+  = 'QUARTER' means that ticks will be plotted on the first of 
+              January, April, July and October.
+  = 'HALF'    means that ticks will be plotted on the first of
+              January and July.
+  = 'YEAR'    means that ticks will be plotted for every year.
+CAX           is a character string that defines the axes.
+                                       Default: ('NONE', 'XYZ').
+Name: LOGTIC  8
+The  appearance  of  minor  ticks on  logarithmic  axes  differs
+slightly from linear axes. By default,  logarithmic  minor ticks
+are generated automatically if the label step is 1 or -1 and the
+if number of ticks in  TICKS is greater than 1.  If the step has
+another value,  minor ticks are plotted  as specified in  TICKS.
+This algorithm can be modified with LOGTIC.
+The call is:  CALL LOGTIC (CMOD)                   level 1, 2, 3
+         or:  void logtic (char *cmod);
+CMOD          is a character  string defining  the appearance of
+              logarithmic ticks.
+  = 'AUTO'    defines default ticks.
+  = 'FULL'    means that logarithmic minor ticks will be genera-
+              ted for every cycle even if the label step is  not
+              1 but some other integer.  Default: CMOD = 'AUTO'.
+Name: LABELS  8,20,21,25
+LABELS determines which label types will be plotted on an axis.
+The call is:   CALL LABELS (CLAB, CAX)             level 1, 2, 3
+         or:   void labels (char *clab, char *cax); 
+CLAB           is a character string that defines the labels.
+  = 'NONE'     will suppress all axis labels.
+  = 'FLOAT'    will plot labels in floating point format.
+  = 'EXP'      will plot  floating point  labels in  exponential
+               format where fractions range between 1 and 10.
+  = 'FEXP'     will plot labels in the format  fEn  where f ran-
+               ges between 1 and 10.
+  = 'LOG'      will plot logarithmic labels with base 10 and the
+               corresponding exponents.
+  = 'CLOG'     is similar to 'LOG'  except that the entire label
+               is centred below the tick mark;  with 'LOG', only
+               the base '10' is centred.
+  = 'ELOG'     will plot only the logarithmic values of labels.
+  = 'TIME'     will plot time labels in the format 'hhmm'.
+  = 'HOURS'    will plot time labels in the format 'hh'.
+  = 'SECONDS'  will plot time labels in the format 'hhmmss'.
+  = 'DATE'    defines date labels.
+  = 'MAP'      defines geographical labels which are  plotted as
+               non  negative  floating point  numbers  with  the
+               following characters 'W', 'E', 'N' and 'S'.
+  = 'LMAP'     is similar to 'MAP' except that lowercase charac-
+               ters are used.
+  = 'DMAP'     selects labels that are plotted as floating point
+               numbers with degree symbols.
+  = 'MYLAB'    selects labels  that are defined with the routine
+               MYLAB.
+CAX            is a character string that defines the axes.
+                                      Default: ('FLOAT', 'XYZ').
+Notes:       - The values 'LOG', 'CLOG' and  'ELOG' can be  only
+               used with logarithmic scaling. If these label ty-
+               pes are used with linear  scaling,   DISLIN  will
+               change them to 'FLOAT'.
+             - For the values 'TIME', 'HOURS' and 'SECONDS', the
+               corresponding parameters in  GRAF must be in  se-
+               conds since midnight.
+            -  For the value  'DATE',  the corresponding parame-
+               ters in GRAF must be in days  since  a base date.
+               The  base date  can be  defined with the  routine
+               BASDAT while the  number  of days since  the base
+               date can be  calculated with the routine  INCDAT.
+               Date labels can be modified with the routine LAB-
+               MOD.
+Name: MYLAB   8
+MYLAB defines user labels.
+The call is:  CALL MYLAB (CSTR, ITICK, CAX)        level 1, 2, 3
+         or:  void mylab (char *cstr, int itick, char *cax);
+CSTR          is a  character string  containing a label  (<= 32
+              characters).
+ITICK         is the tick number where the label will be plotted
+              (<= 50). Tick numbering starts with 1.
+CAX           is a character string that defines the axes.
+Name: LABTYP  8,21
+LABTYP defines horizontal or vertical labels.
+The call is:  CALL LABTYP (CTYPE, CAX)             level 1, 2, 3
+         or:  void labtyp (char *ctype, char *cax);
+CTYPE         is a character string defining the direction.
+  = 'HORI'    defines horizontal labels.
+  = 'VERT'    defines vertical labels.
+CAX           is a character string that defines the axes.
+                                       Default: ('HORI', 'XYZ').
+Name: LABPOS  8,20,21
+LABPOS defines the position of labels.
+The call is:  CALL LABPOS (CPOS, CAX)              level 1, 2, 3
+         or:  void labpos (char *cpos, char *cax);
+CPOS          is a character string defining the position.
+  = 'TICKS'   means that labels will be plotted at major ticks.
+  = 'CENTER'  means that labels will be  centred  between  major
+              ticks.
+  = 'SHIFT'   means that  the starting  and end  labels  will be
+              shifted.
+CAX           is a character string that defines the axes.
+                                      Default: ('TICKS', 'XYZ').
+Name: LABJUS  8
+LABJUS defines the alignment of axis labels.
+The call is:  CALL LABJUS (CJUS, CAX)              level 1, 2, 3
+         or:  void labjus (char *cjus, char *cax);
+CJUS          is a  character string  defining the  alignment of
+              labels.
+  = 'AUTO'    means that labels will automatically justified.
+  = 'LEFT'    means that labels are left-justified.
+  = 'RIGHT'   means that labels are right-justified.
+  = 'OUTW'    means that labels are left-justified  on the  left
+              and lower axes of an axis system. On the right and
+              upper axes labels are right-justified.
+  = 'INWA'    means that labels are right-justified on the  left
+              and lower axes of an axis system. On the right and
+              upper axes labels are left-justified.
+CAX           is a character string that defines the axes.
+                                         Default: CJUS = 'AUTO'.
+Name: LABDIG  8,20,21
+This routine sets the number of digits  after the decimal  point
+displayed in labels.
+The call is:  CALL LABDIG (NDIG, CAX)              level 1, 2, 3
+         or:  void labdig (int ndig, char *cax);
+NDIG = -2     the number  of digits  is automatically calculated
+     = -1     defines integer labels.
+              by DISLIN.
+     =  0     defines  integer  labels  followed  by  a  decimal
+              point.
+     =  n     defines  the number  of digits  after  the decimal
+              point. The last digit will be rounded up.
+CAX           is a character string that defines the axes.
+                                            Default: (1, 'XYZ').
+Name: INTAX   8
+With the routine INTAX, all axes will be labeled with integers.
+The call is:  CALL INTAX
+         or:  void intax ();
+Name: LABDIS  8,25
+This routine sets the distance between labels and ticks.
+The call is:  CALL LABDIS (NDIS, CAX)              level 1, 2, 3
+         or:  void labdis (int ndis, char *cax);
+NDIS          is the distance in plot coordinates.
+CAX           is a character string that defines the axes.
+                                           Default: (24, 'XYZ').
+Name: LABMOD  8
+The routine  LABMOD modifies the appearance of date labels enab-
+led with the keyword  'DATE'  in the routine  LABELS.  Normally,
+date labels will be plotted in the form dd-mmm-yyyy.
+The call is:  CALL LABMOD (CKEY, CVAL, CAX)        level 1, 2, 3
+         or:  void labmod (char *ckey, char *cval, char *cax);
+CKEY          is a character string  containing  one of the fol-
+              lowing keywords:
+ = 'YEAR'     means  that the century field will be  modified in
+              date labels.  For CKEY = 'YEAR', CVAL can have the
+              values 'NONE', 'SHORT' and 'FULL'. 'NONE' suppres-
+              ses the year field while  'SHORT'  suppresses  the
+              century in the year field.  The  default  value is
+              'FULL'. 
+ = 'DAYS'     means  that the  day field will be modified.  CVAL 
+              can  have  the  values  'NONE',  'SHORT',  'LONG',
+              'NAME'  and 'FULL'.  For  CVAL = 'NONE',  the  day 
+              field  will be suppressed, for CVAL = 'SHORT', the
+              day will be plotted  as a number without a leading
+              zero. CVAL = 'LONG'  means  that the  day will  be
+              plotted as a number with two digits, CVAL = 'NAME'
+              means that abbreviations of the weekday names will
+              be plotted and CVAL = 'FULL' means that  the  full
+              weekday names will be displayed. The default value
+              is CVAL = 'LONG'.
+ = 'MONTH'    means  that the month field will be modified. CVAL
+              can  have  the  values  'NONE',  'SHORT',  'LONG', 
+              'NAME', 'TINY' and 'FULL'. For CVAL = 'NONE',  the
+              month  field  will  be  suppressed,   for  CVAL = 
+              'SHORT',  the  month  will be plotted  as a number
+              without  a leading zero.  CVAL = 'LONG' means that
+              the month will be plotted  as a  number  with  two
+              digits,  CVAL = 'NAME' means that abbreviations of
+              the  month names  will be plotted,  CVAL =  'TINY'
+              means that only the first character of month names
+              will be plotted and  CVAL = 'FULL'means  that full
+              month names  will be displayed. The default  value
+              is CVAL = 'NAME'.
+ = 'LANG'     defines  the  language used for weekdays and month
+              names  in date  labels.  CVAL can  have the values 
+              'ENGLISH',  'GERMAN'  and  'SPANISH'.  The default 
+              value for CVAL is 'ENGLISH'.
+ = 'FORM'     defines  the order  of the  date fields.  CVAL can
+              have the values 'DMY',  'DYM', 'YDM', 'YMD', 'DYM'
+              and 'MDY'. The default is CVAL = 'DMY'.
+ = 'SEPA'     defines a separator character used in date labels.
+              CVAL is a character string  containing the separa-
+              tor character. The default is CVAL = '-'.
+ = 'CASE'     defines if weekdays and month names are plotted in
+              uppercase  characters  or in lowercase  characters
+              with a leading uppercase character.  CVAL can have
+              the values  'UPPER' and  'NONE'. The default value
+              is 'NONE'.
+ = 'STEP'     defines a step between labels.  CVAL can  have the
+              values 'DAYS', 'MONTH', 'DMONTH', 'QUARTER', 
+              'HALF', 'YEAR', 'DYEAR' and 'QYREAR'.   For CVAL =
+              'DAYS',  the label step  specified  in the routine
+              GRAF  will be used.  The  default value is  CVAL =
+              'DAYS'.
+CAX           is a character string that defines the axes.
+Name: POLMOD  8
+The routine POLMOD modifies the appearance of angle labels plot-
+ted with the routine POLAR.
+The call is:  CALL POLMOD (CPOS, CDIR)             level 1, 2, 3
+         or:  void polmod (char *cpos, char *cdir);
+CPOS          is a character string that defines the position of
+              the first label. CPOS can have the values 'RIGHT',
+              'TOP', 'LEFT' and 'BOTTOM'.
+CDIR          defines the direction of the labels. CDIR can have
+              the values 'CLOCKWISE' and 'ANTICLOCK'.
+                                Default: ('RIGHT', 'ANTICLOCK').
+Name: TIMOPT  8
+With TIMOPT time  labels can be plotted  in the format  'hh:mm'.
+The default is 'hhmm'.
+The call is:  CALL TIMOPT                          level 1, 2, 3
+         or:  void timopt ();
+Name: RGTLAB  8
+The routine RGTLAB right-justifies user labels. By default, user
+labels are left-justified.
+The call is:  CALL RGTLAB                          level 1, 2, 3
+         or:  void rgtlab ();
+Name: NAME    8
+NAME defines axis titles.
+The call is:  CALL NAME (CSTR, CAX)                level 1, 2, 3
+         or:  void name (char *cstr, char *cax);
+CSTR          is a  character  string  containing the axis title 
+              (<= 132 characters).
+CAX           is a character string that defines the axes.
+                                          Default: (' ', 'XYZ').
+Name: HNAME   8
+HNAME defines the character height for axis names. 
+The call is:  CALL HNAME (NHNAME)                  level 1, 2, 3
+         or:  void hname (int nhname);
+NHNAME        is the character height in plot coordinates.
+                                            Default: NHNAME = 36
+Name: NAMDIS  8
+NAMDIS sets the distance between axis names and labels.
+The call is:  CALL NAMDIS (NDIS, CAX)              level 1, 2, 3
+         or:  void namdis (int ndis, char *cax);
+NDIS          is the distance in plot coordinates.
+CAX           is a character string that defines the axes.
+                                           Default: (30, 'XYZ').
+Name: NAMJUS  8
+The routine NAMJUS defines the alignment of axis titles.
+The call is:  CALL NAMJUS (CJUS, CAX)              level 1, 2, 3
+         or:  void namjus (char *cjus, char *cax);
+CJUS          is a  character  string  that  can have the values
+              'CENT', 'LEFT' and 'RIGHT'. 
+CAX           is a character string that defines the axes.
+                                         Default: CJUS = 'CENT'.
+Name: RVYNAM  8
+The routine  RVYNAM  is used to plot names and labels  on  right
+Y-axes and colour bars  at an angle of 90 degrees.  By  default,
+they are plotted at an angle of 270 degrees.
+The call is:  CALL RVYNAM                          level 1, 2, 3
+         or:  void rvynam ();
+Name: NOLINE  8
+After a call to  NOLINE  the plotting of axis lines will be sup-
+pressed.
+The call is:  CALL NOLINE (CAX)                    level 1, 2, 3
+         or:  void noline (char *cax);
+CAX           is a character string that defines the axes.
+Name: AXENDS  8
+With a call to AXENDS certain labels can be suppressed.
+The call is:  CALL AXENDS (COPT, CAX)              level 1, 2, 3
+         or:  void axends (char *copt, char *cax);
+COPT          is a  character string  that defines  which labels
+              will be suppressed.
+ = 'NONE'     means that all labels will be displayed.
+ = 'FIRST'    means that only  the starting  label will be plot-
+              ted.
+ = 'NOFIRST'  means that the starting label will not be plotted.
+ = 'LAST'     means that only the ending label will be plotted.
+ = 'NOLAST'   means that the ending label will not be plotted.
+ = 'ENDS'     means that  only the start and  end labels will be
+              plotted.
+ = 'NOENDS'   means that  start  and end labels will be suppres-
+              sed.
+CAX           is a character string that defines the axes.
+                                       Default: ('NONE', 'XYZ').
+Name: NOGRAF  6
+The routine NOGRAF suppresses the plotting of an axis system.
+The call is:  CALL NOGRAF                                level 1
+         or:  void nograf ();
+Name: AX2GRF  6
+The routine AX2GRF suppresses the  plotting of the upper  X- and
+the left Y-axis.
+The call is:  CALL AX2GRF                          level 1, 2, 3
+         or:  void ax2grf ();
+Name: SETGRF  6
+SETGRF removes a part of an axis or a complete axis from an axis
+system.
+The call is:  CALL SETGRF (C1, C2, C3, C4)         level 1, 2, 3
+         or:  void setgrf (char *c1, char *c2, 
+                           char *c3, char *c4);
+Ci            are character  strings  corresponding  to the four
+              axes of an axis system. C1 corresponds  to the lo-
+              wer X-axis, C2 to the left Y-axis, C3 to the upper
+              X-axis and C4 to the right Y-axis.  The parameters
+              can have the values 'NONE', 'LINE',  'TICKS', 'LA-
+              BELS' and 'NAME'. With 'NONE',  complete axes will
+              be suppressed,  with  'LINE', only axis lines will
+              be  plotted, with  'TICKS',  axis lines and  ticks
+              will be plotted,  with  'LABELS' axis lines, ticks
+              and labels will be  plotted and with  'NAME',  all
+              axis elements will be displayed.
+                    Default: ('NAME', 'NAME', 'TICKS', 'TICKS').
+Notes:     -  By default,  GRAF  plots a  frame  of  thickness 1
+              around axis systems. Therefore, in addition to the
+              parameter 'NONE', FRAME should be  called with the
+              parameter 0 for suppressing complete axes.
+           -  SETGRF does not reset the effect of NOGRAF and NO-
+              LINE. This must be done using RESET.
+Name: CLPWIN 
+The routine  CLPWIN  defines  a rectangular clipping area on the
+page.
+The call is:  CALL CLPWIN (NX, NY, NW, NH)         level 1, 2, 3
+         or:  void clpwin (int nx, int ny, int nw, int nh);
+NX, NY        are the plot coordinates of the upper left corner.
+NW, NH        are the width and height in plot coordinates.
+Name: CLPBOR
+This routine  sets the clipping area  to the entire  page  or to
+the axis system.
+The call is:  CALL CLPBOR (COPT)                      level 2, 3
+         or:  void clpbor (char *copt);
+COPT          is a character  string  that  can have  the values
+              'PAGE' and 'AXIS'.         Default: COPT = 'PAGE'.  
+Name: NOCLIP  6
+The suppressing  of lines outside of the borders of an axis sys-
+tem can be disabled with NOCLIP.
+The call is:  CALL NOCLIP                          level 1, 2, 3
+         or:  void noclip ();
+Name: CLPMOD  6
+The suppressing  of lines outside of the borders of an axis sys-
+tem can be modified with CLPMOD.
+The call is:  CALL CLPMOD (CMOD)                   level 1, 2, 3
+         or:  void clpmod (char *cmod);
+CMOD          is a character string defining the mode.
+   = 'AUTO'   defines  automatic clipping at  the borders  of an
+              axis system.
+   = 'RECT'   defines  rectangular clipping at the borders of an
+              axis system.
+   = 'CIRC'   defines circular clipping. The circle is placed in
+              the  middle of the axis sytem  with  the radius NR
+              where NR is the minimum of the axis lengths.
+   = 'NONE'   suppresses clipping.
+                                         Default: CMOD = 'AUTO'.
+Name: GRACE  6
+GRACE defines a  margin around axis  systems where lines will be
+clipped.
+The call is:  CALL GRACE (NGRA)                    level 1, 2, 3
+         or:  void grace (ngra);
+NGRA          is the width of the margin in plot coordinates. If
+              NGRA is negative, lines will be clipped inside the
+              axis system.
+                                              Default: NGRA = -1
+Name: FRAME  6,11
+FRAME defines  the thickness  of frames plotted by routines such
+as GRAF and LEGEND.
+The call is:  CALL FRAME (NFRM)                    level 1, 2, 3
+         or:  void frame (nfrm);
+NFRM          is the thickness of the frame in plot coordinates.
+              If  NFRM is negative,  the frame will be thickened
+              from the inside.  If positive,  the frame  will be
+              thickened towards the outside.
+                                               Default: NFRM = 1
+Name: AXSBGD  8
+The routine AXSBGD defines a background colour for axis systems.
+The call is:  CALL AXSBGD (NCLR)                   level 1, 2, 3
+         or:  void axsbgd (int nclr);
+NCLR          is a colour value. If NCLR = -1, the background of
+              an axis system is not filled in GRAF.
+                                              Default: NCLR = -1
+Name: AXCLRS  8
+AXCLRS selects colours for single parts of axes.
+The call is:  CALL AXCLRS (NCLR, COPT, CAX)        level 1, 2, 3
+         or:  void axclrs (int nclr, char *copt, char *cax);
+NCLR          is a colour value. If NCLR = -1, the actual colour
+              is used.
+COPT          is a  character string  that can have  the  values
+              'LINE', 'TICKS', 'LABELS', 'NAME' and 'ALL'.
+CAX           is a character string that defines the axes.
+                                    Default: (-1, 'ALL', 'XYZ').
+Name: TITLIN  9
+This subroutine defines  up to four  lines of text used for axis
+system titles.  The text can be plotted with  TITLE after a call
+to GRAF.
+The call is:  CALL TITLIN (CSTR, IZ)               level 1, 2, 3
+         or:  void titlin (char *cstr, int iz);
+CSTR          is a character string (<= 132 characters).
+IZ            is an integer that contains a value between  1 and
+              4 or -1 and -4.  If IZ is negative,  the line will
+              be underscored.
+                      Default: All lines are filled with blanks.
+Name: LFTTIT  9
+Title lines are centred above axis systems by default but can be
+left-justified with a call to LFTTIT.
+The call is:  CALL LFTTIT                          level 1, 2, 3
+         or:  void lfttit ();
+Name: TITPOS  9
+The routine TITPOS defines the position of title lines which can
+be plotted above or below axis systems.
+The call is:  CALL TITPOS (CPOS)                   level 1, 2, 3
+         or:  void titpos (char *cpos);
+CPOS          is a  character  string  that can  have the values
+              'ABOVE' and 'BELOW'.      Default: CPOS = 'ABOVE'.
+Name: TITJUS  9
+The routine TITJUS defines the alignment of title lines.
+The call is:  CALL TITJUS (CJUS)                   level 1, 2, 3
+         or:  void titjus (char *cjus);
+CJUS          is a character string  that can  have  the  values
+              'CENT', 'LEFT' and 'RIGHT'. 
+                                         Default: CJUS = 'CENT'.
+Name: LINESP  9,11
+LINESP defines the spacing between title and legend lines.
+The call is:  CALL LINESP (XFAC)                   level 1, 2, 3
+         or:  void linesp (float xfac);
+XFAC          The space  between  lines is set  to:  XFAC * cha-
+              racter height.                Default:  XFAC = 1.5
+Name: HTITLE  9
+HTITLE  defines the  character  height for titles. The character
+height defined by HEIGHT will be used if HTITLE is not called.
+The call is:  CALL HTITLE (NHCHAR)                 level 1, 2, 3
+         or:  void htitle (int nhchar);
+NHCHAR        is the character height in plot coordinates.
+Name: VKYTIT  9
+The space between  titles  and axis systems  can be enlarged  or
+reduced  with  VKYTIT.  By default,  the space is  2 * character
+height.
+The call is:  CALL VKYTIT (NV)                     level 1, 2, 3
+         or:  void vkytit (int nv);
+NV            is an integer that determines  the spacing between
+              axis systems  and titles.  If NV is negative,  the
+              space will be reduced by  NV plot coordinates.  If
+              NV is positive,  the space will be  enlarged by NV
+              plot coordinates.
+                                                 Default: NV = 0
+

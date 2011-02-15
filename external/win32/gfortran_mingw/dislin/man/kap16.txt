@@ -1,0 +1,138 @@
+                 Chapter 16: Quick Plots
+
+This chapter presents some quick plots that are  collections
+of DISLIN routines  for displaying  data with one statement.
+Axis scaling  is done automatically, but can be set manually
+with the routine  QPLSCL.  By default,  graphical  output is
+sent to the screen. 
+
+16.1 Plotting Curves
+
+                        Q P L O T
+
+QPLOT connects data points with lines.
+
+The call is:  CALL QPLOT (XRAY, YRAY, N)          level 0, 1
+
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+
+                        Q P L C R V
+
+QPLCRV is a similar routine to  QPLOT,  but can display mul-
+tiple curves.
+
+The call is:  CALL QPLCRV (XRAY, YRAY, N, COPT)   level 0, 1
+
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+COPT          is a character string that describes the mean-
+              ing of the  curve.  COPT can  have  the values
+              'FIRST', 'NEXT' and 'LAST'.
+              
+16.2 Scatter Plots
+
+                        Q P L S C A
+
+QPLSCA marks data points with symbols.
+
+The call is:  CALL QPLSCA (XRAY, YRAY, N)          level 0, 1
+
+XRAY, YRAY    are arrays that contain X- and Y-coordinates.
+N             is the number of data points.
+
+16.3 Bar Graphs
+
+                        Q P L B A R
+
+QPLBAR plots a bar graph.
+
+The call is:  CALL QPLBAR (XRAY, N)                level 0, 1
+
+XRAY          is an  array containing data points.
+N             is the number of data points.
+
+16.4 Pie Charts
+
+                        Q P L P I E
+
+QPLPIE plots a pie chart.
+
+The call is:  CALL QPLPIE (XRAY, N)                level 0, 1
+
+XRAY          is an  array containing data points.
+N             is the number of data points.
+
+16.5 3-D Colour Plots
+
+                        Q P L C L R
+
+QPLCLR makes a 3-D colour plot of a matrix.
+
+The call is:  CALL QPLCLR (ZMAT, IXDIM, IYDIM)     level 0, 1
+
+ZMAT          is a matrix  with the dimension  (IXDIM, IYDIM)
+              containing the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+
+16.6 Surface Plots
+
+                        Q P L S U R
+
+QPLSUR makes a surface plot of a matrix.
+
+The call is:  CALL QPLSUR (ZMAT, IXDIM, IYDIM)     level 0, 1
+
+ZMAT          is a matrix  with the dimension  (IXDIM, IYDIM)
+              containing the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+
+16.7 Contour Plots
+
+                        Q P L C O N
+
+QPLCON makes a contour plot of a matrix.
+
+The call is:  CALL QPLCON (ZMAT, IXDIM, IYDIM, NLEV) 
+                                                   level 0, 1
+
+ZMAT          is a matrix  with the dimension  (IXDIM, IYDIM)
+              containing the function values.
+IXDIM, IYDIM  are the dimensions of ZMAT.
+NLEV          is the number of contour levels  that should be
+              generated.
+
+16.8 Setting Parameters for Quick Plots
+
+Quick plots can be called in level 0 and level 1  of  DISLIN.
+If they are called in level 0,  the statements  CALL METAFL (
+'CONS') and  CALL DISINI are executed by quick plots. If they
+are called in level 1,  these statements  will be suppressed.
+This  means that  programs  can change  the output  device of 
+quick plots and  define  axis names  and titles  if they call
+quick plots in level 1 after a call to DISINI.
+
+                        Q P L S C L
+
+QPLSCL overwrites the automatic scaling of quick plots.
+
+The call is:  CALL QPLSCL (A, E, OR, STEP, CAX)    level 0, 1
+
+A, E          are the lower and upper limits  of the axis.
+OR, STEP      are the first axis label  and the  step between
+              labels.
+CAX           is a character string that defines the axes. 
+              CAX can contain the characters 'X', 'Y' and 'Z'.
+
+
+The  following  example  defines axis  names  and a title for
+QPLOT:
+
+                   CALL METAFL ('CONS')
+                   CALL DISINI
+
+                   CALL NAME ('X-axis', 'X')
+                   CALL NAME ('Y-axis', 'Y')
+                   CALL TITLIN ('This is a Title', 2)
+                   CALL QPLOT (XRAY, YRAY, N)
+                   END

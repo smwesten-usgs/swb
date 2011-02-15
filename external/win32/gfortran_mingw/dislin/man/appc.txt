@@ -1,0 +1,797 @@
+                       Appendix C: Index
+
+This appendix presents all  routines in the graphics library
+in alphabetical  order.  For parameters,  the following con-
+ventions are used:
+
+      - INTEGER variables begin with the character N or I
+      - CHARACTER variables begin with the character C
+      - other variables are REAL
+      - arrays end with the keyword 'RAY'.
+
+The abbreviations have the meaning:
+
+     ps denotes a parameter setting routine
+     rq denotes a parameter requesting routine
+     p  denotes a plot routine.
+     w  denotes a widget routine.
+
+
+------------------------------------------------------------
+| Routine         Parameter              Level     Chapter |
+------------------------------------------------------------
+| ABS3PT    (X, Y, Z, XP, YP)              3         12.22 |
+| ADDLAB    (CSTR, V, ITIC, CAX)          2,3   p     4.5  |
+| ANGLE     (NGRAD)                      1,2,3  ps    6.4  |
+| ARCELL    (NX, NY, NA, NB, A, B, T)    1,2,3  p     8.5  |
+| AREAF     (NXRAY, NYRAY, N)            1,2,3  p     8.5  |
+| AUTRES    (IXDIM, IYDIM)                 1    ps   11.5  |
+| AX2GRF    none                         1,2,3  ps   6.2.6 |
+| AX3LEN    (NXL, NYL, NZL)                1    ps   11.5  |
+| AXCLRS    (NCLR, COPT, CAX)            1,2,3  ps   6.2.9 |
+| AXENDS    (CSTR, CAX)                  1,2,3  ps   6.2.6 |
+| AXGIT     none                          2,3   p     4.4  |
+| AXIS3D    (X3AXIS, Y3AXIS, Z3AXIS)     1,2,3  ps   12.1  |
+| AXSBGD    (NCLR)                       1,2,3  ps   6.2.1 |
+| AXSLEN    (NXL, NYL)                     1    ps   6.2.1 |
+| AXSPOS    (NXA, NYA)                     1    ps   6.2.1 |
+| AXSSCL    (CSCL,CAX)                   1,2,3  ps   6.2.2 |
+| BARBOR    (ICLR)                       1,2,3  ps   10.1  |
+| BARCLR    (IC1, IC2, IC3)              1,2,3  ps   10.1  |
+| BARGRP    (NGRP, GAP)                  1,2,3  ps   10.1  |
+| BARMOD    (CMOD,COPT)                  1,2,3  ps   10.1  |
+| BAROPT    (XF, ANG)                    1,2,3  ps   10.1  |
+| BARPOS    (COPT)                       1,2,3  ps   10.1  |
+| BARS      (XRAY, Y1RAY, Y2RAY, N)       2,3   p    10.1  |
+| BARS3D    (XRAY, YRAY, Z1RAY, Y2RAY,    2,3   p    12.14 | 
+|            XWRAY, YWRAY, ICRAY, N)                       |
+| BARTYP    (CTYP)                       1,2,3  ps   10.1  |
+| BARWTH    (FACTOR)                     1,2,3  ps    6.9  |
+| BASALF    (CALPH)                      1,2,3  ps    6.5  |
+| BASDAT    (ID, IM, IY)               0,1,2,3  ps    9.4  |
+| BEZIER    (XRAY, YRAY, N,            0,1,2,3        9.3  |
+|            XPRAY, YPRAY, NP)                             |
+| BITSI2    (NBITS, NINP2, IINP,       0,1,2,3        9.5  | 
+|            NOUT2, IOT, IOPT)                             |
+| BITSI4    (NBITS, NINP, IINP,        0,1,2,3        9.5  | 
+|            NOUT, IOUT, IOPT)                             |
+| BMPFNT    (CFONT)                      1,2,3  ps    6.5  |
+| BMPMOD    (N, CVAL, COPT)                0    ps   6.1.4 |
+| BOX2D     none                         1,2,3  p     4.1  |
+| BOX3D     none                           3    p    12.4  |
+| BUFMOD    (CMOD, CKEY)                 1,2,3   ps  9.8.1 |  
+| CENTER    none                         1,2,3  ps   6.2.1 |
+| CGMBGD    (XR, XG, XB)               0,1,2,3  ps   6.1.4 |
+| CGMPIC    (CSTR)                     0,1,2,3  ps   6.1.4 |
+| CHAANG    (ANGLE)                      1,2,3  ps    6.4  |
+| CHACOD    (COPT)                       1,2,3  ps    6.4  |
+| CHASPC    (XSPC)                       1,2,3  ps    6.4  |
+| CHAWTH    (XWTH)                       1,2,3  ps    6.4  |
+| CHNATT    none                         1,2,3  ps    6.9  |
+| CHNBAR    (COPT)                       1,2,3  ps   10.1  | 
+| CHNCRV    (CATT)                       1,2,3  ps    6.9  |
+| CHNDOT    none                         1,2,3  ps    6.11 |
+| CHNDSH    none                         1,2,3  ps    6.11 |
+| CHNPIE    (CATT)                       1,2,3  ps   10.2  |
+| CIRC3P    (X1, Y1, X2, Y2, X3, Y3,    0,1,2,3       9.3  |
+|            XM, YM, R)                                    | 
+| CIRCLE    (NX, NY, NR)                 1,2,3  p     8.5  |
+| CIRCSP    (NSPC)                       1,2,3  ps    8.5  |
+| CLIP3D    (COPT)                       1,2,3  ps   12.16 | 
+| CLOSFL    (NLU)                      0,1,2,3        9.7  |
+| CLPBOR    (COPT)                         2,3  ps   6.2.7 |
+| CLPWIN    (NX, NY, NW, NH)             1,2,3  ps   6.2.7 |
+| CLRCYC    (INDEX, ICLR)                1,2,3  ps    6.13 |
+| CLRMOD    (CMOD)                         0    ps   6.1.7 |
+| CLSWIN    (ID)                         1,2,3  ps   9.8.3 |
+| COLOR     (CCOL)                       1,2,3  ps   6.3.1 |
+| COLRAN    (NCA, NCE)                   1,2,3  ps   11.5  |
+| COLRAY    (ZRAY, NRAY, N)                3         11.7  |
+| COMPLX    none                         1,2,3  ps    6.5  |
+| CONCLR    (NCRAY,N)                    1,2,3  ps   14.4  | 
+| CONCRV    (XRAY, YRAY, N, ZLEV)          2,3  p    14.1  |
+| CONE3D    (XM, YM, ZM, R, H1, H2, N, M)  3    p    12.21 |    
+| CONFLL    (XRAY, YRAY, ZVRAY, N,                         |
+|            I1RAY, I2RAY, I3RAY, NTRI,                    | 
+|            ZLVRAY, NLEV)                2,3   p          |
+| CONGAP    (XFAC)                       1,2,3  ps   14.2  |
+| CONLAB    (CSTR)                       1,2,3  ps   14.2  |
+| CONMAT    (ZMAT, N, M, ZLEV)             2,3  p    14.1  |
+| CONMOD    (COPT, NDIG)                 1,2,3  ps   14.2  |
+| CONN3D    (X, Y, Z)                      3    p    12.21 |
+| CONNPT    (X, Y)                       1,2,3  p     8.1  |
+| CONPTS    (XRAY, N, YRAY, M, ZMAT,    0,1,2,3      14.3  |
+|            ZLEV, XPTS, YPTS, MAXPTS,                     |
+|            IRAY, MAXCRV, NCRV)                           |
+| CONSHD    (XRAY, N, YRAY, M, ZMAT,       2,3  P    14.2  | 
+|            ZLVRAY, NLEV)                                 |
+| CONSHD3D  (XRAY, N, YRAY, M, ZMAT,       3    p    12.15 |
+|            ZLVRAY, NLEV)                                 |
+| CONTRI    (XRAY, YRAY, ZRAY, N, I1RAY,   2,3  p    14.1  |
+|            I2RAY, I3RAY, NTRI, ZLEV)               14.2  |
+| CONTUR    (XRAY, N, YRAY, M,             2,3  p    14.1  |
+|                     ZMAT, ZLEV)                          |
+| CROSS     none                           2,3  p     4.4  |
+| CRVMAT    (ZMAT, N, M, IXPTS, IYPTS)     3    p    11.4  |
+| CRVQDR    (XRAY, YRAY, ZRAY, N)          3    p    11.4  |
+| CRVT3D    (XRAY, YRAY, ZRAY, RRAY,       3    p    12.6  |
+|            ICRAY, N)                                     |  
+| CRVTRI    (XRAY, YRAY, ZRAY, N, I1RAY,   3    p    11.4  |
+|            I2RAY, I3RAY, NTRI)                           |
+| CSRKEY    (IKEY)                       1,2,3       9.8.4 | 
+| CSRMOD    (CMOD, CKEY)                 1,2,3  ps   9.8.4 |
+| CSRMOV    (NXRAY, NYRAY, NMAX, N,      1,2,3       9.8.4 |
+|            IRET)                                         |
+| CSRPOS  (NX, NY, IKEY)                 1,2,3       9.8.4 | 
+| CSRPT1    (NX, NY)                     1,2,3       9.8.4 | 
+| CSRPTS    (NXRAY, NYRAY, NMAX, N,      1,2,3       9.8.4 |
+|            IRET)                                         | 
+| CSRREC    (NX1, NY1, NX2, NY2)         1,2,3       9.8.4 | 
+| CSRTYP    (COPT)                       1,2,3  ps   9.8.4 |
+| CSRUNI    (COPT)                       1,2,3  ps   9.8.4 |
+| CURV3D    (XRAY, YRAY, ZRAY, N)          3    p    12.6  |
+| CURVE     (XRAY, YRAY, N)                2,3  p     5.1  |
+| CURVE3    (XRAY, YRAY, ZRAY, N)          3    p    11.4  |
+| CURVMP    (XRAY, YRAY, N)                2    p    13.4  |
+| CURVX3    (XRAY, Y, ZRAY, N)             3    p    11.4  |
+| CURVY3    (X, YRAY, ZRAY, N)             3    p    11.4  |
+| CYLI3D    (XM, YM, ZM, R, H, N, M)       3    p    12.21 |    
+| DASH      none                         1,2,3  ps    6.11 |
+| DASHL     none                         1,2,3  ps    6.11 |
+| DASHM     none                         1,2,3  ps    6.11 |
+| DBFFIN    none                         1,2,3  ps   12.20 |
+| DBFINI    (IRET)                       1,2,3  ps   12.20 |
+| DBFMOD    (CMOD)                       1,2,3  ps   12.20 |
+| DIGITS    (NDIG, CAX)                  1,2,3  ps   6.2.4 |
+| DISALF    none                         1,2,3  ps    6.5  |
+| DISENV    (CPATH)                     0,1,2,3 ps   6.1.8 |
+| DISFIN    none                         1,2,3  ps    3.1  |
+| DISINI    none                           0          3.1  |
+| DISK3D    (XM, YM, ZM, R1, R2, N, M)     3    p    12.21 |    
+| DOT       none                         1,2,3  ps    6.11 |
+| DOTL      none                         1,2,3  ps    6.11 |
+| DUPLX     none                         1,2,3  ps    6.5  |
+| DWGBUT    (CSTR, IVAL)                   0    w    15.5  | 
+| DWGERR    (ISTAT)                        0    w    15.5  | 
+| DWGFIL    (CLAB, CFIL, CMASK)            0    w    15.5  | 
+| DWGLIS    (CLAB, CLIS, ISEL)             0    w    15.5  | 
+| DWGMSG    (CSTR)                         0    w    15.5  | 
+| DWGTXT    (CLAB, CSTR)                   0    w    15.5  | 
+| ELLIPS    (NX, NY, NA, NB)             1,2,3  p     8.5  |
+| ENDGRF    none                           2,3        4.1  |
+| ERASE     none                         1,2,3  p    9.8.1 |
+| ERRBAR    (XRAY, YRAY, E1RAY, E2RAY, N)  2,3  p     5.4  |
+| ERRDEV    (COPT)                         0    ps   6.1.6 |
+| ERRFIL    (CFIL)                         0    ps   6.1.6 |
+| ERRMOD    (CKEY,CMOD)                  1,2,3  ps   6.1.6 |
+| EUSHFT    (CNAT, CHAR)                 1,2,3  ps    6.5  |
+| EXPZLB    (CSTR)                       1,2,3  ps   11.5  |
+| FBARS     (XRAY, Y1RAY, Y2RAY, Y3RAY,   2,3   p    10.1  |
+|            Y4RAY, N)                                     |
+| FCHA      (X, NDIG, NL, CSTR)        0,1,2,3        9.3  |
+| FIELD     (X1RAY, Y1RAY, X2RAY,         2,3   p     5.5  | 
+|                Y2RAY, N, IVEC)                           |
+| FIELD3D   (X1RAY, Y1RAY, Z1RAY, X2RAY,    3   p    12.7  | 
+|            Y2RAY, Z2RAY, N, IVEC)                        |
+| FILBOX    (NX, NY, NW, NH)             1,2,3  ps    3.6  |
+| FILCLR    (CMOD)                       1,2,3  ps    3.6  |
+| FILMOD    (CMOD)                     0,1,2,3  ps   6.1.4 |
+| FILOPT    (COPT,CKEY)                0,1,2,3  ps   6.1.4 |
+| FIXSPC    (XFAC)                       1,2,3  ps    6.4  |
+| FLAB3D    none                         1,2,3  ps   12.3  |
+| FLEN      (X, NDIG, NL)              0,1,2,3        9.3  |
+| FRAME     (NFRM)                       1,2,3  ps   6.2.8 |
+| FRMCLR    (NCLR)                       1,2,3  ps   6.2.8 |
+| FRMESS    (NFRM)                       1,2,3  ps    6.4  |
+| GAXPAR    (V1, V2, COPT, CAX,          1,2,3        4.7  |
+|            A, B, OR, STP, NDIG)                          |
+| GETANG    (NANG)                       1,2,3  rq    7.0  |
+| GETBPP    (NBPP)                     0,1,2,3  rq    7.0  |
+| GETSCR    (NWPIX, NHPIX)             0,1,2,3  rq    7.0  |
+| GETCLP    (NX, NY, NW, NH)             1,2,3  rq    7.0  |
+| GETCLR    (NCOL)                       1,2,3  rq    7.0  |
+| GETDIG    (NXDIG, NYDIG, NZDIG)        1,2,3  rq    7.0  |
+| GETDSP    (CDSP)                      0,12,3  rq    7.0  |
+| GETFIL    (CFIL)                       1,2,3  rq    7.0  |
+| GETGRF    (XA, XE, XOR, XSTP, CAX)       2,3  rq    7.0  |
+| GETHGT    (NHCHAR)                     1,2,3  rq    7.0  |
+| GETHNM    (NHNAME)                     1,2,3  rq    7.0  |
+| GETIND    (INDEX, XR, XG, XB)          1,2,3  rq    7.0  |
+| GETLAB    (CXLAB, CYLAB, CZLAB)        1,2,3  rq    7.0  |
+| GETLEN    (NXL, NYL, NZL)              1,2,3  rq    7.0  |
+| GETLEV    (NLEV)                       1,2,3  rq    7.0  |
+| GETLIN    (NWIDTH)                     1,2,3  rq    7.0  |
+| GETLIT    (XP,YP,ZP,XN,YN,ZN,ICLR)         3  rq   12.17 |
+| GETMAT    (XRAY, YRAY, ZRAY, N, ZMAT,    2,3       12.18 |
+|            NX, NY, ZVAL, IMAT, WMAT)                     |
+| GETMFL    (CFMT)                       1,2,3  rq    7.0  |
+| GETOR     (NX0, NY0)                   1,2,3  rq    7.0  |
+| GETPAG    (NXPAG, NYPAG)               1,2,3  rq    7.0  |
+| GETPAT    (NPAT)                       1,2,3  rq    7.0  |
+| GETPLV    (NPLV)                       1,2,3  rq    7.0  |
+| GETPOS    (NXA, NYA)                   1,2,3  rq    7.0  |
+| GETRAN    (NCA, NCE)                   1,2,3  rq    7.0  |
+| GETRES    (NPB, NPH)                   1,2,3  rq    7.0  |
+| GETRGB    (XR, XG, XB)                 1,2,3  rq    7.0  |
+| GETSCL    (NXSCL, NYSCL, NZSCL)        1,2,3  rq    7.0  |
+| GETSP1    (NXDIS, NYDIS, NZDIS)        1,2,3  rq    7.0  |
+| GETSP2    (NXDIS, NYDIS, NZDIS)        1,2,3  rq    7.0  |
+| GETSYM    (NSYM, NHSYM)                1,2,3  rq    7.0  |
+| GETTCL    (NMAJ, NMIN)                 1,2,3  rq    7.0  | 
+| GETTIC    (NXTIC, NYTIC, NZTIC)        1,2,3  rq    7.0  |
+| GETTYP    (NTYP)                       1,2,3  rq    7.0  |
+| GETUNI    (NU)                         1,2,3  rq    7.0  |
+| GETVER    (XVER)                     0,1,2,3  rq    7.0  |
+| GETVK     (NV, NVFX, NVFY)             1,2,3  rq    7.0  |
+| GETVLT    (CVLT)                       1,2,3  rq    7.0  |
+| GETWID    (NZB)                        1,2,3  rq    7.0  |
+| GETWIN    (NX, NY, NW, NH)             1,2,3  rq    7.0  |
+| GETXID    (IVAL, CTYPE)                1,2,3  rq    7.0  |
+| GIFMOD    (CMOD, CKEY)                   0    ps   6.1.4 |  
+| GOTHIC    none                         1,2,3  ps    6.5  |
+| GRACE     (NGRACE)                     1,2,3  ps   6.2.7 |
+| GRAF      (XA, XE, XOR, XSTP,            1    p     4.1  |
+|            YA, YE, YOR, YSTP)                            |
+| GRAF3     (XA, XE, XOR, XSTP,            1    p    11.2  |
+|            YA, YE, YOR, YSTP,                            |
+|            ZA, ZE, ZOR, ZSTP)                            |
+| GRAF3D    (XA, XE, XOR, XSTP,            1    p    12.3  |
+|            YA, YE, YOR, YSTP,                            |
+|            ZA, ZE, ZOR, ZSTP)                            |
+| GRAFMP    (XA, XE, XOR, XSTP,            1    p    13.1  |
+|            YA, YE, YOR, YSTP)                            |
+| GRFFIN    none                         1,2,3  ps   12.19 |
+| GRFINI    (X1, Y1, Z1, X2, Y2, Z2,       3    ps   12.19 |
+|                        X3, Y3, Z3)                       |    
+| GRID      (IXGRID, IYGRID)               2,3  p     4.4  |
+| GRID3D    (IXGRID, IYGRID, COPT)         2,3  p    12.5  |
+| GRIDMP    (IXGRID, IYGRID)               2    p    13.1  |
+| GWGATT    (ID, IATT, COPT)               0    rq   15.3  |
+| GWGBOX    (ID, ISEL)                     0    rq   15.3  |
+| GWGBUT    (ID, IVAL)                     0    rq   15.3  |
+| GWGFIL    (ID, CFIL)                     0    rq   15.3  |
+| GWGFLT    (ID, XVAL)                     0    rq   15.3  |
+| GWGINT    (ID, IVAL)                     0    rq   15.3  |
+| GWGLIS    (ID, ISEL)                     0    rq   15.3  |
+| GWGSCL    (ID, XVAL)                     0    rq   15.3  |
+| GWGTBF    (ID, IROW, ICOL, XVAL)         0    rq   15.3  |
+| GWGTBI    (ID, IROW, ICOL, IVAL)         0    rq   15.3  |
+| GWGTBL    (ID, XRAY, N, IDX, COPT)       0    rq   15.3  |
+| GWGTBS    (ID, IROW, ICOL, CVAL)         0    rq   15.3  |
+| GWGTXT    (ID, CSTR)                     0    rq   15.3  |
+| GWGXID    (ID, IWINID)                   0    rq   15.3  |
+| HEIGHT    (NHCHAR)                     1,2,3  ps    6.4  |
+| HELVE     none                         1,2,3  ps    6.5  |
+| HELVES    none                         1,2,3  ps    6.5  |
+| HISTOG    (XRAY, N, XHRAY,           0,1,2,3  ps    9.3  |
+|                 YHRAY, NH)                               |
+| HNAME     (NHNAME)                     1,2,3  ps   6.2.5 |
+| HPGMOD    (CMOD, CKEY)                   0    ps   6.1.4 |
+| HSVRGB    (XH, XS, XV, XR, XG, XB)   0,1,2,3       6.3.3 |
+| HSYM3D    (H)                          1,2,3  ps   12.16 |
+| HSYMBL    (NHSYM)                      1,2,3  ps    6.9  |
+| HTITLE    (NHTIT)                      1,2,3  ps   6.2.10|
+| HWFONT    none                         1,2,3  ps    6.5  |
+| HWMODE    (CMOD, CKEY)                 1,2,3  ps    6.12 |  
+| HWORIG    (NX, NY)                       0    ps   6.1.5 |
+| HWPAGE    (NW, NH)                       0    ps   6.1.5 |
+| HWSCAL    (XSCL)                         0    ps   6.1.5 |
+| IMGBOX    (NX, NY, NW, NH)             1,2,3  ps    9.9  |
+| IMGCLP    (NX, NY, NW, NH)             1,2,3  ps    9.9  |
+| IMGFIN    none                         1,2,3  ps    9.9  |
+| IMGFMT    (COPT)                         0    ps   6.1.4 |  
+| IMGINI    none                         1,2,3  ps    9.9  |
+| IMGMOD    (COPT)                       1,2,3  ps    9.9  |
+| IMGSIZ    (NW, NH)                     1,2,3  ps    9.9  |   
+| IMGTPR    (NCLR)                       1,2,3  ps    9.9  |
+| INCCRV    (NCRV)                       1,2,3  ps    6.9  |
+|=INCDAT    (ID, IM, IY)               0,1,2,3        9.5  |        
+| INCFIL    (CFIL)                       1,2,3  p     3.6  |
+| INCMRK    (NMRK)                       1,2,3  ps    6.9  |
+|=INDRGB    (XR,XG,XB)                   1,2,3       6.3.3 |
+|=INTRGB    (XR,XG,XB)                 0,1,2,3       6.3.3 |
+| INTAX     none                         1,2,3  ps   6.2.4 |
+| INTCHA    (NX, NL, CSTR)             0,1,2,3        9.3  |
+| INTLEN    (NX, NL)                   0,1,2,3        9.3  |
+| INTUTF    (IRAY,NRAY,CSTR,NMAX,N)    0,1,2,3        9.2  |
+| ISOPTS    (XRAY, NX, YRAY, NY, ZRAY,     3         12.13 | 
+|            NZ, WMAT, WLEV, XTRI, YTRI,                   |
+|            ZTRI, NMAX, NTRI)                             |
+| ITMCAT    (CLIS, CITEM)              0,1,2,3       15.4  |
+| = ITMCNT  (CLIS)                     0,1,2,3       15.4  |
+| ITMSTR    (CLIS, IDX, CITEM)         0,1,2,3       15.4  |
+| LABCLR    (ICLR, COPT)                 1,2,3  ps   14.2  |
+| LABDIG    (NDIG, CAX)                  1,2,3  ps   6.2.4 |
+| LABDIS    (NDIS, CAX)                  1,2,3  ps   6.2.4 |
+| LABELS    (CLAB, CAX)                  1,2,3  ps   6.2.4 |
+| LABJUS    (CJUS, CAX)                  1,2,3  ps   6.2.4 |
+| LABL3D    (COPT)                       1,2,3  ps   12.16 |
+| LABMOD    (CKEY, CVAL, CAX)            1,2,3  ps   6.2.4 |
+| LABPOS    (CPOS, CAX)                  1,2,3  ps   6.2.4 |
+| LABTYP    (CTYP, CAX)                  1,2,3  ps   6.2.4 |
+| LEGCLR    none                         1,2,3  ps    5.2  |
+| LEGEND    (CBUF, NCOR)                   2,3  p     5.2  |
+| LEGINI    (CBUF, NLIN, NMAXLN)         1,2,3  ps    5.2  |
+| LEGLIN    (CBUF, CSTR, ILIN)           1,2,3  ps    5.2  | 
+| LEGOPT    (XF1, XF2, XF3)              1,2,3  ps    5.2  |
+| LEGPAT    (ITYP, ITHK, ISYM,           1,2,3  ps    5.2  |
+|            ICLR, IPAT, ILIN)                             |
+| LEGPOS    (NX, NY)                     1,2,3  ps    5.2  |
+| LEGTIT    (CSTR)                       1,2,3  ps    5.2  |
+| LEGVAL    (X, COPT)                    1,2,3  ps    5.2  |
+| LFTTIT    none                         1,2,3  ps   6.2.10|
+| LICMOD    (CMOD, CKEY)                 1,2,3  ps    6.10 |
+| LICPTS    (XV, YV, NX, NY, ITMAT,      1,2,3        5.5  | 
+|                IWMAT, WMAT)                              |
+| LIGHT     (CMODE)                      1,2,3  ps   12.17 | 
+| LINCYC    (INDEX, ITYP)                1,2,3  ps    6.13 |
+| LINE      (NX, NY, NU, NV)             1,2,3  p     8.1  |
+| LINESP    (XFAC)                       1,2,3  ps   6.2.10|
+| LINTYP    (NTYP)                       1,2,3  ps    6.11 |
+| LINWID    (NWIDTH)                     1,2,3  ps    6.11 |
+| LITMOD    (ID, CMODE)                  1,2,3  ps   12.17 |
+| LITPOS    (ID, XP, YP, ZP, COPT)       1,2,3  ps   12.17 |
+| LITOP3    (ID, XR, XG, XB, CTYPE)      1,2,3  ps   12.17 |
+| LITOPT    (ID, XVAL, CTYPE)            1,2,3  ps   12.17 |
+| LNCAP     (CAP)                        1,2,3  ps    6.11 |
+| LNJOIN    (CJOIN)                      1,2,3  ps    6.11 |
+| LNMLT     (XFC)                        1,2,3  ps    6.11 |
+| LOGTIC    (CMOD)                       1,2,3  ps   6.2.3 |
+| MAPBAS    (CBAS)                       1,2,3  ps   13.5  |
+| MAPFIL    (CFIL, COPT)                 1,2,3  ps   13.5  |
+| MAPIMG    (CFIL, X1, X2, X3, X4, X5, X6) 2    p    13.3  |
+| MAPLAB    (COPT, CKEY)                 1,2,3  ps   13.5  |
+| MAPLEV    (COPT)                       1,2,3  ps   13.5  |
+| MAPMOD    (CMODE)                      1,2,3  ps   13.5  |
+| MAPOPT    (COPT, CKEY)                 1,2,3  ps   13.5  |
+| MAPPOL    (XPOL, YPOL)                   1    ps   13.5  |
+| MAPREF    (YLOWER, YUPPER)               1    ps   13.5  |
+| MAPSPH    (XRAD)                         1    ps   13.5  |
+| MARKER    (NSYM)                       1,2,3  ps    6.9  |
+| MATOP3    (XR, XG, XB, CTYPE)          1,2,3  ps   12.17 |
+| MATOPT    (XVAL, CTYPE)                1,2,3  ps   12.17 |
+| MDFMAT    (IX, IY, WEIGHT)             1,2,3  ps   12.18 |
+| MESSAG    (CSTR, NX, NY)               1,2,3  p     3.2  |
+| METAFL    (CFMT)                         0    ps   6.1.4 |
+| MIXALF    none                         1,2,3  ps    6.6  |
+| MIXLEG    none                         1,2,3  ps    5.2  |
+| MPSLOGO   (NX, NY, ISIZE, COPT)        1,2,3  p     9.12 |
+| MRKCLR    (NCLR)                       1,2,3  ps    6.9  |
+| MSHCLR    (ICLR)                       1,2,3  ps   12.16 |
+| MSGBOX    (CSTR)                         0    w    15.4  |
+| MYLAB     (CSTR, ITICK, CAX)           1,2,3  ps   6.2.4 |
+| MYLINE    (NRAY, N)                    1,2,3  ps    6.11 |
+| MYPAT     (IANG, ITYP, IDENS, ICROSS)  1,2,3  ps    6.12 |
+| MYSYMB    (XRAY, YRAY, N, ISYM, IFLAG) 1,2,3  ps    6.9  |
+| MYVLT     (XRRAY, XGRAY, XBRAY, N)   0,1,2,3  ps   6.3.2 |
+| NAMDIS    (NDIS, CAX)                  1,2,3  ps   6.2.5 |
+| NAME      (CSTR, CAX)                  1,2,3  ps   6.2.5 |
+| NAMJUS    (CJUS, CAX)                  1,2,3  ps   6.2.5 |
+| NEGLOG    (EPS)                        1,2,3  ps    5.1  |
+| NEWMIX    none                         1,2,3  ps    6.6  |
+| NEWPAG    none                           1    ps   6.1.5 |
+| = NLMESS  (CSTR)                       1,2,3        9.2  |
+| = NLNUMB  (X, NDIG)                    1,2,3        9.3  |
+| NOARLN    none                         1,2,3  ps    6.12 |
+| NOBAR     none                         1,2,3  ps   11.5  |
+| NOBGD     none                         1,2,3  ps   11.5  |
+| NOCHEK    none                         1,2,3  ps    6.9  |
+| NOCLIP    none                         1,2,3  ps   6.2.7 |
+| NOGRAF    none                           1    ps   6.2.6 |
+| NOHIDE    none                         1,2,3  ps   12.16 |
+| NOLINE    (CAX)                        1,2,3  ps   6.2.6 |
+| NUMBER    (X, NDIG, NX, NY)            1,2,3  p     3.2  | 
+| NUMFMT    (COPT)                       1,2,3  ps    6.3  |
+| NUMODE    (CDEC, CGRP, CPOS, CFIX)     1,2,3  ps    6.3  |
+| =NWKDAY   (ID, IM, IY)               0,1,2,3        6.6  |
+| =NXLEGN   (CBUF)                         2,3        5.2  |
+| =NXPIXL   (IX, IY)                     1,2,3        9.1  |
+| =NXPOSN   (X)                            2,3        9.1  |
+| =NYLEGN   (CBUF)                         2,3        5.2  |
+| =NYPIXL   (IX, IY)  &                  1,2,3        9.1  |
+| =NYPOSN   (Y)                            2,3        9.1  |
+| =NZPOSN   (Z)                            3         11.7  |
+| OPENFL    (CFIL, NLU, IRW, ISTAT)    0,1,2,3        9.7  | 
+| OPNWIN    (ID)                         1,2,3       9.8.3 |
+| ORIGIN    (NX0, NY0)                     1    ps   6.1.3 |
+| PAGE      (NWPAGE, NHPAGE)               0    ps   6.1.5 |
+| PAGERA    none                         1,2,3  p     3.4  |
+| PAGHDR    (CSTR1, CSTR2, IOPT, IDIR)   1,2,3  p     3.4  |
+| PAGMOD    (CMOD)                         0    ps   6.1.5 |
+| PAGORG    (COPT)                       1,2,3  ps   6.1.3 |
+| PAGWIN    (NWPAGE, NHPAGE)             1,2,3  ps   9.8.3 |
+| PATCYC    (INDEX, IPAT)                1,2,3  ps    6.13 |
+| PDFBUF    (CBUF, NMAX, N)                0          9.9  |
+| PDFMOD    (CMOD, CKEY)                   0    ps   6.1.4 |  
+| PDFMRK    (CSTR, COPT)                   0    ps   6.1.4 |  
+| PENWID    (XWIDTH)                     1,2,3  ps    6.11 |
+| PIE       (NXM, NYM, NR, ALPHA, BETA)  1,2,3  p     8.5  |
+| PIEBOR    (ICLR)                       1,2,3  ps   10.2  | 
+| PIECBK    (ROUTINE)                    1,2,3  ps   10.2  |
+| PIECLR    (IC1RAY, IC2RAY, N)          1,2,3  ps   10.2  | 
+| PIEEXP    none                         1,2,3  ps   10.2  |
+| PIEGRF    (CBUF, NLIN, XRAY, NSEG)       1    p    10.2  |
+| PIELAB    (CLAB, CPOS)                 1,2,3  ps   10.2  |
+| PIEOPT    (XF, ANG)                    1,2,3  ps   10.2  |
+| PIEROT    (ANGLE)                      1,2,3  ps   10.2  |
+| PIETYP    (CTYP)                       1,2,3  ps   10.2  |
+| PIEVAL    (X, COPT)                    1,2,3  ps   10.2  |
+| PIEVEC    (IVEC, COPT)                 1,2,3  ps   10.2  |
+| PIKE3D    (X1, Y1, Z1, X2, Y2, Z2, R,    3    p    12.21 |
+|            N, M)                                         |    
+| PLAT3D    (XM, YM, ZM, XL, COPT)         3    p    12.21 |    
+| PNGMOD    (CMOD, CKEY)                   0    ps   6.1.4 |  
+| POINT     (NX, NY, NB, NH, NCOL)       1,2,3  p    11.6  |
+| POLAR     (XE, XOR, XSTP, YOR, YSTP)     1    ps    4.1  |
+| POLCLP    (XRAY, YRAY, N, XOUT, YOUT, 0,1,2,3       9.3  |
+|            NMAX, XV, CEDGE)                              |
+| POLCRV    (CPOL)                       1,2,3  ps    6.9  |
+| POLMOD    (CPOS, CDIR)                 1,2,3  ps   6.2.5 |
+| POS2PT    (X, Y, XP, YP)                 2         13.6  |
+| POS3PT    (X, Y, Z, XABS, YABS, ZABS)    3         12.22 |
+| POSIFL    (NLU, NBYTE, ISTAT)        0,1,2,3        9.7  |
+| PROJCT    (CPROJ)                        1    ps   13.2  |
+| PSFONT    (CFONT)                      1,2,3  ps    6.5  |
+| PSMODE    (CMODE)                      1,2,3  ps    6.5  |
+| PYRA3D    (XM, YM, ZM, XL, H1, H2, N)    3    p    12.21 |    
+| QPLBAR    (XRAY, N)                     0,1   p    16.3  |
+| QPLCLR    (ZMAT, IXDIM, IYDIM)          0,1   p    16.6  |
+| QPLCON    (ZMAT, IXDIM, IYDIM, NLEV)    0,1   p    16.8  |
+| QPLCRV    (XRAY, YRAY, N, COPT)         0,1   p    16.1  |
+| QPLOT     (XRAY, YRAY, N)               0,1   p    16.1  |
+| QPLPIE    (XRAY, N)                     0,1   p    16.4  |
+| QPLSCA    (XRAY, YRAY, N)               0,1   p    16.2  |
+| QPLSCL    (A, E, OR, STEP, CAX)         0,1   ps   16.8  |
+| QPLSUR    (ZMAT, IXDIM, IYDIM)          0,1   p    16.6  |
+| QUAD3D    (XM, YM, ZM, XL, YL, ZL)       3    p    12.21 |    
+| RBFPNG    (CBUF, NMAX, N)              1,2,3        9.9  |
+| RBMP      (CFIL)                       1,2,3        9.9  |
+| READFL    (NLU, IRAY, NBYTE, ISTAT)  0,1,2,3        9.7  |
+| REAWGT    none                           0         15.4  |
+| RECFLL    (NX, NY, NW, NH, NCOL)       1,2,3  p    11.6  |
+| RECTAN    (NX, NY, NW, NH)             1,2,3  p     8.5  |
+| REL3PT    (X, Y, Z, XP, YP)              3         12.22 |
+| RESATT    none                         1,2,3  ps    6.9  |
+| RESET     (CNAME)                      1,2,3  ps   6.1.1 |
+| RGBHSV    (XR, XG, XB, XH, XS, XV)   0,1,2,3       6.3.3 |
+| RGIF      (CFIL)                       1,2,3        9.9  |
+| RGTLAB    none                         1,2,3  ps   6.2.4 |
+| RIMAGE    (CFIL)                       1,2,3        9.9  |
+| RLARC     (XM, YM, XA, XB, A, B, T)      2,3  p     8.5  |
+| RLAREA    (XRAY, YRAY, N)                2,3  p     8.5  |
+| RLCIRC    (XM, YM, R)                    2,3  p     8.5  |
+| RLCONN    (X, Y)                         2,3  p     8.1  | 
+| RLELL     (XM, YM, A, B)                 2,3  p     8.5  |
+| RLINE     (X, Y, U, V)                   2,3  p     8.1  |
+| RLMESS    (CSTR, X, Y)                   2,3  p     3.2  |
+| RLNUMB    (X, NDIG, XP, YP)              2,3  p     3.2  |
+| RLPIE     (XM, YM, R, ALPHA, BETA)       2,3  p     8.5  |
+| RLPOIN    (X, Y, NB, NH, NCOL)           2,3  p    11.6  |
+| RLREC     (X, Y, WIDTH, HEIGHT)          2,3  p     8.5  |
+| RLRND     (X, Y, WIDTH, HEIGHT, IOPT)    2,3  p     8.5  | 
+| RLSEC     (XM, YM, R1, R2,               2,3  p    11.6  |
+|            ALPHA, BETA, NCOL)                            |
+| RLSTRT    (X, Y)                         2,3  p     8.1  | 
+| RLSYMB    (NSYM,X,Y)                     2,3  p     3.3  |
+| RLVEC     (X1, Y1, X2, Y2, IVEC)         2,3  p     8.2  |
+| RLWIND    (X,XP,YP,NW,A)                 2,3  p     8.4  |  
+| RNDREC    (NX, NY, NW, NH, IOPT)       1,2,3  p     8.5  |
+| ROT3D     (AX, AY, AZ)                 1,2,3  ps   12.16 | 
+| RPIXEL    (IX, IY, NCLR)               1,2,3        9.9  |
+| RPIXLS    (IRAY, IX, IY, NW, NH)       1,2,3        9.9  |
+| RPNG      (CFIL)                       1,2,3        9.9  |
+| RPPM      (CFIL)                       1,2,3        9.9  |
+| RPXROW    (IRAY, IX, IY, N)            1,2,3        9.9  |
+| RTIFF     (CFIL)                       1,2,3        9.9  |
+| RVYNAM    none                         1,2,3  ps   6.2.5 |
+| SCALE     (CSCL,CAX)                   1,2,3  ps   6.2.2 |
+| SCLFAC    (XFAC)                         0    ps   6.1.5 |
+| SCLMOD    (CMODE)                        0    ps   6.1.5 |
+| SECTOR    (NX, NY, NR1, NR2,           1,2,3  p    11.6  |
+|            ALPHA, BETA, NCOL)                            |
+| SELWIN    (ID)                         1,2,3  ps   9.8.3 |
+| SENDBF    none                         1,2,3       9.8.1 |
+| SENDMB    none                         1,2,3       15.4  |
+| SENDOK    none                           0         15.4  |
+| SERIF     none                         1,2,3  ps    6.5  |
+| SETBAS    (XFAC)                       1,2,3  ps    6.6  |
+| SETCBK    (ROUTINE, COPT)             0,1,2,3 ps   13.7  |
+| SETCLR    (NCOL)                       1,2,3  ps   6.3.1 |
+| SETCSR    (COPT)                       1,2,3  ps   9.8.4 |
+| SETEXP    (FEXP)                       1,2,3  ps    6.6  |
+| SETFCE    (COPT)                       1,2,3  ps   12.16 | 
+| SETFIL    (CFIL)                         0    ps   6.1.4 |
+| SETGRF    (C1, C2, C3, C4)               1    ps   6.2.6 |
+| SETIND    (INDEX, XR, XG, XB)          1,2,3  ps   6.3.2 |
+| SETMIX    (CHAR, CMIX)                 1,2,3  ps    6.6  |
+| SETPAG    (CPAG)                         0         6.1.5 |
+| SETRES    (NPB, NPH)                   1,2,3  ps   11.5  |
+| SETRGB    (XR, XG, XB)                 1,2,3  ps   6.3.1 |  
+| SETSCL    (XRAY, N, CAX)               1,2,3  ps   6.2.2 |
+| SETVLT    (CVLT)                       1,2,3  ps   6.3.2 |
+| SHDCHA    none                         1,2,3  ps    6.5  |
+| SHDCRV    (X1RAY, Y1RAY, N1,             2,3  p     5.3  |
+|            X2RAY, Y2RAY, N2)                             |
+| SHDAFR    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDASI    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDAUS    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDEUR    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDMAP    (CMAP)                         2,3  p    13.3  |
+| SHDMOD    (COPT)                       1,2,3  ps   12.14 |
+| SHDPAT    (IPAT)                       1,2,3  ps    6.12 |
+| SHDNOR    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDSOU    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHDUSA    (INRAY, IPRAY, ICRAY, N)       2    p    13.3  |
+| SHIELD    (CAREA, CMODE)               1,2,3  ps    6.15 |
+| SHLCIR    (NX, NY, NR)                 1,2,3  ps    6.15 |
+| SHLDEL    (ID)                         1,2,3  ps    6.15 |
+| SHLELL    (NX, NY, NA, NB, THETA)      1,2,3  ps    6.15 |
+| SHLIND    (ID)                         1,2,3  ps    6.15 |
+| SHLPIE    (NX, NY, NR, A, B)           1,2,3  ps    6.15 |
+| SHLPOL    (NXRAY, NYRAY, N)            1,2,3  ps    6.15 |
+| SHLRCT    (NX, NY, NW, NH, THETA)      1,2,3  ps    6.15 |
+| SHLREC    (NX, NY, NW, NH)             1,2,3  ps    6.15 |
+| SHLRES    (N)                          1,2,3  ps    6.15 |
+| SHLSUR    none                         1,2,3  ps   12.16 |
+| SHLVIS    (ID, CMODE)                  1,2,3  ps    6.15 |
+| SIMPLX    none                         1,2,3  ps    6.5  | 
+| SKIPFL    (NLU, NBYTE, ISTAT)        0,1,2,3        9.7  |
+| SMXALF    (CALPH, C1, C2, N)           1,2,3  ps    6.5  |
+| SOLID     none                         1,2,3  ps    6.11 |
+| SORTR1    (XRAY, N, COPT)            0,1,2,3        9.3  |
+| SORTR2    (XRAY, YRAY, N, COPT)      0,1,2,3        9.3  |
+| SPHE3D    (XM, YM, ZM, R, N, M)          3    p    12.21 |  
+| SPLINE    (XRAY, YRAY, N,              1,2,3        9.3  |
+|            XSRAY, YSRAY, NSPL)                           |
+| SPLMOD    (NGRAD, NPTS)                1,2,3  ps    6.9  |
+| STMMOD    (CMOD, CKEY)                 1,2,3  ps    6.10 |
+| STMOPT    (N, CKEY)                    1,2,3  ps    6.10 |
+| STMPTS    (XV, YV, NX, NY, XP,YP,       2,3         5.5  |
+|            X0, Y0, XRAY, YRAY, NMAX, N)                  |
+| STMPTS3D  (XV, YV, ZV, NX, NY, NZ,                 12.7  |
+|            XP, YP, ZP, X0, Y0, Z0,                       |
+|            XRAY, YRAY, ZRAY, NMAX, N)                    |
+| STMTRI    (XVRAY, YVRAY, XPRAY, YPRAY,  2,3   p          |
+|            N, I1RAY, I2RAY, I3RAY, NTRI,                 |
+|            XSRAY, YSRAY, NRAY)                           | 
+| STMVAL    (X, CKEY)                    1,2,3  ps    6.10 | 
+| STREAM    (XV, YV, NX, NY, XP,YP,       2,3   p     5.5  |
+|            XS, YS, N)                                    |
+| STREAM3D  (XV, YV, ZV, NX, NY, NZ,       3    p    12.7  |
+|            XP, YP, ZP, XS, YS, ZS, N)                                    |
+| STRT3D    (X, Y, Z)                      3    p    12.21 |
+| STRTPT    (X, Y)                       1,2,3  p     8.1  |
+| SURCLR    (ICTOP, ICBOT)               1,2,3  ps   12.16 |
+| SURFCE    (XRAY, N, YRAY, M, ZMAT)       3    p    12.9  |
+| SURFCP    (ZFUN, T1, T2, TSTP,           3    p    12.11 | 
+|                  U1, U2, USTP)                           |
+| SURFUN    (ZFUN, IXPTS, XD, IYPTS, YD)   3    p    12.8  |
+| SURISO    (XRAY, NX, YRAY, NY, ZRAY,     3    p    12.13 |
+|                        NZ, WMAT, WLEV)                   | 
+| SURMAT    (ZMAT, NX, NY, IXPTS, IYPTS)   3    p    12.9  |
+| SURMSH    (COPT)                       1,2,3  ps   12.16 |
+| SUROPT    (COPT)                       1,2,3  ps   12.16 |
+| SURSHD    (XRAY, N, YRAY, M, ZMAT)       3    p    12.10 |
+| SURSZE    (XMIN, XMAX, YMIN, YMAX)     1,2,3  ps   12.9  |
+| SURTRI    (XRAY, YRAY, ZRAY, N, I1RAY,   3    p    12.12 |
+|            I2RAY, I3RAY, NTRI)                           |
+| SURVIS    (CVIS)                       1,2,3  ps   12.16 |
+| SWAPI2    (IRAY2, N)                 0,1,2,3        9.6  |
+| SWAPI4    (IRAY, N)                  0,1,2,3        9.6  |
+| SWGATT    (ID, CATT, COPT)               0    ps   15.2  | 
+| SWGBOX    (ID, ISEL)                     0    ps   15.2  | 
+| SWGBUT    (ID, IVAL)                     0    ps   15.2  | 
+| SWGCB2    (IP, ROUTINE)                  0    ps   15.2  |
+| SWGCBK    (ID, ROUTINE)                  0    ps   15.2  | 
+| SWGCLR    (XR, XG, XB, COPT)             0    ps   15.2  |
+| SWGDRW    (XF)                           0    ps   15.2  | 
+| SWGFIL    (ID, CFIL)                     0    ps   15.2  | 
+| SWGFLT    (ID, XVAL, NDIG)               0    ps   15.2  | 
+| SWGFNT    (CFONT, NPTS)                  0    ps   15.2  |
+| SWGFOC    (ID)                           0    ps   15.2  |
+| SWGHLP    (CSTR)                         0    ps   15.2  |
+| SWGINT    (ID, IVAL)                     0    ps   15.2  | 
+| SWGIO     (N, CKEY)                      0    ps   15.2  |
+| SWGJUS    (CJUS, CLASS)                  0    ps   15.2  |
+| SWGLIS    (ID, ISEL)                     0    ps   15.2  | 
+| SWGMIX    (CHAR, CMIX)                   0    ps   15.2  |
+| SWGMRG    (IVAL, CMRG)                   0    ps   15.2  |
+| SWGOPT    (COPT, CKEY)                   0    ps   15.2  |
+| SWGPOP    (COPT)                         0    ps   15.2  |
+| SWGPOS    (NX, NY)                       0    ps   15.2  |
+| SWGRAY    (XRAY, N, COPT)                0    ps   15.2  |
+| SWGSCL    (ID, XVAL)                     0    ps   15.2  | 
+| SWGSIZ    (NW, NH)                       0    ps   15.2  |
+| SWGSPC    (XSPC, YSPC)                   0    ps   15.2  |
+| SWGSTP    (XSTP)                         0    ps   15.2  | 
+| SWGTBF    (ID, XVAL, NDIG, IROW, ICOL,   0    ps   15.2  |
+|            COPT)                                         | 
+| SWGTBI    (ID, IVAL, IROW, ICOL, COPT)   0    ps   15.2  | 
+| SWGTBL    (ID, XRAY, N, NDIG, IDX, COPT) 0    ps   15.2  |
+| SWGTBS    (ID, CVAL, IROW, ICOL, COPT)   0    ps   15.2  |
+| SWGTIT    (CTIT)                         0    ps   15.2  |
+| SWGTXT    (ID, CSTR)                     0    ps   15.2  | 
+| SWGTYP    (CTYPE, CLASS)                 0    ps   15.2  | 
+| SWGVAL    (ID, XVAL)                     0    ps   15.2  | 
+| SWGWIN    (NX, NY, NW, NH)               0    ps   15.2  |
+| SWGWTH    (NWTH)                         0    ps   15.2  | 
+| SYMBOL    (NSYM, NX, NY)               1,2,3  p     3.3  |
+| SYMFIL    (CDEV, CSTAT)                  0          3.5  |
+| SYMROT    (ANGLE)                      1,2,3  ps    3.3  |
+| SYMB3D    (N, XM, YM, ZM)                3    p    12.21 |
+| TELLFL    (NLU, NBYTE)               0,1,2,3        9.7  |
+| TEXMOD    (CMODE)                      1,2,3  ps   6.8.2 |
+| TEXOPT    (COPT, CTYPE)                1,2,3  ps   6.8.2 |
+| TEXVAL    (X, COPT)                    1,2,3  ps   6.8.2 |
+| THKCRV    (NTHK)                       1,2,3  ps    6.9  |
+| THRFIN    none                           0          9.11 |
+| THRINI    (N)                            0          9.11 |
+| TICKS     (ITICK, CAX)                 1,2,3  ps   6.2.3 |
+| TICLEN    (NMAJ, NMIN)                 1,2,3  ps   6.2.3 |
+| TICMOD    (CMOD, CAX)                  1,2,3  ps   6.2.3 |
+| TICPOS    (CPOS, CAX)                  1,2,3  ps   6.2.3 |
+| TIFMOD    (N, CVAL, COPT)                0    ps   6.1.4 |
+| TIFORG    (NX, NY)                     1,2,3  ps    9.9  | 
+| TIFWIN    (NX, NY, NW, NH)             1,2,3  ps    9.9  | 
+| TIMOPT    none                         1,2,3  ps   6.2.4 |
+| TITJUS    (CJUS)                       1,2,3  ps   6.2.10|
+| TITLE     none                           2,3  p     4.3  |
+| TITLIN    (CSTR, N)                    1,2,3  ps   6.2.10|
+| TITPOS    (CPOS)                       1,2,3  ps   6.2.10|
+| TORUS3D   (XM, YM, ZM, R1, R2, H,        3    p    12.21 |
+|            A1, A2, H, N, M)                              |
+| TPRFIN    none                         1,2,3  ps    9.10 | 
+| TPRINI    none                         1,2,3  ps    9.10 |
+| TPRMOD    (CMOD,CKEY)                  1,2,3  ps    9.10 |
+| TPRVAL    (X)                          1,2,3  ps    9.10 |
+| TR3RES    none                         1,2,3  ps   12.22 |
+| TR3ROT    (A, B, C)                    1,2,3  ps   12.22 |
+| TR3SCL    (XSCL, YSCL, YSCL)           1,2,3  ps   12.22 |
+| TR3SHF    (XSHFT, YSHFT, ZSHFT)        1,2,3  ps   12.22 |
+| TRFCO1    (XRAY, N, CFROM, CTO)      0,1,2,3        9.1  |       
+| TRFCO2    (XRAY, YRAY, N, CFROM,     0,1,2,3        9.1  | 
+|            CTO)                                          |
+| TRFCO3    (XRAY, YRAY, ZRAY,N,       0,1,2,3        9.1  |
+|            CFROM, CTO)                                   | 
+| TRFDAT    (N, ID, IM, IY)            0,1,2,3        9.5  |
+| TRFMAT    (ZMAT, NX, NY,             0,1,2,3        9.1  |
+|              ZMAT2, NX2, NY2)                            |
+| TRIA3D    (XRAY, YRAY, ZRAY)             3    p    12.21 |
+| TRIANG    (XRAY, YRAY, ZRAY, N,      0,1,2,3        9.3  |
+|            I1RAY, I2RAY, I3RAY, NMAX, NTRI)              |
+| TRFREL    (XRAY, YRAY, N)                2,3        9.1  |
+| TRFRES    none                         1,2,3  ps    6.14 |
+| TRFROT    (XANG, NX, NY)               1,2,3  ps    6.14 |
+| TRFSCL    (XSCL, YSCL)                 1,2,3  ps    6.14 |
+| TRFSHL    (NXSHFT, NYSHFT)             1,2,3  ps    6.14 |
+| TRIFLL    (XRAY, YRAY)                 1,2,3  p     8.3  |
+| TRIPLX    none                         1,2,3  ps    6.5  |
+| TRIPTS    (XRAY, YRAY, ZVRAY, N,      0,1,2,3       14.3 |       
+|            I1RAY, I2RAY, I3RAY, NTRI,                    |
+|            ZLEV, XPTS, YPTS, MAXPTS,                     |
+|            IRAY, MAXCRV, NCRV)                           |
+| = TRMLEN  (CSTR)                     0,1,2,3        9.2  |
+| TUBE3D    (X1, Y1, Z1, X2, Y2, Z2,       3    p    12.21 | 
+|            R, N, M)                                      |    
+| TXTJUS    (CJUS)                       1,2,3  ps    6.3  |
+| TXTURE    (ITMAT, NX, NY)              1,2,3        5.5  | 
+| UNIT      (NU)                         1,2,3  ps   6.1.6 |
+| UNITS     (COPT)                         0    ps   6.1.2 |
+| UPSTR     (CSTR)                     0,1,2,3        9.2  |
+| USRPIE    (ISEG, XD, XP, NR, NOFF,     1,2,3  ps   10.2  |
+|            ANG, NVY, IDRW, IANN)                         |
+| UTFINT    (CSTR,IRAY,NRAY,NL)        0,1,2,3        9.2  |
+| VANG3D    (ANG)                        1,2,3  ps   12.2  |
+| VCLP3D    (XCLP1, XCLP2)               1,2,3  ps   12.16 |
+| VECCLR    (NCLR)                       1,2,3  ps    8.2  |
+| VECF3D    (XVRAY, YVRAY, ZVRAY, XPRAY,   3    p    12.7  | 
+|            YPRAY, ZPRAY, N, IVEC)                        |
+| VECFLD    (XVRAY, YVRAY, XPRAY,         2,3   p     5.5  | 
+|                YPRAY, N, IVEC)                           |
+| VECMAT    (XV, YV, NX, NY, XP, YP,      2,3   p     5.5  | 
+|                IVEC)                                     |
+| VECMAT3D  (XV, YV, ZV, NX, NY, NZ,       3    p    12.7  | 
+|            XP, YP, ZP, IVEC)                             |
+| VECOPT    (X,COPT)                     1,2,3  ps    8.2  |
+| VECTOR    (NX1, NY1, NX2, NY2, IVEC)   1,2,3  p     8.2  |
+| VECTR3    (X1, Y1, Z1,                   3    p    12.21 |
+|            X2, Y2, Z2, IVEC)                             |
+| VFOC3D    (X, Y, Z, COPT)              1,2,3  ps   12.2  |
+| VIEW3D    (XVU, YVU, ZVU, CVU)         1,2,3  ps   12.2  |
+| VKXBAR    (NVFX)                       1,2,3  ps   11.5  |
+| VKYBAR    (NVFY)                       1,2,3  ps   11.5  |
+| VKYTIT    (NV)                         1,2,3  ps   6.2.10| 
+| VLTFIL    (CFIL, COPT)                 1,2,3       6.3.2 |
+| VTX3D     (XRAY, YRAY, ZRAY, N, COPT)    3    p    12.21 |    
+| VTXC3D    (XRAY, YRAY, ZRAY, ICRAY, N,   3    p    12.21 |
+|            COPT)                                         |    
+| VTXN3D    (XRAY, YRAY, ZRAY, XNTAY,      3    p    12.21 | 
+             YNRAY, ZNRAY,N, COPT)                         |     
+| VUP3D     (ANG)                        1,2,3  ps   12.2  |
+| WGAPP     (IP, CLAB, ID)                 0    w    15.1  |
+| WGBAS     (IP, COPT, ID)                 0    w    15.1  |
+| WGBOX     (IP, CLIS, ISEL, ID)           0    w    15.1  |
+| WGBUT     (IP, CLAB, IVAL, ID)           0    w    15.1  |
+| WGCMD     (IP, CLAB, CMD, ID)            0    w    15.1  |
+| WGDLIS    (IP, CLIS, ISEL, ID)           0    w    15.1  |
+| WGDRAW    (IP)                           0    w    15.1  |
+| WGFIL     (IP, CLAB, CFIL, CMASK, ID)    0    w    15.1  |
+| WGFIN     none                           0    w    15.1  |
+| WGINI     (COPT, ID)                     0    w    15.1  |
+| WGLAB     (IP, CSTR, ID)                 0    w    15.1  | 
+| WGLIS     (IP, CLIS, ISEL, ID)           0    w    15.1  |
+| WGLTXT    (IP, CLAB, CSTR, NWTH, ID)     0    w    15.1  |
+| WGOK      (IP, ID)                       0    w    15.1  | 
+| WGPBAR    (IP, XMIN, XMAX, XSTP, ID)     0    w    15.1  |
+| WGPBUT    (IP, CLAB, ID)                 0    w    15.1  |
+| WGPOP     (IP, CLAB, ID)                 0    w    15.1  |
+| WGQUIT    (IP, ID)                       0    w    15.1  | 
+| WGSCL     (IP, CLAB, XMIN, XMAX, XVAL,   0    w    15.1  |
+|                              NDEZ, ID)                   |
+| WGSEP     (IP, ID)                       0    w    15.1  | 
+| WGSTXT    (IP, NSIZE, NMAX, ID)          0    w    15.1  |
+| WGTBL     (IP, NROWS, NCOLS, ID)         0    w    15.1  |
+| WGTXT     (IP, CSTR, ID)                 0    w    15.1  |
+| WIDBAR    (NZB)                        1,2,3  ps   11.5  |
+| WIMAGE    (CFIL)                       1,2,3  p     9.9  |
+| WINAPP    (COPT)                         0    ps   6.1.7 |
+| WINDOW    (NX, NY, NW, NH)               0    ps   6.1.7 |
+| WINDBR    (X,NXP,NYP,NW,A)             1,2,3   p    8.4  |  
+| WINFNT    (CFONT)                      1,2,3  ps    6.5  |
+| WINID     (ID)                         1,2,3  rq   9.8.3 |
+| WINMOD    (CMOD)                       1,2,3  ps   6.1.7 |
+| WINOPT    (ISEC, CKEY)                 1,2,3  ps   6.1.7 |
+| WINSIZ    (NW, NH)                   0,1,2,3  ps   6.1.7 |
+| WINTIT    (CTIT)                       1,2,3  ps   9.8.3 |
+| WMFMOD    (CMOD, CKEY)                   0    ps   6.1.4 |
+| WORLD     none                           2,3  p    13.3  |
+| WPIXEL    (IX, IY, NCLR)               1,2,3  p     9.9  |
+| WPIXLS    (IRAY, IX, IY, NW, NH)       1,2,3  p     9.9  |
+| WPXROW    (IRAY, IX, IY, N)            1,2,3  p     9.9  |
+| WRITFL    (NLU, IRAY, NBYTE, ISTAT)  0,1,2,3        9.7  |
+| WTIFF     (CFIL)                       1,2,3  p     9.9  |
+| X11FNT    (CFONT,COPT)                 1,2,3  ps    6.5  |
+| X11MOD    (CMOD)                         0    ps   6.1.7 |
+| = X2DPOS  (X, Y)                         2         13.6  |
+| = X3DABS  (X, Y, Z)                      3         12.22 |
+| = X3DPOS  (X, Y, Z)                      3         12.22 |
+| = X3DREL  (X, Y, Z)                      3         12.22 |
+| XAXGIT    none                           2,3  p     4.4  |
+| XAXIS     (XA, XE, XOR, XSTP, NL,      1,2,3  p     4.6  |
+|                   CX, IT, NX, NY)                        |
+| XAXLG     (XA, XE, XOR, XSTP, NL,      1,2,3  p     4.6  |
+|                   CX, IT, NX, NY)                        |
+| XAXMAP     (XA, XE, XOR, XSTP,           2    p    13.1  |
+|                   CX, IT, NY)                            |
+| XCROSS    none                           2,3  p     4.4  |
+| XDRAW     (X, Y)                       1,2,3  p     8.1  |
+| XMOVE     (X, Y)                       1,2,3  p     8.1  |
+| =XPOSN    (X)                            2,3        9.1  |
+| = Y2DPOS  (X, Y)                         2         13.6  |
+| = Y3DABS  (X, Y, Z)                      3         12.22 |
+| = Y3DPOS  (X, Y, Z)                      3         12.22 |
+| = Y3DREL  (X, Y, Z)                      3         12.22 |
+| YAXGIT    none                           2,3  p     4.4  |
+| YAXIS     (YA, YE, YOR, YSTP, NL,      1,2,3  p     4.6  |
+|                   CY, IT, NX, NY)                        |
+| YAXLG     (YA, YE, YOR, YSTP, NL,      1,2,3  p     4.6  |
+|                   CY, IT, NX, NY)                        |
+| YAXMAP    (YA, YE, YOR, YSTP,            2  p      13.1  |
+|                   CY, IT, NX)                            |
+| YCROSS    none                           2,3  p     4.4  |
+| =YPOSN    (Y)                            2,3        9.1  |
+| = Z3DPOS  (X, Y, Z)                       3        12.22 |
+| ZAXIS     (A, B, OR, STEP, NL,         1,2,3  p    11.3  |
+|            CZ, IT, ID, NX, NY)                           |
+| ZAXLG     (A, B, OR, STEP, NL,         1,2,3  p    11.3  |
+|            CZ, IT, ID, NX, NY)                           |
+| ZBFERS    none                         1,2,3       12.20 |
+| ZBFFIN    none                         1,2,3       12.20 |
+| ZBFINI    (IRET)                       1,2,3       12.20 |      
+| ZBFLIN    (X1, Y1, Z1, X2, Y2, Z2)       3 &  p    12.20 |
+| ZBFMOD    (CMOD)                       1,2,3       12.20 |      
+| ZBFRES    none                         1,2,3       12.20 |
+| ZBFSCL    (X)                          1,2,3       12.20 |
+| ZBFTRI    (XRAY, YRAY, ZRAY, IRAY)       3 &  p    12.20 |
+| ZSCALE    (ZMIN, ZMAX)                 1,2,3  ps   12.16 |
+------------------------------------------------------------
