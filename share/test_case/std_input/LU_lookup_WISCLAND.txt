@@ -1,0 +1,19 @@
+NUM_LANDUSE_TYPES	14																	
+NUM_SOIL_TYPES	4																	
+#			CURVE NUMBER															
+#			AMCII	AMC II	AMC II	AMC II	MAX RECHARGE				Interception	Interception						
+# LU code	Description	Assumed Imperviousness	A	B	C	D	A	B	C	D	(growing season)	(Non-growing season)	A	B	C	D	Reference (CN)	Reference (Root Depth)
+101	1.1   High Intensity (commercial and business)	0.85	89	92	94	95	143	48	14	3	0	0	3.33	3.33	3.33	2.22	210-VI-TR-55 Second Ed. June 1986	"2/3 of Table 10, TM 1957"
+104	1.2   Low Intensity (1/8 acre residential)	0.65	67	78	85	89	143	48	14	3	0	0	3.33	3.33	3.33	2.22	210-VI-TR-55 Second Ed. June 1986	"2/3 of Table 10, TM 1957"
+105	1.3   Golf Course (fair condition)	**	49	69	79	84	143	48	14	3	0	0	3.33	3.33	3.33	2.22	210-VI-TR-55 Second Ed. June 1986	"2/3 of Table 10, TM 1957"
+110	2 AGRICULTURE	**	65	75	82	86	143	48	14	3	0	0	3.33	3.61	3.4	2.11	210-VI-TR-55 Second Ed. June 1986	
+150	"3 GRASSLAND (assume pasture, good condition)"	**	39	61	74	80	143	48	14	3	0	0	3.33	3.61	3.4	2.11	"SCS Nat Eng Handbook Section 9, 2004"	"Table 10, TM 1957; Deep-rooted crops"
+160	4 FOREST (assume good condition)	**	25	55	70	77	143	48	14	3	0	0	1.5	1.5	1.5	1.5	"SCS Nat Eng Handbook Section 9, 2004"	
+200	5 OPEN WATER	**	100	100	100	100	143	48	14	3	0	0	0	0	0	0	Dripps	
+210	6 WETLAND	**	30	58	71	78	143	48	14	3	0	0	4.5	4.5	4.5	4.5	"SCS Nat Eng Handbook Section 4, 1964"	
+240	7 BARREN	**	74	83	88	90	143	48	14	3	0	0	2	2	2	2	210-VI-TR-55 Second Ed. June 1986	"2/3 of Table 10, TM 1957"
+250	8 SHRUBLAND	**	35	56	70	77	143	48	14	3	0	0	3.33	3.33	3.33	2.22	"SCS Nat Eng Handbook Section 4, 1964"	"Table 10, TM 1957; Deep-rooted crops"
+300	Transportation		95	95	95	95	143	48	14	3	0	0	1	1	1	1		
+301	Extractive		74	83	88	90	143	48	14	3	0	0	2	2	2	2		
+302	Cemetery		49	69	79	84	143	48	14	3	0	0	3.33	3.33	3.33	2.22		
+303	Solid Waste		95	95	95	95	143	48	14	3	0	0	2	2	2	2		
