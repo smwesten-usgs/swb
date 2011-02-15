@@ -31,6 +31,10 @@ get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 #------------------------------------------------------------------------
 # Set PREPROCESSOR DEFINES for conditional compilation
 #------------------------------------------------------------------------
+
+set(STREAM_INTERACTIONS_VARS 0)
+set(IRRIGATION_MODULE_VARS 0)
+
 option (OPTION__GRAPHICS_SUPPORT
       "Compile the code with graphics (DISLIN) support?" ON)
 if(OPTION__GRAPHICS_SUPPORT)
@@ -41,6 +45,7 @@ option (OPTION__STREAM_INTERACTIONS
       "Compile the code with stream interactions support?" OFF)
 if(OPTION__STREAM_INTERACTIONS)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "STREAM_INTERACTIONS")
+  set(STREAM_INTERACTIONS_VARS 1)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
@@ -53,6 +58,7 @@ option (OPTION__IRRIGATION_MODULE
       "Compile the code with irrigation module support?" OFF)
 if(OPTION__IRRIGATION_MODULE)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "IRRIGATION_MODULE")
+  set(IRRIGATION_MODULE_VARS 3)
 endif()
 
 option (OPTION__DEBUG_PRINT
@@ -61,32 +67,61 @@ if(OPTION__DEBUG_PRINT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
 endif()
 
+math(EXPR TOTAL_T_STATS_VARS "(26 + ${STREAM_INTERACTIONS_VARS} + ${IRRIGATION_MODULE_VARS})")
+set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "CPP_NUM_VARS=${TOTAL_T_STATS_VARS}")
+message("Setting dimension for number of T_STATS elements to: " ${TOTAL_T_STATS_VARS})
+
 #------------------------------------------------------------------------
 # Set platform-specific options
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
    if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+
+
+   set(CMAKE_MAKE_PROGRAM "c:/gfortran_32/bin/make.exe")
+   set(CMAKE_LINKER "c:/gfortran_32/bin/ld.exe")
+   set(CMAKE_AR "c:/gfortran_32/bin/ar.exe")
      #------------------------------------------------------------------------
      # Set compilation and link preferences for GFORTRAN
      #------------------------------------------------------------------------
-     set (Fortran_FLAGS_RELEASE "-Ofast -ffree-form -ffree-line-length-none -x f95-cpp-input")
-     set (Fortran_FLAGS_DEBUG "-O0 -g -Wall -ffree-form -ffree-line-length-none -x f95-cpp-input")
+     set (Fortran_FLAGS_RELEASE "-Ofast -ffree-form -ffree-line-length-none -cpp")
+     set (Fortran_FLAGS_DEBUG "-O0 -g -Wall -ffree-form -ffree-line-length-none -cpp")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
 
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
+#     set (CMAKE_PREFIX_PATH "C:/gfortran_32")
 
-     find_program(CMAKE_MAKE_PROGRAM make make.exe
-       DOC "Find a suitable make program for building under Windows/MinGW"
-       HINTS
-       C:/gfortran_32/bin
-       C:/MinGW_MSYS/msys/1.0/bin
-       C:/MinGW/bin
-       D:/MinGW/bin)
+#     find_program(CMAKE_MAKE_PROGRAM make make.exe
+#       DOC "Find a suitable make program for building under Windows/MinGW"
+#       PATHS
+#       C:/gfortran_32/bin
+#       C:/MinGW/bin
+#       D:/MinGW/bin
+#       NO_DEFAULT_PATH)
+##       NO_SYSTEM_ENVIRONMENT_PATH)
        message("CMAKE_MAKE_PROGRAM: " ${CMAKE_MAKE_PROGRAM})
+
+#     find_program(CMAKE_LINKER ld.exe ld
+#       DOC "Find a suitable linker for building under Windows/MinGW"
+#       HINTS
+#       C:/gfortran_32/bin
+#       C:/MinGW_MSYS/msys/1.0/bin
+#       C:/MinGW/bin
+#       D:/MinGW/bin)
+       message("CMAKE_LINKER: " ${CMAKE_LINKER})
+
+#     find_program(CMAKE_AR ar.exe ar
+#       DOC "Find a suitable archiving program for building under Windows/MinGW"
+#       HINTS
+#       C:/gfortran_32/bin
+#       C:/MinGW_MSYS/msys/1.0/bin
+#       C:/MinGW/bin
+#       D:/MinGW/bin)
+       message("CMAKE_AR: " ${CMAKE_AR})
 
      find_program(CMAKE_SH sh cmd.exe
        DOC "Find a suitable shell for building under Windows/MinGW"
@@ -138,7 +173,19 @@ if(CMAKE_HOST_WIN32)
 
       find_library(GDI32_LIB
         NAMES gdi32 libgdi32.a
-        DOC "MinGW USER32 library"
+        DOC "MinGW GDI32 library"
+        HINTS
+        C:/gfortran_32/lib )
+
+      find_library(OPENGL32_LIB
+        NAMES opengl32 libopengl32.a
+        DOC "MinGW OPENGL32 library"
+        HINTS
+        C:/gfortran_32/lib )
+
+      find_library(GLU32_LIB
+        NAMES glu32 libglu32.a
+        DOC "MinGW GLU32 library"
         HINTS
         C:/gfortran_32/lib )
 
@@ -148,6 +195,8 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${GLU32_LIB} )
 
      SET(CMAKE_INSTALL_PREFIX "d:/dos")
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe D:/dos/swb.exe
