@@ -1,9 +1,9 @@
-!> \brief User-defined types for the SWB code.
-!!
-!! This module defines parameters and project specific data types for the
-!! SWB model.  This module also contains a number of utility functions
-!! that perform string manipulations, convert Celcius to Fahrenheit, and
-!! convert between Julian days and Gregorian dates.
+!> @brief User-defined types for the SWB code.
+!>
+!> This module defines parameters and project specific data types for the
+!> SWB model.  This module also contains a number of utility functions
+!> that perform string manipulations, convert Celcius to Fahrenheit, and
+!> convert between Julian days and Gregorian dates.
 module types
 
 #ifdef __INTEL_COMPILER
@@ -24,68 +24,88 @@ module types
   integer, public, parameter :: T_SGL = SELECTED_REAL_KIND(p=6,r=37)
   integer, public, parameter :: T_DBL = SELECTED_REAL_KIND(p=13,r=200)
 
-  !> I/O Units
-  integer (kind=T_INT), public, parameter :: LU_STD_OUT = 6
-  integer (kind=T_INT), public, parameter :: LU_CONTROL = 100
-  integer (kind=T_INT), public, parameter :: LU_GRID = 101
-  integer (kind=T_INT), public, parameter :: LU_LOOKUP = 102
-  integer (kind=T_INT), public, parameter :: LU_TS = 103
-  integer (kind=T_INT), public, parameter :: LU_TEMP = 104
-  integer (kind=T_INT), public, parameter :: LU_MSB_REPORT = 105
-  integer (kind=T_INT), public, parameter :: LU_BIN_FILE = 106
-  integer (kind=T_INT), public, parameter :: LU_ROUTING = 107
-  integer (kind=T_INT), public, parameter :: LU_CSV = 108
-  integer (kind=T_INT), public, parameter :: LU_CSV_SERIES = 109
-  integer (kind=T_INT), public, parameter :: LU_CSV_ANNUAL = 110
-  integer (kind=T_INT), public, parameter :: LU_MASK = 111
-  integer (kind=T_INT), public, parameter :: LU_MASK_FILE = 112
-  integer (kind=T_INT), public, parameter :: LU_MASK_STATS_CSV = 113
-  integer (kind=T_INT), public, parameter :: LU_PEST_STATS = 114
-  integer (kind=T_INT), public, parameter :: LU_PEST_OBS = 115
-  integer (kind=T_INT), public, parameter :: LU_PEST_INS = 116
-  integer (kind=T_INT), public, parameter :: LU_LOG = 117
+  !> @name Variables: Fortran logical unit numbers
+  !> Global logical unit numbers for input and output
+  !> @note Original SWB has these hard-coded as parameters;
+  !> changed all file open statements to use "newunit" and
+  !> converted these to variables - Jan 2011
+  !> @{
+  integer (kind=T_INT) :: LU_STD_OUT = 6
+  integer (kind=T_INT) :: LU_CONTROL
+  integer (kind=T_INT) :: LU_GRID
+  integer (kind=T_INT) :: LU_LOOKUP
+  integer (kind=T_INT) :: LU_TS
+  integer (kind=T_INT) :: LU_TEMP
+  integer (kind=T_INT) :: LU_MSB_REPORT
+  integer (kind=T_INT) :: LU_BIN_FILE
+  integer (kind=T_INT) :: LU_ROUTING
+  integer (kind=T_INT) :: LU_CSV_MIN
+  integer (kind=T_INT) :: LU_CSV_MEAN
+  integer (kind=T_INT) :: LU_CSV_MAX
+  integer (kind=T_INT) :: LU_CSV_ANNUAL
+  integer (kind=T_INT) :: LU_MASK
+  integer (kind=T_INT) :: LU_MASK_FILE
+  integer (kind=T_INT) :: LU_MASK_STATS_CSV
+  integer (kind=T_INT) :: LU_PEST_STATS
+  integer (kind=T_INT) :: LU_PEST_OBS
+  integer (kind=T_INT) :: LU_PEST_INS
+  integer (kind=T_INT) :: LU_LOG
+  !> @}
 
-  !> Some useful typed constants (to ensure accurate computations)
-  real (kind=T_SGL), public, parameter :: rZERO = 0.0_T_SGL
-  real (kind=T_DBL), public, parameter :: rD_ZERO = 0.0_T_DBL
-  real (kind=T_SGL), public, parameter :: rNEAR_ZERO = 1E-9_T_SGL
-  real (kind=T_SGL), public, parameter :: rPOINT2 = 0.2_T_SGL
-  real (kind=T_SGL), public, parameter :: rHALF = 0.5_T_SGL
-  real (kind=T_SGL), public, parameter :: rPOINT8 = 0.8_T_SGL
-  real (kind=T_SGL), public, parameter :: rONE = 1.0_T_SGL
-  real (kind=T_DBL), public, parameter :: rD_ONE = 1.0_T_DBL
-  real (kind=T_SGL), public, parameter :: rFREEZING = 32.0_T_SGL
-  real (kind=T_SGL), public, parameter :: rTEN = 10.0_T_SGL
-  real (kind=T_SGL), public, parameter :: rHUNDRED = 100.0_T_SGL
-  real (kind=T_SGL), public, parameter :: rTHOUSAND = 1000.0_T_SGL
-  real (kind=T_DBL), public, parameter :: rC_PER_F = 5.0_T_DBL / 9.0_T_DBL
-  real (kind=T_DBL), public, parameter :: rF_PER_C = 9.0_T_DBL / 5.0_T_DBL
-  real (kind=T_SGL), public, parameter :: rMM_PER_INCH = 25.4_T_SGL
-  real (kind=T_SGL), public, parameter :: rCM_PER_INCH = 2.54_T_SGL
-  real (kind=T_DBL), public, parameter :: rPI = 3.14159265_T_DBL
-  real (kind=T_DBL), public, parameter :: rTWOPI = 2.0_T_DBL * rPI
-  real (kind=T_DBL), public, parameter :: rSQM_to_SQFT = 10.76391_T_DBL
-  integer (kind=T_INT), public, parameter :: iMOVING_AVG_TERMS = 5
-  integer (kind=T_INT), public, parameter :: iROUTE_CELL_MARKED = -1
-  integer (kind=T_INT), public, parameter :: iROUTE_DEPRESSION = -999
-  integer (kind=T_INT), public, parameter :: iROUTE_LEFT_GRID = -1000
-  integer (kind=T_INT), public, parameter :: iNO_DATA_NCDC = -99999
-  integer (kind=T_INT), public, parameter :: iNUM_DIGITS = 3
-  integer (kind=T_INT), public, parameter :: iFIELD_WIDTH = 10
-  integer (kind=T_INT), public, parameter :: iZERO = 0
-  logical (kind=T_LOGICAL), public, parameter :: lTRUE = .true._T_LOGICAL
-  logical (kind=T_LOGICAL), public, parameter :: lFALSE = .false._T_LOGICAL
+  !> @name Constants: General conversion factors and flags
+  !> Some useful and common conversion factors, defined here
+  !> to ensure consistency throughout the code
+  !> @{
+  real (kind=T_SGL), parameter :: rZERO = 0.0_T_SGL
+  real (kind=T_DBL), parameter :: rD_ZERO = 0.0_T_DBL
+  real (kind=T_SGL), parameter :: rNEAR_ZERO = 1E-9_T_SGL
+  real (kind=T_SGL), parameter :: rPOINT2 = 0.2_T_SGL
+  real (kind=T_SGL), parameter :: rHALF = 0.5_T_SGL
+  real (kind=T_SGL), parameter :: rPOINT8 = 0.8_T_SGL
+  real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
+  real (kind=T_DBL), parameter :: rD_ONE = 1.0_T_DBL
+  real (kind=T_SGL), parameter :: rFREEZING = 32.0_T_SGL
+  real (kind=T_SGL), parameter :: rTEN = 10.0_T_SGL
+  real (kind=T_SGL), parameter :: rHUNDRED = 100.0_T_SGL
+  real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
+  real (kind=T_DBL), parameter :: rC_PER_F = 5.0_T_DBL / 9.0_T_DBL
+  real (kind=T_DBL), parameter :: rF_PER_C = 9.0_T_DBL / 5.0_T_DBL
+  real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
+  real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
+  real (kind=T_DBL), parameter :: rPI = 3.14159265_T_DBL
+  real (kind=T_DBL), parameter :: rTWOPI = 2.0_T_DBL * rPI
+  real (kind=T_DBL), parameter :: rSQM_to_SQFT = 10.76391_T_DBL
+  integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
+  integer (kind=T_INT), parameter :: iROUTE_CELL_MARKED = -1
+  integer (kind=T_INT), parameter :: iROUTE_DEPRESSION = -999
+  integer (kind=T_INT), parameter :: iROUTE_LEFT_GRID = -1000
+  integer (kind=T_INT), parameter :: iNO_DATA_NCDC = -99999
+  integer (kind=T_INT), parameter :: iNUM_DIGITS = 3
+  integer (kind=T_INT), parameter :: iFIELD_WIDTH = 10
+  integer (kind=T_INT), parameter :: iZERO = 0
+  logical (kind=T_LOGICAL), parameter :: lTRUE = .true._T_LOGICAL
+  logical (kind=T_LOGICAL), parameter :: lFALSE = .false._T_LOGICAL
   integer(kind=T_INT), parameter :: iEOF = HUGE(iZERO)
-  real (kind=T_SGL), public, parameter :: rBIGVAL = 1.0e20_T_SGL
-  integer(kind=T_INT), public :: iSTARTDATE_POS
-  integer(kind=T_INT), public :: iENDDATE_POS
-  integer(kind=T_INT), public :: iENDHEADER_POS
+  real (kind=T_SGL), parameter :: rBIGVAL = 1.0e20_T_SGL
+  character (len=1), parameter :: sTAB = achar(9)
+  character (len=1), parameter :: sBACKSLASH = achar(92)
+  character (len=1), parameter :: sFORWARDSLASH = achar(47)
+  !> @}
 
-#ifdef NETCDF_SUPPORT
-  integer (kind=T_INT), public, parameter :: iNC_INPUT = 1
-  integer (kind=T_INT), public, parameter :: iNC_OUTPUT = 2
-  integer (kind=T_INT), public, parameter :: iNC_OBSERVATION = 3
-#endif
+  !> @name Globals: Variables for run-length encoding operation
+  !> These variables store the position of the start date and
+  !> end date within the binary (stream) output file.
+  !> @{
+  integer(kind=T_INT) :: iSTARTDATE_POS
+  integer(kind=T_INT) :: iENDDATE_POS
+  integer(kind=T_INT) :: iENDHEADER_POS
+  !> @}
+
+
+  integer (kind=T_INT), parameter :: iNC_INPUT = 1
+  integer (kind=T_INT), parameter :: iNC_OUTPUT = 2
+  integer (kind=T_INT), parameter :: iNC_OBSERVATION = 3
+
 
   !> Define ANSI.sys-like text colors
   character (len=7), parameter :: sRED = char(27)//'[1;31m'
@@ -99,11 +119,11 @@ module types
 
 
 
-!> \brief Type that contains the data for an individual grid cell.
-!!
-!! Type that contains data for an individual grid cell. The model uses
-!! a grid of T_CELL types. Each variable added to this data type
-!! consumes Ny * Nx * size(T_SGL) bytes.
+!> @brief Type that contains the data for an individual grid cell.
+!>
+!> Type that contains data for an individual grid cell. The model uses
+!> a grid of T_CELL types. Each variable added to this data type
+!> consumes Ny * Nx * size(T_SGL) bytes.
   type T_CELL
       integer (kind=T_SHORT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
       integer (kind=T_SHORT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
@@ -122,10 +142,10 @@ module types
       real (kind=T_SGL) :: rSM_PotentialET          ! Potential ET
 !      real (kind=T_SGL) :: rSM_ActualET            ! Actual Evapotranspiration
 
-#ifdef STREAM_INTERACTIONS
+!if_defined STREAM_INTERACTIONS
       integer (kind=T_INT) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
       real (kind=T_SGL) :: rStreamCapture           ! Amount of water captured by the stream (or fracture)
-#endif
+!end_if
 
       integer (kind=T_INT) :: iTgt_Row   ! Row: "i" index of target cell into which runoff flows
       integer (kind=T_INT) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
@@ -140,7 +160,7 @@ module types
       real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
 !      real (kind=T_SGL) :: rInterception           ! Interception term
       real (kind=T_SGL) :: rNetPrecip              ! Net precipitation - precip minus interception
-      real (kind=T_SGL) :: rSnowWaterEquiv         ! precipitation that falls as snow (in SWE)
+      real (kind=T_SGL) :: rSnowFall_SWE           ! precipitation that falls as snow (in SWE)
       real (kind=T_SGL) :: rSnowFall               ! snowfall in inches as SNOW
       real (kind=T_SGL) :: rSnowCover              ! snowcover expressed as inches of water
       real (kind=T_SGL) :: rSnowTemperature = 23. ! snow temperature
@@ -150,12 +170,12 @@ module types
       real (kind=T_SGL) :: rTMax                   ! Maximum daily temperature
       real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
-#ifdef IRRIGATION_MODULE
+!if_defined IRRIGATION_MODULE
       real (kind=T_SGL) :: rGDD_TBase = 50.        !
       real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
       real (kind=T_SGL) :: rIrrigationAmount = rZERO ! term to hold irrigation term, if any
-#endif
+!end_if
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
       integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
 !      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
@@ -173,14 +193,14 @@ module types
   integer (kind=T_INT), public, parameter :: T_SGL_GRID = 1       ! Real data
   integer (kind=T_INT), public, parameter :: T_CELL_GRID = 2       ! SWB cell data
 
-!> \brief Type that contains the data for a grid.
-!!
-!!   Type that contains the data for a grid. Depending on the need of the
-!!   application code, the grid may contain integer, real, or cell-by-cell
-!!   data. This 'generic' data type makes many data validation problems
-!!   simpler, but at the cost of two unpopulated pointer variables per grid.
-!!   This implements a coding mechanism comparable to templates in C++.!
-  type, public :: T_GENERAL_GRID
+!> @brief Type that contains the data for a grid.
+!>
+!>   Type that contains the data for a grid. Depending on the need of the
+!>   application code, the grid may contain integer, real, or cell-by-cell
+!>   data. This 'generic' data type makes many data validation problems
+!>   simpler, but at the cost of two unpopulated pointer variables per grid.
+!>   This implements a coding mechanism comparable to templates in C++.!
+  type T_GENERAL_GRID
 !      integer (kind=T_INT) :: iGridType            ! One of the grid type options above
       integer (kind=T_INT) :: iNX                   ! Number of cells in the x-direction
       integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
@@ -199,14 +219,14 @@ module types
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
 
-  type, public :: T_GRID_COLLECTION
+  type T_GRID_COLLECTION
     type (T_GENERAL_GRID), dimension(:), pointer :: Grids
   end type T_GRID_COLLECTION
 
 
-  !> \brief Container for land-use related data
-  !!
-  !! Includes curve number and rooting-depth generalizations
+  !> @brief Container for land-use related data
+  !>
+  !> Includes curve number and rooting-depth generalizations
   type T_LANDUSE_LOOKUP
 	integer (kind=T_INT) :: iLandUseType ! land use code corresponding to
 	                                     ! the codes specified in land use grid
@@ -219,6 +239,7 @@ module types
 !    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rY_ROOT_ZONE
   end type T_LANDUSE_LOOKUP
 
+#ifdef IRRIGATION_MODULE
   type T_IRRIGATION_LOOKUP
  	 integer (kind=T_INT) :: iLandUseType ! land use code corresponding to
 	                                     ! the codes specified in land use grid
@@ -234,6 +255,7 @@ module types
     integer (kind=T_INT) :: iBeginIrrigation = 120
     integer (kind=T_INT) :: iEndIrrigation = 240
   end type T_IRRIGATION_LOOKUP
+#endif
 
   !> container for basin mask table data
   type T_BASIN_MASK
@@ -254,7 +276,7 @@ module types
     real (kind=T_SGL) :: rMEAN
   end type T_BASIN_MASK
 
-  ! container for SSF file information
+  !> container for SSF file information
   type T_SSF_FILES
     integer (kind=T_INT) :: iLU      ! Fortran logical unit #
     character (len=128) :: sFileName
@@ -263,7 +285,7 @@ module types
     integer (kind=T_INT) :: iVarNum  ! T_STATS variable number
   end type T_SSF_FILES
 
-#ifdef NETCDF_SUPPORT
+!if_defined NETCDF_SUPPORT
   type T_NETCDF_FILE
     integer(kind=T_INT) :: iNCID
     character(len=64)  :: sFilename
@@ -306,11 +328,11 @@ module types
     character(len=48) :: sEllipsoidName = "GRS 1980"
     integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
   end type T_NETCDF_FILE
-#endif
+!end_if
 
   !> Container for calendar lookup information
   type T_MONTH
-      !! Container for calendar lookup information
+      ! Container for calendar lookup information
     character (len=3) :: sName          ! Abbreviated name
 	 character (len=9) :: sFullName      ! Full month name
     integer (kind=T_INT) :: iStart      ! Starting (Julian) date
@@ -337,233 +359,278 @@ module types
   ! Global buffer for writing log messages
   character (len=256), public :: sLogBuffer
 
-!   T_STATS - Type that contains parameters for graphings and stats calculations.
-!
-! SYNOPSIS
-!   This type contains parameters that determine how the main state variables
-!   and other important ancillary variables are tabulated and graphed.
-!
-! SOURCE
-  !> Type that contains parameters for graphings and stats calculations.
-  !!
-  !! This type contains parameters that determine how the main state variables
-  !! and other important ancillary variables are tabulated and graphed.
+  !> @brief Type that contains parameters for graphings and stats calculations.
+  !>
+  !> This type contains parameters that determine how the main state variables
+  !> and other important ancillary variables are tabulated and graphed.
 
-  type :: T_STATS
-    character (len=20) :: sVARIABLE_NAME       ! holds short version of the variable name
-    integer(kind=T_INT) :: iLU                 ! Fortran logical unit for binary file writes
-    integer (kind=T_INT) :: iIndent            ! integer number of characters to indent
-    integer(kind=T_INT) :: iMassBalanceConst   ! holds multiplier for calculating mass balances
-    logical(kind=T_LOGICAL) :: lShowSum        ! does it make sense to show the sum of this accumulator?
-    logical(kind=T_LOGICAL) :: lShowDailySum   ! does it make sense to show the daily sum of this accumulator?
-    character (len=20) :: sUNITS               ! holds information about units of
-    character(len=64) :: sLongName            ! long form of name
+  type T_STATS
+    !> Short version of the variable name
+    character (len=20) :: sVARIABLE_NAME
+    !> Fortran logical unit for binary file writes
+    integer(kind=T_INT) :: iLU
+    !> Integer number of characters to indent (on-screen display)
+    integer (kind=T_INT) :: iIndent
+    !> Multiplier for calculating mass balances (1=source, 0=NA, -1=sink)
+    integer(kind=T_INT) :: iMassBalanceConst
+    !> Does it make sense to show the sum of this accumulator?
+    logical(kind=T_LOGICAL) :: lShowSum
+    !> Does it make sense to show the daily sum of this accumulator?
+    logical(kind=T_LOGICAL) :: lShowDailySum
+    !> Is this variable active given the compiler options?
+    logical (kind=T_LOGICAL) :: lActive
+    !> Text describing the unit of measure (i.e. inches)
+    character (len=20) :: sUnits
+    !> Long form of the variable name
+    character(len=64) :: sLongName
+    !> Multiplication factor when writing to a NetCDF file
     real (kind=T_DBL) :: rNC_MultFactor
+    !> Offset when writing to a NetCDF file
     real (kind=T_DBL) :: rNC_AddOffset
-    integer(kind=T_INT) :: iDailyOutput   ! reconstitute daily grids?
-    integer(kind=T_INT) :: iMonthlyOutput ! reconstitute monthly grids?
-    integer(kind=T_INT) :: iAnnualOutput  ! reconstitute annual grids?
-    integer(kind=T_INT) :: iNetCDFOutput  ! Dump variable to NetCDF file?
+    !> Type of daily output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
+    integer(kind=T_INT) :: iDailyOutput
+    !> Type of monthly output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
+    integer(kind=T_INT) :: iMonthlyOutput
+    !> Type of annual output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
+    integer(kind=T_INT) :: iAnnualOutput
+    !> Is output to be written to a NetCDF file?
+    integer(kind=T_INT) :: iNetCDFOutput
+    !> Description of utility of variable in calculating mass balance
+    character (len=24) :: sMSB_Note
   end type T_STATS
 
+  !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
+  !> Global parameter defining the number of elements in the STAT_INFO array.
+  !> @note This parameter value is set to the value of the
+  !> C preprocessor macro variable "CPP_NUM_VARS". If this macro value
+  !> is undefined or improperly defined, compilation will fail.
+  !> As of Feb. 2011, this value is calculated within the cmake system
+  !> on the basis of the \#defines included in conditional compilation.
+  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 29
 
+  ! constants defining T_STATS output types
   integer(kind=T_INT), parameter :: iNONE = 0
   integer(kind=T_INT), parameter :: iGRID = 1
   integer(kind=T_INT), parameter :: iGRAPH = 2
   integer(kind=T_INT), parameter :: iBOTH = 3
   integer(kind=T_INT), parameter :: iSTATS = 4
 
-#ifndef STREAM_INTERACTIONS
-  ! Define parameter values for working with accumulator arrays
-  integer (kind=T_INT), parameter :: iNUM_VARIABLES = 28
-#else
-  ! Define parameter values for working with accumulator arrays
-  integer (kind=T_INT), parameter :: iNUM_VARIABLES = 29
-#endif
+  !> Define parameter values for working with accumulator arrays
+  type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = [ &
 
-  type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = (/ &
-    T_STATS ('GROSS_PRECIP',201,2,0,lTRUE,lTRUE, &
+    ! FIRST come the SOURCES (+) in the mass balance...
+    T_STATS ('GROSS_PRECIP',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','gross precipitation', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SNOWFALL',202,0,1,lTRUE,lTRUE, &
-      'inches','precipitation falling as snow', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SNOWCOVER',203,2,0,lFALSE,lTRUE, &
-      'inches','water equivalent of snow cover', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('CFGI',204,2,0,lFALSE,lFALSE, &
-      'unitless','continuous frozen ground index', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('MIN_TEMP',205,2,0,lFALSE,lFALSE, &
-      'degrees F','minimum daily air temperature', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('MAX_TEMP',206,2,0,lFALSE,lFALSE, &
-      'degrees F','maximum daily air temperature', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('AVG_TEMP',207,2,0,lFALSE,lFALSE, &
-      'degrees F','mean daily air temperature', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('CHG_IN_SNOW_COV',208,0,-1,lTRUE,lTRUE, &
-      'inches','snowfall minus snowmelt', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SNOWMELT',209,2,0,lTRUE,lTRUE, &
-      'inches','snowmelt', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('INTERCEPTION',210,2,0,lTRUE,lTRUE, &
-      'inches','interception', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('NET_PRECIP',211,0,1,lTRUE,lTRUE, &
-      'inches','gross precipitation minus interception', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('INFLOW',212,0,1,lTRUE,lTRUE, &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+
+    T_STATS ('SNOWMELT',0,2,0,lTRUE,lTRUE, lTRUE, &
+       'inches','snowmelt', &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+
+    T_STATS ('INFLOW',0,0,1,lTRUE,lTRUE, lTRUE, &
       'inches','incoming flow from adjacent cells', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('OUTFLOW',213,0,-1,lTRUE,lTRUE, &
-      'inches','outgoing flow to adjacent cells', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('RUNOFF_OUTSIDE',214,0,-1,lTRUE,lTRUE, &
-      'inches','runoff leaving model domain', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('REJECTED_RECHARGE',215,0,-1,lTRUE,lTRUE, &
-      'inches','recharge exceeding max recharge rate', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('NET_INFLOW',216,2,0,lTRUE,lTRUE, &
-      'inches','sum of net precip and inflow', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('NET_INFIL',217,2,0,lTRUE,lTRUE, &
-      'inches','precip and inflow minus outflow', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('POT_ET',218,2,0,lTRUE,lTRUE, &
-      'inches','potential evapotranspiration', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('ACT_ET',219,0,-1,lTRUE,lTRUE, &
-      'inches','actual evapotranspiration', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('P_MINUS_PET',220,2,0,lTRUE,lFALSE, &
-      'inches','net inflow minus potential et', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SM_DEFICIT',221,2,0,lTRUE,lFALSE, &
-      'inches','daily soil moisture deficit', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SM_SURPLUS',222,2,0,lTRUE,lFALSE, &
-      'inches','daily soil moisture surplus', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SM_APWL',223,2,0,lFALSE,lFALSE, &
-      'inches','accumulated potential water loss', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('SOIL_MOISTURE',224,2,0,lFALSE,lTRUE, &
-      'inches','daily soil moisture', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('CHG_IN_SOIL_MOIS',225,0,-1,lTRUE,lTRUE, &
-      'inches','daily change in soil moisture', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('RECHARGE',226,0,-1,lTRUE,lTRUE, &
-      'inches','daily potential recharge', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('GDD',227,2,0,lFALSE,lFALSE, &
-      'degree-day','growing degree day', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE), &
-    T_STATS ('IRRIGATION_AMOUNT',228,0,1,lTRUE,lTRUE, &
-      'inches','daily estimated irrigation amount', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE) &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
 
-#ifndef STREAM_INTERACTIONS
-      /)
+    T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
+#ifdef IRRIGATION_MODULE
+      lTRUE, &
 #else
-    ,T_STATS ('STREAM_CAPTURE',229,0,-1,lTRUE,lTRUE, &
-      'inches','runoff or recharge captured by a stream or fracture', &
-      1.,0.0, &
-      iNONE,iNONE,iNONE,iNONE)/)
+      lFALSE, &
 #endif
+       'inches','daily estimated irrigation amount', &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
 
-  !> define parameters referring to statistics
+    ! NOW make room for the SINKS (-) in the mass balance...
+    T_STATS ('SNOWFALL',0,0,1,lTRUE,lTRUE, lTRUE, &
+      'inches','precipitation falling as snow (SWE)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','interception', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('OUTFLOW',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','outgoing flow to adjacent cells', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('RUNOFF_OUTSIDE',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','runoff leaving model domain', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('ACT_ET',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','actual evapotranspiration', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('CHG_IN_SOIL_MOIS',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','daily change in soil moisture', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','daily potential recharge', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('REJECTED_RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','recharge exceeding max recharge rate', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    T_STATS ('STREAM_CAPTURE',0,0,-1,lTRUE,lTRUE, &
+#ifdef STREAM_INTERACTIONS
+      lTRUE, &
+#else
+      lFALSE, &
+#endif
+        'inches','runoff or recharge captured by a stream or fracture', &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+
+    ! The following items are tracked and provided as outputs
+    ! but are not part of the mass balance calculation...
+    T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE, &
+      'inches','water equivalent of snow cover', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('CFGI',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'unitless','continuous frozen ground index', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('MIN_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'degrees F','minimum daily air temperature', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('MAX_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'degrees F','maximum daily air temperature', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('AVG_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'degrees F','mean daily air temperature', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('CHG_IN_SNOW_COV',0,0,-1,lTRUE,lTRUE, lTRUE, &
+      'inches','snowfall minus snowmelt', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('NET_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE, &
+      'inches','gross precipitation minus interception', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('NET_INFLOW',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','sum of net precip and inflow', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('NET_INFIL',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','precip and inflow minus outflow', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('POT_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','potential evapotranspiration', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE, &
+      'inches','net inflow minus potential et', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('SM_DEFICIT',0,2,0,lTRUE,lFALSE, lTRUE, &
+      'inches','daily soil moisture deficit', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('SM_SURPLUS',0,2,0,lTRUE,lFALSE, lTRUE, &
+      'inches','daily soil moisture surplus', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('SM_APWL',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'inches','accumulated potential water loss', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('SOIL_MOISTURE',0,2,0,lFALSE,lTRUE, lTRUE, &
+      'inches','daily soil moisture', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+
+    T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
+#ifdef IRRIGATION_MODULE
+      lTRUE, &
+#else
+      lFALSE, &
+#endif
+      'degree-day','growing degree day', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info') ]
+
+  !> @anchor const_stat
+  !> @name Constants: Statistics that SWB knows how to calculate and store
+  !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
+  !> that are global variables within module swb_stats
+  !> @{
   integer (kind=T_INT), parameter :: iNUM_STATS = 5
   integer (kind=T_INT), parameter :: iMIN = 1
   integer (kind=T_INT), parameter :: iMEAN = 2
   integer (kind=T_INT), parameter :: iMAX = 3
   integer (kind=T_INT), parameter :: iSUM = 4
   integer (kind=T_INT), parameter :: iLENGTH = 5
+  character(len=7), dimension(iNUM_STATS), parameter :: STAT_NAMES = &
+    [ "Minimum", "Mean   ", "Maximum", "Sum    ", "Length " ]
+  !> @}
 
-  !> define variable names to be stored in the T_STATS array
+  !> @name Constants: Variables that SWB can output or summarize
+  !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
+  !> that are global variables within module swb_stats
+  !> @note These constants are arranged in the desired order of output
+  !> for daily and annual reporting: sources first, then the sinks,
+  !> and then all other informational items
+  !> @{
   integer (kind=T_INT), parameter :: iGROSS_PRECIP = 1
-  integer (kind=T_INT), parameter :: iSNOWFALL = 2
-  integer (kind=T_INT), parameter :: iSNOWCOVER = 3
-  integer (kind=T_INT), parameter :: iCFGI = 4
-  integer (kind=T_INT), parameter :: iMIN_TEMP = 5
-  integer (kind=T_INT), parameter :: iMAX_TEMP = 6
-  integer (kind=T_INT), parameter :: iAVG_TEMP = 7
-  integer (kind=T_INT), parameter :: iCHG_IN_SNOW_COV = 8
-  integer (kind=T_INT), parameter :: iSNOWMELT = 9
-  integer (kind=T_INT), parameter :: iINTERCEPTION = 10
-  integer (kind=T_INT), parameter :: iNET_PRECIP = 11
-  integer (kind=T_INT), parameter :: iINFLOW = 12
-  integer (kind=T_INT), parameter :: iOUTFLOW = 13
-  integer (kind=T_INT), parameter :: iRUNOFF_OUTSIDE = 14
-  integer (kind=T_INT), parameter :: iREJECTED_RECHARGE = 15
-  integer (kind=T_INT), parameter :: iNET_INFLOW = 16
-  integer (kind=T_INT), parameter :: iNET_INFIL = 17
-  integer (kind=T_INT), parameter :: iPOT_ET = 18
-  integer (kind=T_INT), parameter :: iACT_ET = 19
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 20
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 21
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 22
-  integer (kind=T_INT), parameter :: iSM_APWL = 23
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 24
-  integer (kind=T_INT), parameter :: iCHG_IN_SOIL_MOIST = 25
-  integer (kind=T_INT), parameter :: iRECHARGE = 26
-  integer (kind=T_INT), parameter :: iGDD = 27
-  integer (kind=T_INT), parameter :: iIRRIGATION = 28
-#ifdef STREAM_INTERACTIONS
-  integer (kind=T_INT), parameter :: iSTREAM_CAPTURE = 29
-#endif
+  integer (kind=T_INT), parameter :: iSNOWMELT = 2
+  integer (kind=T_INT), parameter :: iINFLOW = 3
+  integer (kind=T_INT), parameter :: iIRRIGATION = 4
+  integer (kind=T_INT), parameter :: iSNOWFALL_SWE = 5
+  integer (kind=T_INT), parameter :: iINTERCEPTION = 6
+  integer (kind=T_INT), parameter :: iOUTFLOW = 7
+  integer (kind=T_INT), parameter :: iRUNOFF_OUTSIDE = 8
+  integer (kind=T_INT), parameter :: iACT_ET = 9
+  integer (kind=T_INT), parameter :: iCHG_IN_SOIL_MOIST = 10
+  integer (kind=T_INT), parameter :: iRECHARGE = 11
+  integer (kind=T_INT), parameter :: iREJECTED_RECHARGE = 12
+  integer (kind=T_INT), parameter :: iSTREAM_CAPTURE = 13
+  integer (kind=T_INT), parameter :: iSNOWCOVER = 14
+  integer (kind=T_INT), parameter :: iCFGI = 15
+  integer (kind=T_INT), parameter :: iMIN_TEMP = 16
+  integer (kind=T_INT), parameter :: iMAX_TEMP = 17
+  integer (kind=T_INT), parameter :: iAVG_TEMP = 18
+  integer (kind=T_INT), parameter :: iCHG_IN_SNOW_COV = 19
+  integer (kind=T_INT), parameter :: iNET_PRECIP = 20
+  integer (kind=T_INT), parameter :: iNET_INFLOW = 21
+  integer (kind=T_INT), parameter :: iNET_INFIL = 22
+  integer (kind=T_INT), parameter :: iPOT_ET = 23
+  integer (kind=T_INT), parameter :: iP_MINUS_PET = 24
+  integer (kind=T_INT), parameter :: iSM_DEFICIT = 25
+  integer (kind=T_INT), parameter :: iSM_SURPLUS = 26
+  integer (kind=T_INT), parameter :: iSM_APWL = 27
+  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 28
+  integer (kind=T_INT), parameter :: iGDD = 29
 
 #ifdef STREAM_INTERACTIONS
-  !> The maximum number of fracture recharge entries
+  ! The maximum number of fracture recharge entries
   integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
+  !> @}
 
-
-  !> \brief Type that contains model configuration data.
-  !!
-  !! Type that holds model configuration data. Passed by pointer throughout
-  !! the SWB model modules.
+  !> @brief Type that contains model configuration data.
+  !>
+  !> The configuration data structure is passed by pointer throughout
+  !> the SWB model modules. Most of the functioning of SWB may be controlled
+  !> by changing the configuration options prior to a run.
   type T_MODEL_CONFIGURATION
 
-      integer (kind=T_INT) :: iConfigureRunoff      ! runoff calculation method
-      integer (kind=T_INT) :: iConfigureRunoffMode  ! iterative, downhill, or NO solution
-      integer (kind=T_INT) :: iConfigureET          ! ET calculation option
-      integer (kind=T_INT) :: iConfigurePrecip      ! precip input option
-      integer (kind=T_INT) :: iConfigureTemperature ! temperature data input option
-      integer (kind=T_INT) :: iConfigureLanduse     ! landuse input data option
+      !> Runoff calculation method @ref const_runoffCalc "(\em see defined constants)"
+      integer (kind=T_INT) :: iConfigureRunoff
+      !> Runoff routing solution mode @ref const_runoffSoln "(\em see defined constants)"
+      integer (kind=T_INT) :: iConfigureRunoffMode
+      !> Reference evapotranspiration calculation method
+      integer (kind=T_INT) :: iConfigureET
+      !> Precipitation input option
+      integer (kind=T_INT) :: iConfigurePrecip
+      !> Temperature data input option
+      integer (kind=T_INT) :: iConfigureTemperature
+      !> Landuse data input option
+      integer (kind=T_INT) :: iConfigureLanduse
       integer (kind=T_INT) :: iConfigureSM          ! soil moisture calculation option
       integer (kind=T_INT) :: iConfigureSnow        ! snowfall and snowmelt option
       integer (kind=T_INT) :: iConfigureSMCapacity  ! maximum soil water capacity option
@@ -578,7 +645,7 @@ module types
 
       ! allow for alternate methods of delimiting subdirectories;
       ! needed for operation on Windows *and* Linux platforms
-      character(len=1) :: sSlash = "\"
+      character(len=1) :: sSlash = sBACKSLASH
 
       integer(kind=T_INT) :: iRLE_MULT = 10000
       real (kind=T_SGL) :: rRLE_OFFSET = 0.
@@ -622,7 +689,7 @@ module types
 
       ! precip correction factors
       real (kind=T_SGL) :: rRainfall_Corr_Factor = 1.0
-      real (kind=T_SGL) :: rSnowWaterEquiv_Corr_Factor = 1.0
+      real (kind=T_SGL) :: rSnowFall_SWE_Corr_Factor = 1.0
 
       ! minimum value for valid precip data
       real (kind=T_SGL) :: rMinValidPrecip = -99999.0
@@ -642,8 +709,10 @@ module types
       ! Filename for land use lookup table
       character (len=256) :: sLanduseLookupFilename
 
+#ifdef IRRIGATION_MODULE
       ! Filename for irrigation lookup table
       character (len=256) :: sIrrigationLookupFilename
+#endif
 
       ! Filename for basin mask table
       character (len=256) :: sBasinMaskFilename
@@ -684,8 +753,10 @@ module types
       ! define a pointer to the landuse lookup table
       type (T_LANDUSE_LOOKUP), dimension(:), pointer :: LU  ! T_LANDUSE_LOOKUP objects
 
+#ifdef IRRIGATION_MODULE
       ! define a pointer to the IRRIGATION lookup table
       type (T_IRRIGATION_LOOKUP), dimension(:),pointer :: IRRIGATION
+#endif
 
       ! define a pointer to the BASIN MASK lookup table
       type (T_BASIN_MASK), dimension(:), pointer :: BMASK  ! T_BASIN_MASK objects
@@ -707,23 +778,25 @@ module types
       ! define the land use category associated with open water
       integer(kind=T_INT) :: iOPEN_WATER_LU = -99999
 
-	    ! define southern and northern latitude values bounding the grid
-	    real (kind=T_SGL) :: rSouthernLatitude
- 	    real (kind=T_SGL) :: rNorthernLatitude
+      ! define southern and northern latitude values bounding the grid
+	  real (kind=T_SGL) :: rSouthernLatitude
+ 	  real (kind=T_SGL) :: rNorthernLatitude
 
+#ifdef STREAM_INTERACTIONS
  	    ! Data for the elevation corrections on temperature
  	    logical (kind=T_LOGICAL) :: lElevAdjustment
  	    real (kind=T_SGL) :: rElevStationElevation
  	    real (kind=T_SGL) :: rElevDryFactor
  	    real (kind=T_SGL) :: rElevHumidFactor
  	    real (kind=T_SGL) :: rElevHumidityThreshold
+#endif
 
        ! data structure to hold information about which cells we
        ! want to write our SSF files for
        type (T_SSF_FILES), dimension(:), pointer :: SSF_FILES
 
 #ifdef NETCDF_SUPPORT
-      !> define a pointer to structure holding NETCDF file information
+      ! define a pointer to structure holding NETCDF file information
       type (T_NETCDF_FILE), dimension(:,:), pointer :: NETCDF_FILE  ! NETCDF objects
       character(len=48) :: sProjectionName = "wtm"
       real (kind=T_DBL) :: rFalseEasting = 520000_T_DBL      ! defaults for WTM 83/91
@@ -768,7 +841,7 @@ module types
 
   end type T_MODEL_CONFIGURATION
 
-  ! data structure to hold a line of input from the classic time-series file
+  !> data structure to hold a line of input from the classic time-series file
   type T_TIME_SERIES_FILE
      integer (kind=T_INT) :: iMonth
      integer (kind=T_INT) :: iDay
@@ -785,7 +858,7 @@ module types
   end type T_TIME_SERIES_FILE
 
   !> Type that holds parameters used to create graphics with the DISLIN
-  !  library.
+  !> library.
   type T_GRAPH_CONFIGURATION
 
     character(len=256) :: cSETFIL = "DEFAULT_FILENAME"
@@ -812,75 +885,90 @@ module types
 
   end type T_GRAPH_CONFIGURATION
 
-  !> define parameters for use with type T_GRAPH_CONFIGURATION
   integer(kind=T_INT),parameter :: iDAILY = 1
   integer(kind=T_INT),parameter :: iMONTHLY = 2
   integer(kind=T_INT),parameter :: iANNUAL = 3
 
-  !> Configuration information for runoff calculations
+  !> @anchor const_runoffCalc
+  !> @name Constants: Runoff calculation
+  !> Options controlling the selection of a runoff calculation algorithm
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_RUNOFF_CURVE_NUMBER = 0
   integer (kind=T_INT),parameter :: CONFIG_RUNOFF_GREEN_AMPT = 1
+  !> @}
 
-  !> Runoff solution mode
+  !> @anchor const_runoffSoln
+  !> @name Constants: Runoff routing calculation
+  !> Options for routing mechanism selection
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
   integer (kind=T_INT),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
   integer (kind=T_INT),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
+  !> @}
 
-  !> Configuration information for ET calculations
+
+  !> @name Constants: Evapotranspiration algorithm
+  !> Options for specifying the choice of evapotranspiration algorithm
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_ET_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_ET_THORNTHWAITE_MATHER = 1
   integer (kind=T_INT),parameter :: CONFIG_ET_TURC = 2
   integer (kind=T_INT),parameter :: CONFIG_ET_JENSEN_HAISE = 3
   integer (kind=T_INT),parameter :: CONFIG_ET_BLANEY_CRIDDLE = 4
   integer (kind=T_INT),parameter :: CONFIG_ET_HARGREAVES = 5
+  !> @}
 
-  !> Configuration information for precipitation input
+  !> @name Constants: Precipitation data format
+  !> Options for specifying the method of input for precipitation data
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_PRECIP_SINGLE_STATION = 0
   integer (kind=T_INT),parameter :: CONFIG_PRECIP_ARC_GRID = 1
   integer (kind=T_INT),parameter :: CONFIG_PRECIP_SURFER_GRID = 2
-#ifdef NETCDF_SUPPORT
   integer (kind=T_INT),parameter :: CONFIG_PRECIP_NETCDF = 3
-#endif
+  !> @}
 
-  !> Configuration information for temperature input
+  !> @name Constants: Temperature data format
+  !> Options for specifying the method of input for temperature data
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SINGLE_STATION = 0
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_ARC_GRID = 1
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SURFER_GRID = 2
-#ifdef NETCDF_SUPPORT
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
-#endif
+  !> @}
 
-  !> Configuration information for landuse input
+  !> Configuration information for landuse input {
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
 
-  !> Configuration information for snowfall and snowmelt option
+  ! Configuration information for snowfall and snowmelt option
   integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
   integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
 
-  !> Configuration information for soil-moisture capacity calculations
+  ! Configuration information for soil-moisture capacity calculations
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
 
-  !> Configuration information for soil-moisture calculations
+  ! Configuration information for soil-moisture calculations
   integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
 
-  !> Configuration information for initial abstraction assumptions
+  ! Configuration information for initial abstraction assumptions
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
 
-  !> Define behavior in the case of missing data
+  ! Define behavior in the case of missing data
   integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
   integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
 
-  !> Options for output formats
+  ! Options for output formats
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
+
+
 
 !**********************************************************************
 !! GENERIC interfaces
@@ -891,195 +979,363 @@ module types
     module procedure approx_equal_dbl
   end interface approx_equal
 
+  interface assert
+    module procedure assert_simple_sub
+    module procedure assert_module_details_sub
+  end interface assert
+
+  interface chomp
+    module procedure chomp_delim_sub
+    module procedure chomp_default_sub
+  end interface
+
 contains
 
-
-  !> \brief General-purpose error-checking routine.
-  !!
-  !! General-purpose error-checking routine. If lCondition is .false.,
-  !! prints the error message and stops!
-  subroutine Assert(lCondition,sErrorMessage,sFilename,iLineNo)
-
-    ! ARGUMENTS
-    logical (kind=T_LOGICAL), intent(in) :: lCondition
-    character (len=*), intent(in) :: sErrorMessage
-    character (len=*), optional :: sFilename
-    integer (kind=T_INT), optional :: iLineNo
-    logical :: lFileOpen
-
-    if ( .not. lCondition ) then
-      write(UNIT=LU_STD_OUT,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
-      print *,trim(sErrorMessage)
-      print *, " "
-      if(present(sFilename)) print *,"swb module: ", trim(sFilename)
-      if(present(iLineNo)) print *,"line no.: ",iLineNo
-
-      ! echo error condition to the log file ONLY if it is open!
-      inquire (unit=LU_LOG, opened=lFileOpen)
-      if(lFileOpen) then
-
-        write(UNIT=LU_LOG,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
-        write(UNIT=LU_LOG,FMT=*) trim(sErrorMessage)
-        write(UNIT=LU_LOG,FMT=*) " "
-        if(present(sFilename)) write(UNIT=LU_LOG,FMT=*) "swb module: ", &
-           trim(sFilename)
-        if(present(iLineNo)) write(UNIT=LU_LOG,FMT=*) "line no.: ",iLineNo
-
-      end if
-
-      flush(unit=LU_LOG)
-
-      stop
-    end if
-
-    return
-
-  end subroutine Assert
-
-!--------------------------------------------------------------------------
-!****s* types/Chomp
-! NAME
-!   Chomp - Chomps the first space-delimited word from the
-!           beginning of a text string.
+!   !> @brief General-purpose error-checking routine.
+!   !>
+!   !> General-purpose error-checking routine. If lCondition is .false.,
+!   !> prints the error message and stops!
+!   subroutine Assert(lCondition,sErrorMessage,sFilename,iLineNo)
 !
-! SYNOPSIS
-!   Chomps the first space-delimited word from the the text string in
-!   sRecord and returns it in sItem; leaves the remaining text in sRecord.
+!     ! ARGUMENTS
+!     logical (kind=T_LOGICAL), intent(in) :: lCondition
+!     character (len=*), intent(in) :: sErrorMessage
+!     character (len=*), optional :: sFilename
+!     integer (kind=T_INT), optional :: iLineNo
+!     logical :: lFileOpen
 !
-! INPUTS
-!   sRecord - Character string to operate on.
+!     if ( .not. lCondition ) then
+!       write(UNIT=LU_STD_OUT,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
+!       print *,trim(sErrorMessage)
+!       print *, " "
+!       if(present(sFilename)) print *,"swb module: ", trim(sFilename)
+!       if(present(iLineNo)) print *,"line no.: ",iLineNo
 !
-! OUTPUTS
-!   sRecord - Character string to operate on.
-!   sItem - Character string to operate on.
+!       ! echo error condition to the log file ONLY if it is open!
+!       inquire (unit=LU_LOG, opened=lFileOpen)
+!       if(lFileOpen) then
 !
-! EXAMPLE
-!   input:   sRecord = "THIS IS THE TIME"    sItem = ""
-!   output:  sRecord = "IS THE TIME"         sItem = "THIS"
+!         write(UNIT=LU_LOG,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
+!         write(UNIT=LU_LOG,FMT=*) trim(sErrorMessage)
+!         write(UNIT=LU_LOG,FMT=*) " "
+!         if(present(sFilename)) write(UNIT=LU_LOG,FMT=*) "swb module: ", &
+!            trim(sFilename)
+!         if(present(iLineNo)) write(UNIT=LU_LOG,FMT=*) "line no.: ",iLineNo
 !
-! SOURCE
+!       end if
+!
+!       flush(unit=LU_LOG)
+!
+!       stop
+!     end if
+!
+!     return
+!
+!   end subroutine Assert
 
-subroutine Chomp(sRecord, sItem)
+!------------------------------------------------------------------------------
+
+subroutine assert_simple_sub(lCondition,sErrorMessage)
 
   ! ARGUMENTS
-  character (len=*), intent(inout) :: sRecord
-  character (len=256), intent(out) :: sItem
-  ! LOCALS
-  integer (kind=T_INT) :: iR                      ! Index in sRecord
-  integer (kind=T_INT) :: iS                      ! Index in sItem
-  logical (kind=T_LOGICAL) :: lSkip               ! TRUE while skipping spaces
-
-  ! Set my pointers and remove leading and trailing spaces
-  iR = 1
-  iS = 1
-  sItem = ""
-  lSkip = lTRUE
-  do iR=1,len_trim(sRecord)
-      if ( lSkip .and. sRecord(iR:iR) == " " ) then
-          cycle
-      else if ( .not. lSkip .and. sRecord(iR:iR) == " " ) then
-          exit
-      else
-          lSkip = lFALSE
-          sItem(iS:iS) = sRecord(iR:iR)
-          iS = iS+1
-      end if
-  end do
-  sRecord = sRecord(iR:)
-
-  return
-end subroutine Chomp
-
-
-subroutine GetSysTimeDate(sDateStr,sDateStrPretty)
-
-  character(len=256), intent(out) :: sDateStr, sDateStrPretty
-
-  character (len=256) :: sRecord
+  logical (kind=T_LOGICAL), intent(in) :: lCondition
+  character (len=*), intent(in) :: sErrorMessage
+  character (len=len(sErrorMessage)) :: sRecord
   character (len=256) :: sItem
-  character (len=256) :: sDay
-  character (len=256) :: sMon
-  character (len=256) :: sDD
-  character (len=8) :: sHH
-  character (len=8) :: sMM
-  character (len=8) :: sSS
-  character (len=256) :: sTime
-  character (len=256) :: sYear
 
-  sRecord = FDATE()
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT), dimension(2) :: iLU
+  logical (kind=T_LOGICAL) :: lFileOpen
 
-  call chomp(sRecord,sDay)
-  call chomp(sRecord,sMon)
-  call chomp(sRecord,sDD)
-  call chomp(sRecord,sTime)
-  call chomp(sRecord,sYear)
+  iLU = [ LU_STD_OUT, LU_LOG ]
 
-  sHH = sTime(1:2)
-  sMM = sTime(4:5)
-  sSS = sTime(7:8)
+  if ( .not. lCondition ) then
 
-  sDateStr = TRIM(sDD)//"_"//TRIM(sMon)//"_"//TRIM(sYear)//"__"//&
-    TRIM(sHH)//"_"//TRIM(sMM)
-  sDateStrPretty = &
-    TRIM(sDay)//" "//TRIM(sMon)//" "//TRIM(sDD)//" "//TRIM(sYear)//" " &
-     //TRIM(sHH)//":"//TRIM(sMM)
+  ! echo error condition to the log file ONLY if it is open!
+  inquire (unit=LU_LOG, opened=lFileOpen)
+  if(lFileOpen) then
+      iEnd = 2
+    else
+      iEnd = 1
+    endif
 
-  return
+    do i=1,2
+      sRecord = sErrorMessage
+      write(UNIT=iLU(i),FMT="(/,a)") 'FATAL ERROR - HALTING SWB'
+      do
+        call chomp(sRecord, sItem, "~")
+        if(len_trim(sItem) == 0) exit
+        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
+      enddo
+    enddo
 
-end subroutine GetSysTimeDate
+    stop
 
+  endif
+
+end subroutine assert_simple_sub
 
 !--------------------------------------------------------------------------
-!****s* types/Chomp_tab
-! NAME
-!   Chomp_tab - Chomps all text up to the first tab character from a text string.
-!
-! SYNOPSIS
-!   Chomps all text up to the first tab character from the text string in
-!   sRecord and returns it in sItem; leaves the remaining text in sRecord.
-!
-! INPUTS
-!   sRecord - Character string to operate on.
-!
-! OUTPUTS
-!   sRecord - Character string to operate on.
-!   sItem - Character string to operate on.
-!
-! EXAMPLE
-!   input:   sRecord = "THIS IS<tab> THE TIME"    sItem = ""
-!   output:  sRecord = " THE TIME"                sItem = "THIS IS"
-!
-! SOURCE
 
-subroutine Chomp_tab(sRecord, sItem)
+subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum)
 
   ! ARGUMENTS
-  character (len=*), intent(inout) :: sRecord
-  character (len=256), intent(out) :: sItem
+  logical (kind=T_LOGICAL), intent(in) :: lCondition
+  character (len=*), intent(in) :: sErrorMessage
+  character (len=*) :: sFilename
+  integer (kind=T_INT) :: iLineNum
+  character (len=len(sErrorMessage)) :: sRecord
+  character (len=256) :: sItem
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT), dimension(2) :: iLU
+  logical (kind=T_LOGICAL) :: lFileOpen
+  character (len=12) :: sLineNum
+
+  iLU = [ LU_STD_OUT, LU_LOG ]
+
+  if ( .not. lCondition ) then
+
+    write(sLineNum,fmt="(i12)") iLineNum
+
+    ! echo error condition to the log file ONLY if it is open!
+    inquire (unit=LU_LOG, opened=lFileOpen)
+    if(lFileOpen) then
+      iEnd = 2
+    else
+      iEnd = 1
+    endif
+
+    do i=1,2
+      sRecord = sErrorMessage
+      write(UNIT=iLU(i),FMT="(/,a)") 'FATAL ERROR - HALTING SWB'
+      do
+        call chomp(sRecord, sItem, "~")
+        if(len_trim(sItem) == 0) exit
+        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
+      enddo
+
+      write(UNIT=iLU(i),FMT="(/,'   fortran module:       ',a)") trim(sFilename)
+      write(UNIT=iLU(i),FMT="('   module line number:    ',a)") trim(sLineNum)
+    enddo
+
+    stop
+
+  endif
+
+end subroutine assert_module_details_sub
+
+subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
+
+  ! ARGUMENTS
+  character (len=*), intent(inout)           :: sRecord
+  character (len=256), intent(out)           :: sItem
+  character (len=*), intent(in)              :: sDelimiters
   ! LOCALS
   integer (kind=T_INT) :: iR                      ! Index in sRecord
-  character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
+  integer (kind=T_INT) :: iB                      !
+  integer (kind=T_INT) :: iLen
 
-  iR = SCAN(sRecord,cTab)
+  ! eliminate any leading spaces
+  sRecord = adjustl(sRecord)
+  ! find the end position of 'sRecord'
+  iLen = len_trim(sRecord)
+
+  ! find the POSITION of the first delimiter found
+  iR = SCAN(trim(sRecord),sDelimiters)
 
   if(iR==0) then
-    sItem = trim(sRecord)      ! no tab found; return entirety of sRecord
-	sRecord = ""			   ! as sItem
+    sItem = trim(sRecord)   ! no delimiters found; return entirety of sRecord
+    sRecord = ""            ! as sItem
   else
+    ! find *next* occurance of *NON*-delimiter (needed to skip over multiple delimiters)
+    iB = verify(string = sRecord(max(iR,1):iLen), set = sDelimiters)
     sItem = trim(sRecord(1:iR-1))
-	sRecord = trim(sRecord(iR+1:))
-    do iR=1,len_trim(sRecord)
-	  if (sRecord(iR:iR) == " " ) then
-        cycle
-	  else
-	    exit
-	  end if
-	end do
-    sRecord = sRecord(iR:)
+    sRecord = trim(sRecord(iR+iB-1:))
   end if
 
-  return
-end subroutine Chomp_tab
+end subroutine Chomp_delim_sub
+
+!------------------------------------------------------------------------------
+
+subroutine Chomp_default_sub(sRecord, sItem)
+
+  ! ARGUMENTS
+  character (len=*), intent(inout)           :: sRecord
+  character (len=256), intent(out)           :: sItem
+
+  ! LOCALS
+  integer (kind=T_INT) :: iR                      ! Index in sRecord
+  integer (kind=T_INT) :: iB                      !
+  integer (kind=T_INT) :: iLen
+  character (len=2) :: sDefaultDelimiters = " "//sTAB
+
+  ! eliminate any leading spaces
+  sRecord = adjustl(sRecord)
+  ! find the end position of 'sRecord'
+  iLen = len_trim(sRecord)
+
+  ! find the POSITION of the first delimiter found
+  iR = SCAN(trim(sRecord),sDefaultDelimiters)
+
+  if(iR==0) then
+    sItem = trim(sRecord)   ! no delimiters found; return entirety of sRecord
+    sRecord = ""            ! as sItem
+  else
+    ! find *next* occurance of *NON*-delimiter (needed to skip over multiple delimiters)
+    iB = verify(string = sRecord(max(iR,1):iLen), set = sDefaultDelimiters)
+    sItem = trim(sRecord(1:iR-1))
+    sRecord = trim(sRecord(iR+iB-1:))
+  end if
+
+end subroutine Chomp_default_sub
+
+! !--------------------------------------------------------------------------
+! !****s* types/Chomp
+! ! NAME
+! !   Chomp - Chomps the first space-delimited word from the
+! !           beginning of a text string.
+! !
+! ! SYNOPSIS
+! !   Chomps the first space-delimited word from the the text string in
+! !   sRecord and returns it in sItem; leaves the remaining text in sRecord.
+! !
+! ! INPUTS
+! !   sRecord - Character string to operate on.
+! !
+! ! OUTPUTS
+! !   sRecord - Character string to operate on.
+! !   sItem - Character string to operate on.
+! !
+! ! EXAMPLE
+! !   input:   sRecord = "THIS IS THE TIME"    sItem = ""
+! !   output:  sRecord = "IS THE TIME"         sItem = "THIS"
+! !
+! ! SOURCE
+!
+! subroutine Chomp(sRecord, sItem)
+!
+!   ! ARGUMENTS
+!   character (len=*), intent(inout) :: sRecord
+!   character (len=256), intent(out) :: sItem
+!   ! LOCALS
+!   integer (kind=T_INT) :: iR                      ! Index in sRecord
+!   integer (kind=T_INT) :: iS                      ! Index in sItem
+!   logical (kind=T_LOGICAL) :: lSkip               ! TRUE while skipping spaces
+!
+!   ! Set my pointers and remove leading and trailing spaces
+!   iR = 1
+!   iS = 1
+!   sItem = ""
+!   lSkip = lTRUE
+!   do iR=1,len_trim(sRecord)
+!       if ( lSkip .and. sRecord(iR:iR) == " " ) then
+!           cycle
+!       else if ( .not. lSkip .and. sRecord(iR:iR) == " " ) then
+!           exit
+!       else
+!           lSkip = lFALSE
+!           sItem(iS:iS) = sRecord(iR:iR)
+!           iS = iS+1
+!       end if
+!   end do
+!   sRecord = sRecord(iR:)
+!
+!   return
+! end subroutine Chomp
+!
+!
+ subroutine GetSysTimeDate(sDateStr,sDateStrPretty)
+
+   character(len=256), intent(out) :: sDateStr, sDateStrPretty
+
+   character (len=256) :: sRecord
+   character (len=256) :: sItem
+   character (len=256) :: sDay
+   character (len=256) :: sMon
+   character (len=256) :: sDD
+   character (len=8) :: sHH
+   character (len=8) :: sMM
+   character (len=8) :: sSS
+   character (len=256) :: sTime
+   character (len=256) :: sYear
+
+   sRecord = FDATE()
+
+   call chomp(sRecord,sDay)
+   call chomp(sRecord,sMon)
+   call chomp(sRecord,sDD)
+   call chomp(sRecord,sTime)
+   call chomp(sRecord,sYear)
+
+   sHH = sTime(1:2)
+   sMM = sTime(4:5)
+   sSS = sTime(7:8)
+
+   sDateStr = TRIM(sDD)//"_"//TRIM(sMon)//"_"//TRIM(sYear)//"__"//&
+     TRIM(sHH)//"_"//TRIM(sMM)
+   sDateStrPretty = &
+     TRIM(sDay)//" "//TRIM(sMon)//" "//TRIM(sDD)//" "//TRIM(sYear)//" " &
+      //TRIM(sHH)//":"//TRIM(sMM)
+
+   return
+
+ end subroutine GetSysTimeDate
+
+!
+! !--------------------------------------------------------------------------
+! !****s* types/Chomp_tab
+! ! NAME
+! !   Chomp_tab - Chomps all text up to the first tab character from a text string.
+! !
+! ! SYNOPSIS
+! !   Chomps all text up to the first tab character from the text string in
+! !   sRecord and returns it in sItem; leaves the remaining text in sRecord.
+! !
+! ! INPUTS
+! !   sRecord - Character string to operate on.
+! !
+! ! OUTPUTS
+! !   sRecord - Character string to operate on.
+! !   sItem - Character string to operate on.
+! !
+! ! EXAMPLE
+! !   input:   sRecord = "THIS IS<tab> THE TIME"    sItem = ""
+! !   output:  sRecord = " THE TIME"                sItem = "THIS IS"
+! !
+! ! SOURCE
+!
+! subroutine Chomp_tab(sRecord, sItem)
+!
+!   ! ARGUMENTS
+!   character (len=*), intent(inout) :: sRecord
+!   character (len=256), intent(out) :: sItem
+!   ! LOCALS
+!   integer (kind=T_INT) :: iR                      ! Index in sRecord
+!   character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
+!
+!   iR = SCAN(sRecord,cTab)
+!
+!   if(iR==0) then
+!     sItem = trim(sRecord)      ! no tab found; return entirety of sRecord
+! 	sRecord = ""			   ! as sItem
+!   else
+!     sItem = trim(sRecord(1:iR-1))
+! 	sRecord = trim(sRecord(iR+1:))
+!     do iR=1,len_trim(sRecord)
+! 	  if (sRecord(iR:iR) == " " ) then
+!         cycle
+! 	  else
+! 	    exit
+! 	  end if
+! 	end do
+!     sRecord = sRecord(iR:)
+!   end if
+!
+!   return
+! end subroutine Chomp_tab
 
 !--------------------------------------------------------------------------
 !****s* types/Chomp_slash
@@ -1312,7 +1568,8 @@ subroutine CleanUpSlash ( s )
   integer (kind=T_INT) :: i,j
   ! LOCAL PARAMETERS
   character (len=1),dimension(5),parameter :: &
-                REPLACE_CHARS = (/ ',', achar(9), '"', '/', '\' /)
+                REPLACE_CHARS = [ ',', sTAB, '"', &
+                  sBACKSLASH, sFORWARDSLASH ]
 
   do i=1,size(REPLACE_CHARS)
     do j=1,len(s)
@@ -1651,7 +1908,7 @@ function count_fields(sRecord) result(iNumFields)
   i=1
 
   do
-    call Chomp_tab(sRecord,sItem)
+    call chomp(sRecord,sItem, sTAB)
 
     if(LEN_TRIM(sRecord)==0) then
       exit
@@ -1915,9 +2172,9 @@ function real2char(rValue, iDec, iWidth)  result(sBuf)
 
 end function real2char
 
-!> \brief Return the number of days in the given year.
-!!
-!! This function simply returns the number of days given the current year.
+!> @brief Return the number of days in the given year.
+!>
+!> This function simply returns the number of days given the current year.
 function num_days_in_year(iYear) result(iNumDaysInYear)
 
   integer (kind=T_INT), intent(in) :: iYear
@@ -1977,17 +2234,17 @@ end function day_of_year
 !       http://aa.usno.navy.mil/faq/docs/JD_Formula.html
 
 
-!> \brief Convert from a Julian day number to a Gregorian date.
-!!
-!! Converts from a Julian day number to a Gregorian date.
-!! Valid for any Gregorian calendar date producing a Julian day number
-!! greater than zero.
-!!
-!! Reference: Fliegel, H. F. and van Flandern, T. C. (1968).
-!!            Communications of the ACM, Vol. 11, No. 10 (October, 1968).
-!!
-!!    Modified from code found at:
-!!            http://aa.usno.navy.mil/faq/docs/JD_Formula.html
+!> @brief Convert from a Julian day number to a Gregorian date.
+!>
+!> Converts from a Julian day number to a Gregorian date.
+!> Valid for any Gregorian calendar date producing a Julian day number
+!> greater than zero.
+!>
+!> Reference: Fliegel, H. F. and van Flandern, T. C. (1968).
+!>            Communications of the ACM, Vol. 11, No. 10 (October, 1968).
+!>
+!>    Modified from code found at:
+!>            http://aa.usno.navy.mil/faq/docs/JD_Formula.html
 subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
 
   ! [ ARGUMENTS ]

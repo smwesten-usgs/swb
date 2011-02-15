@@ -47,7 +47,7 @@ subroutine sm_thornthwaite_mather_Configure ( sRecord )
   ! Read the grid for the water-loss table
   call Chomp( sRecord, sOption )
   call Assert( LOGICAL(len_trim(sOption) > 0,kind=T_LOGICAL), &
-     "No WLT file was specified" )
+     "No Soil-moisture retention table file was specified" )
   write(UNIT=LU_LOG,FMT=*)"Reading ",trim(sOption)," for soil-moisture retention information"
   gWLT => grid_Read( sOption, "SURFER", T_SGL_GRID )
 
@@ -479,6 +479,8 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
       do k=1,iNUM_VARIABLES
 
+        if(.not. STAT_INFO(k)%lActive) cycle
+
 #ifdef NETCDF_SUPPORT
 
         if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
@@ -487,9 +489,9 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
             case(iGROSS_PRECIP)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rGrossPrecip, pGrd, iRow, iCol, iTime)
-            case(iSNOWFALL)
+            case(iSNOWFALL_SWE)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowFall, pGrd, iRow, iCol, iTime)
+                cel%rSnowFall_SWE, pGrd, iRow, iCol, iTime)
             case(iSNOWCOVER)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rSnowCover, pGrd, iRow, iCol, iTime)
@@ -507,7 +509,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                 cel%rTAvg, pGrd, iRow, iCol, iTime)
             case(iCHG_IN_SNOW_COV)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowWaterEquiv - cel%rSnowmelt, pGrd, iRow, iCol, iTime)
+                cel%rSnowFall_SWE - cel%rSnowmelt, pGrd, iRow, iCol, iTime)
             case(iSNOWMELT)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rSnowmelt, pGrd, iRow, iCol, iTime)
@@ -564,24 +566,15 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
             case(iRECHARGE)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 rDailyRecharge, pGrd, iRow, iCol, iTime)
-#ifdef IRRIGATION_MODULE
             case(iGDD)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rGDD, pGrd, iRow, iCol, iTime)
             case(iIRRIGATION)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rIrrigationAmount, pGrd, iRow, iCol, iTime)
-#endif
-
-
-
-#ifdef STREAM_INTERACTIONS
-
             case(iSTREAM_CAPTURE)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rStreamCapture, pGrd, iRow, iCol, iTime)
-
-#endif
 
             case default
               call Assert(lFALSE, "Internal programming error in " &
@@ -590,7 +583,8 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
           end select
         end if
 
-#endif ! end if NETCDF_SUPPORT
+#endif
+! end if NETCDF_SUPPORT
 
         if(STAT_INFO(k)%iDailyOutput > iNONE &
           .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
@@ -601,10 +595,10 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
               call RLE_writeByte(STAT_INFO(iGROSS_PRECIP)%iLU, &
                 cel%rGrossPrecip, pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iGROSS_PRECIP)
-            case(iSNOWFALL)
-              call RLE_writeByte(STAT_INFO(iSNOWFALL)%iLU, &
-                cel%rSnowFall, pConfig%iRLE_MULT, &
-                 pConfig%rRLE_OFFSET, iNumGridCells, iSNOWFALL)
+            case(iSNOWFALL_SWE)
+              call RLE_writeByte(STAT_INFO(iSNOWFALL_SWE)%iLU, &
+                cel%rSnowFall_SWE, pConfig%iRLE_MULT, &
+                 pConfig%rRLE_OFFSET, iNumGridCells, iSNOWFALL_SWE)
             case(iSNOWCOVER)
               call RLE_writeByte(STAT_INFO(iSNOWCOVER)%iLU, &
                 cel%rSnowCover, pConfig%iRLE_MULT, &
@@ -627,7 +621,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iAVG_TEMP)
             case(iCHG_IN_SNOW_COV)
               call RLE_writeByte(STAT_INFO(iCHG_IN_SNOW_COV)%iLU, &
-                cel%rSnowWaterEquiv-cel%rSnowmelt, &
+                cel%rSnowFall_SWE-cel%rSnowmelt, &
                  pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
                  iNumGridCells, iCHG_IN_SNOW_COV)
             case(iSNOWMELT)
@@ -704,7 +698,6 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
               call RLE_writeByte(STAT_INFO(iRECHARGE)%iLU, &
                   rDailyRecharge, pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iRECHARGE)
-#ifdef IRRIGATION_MODULE
             case(iGDD)
               call RLE_writeByte(STAT_INFO(iGDD)%iLU, &
                   cel%rGDD, pConfig%iRLE_MULT, &
@@ -713,7 +706,6 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
               call RLE_writeByte(STAT_INFO(iIRRIGATION)%iLU, &
                   cel%rIrrigationAmount, pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iIRRIGATION)
-#endif IRRIGATION
 
 
       ! NOTE to Vic: the following code block needs to be present in order
@@ -728,15 +720,10 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
       ! Unless rStreamCapture is operated on by other modules, it could be
       ! converted to a local module variable
 
-
-#ifdef STREAM_INTERACTIONS
-
             case(iSTREAM_CAPTURE)
               call RLE_writeByte(STAT_INFO(iSTREAM_CAPTURE)%iLU, &
                   REAL(cel%rStreamCapture,kind=T_SGL), pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iSTREAM_CAPTURE)
-
-#endif
 
             case default
               call Assert(lFALSE, "Internal programming error in " &
@@ -761,9 +748,9 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
               case(iGROSS_PRECIP)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rGrossPrecip)
-              case(iSNOWFALL)
+              case(iSNOWFALL_SWE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, cel%rSnowFall)
+                    iYear, cel%rSnowFall_SWE)
               case(iSNOWCOVER)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rSnowCover)
@@ -781,7 +768,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                     iYear, cel%rTAvg)
               case(iCHG_IN_SNOW_COV)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, cel%rSnowWaterEquiv-cel%rSnowmelt)
+                    iYear, cel%rSnowFall_SWE-cel%rSnowmelt)
               case(iSNOWMELT)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rSnowmelt)
@@ -839,22 +826,16 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
               case(iRECHARGE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, rDailyRecharge)
-#ifdef IRRIGATION_MODULE
               case(iGDD)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rGDD)
               case(iIRRIGATION)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rIrrigationAMount)
-#endif
-
-#ifdef STREAM_INTERACTIONS
-
               case(iSTREAM_CAPTURE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rStreamCapture)
 
-#endif
             case default
               call Assert(lFALSE, "Internal programming error in " &
                 //"select case structure",TRIM(__FILE__),__LINE__)

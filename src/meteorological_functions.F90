@@ -32,7 +32,7 @@ contains
 !   Calculates daylight hours given the sunset hour angle (Omega_s).
 !
 ! INPUTS
-!   rOmega_s - sunset hour angle in Radians.
+!   rOmega_s -
 !
 ! OUTPUTS
 !   rN - Daylight hours, in hours.
@@ -50,9 +50,20 @@ contains
 
 
 
-!> @brief Calculates the number of daylight hours at a location
+!> @brief Calculates the number of daylight hours at a location.
+!>
+!> @param  rOmega_s The sunset hour angle in Radians.
+!> @return rN The number of daylight hours.
+!> @par
 !> The distance between \f$(x_1,y_1)\f$ and \f$(x_2,y_2)\f$ is
 !> \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
+!>
+!> @note Implemented as equation 34, Allen and others (2006).
+!> @par
+!>   Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
+!>   "Crop Evapotranspiration (Guidelines for computing crop water
+!>   requirements)", Food and Agriculture Organization, Rome, Italy.
+
 
  function daylight_hours(rOmega_s) result(rN)
 

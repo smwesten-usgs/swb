@@ -271,7 +271,7 @@ function grid_ReadArcGrid ( sFileName, iDataType ) result ( pGrd )
   logical (kind=T_LOGICAL) :: lXLLCenter, lYLLCenter  ! Flags XLLCENTER / XLLCORNER
 
   ! Pre-scan for the number of header records and read the header
-  open ( unit=LU_GRID, iostat=iStat, file=trim(sFileName) )
+  open ( newunit=LU_GRID, iostat=iStat, file=trim(sFileName) )
   call Assert( iStat == 0, &
     "Could not open input file " // trim(sFileName) )
 
@@ -429,7 +429,7 @@ function grid_ReadSurferGrid ( sFileName, iDataType ) result ( pGrd )
   real (kind=T_DBL) :: rY0,rY1                       ! Limits in Y
   real (kind=T_SGL) :: rZ0,rZ1                       ! Limits in Z (not used)
 
-  open ( unit=LU_GRID, iostat=iStat, file=trim(sFileName) )
+  open ( newunit=LU_GRID, iostat=iStat, file=trim(sFileName) )
   call Assert( LOGICAL(iStat == 0,kind=T_LOGICAL), &
      "Could not open input file " // trim(sFileName) )
 
@@ -528,7 +528,7 @@ subroutine grid_WriteArcGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues,rNoData)
     nodata_value = -9999.
   end if
 
-  open ( unit=LU_TEMP, file=cFilename, iostat=istat, status="REPLACE" )
+  open ( newunit=LU_TEMP, file=cFilename, iostat=istat, status="REPLACE" )
   call Assert( istat==0, "Could not open output file " // cFilename, &
       TRIM(__FILE__),__LINE__)
 
@@ -596,7 +596,7 @@ subroutine grid_WriteSurferGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues)
   ! dynamically create the Fortran output format
   write(sBuf,FMT="(a,a,a)") '(',TRIM(int2char(size(rValues,2))),'(a,1x))'
 
-  open ( unit=LU_TEMP, file=cFilename, iostat=istat, status="REPLACE" )
+  open ( newunit=LU_TEMP, file=cFilename, iostat=istat, status="REPLACE" )
   call Assert( istat==0, "Could not open output file " // cFilename, &
       TRIM(__FILE__),__LINE__)
 

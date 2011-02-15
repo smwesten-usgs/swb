@@ -1,3 +1,6 @@
+!> @brief Implements snow-related calculations (i.e. albedo, snow depth).
+!> @note These routines are only invoked when control variable
+!> \c pConfig%iConfigureSnow is set to \c CONFIG_SNOW_NEW_SWB
 module snow
 
   use types

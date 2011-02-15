@@ -30,17 +30,19 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
   integer (kind=T_INT) :: iCol,iRow,k,l
   type (T_CELL),pointer :: cel              ! pointer to a grid cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
+  logical (kind=T_LOGICAL) :: lMatch
 
   write(UNIT=LU_LOG,FMT=*)"Initializing the base curve numbers"
   ! Initialize all CNs to "bare rock"
   pGrd%Cells(:,:)%rBaseCN = real(5,T_SGL)
 
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX
+  do iCol=1,pGrd%iNX
+    do iRow=1,pGrd%iNY
       ! Use the LU and SG in the grid cell, along with the LU option to
       ! look up the curve number
 
 	  cel => pGrd%Cells(iRow,iCol)
+	  lMatch = lFALSE
 
       ! iterate through all land use types
       do k = 1,size(pConfig%LU,1)
@@ -55,10 +57,20 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
           do l=1,size(pConfig%CN,2)
             if(cel%iSoilGroup==l) then
               cel%rBaseCN = pConfig%CN(k,l)
+              lMatch = lTRUE
               exit
             end if
+
           end do
- !		  write(UNIT=LU_LOG,FMT=*) iRow,iCol,k, "LU:",pLU%iLandUseType, "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
+
+          if(.not. lMatch) then
+  		    write(UNIT=LU_LOG,FMT=*) iRow,iCol,k, "LU:",pLU%iLandUseType, &
+  		      "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
+			call assert(lFALSE, "Failed to find a curve number for this " &
+			  //"combined landuse and soil type. See logfile for details.", &
+			  trim(__FILE__),__LINE__)
+          endif
+
           exit
         end if
 
@@ -168,7 +180,7 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
       cel%rAdjCN = cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN)
     end if
 
-  else
+  else ! dormant (non-growing) season
 
     if ( rTotalInflow < pConfig%rDRY_DORMANT ) then           ! AMC I
 

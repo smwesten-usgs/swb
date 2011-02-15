@@ -11,6 +11,26 @@ add_executable(swb
             main.F90
             meteorological_functions.F90
             model.F90
+            control.F90
+            netcdf_support.F90
+            RLE.F90
+            runoff_curve_number.F90
+            sm_thornthwaite_mather.F90
+            snow.F90
+            stats.F90
+            types.F90)
+
+add_library(swbf
+            et_blaney_criddle.F90
+            et_hargreaves.F90
+            et_jensen_haise.F90
+            et_thornthwaite_mather.F90
+            et_turc.F90
+            graph.F90
+            grid.F90
+            irrigation.F90
+            meteorological_functions.F90
+            model.F90
             netcdf_support.F90
             RLE.F90
             runoff_curve_number.F90
@@ -38,10 +58,11 @@ add_executable(swbstats
 set_target_properties(swb
             PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}")
 
-#set_target_properties(swb
-#            PROPERTIES COMPILE_DEFINITIONS NONE)
-
+# need to override current preprocessor definitions;
+# these targets MUST be compiled with GRAPHICS_SUPPORT
+# or they fail to compile!
+#
 set_target_properties(swbread swbstats
-            PROPERTIES COMPILE_DEFINITIONS GRAPHICS_SUPPORT)
+            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
 
 target_link_libraries(swb ${EXTRA_LIBS})

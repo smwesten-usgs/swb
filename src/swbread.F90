@@ -40,7 +40,7 @@ implicit none
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lYearEnd
 
-  integer (kind=T_INT), parameter :: LU_SWBREAD = 401
+  integer (kind=T_INT) :: LU_SWBREAD
 
   integer (kind=T_INT) :: iSWBReadStartDate, iSWBReadStartMM, &
                           iSWBReadStartDD,iSWBReadStartYYYY
@@ -75,7 +75,7 @@ implicit none
   write(sBuf,FMT=*) "SWBREAD_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(unit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
+  open(newunit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
       status='REPLACE')
   call Assert( iStat == 0, "Problem opening log file file for output.")
 
@@ -121,7 +121,7 @@ implicit none
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
 
-  open(unit=LU_SWBREAD, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
+  open(newunit=LU_SWBREAD, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
        status='OLD',ACCESS='STREAM', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&

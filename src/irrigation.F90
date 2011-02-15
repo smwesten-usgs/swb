@@ -39,6 +39,7 @@ subroutine update_irrigation_amounts(pGrd, pConfig)
 
     ! isolate the relevant IRRIGATION record for this landuse
     pIRRIGATION => pConfig%IRRIGATION(i)
+    if( pIRRIGATION%rMAD > 99.9 ) cycle
 
     if(pConfig%iDayOfYear >= pIRRIGATION%iBeginIrrigation &
       .and. pConfig%iDayOfYear <= pIRRIGATION%iEndIrrigation ) then

@@ -85,7 +85,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
-  open ( unit=LU_TEMP, file=trim(sFileName), iostat=iStat )
+  open ( newunit=LU_TEMP, file=trim(sFileName), iostat=iStat )
   call Assert ( iStat == 0, "Could not open time series file " // trim(sFileName), &
     trim(__FILE__),__LINE__)
 

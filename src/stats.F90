@@ -1,13 +1,15 @@
-!> \brief Calculates daily, monthly, and annual statistics
-!>        for an SWB model run.
+!> @brief Calculates daily, monthly, and annual statistics
+!>    for an SWB model run.
+!>
+!> Calculates daily, monthly, and annual statistics
+!> for an SWB model run. Also contains routines to:
+!> - Extract data from a compressed binary file in order
+!> to output grids or plots
+!> - Write to a PEST *.ssf file
+!> - Calculate statistics for a subset of the model domain (i.e. catchment, county)
+!> - Write daily, annual, and mass balance reports
 
 module swb_stats
-
-! SYNOPSIS
-!   This module calculates summary statistics (min, mean, max, sum) for
-!   all model state and intermediate variables.
-!
-!!***
 
   use types
   use swb_grid
@@ -176,26 +178,45 @@ end subroutine stats_FormatTextString
 
 !--------------------------------------------------------------------------
 
-subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear)
+subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatistic)
 
   ![ARGUMENTS]
   integer (kind=T_INT), intent(in) :: iLU
   integer (kind=T_INT), intent(in) :: iMonth,iDay,iYear
+  integer (kind=T_INT), intent(in) :: iStatistic
 
   ![LOCALS]
   integer (kind=T_INT) :: i,j
 
-  write(iLU,"(i2.2,A1,i2.2,A1,i4,A1,100(f12.3,A1))") &
-                                iMonth,"/",iDay,"/",iYear,",", &
-                               (rDaily(iMIN,i),",", &
-                                rDaily(iMEAN,i),",", &
-                                rDaily(iMAX,i),",",i=1,iNUM_VARIABLES -1), &
-                                rDaily(iMIN,iNUM_VARIABLES),",", &
-                                rDaily(iMEAN,iNUM_VARIABLES),",", &
-                                rDaily(iMAX,iNUM_VARIABLES)
+  select case(iStatistic)
 
-  return
+    case(iMIN)
 
+      write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
+      do i=1,iNUM_VARIABLES
+        if(STAT_INFO(i)%lActive) &
+          write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMIN,i)
+      enddo
+
+    case(iMEAN)
+
+      write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
+      do i=1,iNUM_VARIABLES
+        if(STAT_INFO(i)%lActive) &
+          write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMEAN,i)
+      enddo
+
+    case(iMAX)
+
+       write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
+       do i=1,iNUM_VARIABLES
+         if(STAT_INFO(i)%lActive) &
+           write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMAX,i)
+       enddo
+
+   end select
+
+   write(iLU,"(A)") ""
 
 end subroutine stats_WriteDailyAccumulatorValuesCSV
 
@@ -222,21 +243,34 @@ end subroutine stats_WriteAnnualAccumulatorValuesCSV
 
 !--------------------------------------------------------------------------
 
-subroutine stats_WriteDailyAccumulatorHeaderCSV(iLU)
+subroutine stats_WriteDailyAccumulatorHeaderCSV(iLU, iStatistic)
 
   ![ARGUMENTS]
   integer (kind=T_INT), intent(in) :: iLU
+  integer (kind=T_INT), intent(in) :: iStatistic
 
   ![LOCALS]
   integer (kind=T_INT) :: i,j
 
-  write(iLU,"(300A)") "Date,",( "MIN " // STAT_INFO(i)%sVARIABLE_NAME // "," // &
-                     "MEAN " // STAT_INFO(i)%sVARIABLE_NAME // "," // &
-                     "MAX " // STAT_INFO(i)%sVARIABLE_NAME // ",", &
-                     i=1,iNUM_VARIABLES - 1), &
-                     "MIN " // STAT_INFO(iNUM_VARIABLES)%sVARIABLE_NAME // "," // &
-                     "MEAN " // STAT_INFO(iNUM_VARIABLES)%sVARIABLE_NAME // "," // &
-                     "MAX " // STAT_INFO(iNUM_VARIABLES)%sVARIABLE_NAME
+  write(iLU,"(A)",advance="no") "Mass balance?"
+  do i=1,iNUM_VARIABLES
+    if(STAT_INFO(i)%lActive) &
+     write(iLU,"(A)" ,advance="no")  ","//trim(STAT_INFO(i)%sMSB_Note)
+  enddo
+
+  write(iLU,"(/,A)",advance="no") "Statistic"
+  do i=1,iNUM_VARIABLES
+    if(STAT_INFO(i)%lActive) &
+      write(iLU,"(A)" ,advance="no")  ","//trim(STAT_NAMES(iStatistic))
+  enddo
+
+  write(iLU,"(/,A)", advance="no") "Date"
+  do i=1,iNUM_VARIABLES
+    if(STAT_INFO(i)%lActive) &
+      write(iLU,"(A)",advance="no") ","//STAT_INFO(i)%sVARIABLE_NAME
+  enddo
+
+  write(iLU, "(A)" )  ""
 
   flush(unit=iLU)
 
@@ -518,6 +552,11 @@ end subroutine stats_UpdateAllAccumulatorsByGrid
 
 !--------------------------------------------------------------------------
 
+!> @brief Calculates and writes out monthly min, max, and mean of 2D variable array.
+!> @par
+!> @param [in] iMonthNum Numerical index (1-12) of the month for which statistics are reported.
+!> @param [in] iDaysInMonth Number of days in the reporting month.
+!> @deprecated This subroutine will be eliminated in future version of SWB.
 subroutine stats_CalcMonthlyMeans(iMonthNum, iDaysInMonth)
 
   ![ARGUMENTS]
@@ -536,9 +575,12 @@ end subroutine stats_CalcMonthlyMeans
 
 !--------------------------------------------------------------------------
 
-!> \brief Writes out the min, max, and mean of 2D variable array
-!> Second line of brief description of this routine
-!> \bug Yikes! A bug!!
+!> @brief Writes out the min, max, and mean of 2D variable array.
+!> @par
+!> @param [in] iLU Fortran logical unit number to write output to.
+!> @param [in] sText Descriptive text associated with the statistics.
+!> @param [in] rData 2-d array of values for which statistics are calculated.
+!> @param [in] iCount <em>{Optional} User-supplied divisor for use in calculating the mean.</em>
 
 subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
 
@@ -592,7 +634,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 !                   - rDaily(iSUM,iRECHARGE)
 
 #ifndef STREAM_INTERACTIONS
-       rDailyMSB =  rDaily(iSUM,iSNOWFALL) &
+       rDailyMSB =  rDaily(iSUM,iSNOWFALL_SWE) &
                   - rDaily(iSUM,iCHG_IN_SNOW_COV) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
@@ -617,9 +659,9 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iINTERCEPTION)*rVolConvert, &
                          (rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION)) &
                                     *rVolConvert, &
-                         rDaily(iSUM,iSNOWFALL)*rVolConvert, &
+                         rDaily(iSUM,iSNOWFALL_SWE)*rVolConvert, &
                          MAX((rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION) &
-                           - rDaily(iSUM,iSNOWFALL)),0.0D0)*rVolConvert, &
+                           - rDaily(iSUM,iSNOWFALL_SWE)),0.0D0)*rVolConvert, &
                          rDaily(iSUM,iSNOWCOVER)*rVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*rVolConvert, &
                          rDaily(iSUM,iSNOWMELT)*rVolConvert, &
@@ -631,7 +673,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iRECHARGE)*rVolConvert, &
                          rDailyMSB*rVolConvert
 #else
-       rDailyMSB =  rDaily(iSUM,iSNOWFALL) &
+       rDailyMSB =  rDaily(iSUM,iSNOWFALL_SWE) &
                   - rDaily(iSUM,iCHG_IN_SNOW_COV) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
@@ -657,9 +699,9 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iINTERCEPTION)*rVolConvert, &
                          (rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION)) &
                                     *rVolConvert, &
-                         rDaily(iSUM,iSNOWFALL)*rVolConvert, &
+                         rDaily(iSUM,iSNOWFALL_SWE)*rVolConvert, &
                          MAX((rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION) &
-                           - rDaily(iSUM,iSNOWFALL)),0.0D0)*rVolConvert, &
+                           - rDaily(iSUM,iSNOWFALL_SWE)),0.0D0)*rVolConvert, &
                          rDaily(iSUM,iSNOWCOVER)*rVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*rVolConvert, &
                          rDaily(iSUM,iSNOWMELT)*rVolConvert, &
@@ -1114,7 +1156,6 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
   real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
 
   character (len=256) :: sBuf
-  character (len=1) :: sTab = CHAR(9)
 
   type (T_GENERAL_GRID),pointer :: input_grd    ! Pointer to temporary grid for I/O
 
@@ -1125,19 +1166,19 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
       pGrd%rX1, pGrd%rY1, T_SGL_GRID)
 
-  open(UNIT=LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
+  open(newunit=LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open basin mask statistics file")
 
-  open(UNIT=LU_PEST_STATS,FILE="SWB_PEST_STATS.txt",iostat=iStat,STATUS='REPLACE')
+  open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST statistics file")
 
-  open(UNIT=LU_PEST_OBS,FILE="SWB_PEST_OBSERVATIONS.txt",iostat=iStat,STATUS='REPLACE')
+  open(newunit=LU_PEST_OBS,FILE="SWB_PEST_OBSERVATIONS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST observations file")
 
-  open(UNIT=LU_PEST_INS,FILE="SWB_PEST_INSTRUCTIONS.ins",iostat=iStat,STATUS='REPLACE')
+  open(newunit=LU_PEST_INS,FILE="SWB_PEST_INSTRUCTIONS.ins",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST instructions file")
 
@@ -1157,10 +1198,10 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
   write(UNIT=LU_LOG,FMT=*) "Number of years in simulation:",n
 
   write(UNIT=LU_MASK_STATS_CSV,FMT=*) "USGS_UpstreamOrderNum" &
-    //sTab//"Basin_Description"//sTab//"Drainage_area"//sTab &
-    //"Majority Land Use"//sTab//"Majority Soil Type"//sTab &
-    //"SWB_Mean_Recharge"//sTab//"SWB_Min_Recharge"//sTab &
-    //"SWB_Max_Recharge"//sTab//"Baseflow_Recharge"
+    //sTAB//"Basin_Description"//sTAB//"Drainage_area"//sTAB &
+    //"Majority Land Use"//sTAB//"Majority Soil Type"//sTAB &
+    //"SWB_Mean_Recharge"//sTAB//"SWB_Min_Recharge"//sTAB &
+    //"SWB_Max_Recharge"//sTAB//"Baseflow_Recharge"
 
   do k = 1,size(pConfig%BMASK,1)
 
@@ -1228,11 +1269,11 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
     write(UNIT=LU_LOG,FMT="(8x,2(A7,f14.2))") "avg:",rAvg,"Qb:",pConfig%BMASK(k)%rQb
     write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
     write(UNIT=LU_MASK_STATS_CSV,FMT="(A,a,A,a,f16.4,3a,i4,a,4(f16.4,a))") &
-       TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID),sTab, &
-       TRIM(pConfig%BMASK(k)%sBasinDescription),sTab, &
-       pConfig%BMASK(k)%rDrainageArea,sTab, &
-       TRIM(pConfig%LU(iMajorityLU)%sLanduseDescription), sTab,iMajoritySoil, sTab,&
-       rAvg,sTab,rMin,sTab,rMax,sTab,pConfig%BMASK(k)%rQb, sTab
+       TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID),sTAB, &
+       TRIM(pConfig%BMASK(k)%sBasinDescription),sTAB, &
+       pConfig%BMASK(k)%rDrainageArea,sTAB, &
+       TRIM(pConfig%LU(iMajorityLU)%sLanduseDescription), sTAB,iMajoritySoil, sTAB,&
+       rAvg,sTAB,rMin,sTAB,rMax,sTAB,pConfig%BMASK(k)%rQb, sTAB
 
     write(UNIT=LU_PEST_STATS,FMT="(A,f16.6)") &
        ADJUSTL("s"//TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID)),rAvg
@@ -1499,7 +1540,7 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
 
     pSSF => pConfig%SSF_FILES(iSSFindex)
 
-    open(unit=pSSF%iLU, file=TRIM(pSSF%sFileName),status='OLD', &
+    open(newunit=pSSF%iLU, file=TRIM(pSSF%sFileName),status='OLD', &
         access='APPEND', iostat=iStat)
 
     sBuf = TRIM(int2char(pSSF%iLU))//"; filename = "//TRIM(pSSF%sFileName)
@@ -1540,7 +1581,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(unit=STAT_INFO(i)%iLU, FILE='output'//pConfig%sSlash// &
+      open(newunit=STAT_INFO(i)%iLU, FILE='output'//pConfig%sSlash// &
         TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')

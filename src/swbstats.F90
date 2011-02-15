@@ -24,7 +24,6 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
   real (kind=T_SGL) :: rDenominator
 
   character (len=256) :: sBuf
-  character (len=1) :: sTab = CHAR(9)
 
   integer (kind=T_INT) :: iNumRecs
 
@@ -43,16 +42,16 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(pConfig%lFirstDayOfSimulation) then
 
-    open(UNIT=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
+    open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
           iostat=iStat, STATUS='REPLACE')
     call Assert ( iStat == 0, &
       "Could not open PEST statistics file")
 
-    write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') "Period",sTab
+    write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
 
     do k=1,iNumRecs-1
       write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') &
-          ADJUSTL(TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID)),sTab
+          ADJUSTL(TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID)),sTAB
     end do
 
     write(UNIT=LU_PEST_STATS,FMT="(A)") &
@@ -62,14 +61,14 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   else   ! append to files
 
-    open(UNIT=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt",iostat=iStat, &
+    open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt",iostat=iStat, &
         POSITION='APPEND', STATUS='OLD')
     call Assert ( iStat == 0, &
       "Could not open PEST statistics file")
 
   end if
 
-  write(UNIT=LU_PEST_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTab
+  write(UNIT=LU_PEST_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
   do k = 1,iNumRecs
 
@@ -99,7 +98,7 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
     if( k < iNumRecs ) then
 
-      write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTab
+      write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
 
     else
 
@@ -136,7 +135,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   character (len=256) :: sBuf
 
   ! open basin mask file
-  open ( unit=LU_MASK, file=pConfig%sBasinMaskFilename, &
+  open ( newunit=LU_MASK, file=pConfig%sBasinMaskFilename, &
             status="OLD", iostat=iStat )
   call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
             "Open failed for file: " // pConfig%sBasinMaskFilename )
@@ -147,10 +146,10 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
      "Error reading first line of basin mask table" )
 
   ! read mask file to obtain expected number of basin mask files
-  call Chomp_tab( sRecord, sItem )
+  call chomp( sRecord, sItem, sTAB )
   call Uppercase( sItem )
   if ( sItem == "NUM_BASIN_MASK_FILES" ) then
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumMaskFiles
     call Assert( iStat == 0, "Failed to read number of basin mask files" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumMaskFiles, &
@@ -195,52 +194,52 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
     write(UNIT=LU_LOG,FMT=*)  "Reading basin mask record number ",iRecNum, " of ",iNumMaskFiles
     write(UNIT=LU_LOG,FMT=*) ""
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID
     call Assert( iStat == 0, &
       "Error reading upstream order ID in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Upstream order ID = ",TRIM(pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     call Uppercase(sItem)
     pConfig%BMASK(iRecNum)%sBasinDescription = TRIM(sItem)
     call Assert( iStat == 0, &
       "Error reading basin description in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Basin description = ",TRIM(pConfig%BMASK(iRecNum)%sBasinDescription)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     pConfig%BMASK(iRecNum)%sPestGroup = TRIM(ADJUSTL(sItem))
     call Assert( iStat == 0, &
       "Error reading PEST group in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "PEST group = ",TRIM(pConfig%BMASK(iRecNum)%sPestGroup)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rPestWeight
     call Assert( iStat == 0, &
       "Error reading PEST observation weight in basin mask table" )
     write(sBuf,FMT="(F12.3)") pConfig%BMASK(iRecNum)%rPestWeight
     write(UNIT=LU_LOG,FMT=*)  "PEST weight = "//TRIM(sBuf)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
 !    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sBasinMaskFilename
     pConfig%BMASK(iRecNum)%sBasinMaskFilename = TRIM(ADJUSTL(sItem))
     call Assert( iStat == 0, &
       "Error reading basin mask filename in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Basin mask filename = ",TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sFileType
     call Assert( iStat == 0, &
       "Error reading basin mask file type in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Basin mask filetype = ",TRIM(pConfig%BMASK(iRecNum)%sFileType)
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rQb
     call Assert( iStat == 0, &
       "Error reading baseflow estimate Qb in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Qb = ",pConfig%BMASK(iRecNum)%rQb
 
-    call Chomp_tab ( sRecord, sItem )
+    call chomp( sRecord, sItem, sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rDrainageArea
     call Assert( iStat == 0, &
       "Error reading basin drainage area in basin mask table" )
@@ -310,7 +309,7 @@ implicit none
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lYearEnd
 
-  integer (kind=T_INT), parameter :: LU_SWBSTATS = 401
+  integer (kind=T_INT) :: LU_SWBSTATS
 
   integer (kind=T_INT) :: iSWBStatsStartDate, iSWBStatsStartMM, &
                           iSWBStatsStartDD,iSWBStatsStartYYYY
@@ -343,6 +342,7 @@ implicit none
   logical (kind=T_LOGICAL) :: lEOF
   logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
 
+  !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   type (T_GRID_COLLECTION), pointer :: mask_grd
@@ -357,7 +357,7 @@ implicit none
   write(sBuf,FMT=*) "SWBSTATS_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(unit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
+  open(newunit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
       status='REPLACE')
   call Assert( iStat == 0, "Problem opening log file file for output.")
 
@@ -408,7 +408,7 @@ implicit none
 
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
-  open(unit=LU_SWBSTATS, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
+  open(newunit=LU_SWBSTATS, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
        status='OLD',ACCESS='STREAM', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&
