@@ -217,6 +217,7 @@ subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatisti
    end select
 
    write(iLU,"(A)") ""
+   flush(iLU)
 
 end subroutine stats_WriteDailyAccumulatorValuesCSV
 
@@ -229,15 +230,16 @@ subroutine stats_WriteAnnualAccumulatorValuesCSV(iLU,iYear)
   integer (kind=T_INT), intent(in) :: iYear
 
   ![LOCALS]
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: i
 
-  write(iLU,"(i4,A1,100(f12.3,A1))") &
-                                iYear,",", &
-                               (rAnnual(iMEAN,i),",", i=1,iNUM_VARIABLES-1), &
-                               rAnnual(iMEAN,iNUM_VARIABLES)
+   write(iLU,"(i4)", advance="no") iYear
+   do i=1,iNUM_VARIABLES
+     if(STAT_INFO(i)%lActive) &
+       write(iLU,"(A, F12.3)" ,advance="no")  ",",rAnnual(iMEAN,i)
+   enddo
 
-  return
-
+   write(iLU,"(A)") ""
+   flush(iLU)
 
 end subroutine stats_WriteAnnualAccumulatorValuesCSV
 
@@ -274,9 +276,6 @@ subroutine stats_WriteDailyAccumulatorHeaderCSV(iLU, iStatistic)
 
   flush(unit=iLU)
 
-  return
-
-
 end subroutine stats_WriteDailyAccumulatorHeaderCSV
 
 !--------------------------------------------------------------------------
@@ -287,15 +286,29 @@ subroutine stats_WriteAnnualAccumulatorHeaderCSV(iLU)
   integer (kind=T_INT), intent(in) :: iLU
 
   ![LOCALS]
-  integer (kind=T_INT) :: i,j
+  integer (kind=T_INT) :: i
 
-  write(iLU,"(100A)") "Year,",("MEAN " // STAT_INFO(i)%sVARIABLE_NAME // ",", &
-                     i=1,iNUM_VARIABLES)
+   write(iLU,"(A)",advance="no") "Mass balance?"
+   do i=1,iNUM_VARIABLES
+     if(STAT_INFO(i)%lActive) &
+       write(iLU,"(A)" ,advance="no")  ","//trim(STAT_INFO(i)%sMSB_Note)
+   enddo
+
+   write(iLU,"(/,A)",advance="no") "Statistic"
+   do i=1,iNUM_VARIABLES
+     if(STAT_INFO(i)%lActive) &
+       write(iLU,"(A)" ,advance="no")  ","//trim(STAT_NAMES(iMEAN))
+   enddo
+
+   write(iLU,"(/,A)", advance="no") "Year"
+   do i=1,iNUM_VARIABLES
+     if(STAT_INFO(i)%lActive) &
+       write(iLU,"(A)",advance="no") ","//STAT_INFO(i)%sVARIABLE_NAME
+   enddo
+
+  write(iLU, "(A)" )  ""
 
   flush(unit=iLU)
-
-  return
-
 
 end subroutine stats_WriteAnnualAccumulatorHeaderCSV
 
@@ -329,17 +342,20 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
   if(pConfig%lANSI_Colors .and. iLU==LU_STD_OUT) write(iLU,FMT=*) sWHITE
 
   do i=1,iNUM_VARIABLES
-    call stats_FormatTextString(STAT_INFO(i)%sVARIABLE_NAME, &
-                REAL(rTempArray(:,i),kind=T_SGL), &
-                pConfig, &
-                i, &
-                sText)
+    if(STAT_INFO(i)%lActive) then
+      call stats_FormatTextString(STAT_INFO(i)%sVARIABLE_NAME, &
+                  REAL(rTempArray(:,i),kind=T_SGL), &
+                  pConfig, &
+                  i, &
+                  sText)
 
-    if(pConfig%lANSI_Colors .and. iLU==LU_STD_OUT) then
-      write(iLU,'(A25,3A22,A28)') sText
-    else
-      write(iLU,'(A20,3A15,A21)') sText
-    end if
+      if(pConfig%lANSI_Colors .and. iLU==LU_STD_OUT) then
+        write(iLU,'(A25,3A22,A28)') sText
+      else
+        write(iLU,'(A20,3A15,A21)') sText
+      end if
+
+    endif
 
   end do
 

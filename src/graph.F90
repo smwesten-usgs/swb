@@ -43,6 +43,11 @@ module graph
     character (len=256) :: sPaperSize
     real :: rFG_Color
     integer :: iBG_Color
+    character (len=256) :: sDislin
+
+    ! is the DISLIN environment variable defined? if so, it is OK
+    ! to make a call to BMPFNT
+    call get_environment_variable("DISLIN", sDislin)
 
     ! establish number of cells in model grid
     iNumGridCells = pGrd%iNY * pGrd%iNX
@@ -86,6 +91,13 @@ module graph
         call Assert(lFALSE,"graph.f95: unsupported grid type was used in call")
 
     end select
+
+    ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
+    ! accordingly
+    if(approx_equal(ZA, ZE) ) then
+      ZE = ZA * 1.1 + .1
+      ZSTEP = (ZE - ZA) / 10.
+    endif
 
     write(sBuf,"(a7,f9.2,a9,f9.2,a7,f9.2)") &
        "  min: ",minval(ZMAT), &
@@ -218,7 +230,14 @@ module graph
     CALL LABELS('FLOAT','Z')
 
     ! LABDIG: Set the number of digits following the decimal place.
-    CALL LABDIG (2, 'Z')
+    ! select an appropriate number of digits
+    if(ZE >= 100.) then
+      CALL LABDIG (1, 'Z')
+    elseif(ZE < 1.) then
+      CALL LABDIG (3, 'Z')
+    else
+      CALL LABDIG (2, 'Z')
+    endif
 
     ! SETGRF removes a part of an axis or a complete axis from an axis system.
     ! The call is:     CALL SETGRF (C1, C2, C3, C4)     level 1, 2, 3
@@ -231,6 +250,11 @@ module graph
     ! ==> LEVEL 1 <==
     if(TRIM(pGraph(iVarNum)%cCDEV)=="PNG") then
       CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
+      if(len_trim(sDislin) > 0) then
+        CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
+      else
+        CALL DUPLX()
+      endif
       call SETRGB(rFG_Color, rFG_Color, rFG_Color)
       CALL PAGFLL(iBG_Color)
 
@@ -250,7 +274,11 @@ module graph
 !           call COLOR('YELLOW')
 
     elseif(TRIM(pGraph(iVarNum)%cCDEV)=="BMP") then
-      CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
+        if(len_trim(sDislin) > 0) then
+          CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
+        else
+          CALL DUPLX()
+        endif
 !           call COLOR('YELLOW')
 
     elseif(TRIM(pGraph(iVarNum)%cCDEV)=="PS") then
@@ -342,6 +370,8 @@ module graph
     integer (kind=T_INT) :: iPtVAxLen
     integer (kind=T_INT) :: iPtHAxLen
 
+    character (len=256) :: sDislin
+
     ! EXPLANATION OF DISLIN VARIABLES
     ! XA, XE        :: lower and upper limits of the X-axis.
     ! XOR, XSTP     :: first X-axis label and the step between labels.
@@ -356,6 +386,8 @@ module graph
 
     integer :: iX, iY, iNXW, iNYW
     integer (kind=T_INT) :: iNumGridCells
+
+    call get_environment_variable("DISLIN", sDislin)
 
     ! establish number of cells in model grid
     iNumGridCells = pGrd%iNY * pGrd%iNX
@@ -433,6 +465,13 @@ module graph
         call Assert(lFALSE,"graph.f95: unsupported grid type was used in call")
       end select
 
+      ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
+      ! accordingly
+      if(approx_equal(ZA, ZE) ) then
+        ZE = ZA * 1.1 + .1
+        ZSTEP = (ZE - ZA) / 10.
+      endif
+
       write(sSummaryTxt,"(a,f9.2,a,f9.2,a,f9.2)") &
         "  min: ",minval(ZMAT), &
         "  mean: ",sum(ZMAT)/iNumGridCells, &
@@ -484,12 +523,24 @@ module graph
       CALL SETVLT('SPEC')
 
 !     CALL HELVES()
-      CALL DUPLX()
+
+      if(len_trim(sDislin) > 0) then
+        call BMPFNT("helve")
+      else
+        CALL DUPLX()
+      endif
 !      CALL SHDCHA()
 
       ! The routine LABELS defines contour labels.
       CALL LABELS('FLOAT','Z')
-      CALL LABDIG (2, 'Z')
+
+      if(ZE >= 100.) then
+        CALL LABDIG (1, 'Z')
+      elseif(ZE < 1.) then
+        CALL LABDIG (3, 'Z')
+      else
+        CALL LABDIG (2, 'Z')
+      endif
 
       ! SETGRF removes a part of an axis or a complete axis from an axis system.
       ! The call is:  CALL SETGRF (C1, C2, C3, C4)  level 1, 2, 3

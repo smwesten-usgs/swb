@@ -1184,10 +1184,9 @@ subroutine Chomp_default_sub(sRecord, sItem)
     sItem = trim(sRecord)   ! no delimiters found; return entirety of sRecord
     sRecord = ""            ! as sItem
   else
-    ! find *next* occurance of *NON*-delimiter (needed to skip over multiple delimiters)
-    iB = verify(string = sRecord(max(iR,1):iLen), set = sDefaultDelimiters)
-    sItem = trim(sRecord(1:iR-1))
-    sRecord = trim(sRecord(iR+iB-1:))
+!    iB = verify(string = sRecord(max(iR,1):iLen), set = sDefaultDelimiters)
+    sItem = trim(adjustl(sRecord(1:iR-1)))
+    sRecord = trim(adjustl(sRecord(iR+1:)))
   end if
 
 end subroutine Chomp_default_sub
@@ -1307,35 +1306,34 @@ end subroutine Chomp_default_sub
 ! !
 ! ! SOURCE
 !
-! subroutine Chomp_tab(sRecord, sItem)
-!
-!   ! ARGUMENTS
-!   character (len=*), intent(inout) :: sRecord
-!   character (len=256), intent(out) :: sItem
-!   ! LOCALS
-!   integer (kind=T_INT) :: iR                      ! Index in sRecord
-!   character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
-!
-!   iR = SCAN(sRecord,cTab)
-!
-!   if(iR==0) then
-!     sItem = trim(sRecord)      ! no tab found; return entirety of sRecord
-! 	sRecord = ""			   ! as sItem
-!   else
-!     sItem = trim(sRecord(1:iR-1))
-! 	sRecord = trim(sRecord(iR+1:))
-!     do iR=1,len_trim(sRecord)
-! 	  if (sRecord(iR:iR) == " " ) then
-!         cycle
-! 	  else
-! 	    exit
-! 	  end if
-! 	end do
-!     sRecord = sRecord(iR:)
-!   end if
-!
-!   return
-! end subroutine Chomp_tab
+ subroutine Chomp_tab(sRecord, sItem)
+
+   ! ARGUMENTS
+   character (len=*), intent(inout) :: sRecord
+   character (len=256), intent(out) :: sItem
+   ! LOCALS
+   integer (kind=T_INT) :: iR                      ! Index in sRecord
+   character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
+
+   iR = SCAN(sRecord,cTab)
+
+   if(iR==0) then
+     sItem = trim(sRecord)      ! no tab found; return entirety of sRecord
+ 	sRecord = ""			   ! as sItem
+   else
+     sItem = trim(sRecord(1:iR-1))
+ 	sRecord = trim(sRecord(iR+1:))
+     do iR=1,len_trim(sRecord)
+ 	  if (sRecord(iR:iR) == " " ) then
+         cycle
+ 	  else
+ 	    exit
+ 	  end if
+ 	end do
+     sRecord = sRecord(iR:)
+   end if
+
+ end subroutine Chomp_tab
 
 !--------------------------------------------------------------------------
 !****s* types/Chomp_slash
@@ -1702,28 +1700,20 @@ end subroutine LookupMonth
 
 !----------------------------------------------------------------------
 
-function approx_equal_dbl(rA, rB, rTol)  result(lTest)
+function approx_equal_dbl(rA, rB)  result(lTest)
 
    real(kind=T_DBL) :: rA
    real(kind=T_DBL) :: rB
-   real(kind=T_DBL), optional :: rTol
    logical(kind=T_LOGICAL) :: lTest
 
    ! [ LOCALS ]
-   real (kind=T_DBL) :: rTolerance
-   real (kind=T_DBL) :: rRPD
+   real (kind=T_DBL) :: rDiff
+   integer (kind=T_INT) :: iDiff
 
+   rDiff = ABS(rA - rB)
+   iDiff = int(rDiff * 10000., kind=T_INT)
 
-   ! set default tolerance equal to reciprocal of mean value
-   if(present(rTol)) then
-     rTolerance = rTol
-   else
-     rTolerance = 1./((rA + rB) / 2.)
-   end if
-
-   rRPD = ABS(rA - rB) / ((rA + rB) / 2.)
-
-   if( rRPD<rTolerance ) then
+   if(iDiff == 0) then
      lTest = lTRUE
    else
      lTest = lFALSE
@@ -1734,28 +1724,20 @@ function approx_equal_dbl(rA, rB, rTol)  result(lTest)
 end function approx_equal_dbl
 
 
-function approx_equal_sgl(rA, rB, rTol)  result(lTest)
+function approx_equal_sgl(rA, rB)  result(lTest)
 
    real(kind=T_SGL) :: rA
    real(kind=T_SGL) :: rB
-   real(kind=T_SGL), optional :: rTol
    logical(kind=T_LOGICAL) :: lTest
 
    ! [ LOCALS ]
-   real (kind=T_SGL) :: rTolerance
-   real (kind=T_SGL) :: rRPD
+   real (kind=T_DBL) :: rDiff
+   integer (kind=T_INT) :: iDiff
 
+   rDiff = ABS(rA - rB)
+   iDiff = int(rDiff * 10000., kind=T_INT)
 
-   ! set default tolerance equal to reciprocal of mean value
-   if(present(rTol)) then
-     rTolerance = rTol
-   else
-     rTolerance = 1./((rA + rB) / 2.)
-   end if
-
-   rRPD = ABS(rA - rB) / ((rA + rB) / 2.)
-
-   if( rRPD<rTolerance ) then
+   if(iDiff == 0) then
      lTest = lTRUE
    else
      lTest = lFALSE

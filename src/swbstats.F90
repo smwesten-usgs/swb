@@ -315,6 +315,7 @@ implicit none
                           iSWBStatsStartDD,iSWBStatsStartYYYY
   integer (kind=T_INT) :: iSWBStatsEndDate, iSWBStatsEndMM, &
                           iSWBStatsEndDD,iSWBStatsEndYYYY
+  integer (kind=T_INT) :: iSWBStatsTotalNumDays
   integer (kind=T_INT) :: iSWBStatsOutputType = iBOTH
   integer (kind=T_INT) :: iSWBStatsType = iMEAN
 
@@ -324,6 +325,7 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pGrd
   type ( T_GENERAL_GRID ),pointer :: pMonthGrd
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
+  type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
 
   real(kind=T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad
 
@@ -341,6 +343,7 @@ implicit none
   integer (kind=T_INT) :: iOutputFormat = OUTPUT_ARC
   logical (kind=T_LOGICAL) :: lEOF
   logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
+  integer (kind=T_INT) :: iMonthCount, iYearCount
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -391,16 +394,22 @@ implicit none
 #endif
 
     write(UNIT=*,FMT="(/,/,a)") &
-      "Usage: swbstats [binary file name] [GRID|PLOT|BOTH|STATS] {SUM} {SURFER} {YEARLY|MONTHLY|DAILY} "
-    write(UNIT=*,FMT="(a,/)") "         {start date} {end date} {VERBOSE} {basin_mask_filename}"
-    write(UNIT=*,FMT="(/,t5,a)") "A filename and output type must be specified. All other arguments are OPTIONAL:"
+      "Usage: swbstats [binary file name] [PERIOD|YEARLY|MONTHLY|DAILY]" &
+        //" {SUM} {SURFER} {GRID|PLOT|BOTH|STATS} "
+    write(UNIT=*,FMT="(t17,a,/)") "{start date (mm/dd/yyyy)} {end date (mm/dd/yyyy)} {VERBOSE} {basin_mask_filename}"
+
+    write(UNIT=*,FMT="(/,t5,a)") "A filename and output frequency must be specified. All other arguments are OPTIONAL."
+    write(UNIT=*,FMT="(/,t5,a)") "NOTES:"
     write(UNIT=*,FMT="(/,t7,a)") "1) output frequency will generate output at all frequencies less than"
     write(UNIT=*,FMT="(t10,a)") "that specified (i.e. MONTHLY will also generate YEARLY)"
-    write(UNIT=*,FMT="(/,t7,a)") "2) start date and end date must be in MM/DD/YYYY format"
-    write(UNIT=*,FMT="(/,t7,a)") "3) {SUM}: will calculate statistics based on SUMS rather than MEAN values"
+    write(UNIT=*,FMT="(t12,a)") " - PERIOD: generates output for the entire period of"
+    write(UNIT=*,FMT="(t15,a)") "simulation *or* the start and end dates entered on the command line"
+    write(UNIT=*,FMT="(/,t7,a)") "2) If no output frequency is provided, a summary for the entire"
+    write(UNIT=*,FMT="(t10,a)") "model simulation period is calculated"
+    write(UNIT=*,FMT="(/,t7,a)") "3) SUM: will calculate statistics based on SUMS rather than MEAN values"
     write(UNIT=*,FMT="(/,t7,a)") "4) VERBOSE: writes daily min, mean, and max values to logfile"
     write(UNIT=*,FMT="(/,t7,a)") "5) SURFER: directs output to Surfer grids rather than Arc ASCII grids"
-    write(UNIT=*,FMT="(/,t7,a)") "6) {basin_mask_filename}: specifies a list of basins for which stats will be calculated"
+    write(UNIT=*,FMT="(/,t7,a)") "6) basin_mask_filename: specifies a list of basins for which stats will be calculated"
 
     stop
 
@@ -441,13 +450,14 @@ implicit none
   pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
   pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
   pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
 
   ! set default values for program options
   iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
   iSWBStatsEndDate = julian_day ( iEndYYYY, iEndMM, iEndDD)
   STAT_INFO(iVariableNumber)%iDailyOutput = iNONE
   STAT_INFO(iVariableNumber)%iMonthlyOutput = iNONE
-  STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
+  STAT_INFO(iVariableNumber)%iAnnualOutput = iNONE
 
   iNumGridCells = iNX * iNY
 
@@ -499,6 +509,7 @@ implicit none
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BOTH") then
       STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
       iSWBStatsOutputType = iBOTH
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD") then
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "STATS") then
       STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
@@ -647,6 +658,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   pGrd%rData(:,:)= rZERO
   pMonthGrd%rData(:,:)= rZERO
   pYearGrd%rData(:,:)= rZERO
+  pSummaryGrd%rData(:,:)= rZERO
+  iMonthCount = 0
+  iYearCount = 0
 
   do
     ! read in the current date
@@ -677,16 +691,30 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
        rRLE_OFFSET, rVal,iNumGridCells,lEOF)
     if(lEOF) exit
 
+    !> if current date does not fall within desired date range, keep
+    !> reading data, or if current date is after the end of the
+    !> desired date range, stop reading and get out
     if(iCurrJD < iSWBStatsStartDate) then
       cycle
     elseif(iCurrJD > iSWBStatsEndDate) then
       exit
     endif
 
+    iYearCount = iYearCount + 1
+
     pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad)
 
-    pMonthGrd%rData = pMonthGrd%rData + pGrd%rData
-    pYearGrd%rData = pYearGrd%rData + pGrd%rData
+    if(STAT_INFO(iVariableNumber)%iMonthlyOutput /= iNONE) then
+        pMonthGrd%rData = pMonthGrd%rData + pGrd%rData
+        iMonthCount = iMonthCount + 1
+    endif
+
+    if(STAT_INFO(iVariableNumber)%iAnnualOutput /= iNONE) then
+        pYearGrd%rData = pYearGrd%rData + pGrd%rData
+        iYearCount = iYearCount + 1
+    endif
+
+    pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
 
     if(lVerbose) &
       call stats_WriteMinMeanMax(LU_LOG, &
@@ -733,11 +761,12 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 !------------------------- MONTHLY ANALYSIS
     if(lMonthEnd) then
 
-      write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
-
       if(STAT_INFO(iVariableNumber)%iMonthlyOutput==iSTATS) then
+
+        write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
+
         if(iSWBStatsType == iMEAN) then
-          call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel, iCurrDD)
+          call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel, iMonthCount)
         else
           call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel)
         endif
@@ -746,63 +775,75 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       if((STAT_INFO(iVariableNumber)%iMonthlyOutput==iGRID &
          .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH)) then
 
-        write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.',a)") &
-           "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
+        if(iSWBStatsType == iSUM) then
 
-        if ( iOutputFormat == OUTPUT_SURFER ) then
-           call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-             rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
+          write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.',a)") &
+             "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
+
+          if ( iOutputFormat == OUTPUT_SURFER ) then
+             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+               rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
+          else
+             call grid_WriteArcGrid(TRIM(sOutputFilename), &
+                rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
+          end if
+
         else
-           call grid_WriteArcGrid(TRIM(sOutputFilename), &
-              rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
-        end if
 
-        write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.',a)") &
-           "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
+          write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.',a)") &
+             "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
 
-        if ( iOutputFormat == OUTPUT_SURFER ) then
-           call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-             rX0,rX1,rY0,rY1,&
-               pMonthGrd%rData(:,:) / REAL(iCurrDD))
-        else
-           call grid_WriteArcGrid(TRIM(sOutputFilename), &
-              rX0,rX1,rY0,rY1, &
-               pMonthGrd%rData(:,:) / REAL(iCurrDD))
-        end if
+          if ( iOutputFormat == OUTPUT_SURFER ) then
+             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+               rX0,rX1,rY0,rY1,&
+                 pMonthGrd%rData(:,:) / REAL(iMonthCount))
+          else
+             call grid_WriteArcGrid(TRIM(sOutputFilename), &
+                rX0,rX1,rY0,rY1, &
+                 pMonthGrd%rData(:,:) / REAL(iMonthCount))
+          end if
+
+        endif
 
       end if
 
       if(STAT_INFO(iVariableNumber)%iMonthlyOutput==iGRAPH &
          .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH) then
 
-        write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
-           "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,iCurrMM
+        if(iSWBStatsType == iSUM) then
+          write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
+             "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,iCurrMM
 
-        sTitleTxt = "SUM of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
-          ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
+          sTitleTxt = "SUM of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+            ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
 
-        call make_shaded_contour(pMonthGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
-          TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+          call make_shaded_contour(pMonthGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+            TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
-        ! now repeat for MEAN value reporting
-        write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
-           "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,iCurrMM
+        else
 
-        sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
-          ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
+          ! now repeat for MEAN value reporting
+          write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
+             "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,iCurrMM
 
-        pMonthGrd%rData = pMonthGrd%rData / REAL(iCurrDD)
+          sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+            ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
 
-        call make_shaded_contour(pMonthGrd, TRIM(sOutputFilename), &
-           TRIM(sTitleTxt), TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+          pMonthGrd%rData = pMonthGrd%rData / REAL(iMonthCount)
+
+          call make_shaded_contour(pMonthGrd, TRIM(sOutputFilename), &
+             TRIM(sTitleTxt), TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
+        endif
 
       endif
 
       pMonthGrd%rData=rZERO
+      iMonthCount = 0
 
     endif
 
@@ -810,83 +851,174 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     if(lYearEnd) then
 
-      iNumDaysInYear = num_days_in_year(iCurrYYYY)
-
-      write(sLabel,FMT="(i4.4)") iCurrYYYY
-
-      if(STAT_INFO(iVariableNumber)%iAnnualOutput==iSTATS) then
+      if(STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
+        write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
-          call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel, iNumDaysInYear)
+          call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel, iYearCount)
         else
           call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel)
         endif
       endif
 
-      if((STAT_INFO(iVariableNumber)%iAnnualOutput==iGRID &
-         .or. STAT_INFO(iVariableNumber)%iAnnualOutput==iBOTH)) then
+      if((STAT_INFO(iVariableNumber)%iAnnualOutput == iGRID &
+         .or. STAT_INFO(iVariableNumber)%iAnnualOutput == iBOTH)) then
 
-        write(sOutputFilename,FMT="(A,'_',i4.4,'.',a)") &
-           "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,trim(sOutputFileSuffix)
+        if(iSWBStatsType == iSUM) then
 
-        if ( iOutputFormat == OUTPUT_SURFER ) then
-           call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-             rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
+          write(sOutputFilename,FMT="(A,'_',i4.4,'.',a)") &
+             "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,trim(sOutputFileSuffix)
+
+          if ( iOutputFormat == OUTPUT_SURFER ) then
+             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+               rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
+          else
+             call grid_WriteArcGrid(TRIM(sOutputFilename), &
+                rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
+          end if
+
         else
-           call grid_WriteArcGrid(TRIM(sOutputFilename), &
-              rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
-        end if
 
-        ! now repeat for reporting of MEAN values
-        write(sOutputFilename,FMT="(A,'_',i4.4,'.',a)") &
-           "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY,trim(sOutputFileSuffix)
+          ! now repeat for reporting of MEAN values
+          write(sOutputFilename,FMT="(A,'_',i4.4,'.',a)") &
+             "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY,trim(sOutputFileSuffix)
 
-        if ( iOutputFormat == OUTPUT_SURFER ) then
-           call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-             rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iNumDaysInYear))
-        else
-           call grid_WriteArcGrid(TRIM(sOutputFilename), &
-              rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iNumDaysInYear))
-        end if
+          if ( iOutputFormat == OUTPUT_SURFER ) then
+             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+               rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iYearCount))
+          else
+             call grid_WriteArcGrid(TRIM(sOutputFilename), &
+                rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iYearCount))
+          end if
 
+        endif
 
       end if
 
       ! now produce ANNUAL PLOTS
-      if(STAT_INFO(iVariableNumber)%iAnnualOutput==iGRAPH &
-         .or. STAT_INFO(iVariableNumber)%iAnnualOutput==iBOTH) then
+      if(STAT_INFO(iVariableNumber)%iAnnualOutput == iGRAPH &
+         .or. STAT_INFO(iVariableNumber)%iAnnualOutput == iBOTH) then
 
-        write(sOutputFilename,FMT="(A,'_',i4.4,'.png')") &
-           "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY
+        if(iSWBStatsType == iSUM) then
 
-        sTitleTxt = "SUM of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
-          ' for '//trim(int2char(iCurrYYYY))
+          write(sOutputFilename,FMT="(A,'_',i4.4,'.png')") &
+             "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY
 
-        call make_shaded_contour(pYearGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
-          TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+          if(iYearCount < 365) then
+            sTitleTxt = "SUM of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+              " for "//trim(int2char(iCurrYYYY)//" ("//trim(int2char(iYearCount)) &
+              //" days in calculation)")
+          else
+            sTitleTxt = "SUM of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+              " for "//trim(int2char(iCurrYYYY))
+          endif
 
-        ! now repeat for MEAN value reporting
-        write(sOutputFilename,FMT="(A,'_',i4.4,'.png')") &
-           "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-           iCurrYYYY
+          call make_shaded_contour(pYearGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+            TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
-        sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
-          ' for '//trim(int2char(iCurrYYYY))
+        else
 
-        pYearGrd%rData = pYearGrd%rData / REAL(iNumDaysInYear)
+          ! now repeat for MEAN value reporting
+          write(sOutputFilename,FMT="(A,'_',i4.4,'.png')") &
+             "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+             iCurrYYYY
 
-        call make_shaded_contour(pYearGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
-          TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+          if(iYearCount < 365) then
+            sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+              " for "//trim(int2char(iCurrYYYY)//" ("//trim(int2char(iYearCount)) &
+              //" days in calculation)")
+          else
+            sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
+              " for "//trim(int2char(iCurrYYYY))
+          endif
+
+          pYearGrd%rData = pYearGrd%rData / REAL(iYearCount)
+
+          call make_shaded_contour(pYearGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+            TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
+        endif
 
       end if
 
       pYearGrd%rData=rZERO
+      iYearCount = 0
 
     end if
 
   end do
+
+  !------------------------- SUMMARY ANALYSIS
+
+  iSWBStatsTotalNumDays = iSWBStatsEndDate - iSWBStatsStartDate + 1
+
+  write(sLabel,fmt="(i02.2,'_',i02.2,'_',i04.4,"// &
+      "'_to_',i02.2,'_',i02.2,'_',i04.4)") iSWBStatsStartMM, &
+      iSWBStatsStartDD, iSWBStatsStartYYYY, &
+      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  if( iSWBStatsOutputType == iSTATS ) then
+    if(iSWBStatsType == iMEAN) then
+      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel, iSWBStatsTotalNumDays)
+    else
+      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel)
+    endif
+  endif
+
+  write(sOutputFilename,FMT="(A,'_',a,'.',a)") &
+     "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+     trim(sLabel),trim(sOutputFileSuffix)
+
+  if ( iOutputFormat == OUTPUT_SURFER ) then
+    call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+       rX0,rX1,rY0,rY1,pSummaryGrd%rData(:,:))
+  else
+    call grid_WriteArcGrid(TRIM(sOutputFilename), &
+       rX0,rX1,rY0,rY1,pSummaryGrd%rData(:,:))
+  end if
+
+  ! now repeat for reporting of MEAN values
+  write(sOutputFilename,FMT="(A,'_',a,'.',a)") &
+    "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+     trim(sLabel),trim(sOutputFileSuffix)
+
+  if ( iOutputFormat == OUTPUT_SURFER ) then
+    call grid_WriteSurferGrid(TRIM(sOutputFilename), &
+       rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays))
+  else
+    call grid_WriteArcGrid(TRIM(sOutputFilename), &
+       rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays))
+  end if
+
+  write(sOutputFilename,FMT="(A,'_',a,'.png')") &
+    "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), trim(sLabel)
+
+  write(sTitleTxt,fmt="('SUM of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
+      "' to ',i02.2,'/',i02.2,'/',i04.4)") &
+      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
+      iSWBStatsStartDD, iSWBStatsStartYYYY, &
+      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+    TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
+  ! now repeat for MEAN value reporting
+  write(sOutputFilename,FMT="(A,'_',a,'.png')") &
+     "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), trim(sLabel)
+
+  write(sTitleTxt,fmt="('MEAN of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
+      "' to ',i02.2,'/',i02.2,'/',i04.4)") &
+      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
+      iSWBStatsStartDD, iSWBStatsStartYYYY, &
+      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  pSummaryGrd%rData = pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays)
+
+  call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+    TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
 
   close(unit=LU_LOG)
 

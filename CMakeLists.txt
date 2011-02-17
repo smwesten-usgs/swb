@@ -28,6 +28,18 @@ set( CMAKE_BUILD_TYPE "Release" CACHE STRING
 #------------------------------------------------------------------------
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
+option (TARGET__SWB_EXECUTABLE
+      "Compile the main SWB executable?" ON)
+
+option (TARGET__SWB_LIBRARY
+      "Compile SWB as a library?" ON)
+
+option (TARGET__SWBREAD
+      "Compile the swbread application?" ON)
+
+option (TARGET__SWBSTATS
+      "Compile the swbstats application?" ON)
+
 #------------------------------------------------------------------------
 # Set PREPROCESSOR DEFINES for conditional compilation
 #------------------------------------------------------------------------
@@ -67,9 +79,9 @@ if(OPTION__DEBUG_PRINT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
 endif()
 
-math(EXPR TOTAL_T_STATS_VARS "(26 + ${STREAM_INTERACTIONS_VARS} + ${IRRIGATION_MODULE_VARS})")
-set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "CPP_NUM_VARS=${TOTAL_T_STATS_VARS}")
-message("Setting dimension for number of T_STATS elements to: " ${TOTAL_T_STATS_VARS})
+#math(EXPR TOTAL_T_STATS_VARS "(26 + ${STREAM_INTERACTIONS_VARS} + ${IRRIGATION_MODULE_VARS})")
+#set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "CPP_NUM_VARS=${TOTAL_T_STATS_VARS}")
+#message("Setting dimension for number of T_STATS elements to: " ${TOTAL_T_STATS_VARS})
 
 #------------------------------------------------------------------------
 # Set platform-specific options
@@ -290,11 +302,14 @@ elseif(CMAKE_HOST_UNIX)
 
 endif()
 
+set ( CMAKE_Fortran_FLAGS_DEBUG ${Fortran_FLAGS_DEBUG})
+set ( CMAKE_Fortran_FLAGS_RELEASE ${Fortran_FLAGS_RELEASE})
+
 if( CMAKE_BUILD_TYPE STREQUAL "Debug")
-  add_definitions(${Fortran_FLAGS_DEBUG})
+#  add_definitions(${Fortran_FLAGS_DEBUG})
 else()
   set(CMAKE_BUILD_TYPE "Release")
-  add_definitions(${Fortran_FLAGS_RELEASE})
+#  add_definitions(${Fortran_FLAGS_RELEASE})
 endif()
 
 message("--------------------------------------------------------------------")
@@ -303,7 +318,9 @@ message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
 message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message ("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
 message ("CMAKE_AR: " ${CMAKE_AR})
+message ("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
 message ("Fortran flags (Debug):      " ${Fortran_FLAGS_DEBUG})
+message ("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
 message ("Fortran flags (Release):    " ${Fortran_FLAGS_RELEASE})
 MESSAGE ("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
 message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
@@ -318,7 +335,5 @@ set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
 link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
-
-######################################################################
 
 add_subdirectory(src)

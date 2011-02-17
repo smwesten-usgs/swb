@@ -67,11 +67,13 @@ program main
 
   use types
   use control
+  use, intrinsic :: ISO_FORTRAN_ENV
 
   implicit none
 
   character (len=256) :: sControlFile
   integer (kind=T_INT) :: iNumArgs
+  character (len=512) :: sCompilerFlags
 
   ! warning - calling a Fortran 2003 extension function here
   iNumArgs = COMMAND_ARGUMENT_COUNT()
@@ -82,49 +84,53 @@ program main
       "Soil Water Balance Code -- compiled on: "// &
       TRIM(__DATE__) //" "// TRIM(__TIME__)
 #ifdef __GFORTRAN__
-    write(UNIT=*,FMT="(a,/)") "Compiled with GNU gfortran version "//TRIM(__VERSION__)
+    write(UNIT=*,FMT="(a,/)") "Compiled with: GNU gfortran version "//TRIM(__VERSION__)
+    sCompilerFlags = COMPILER_OPTIONS()
+    write(UNIT=*,FMT="(a)") "Compiler flags:"
+    write(UNIT=*,FMT="(a)") "-------------------------------"
+    write(UNIT=*,FMT="(a,/)") TRIM(sCompilerFlags)
 #endif
 
 #ifdef __INTEL_COMPILER
-    write(UNIT=*,FMT="(a,/)") "Compiled with Intel Fortran version " &
+    write(UNIT=*,FMT="(a,/)") "Compiled with: Intel Fortran version " &
       //TRIM(int2char(__INTEL_COMPILER))
 #endif
 
 #ifdef __G95__
-    write(UNIT=*,FMT="(a,/)") "Compiled with G95 minor version " &
+    write(UNIT=*,FMT="(a,/)") "Compiled with: G95 minor version " &
       //TRIM(int2char(__G95_MINOR__))
 #endif
 
-    write(UNIT=*,FMT=*) "  Compilation options:"
-    write(UNIT=*,FMT=*) " -------------------------------"
+    write(UNIT=*,FMT="(a)") "Compilation options:"
+    write(UNIT=*,FMT="(a)") "-------------------------------"
 #ifdef STREAM_INTERACTIONS
-    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS      yes"
+    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS      yes"
 #else
-    write(UNIT=*,FMT=*) "  STREAM_INTERACTIONS       no"
+    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS       no"
 #endif
 
 #ifdef GRAPHICS_SUPPORT
-    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT         yes"
+    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT         yes"
 #else
-    write(UNIT=*,FMT=*) "  GRAPHICS_SUPPORT          no"
+    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT          no"
 #endif
 
 #ifdef NETCDF_SUPPORT
-    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT           yes"
+    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT           yes"
 #else
-    write(UNIT=*,FMT=*) "  NETCDF_SUPPORT            no"
+    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT            no"
 #endif
 
 #ifdef IRRIGATION_MODULE
-    write(UNIT=*,FMT=*) "  IRRIGATION calculations  yes"
+    write(UNIT=*,FMT="(a)") " IRRIGATION calculations  yes"
 #else
-    write(UNIT=*,FMT=*) "  IRRIGATION calculations   no"
+    write(UNIT=*,FMT="(a)") " IRRIGATION calculations   no"
 #endif
 
 #ifdef DEBUG_PRINT
-    write(UNIT=*,FMT=*) "  DEBUG_PRINT              yes"
+    write(UNIT=*,FMT="(a)") " DEBUG_PRINT              yes"
 #else
-    write(UNIT=*,FMT=*) "  DEBUG_PRINT               no"
+    write(UNIT=*,FMT="(a)") " DEBUG_PRINT               no"
 #endif
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"
