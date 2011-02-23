@@ -43,12 +43,12 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rValue
   call Assert( iStat == 0, "Could not read the southerly latitude" )
-  pConfig%rSouthernLatitude = rTWOPI * rValue / 360.0_T_SGL
+  pConfig%rSouthernLatitude = dpTWOPI * rValue / 360.0_T_SGL
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rValue
   call Assert( iStat == 0, "Could not read the northerly latitude" )
-  pConfig%rNorthernLatitude = rTWOPI * rValue / 360.0_T_SGL
+  pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_T_SGL
 
   return
 end subroutine et_hargreaves_configure
@@ -107,11 +107,11 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
     do iCol=1,pGrd%iNX
 
-      pGrd%Cells(iRow,iCol)%rSM_PotentialET = ET0_hargreaves( &
+      pGrd%Cells(iCol,iRow)%rSM_PotentialET = ET0_hargreaves( &
                                            pConfig, &
                                            equivalent_evaporation(rRa), &
-                                           pGrd%Cells(iRow,iCol)%rTMin, &
-                                           pGrd%Cells(iRow,iCol)%rTMax)
+                                           pGrd%Cells(iCol,iRow)%rTMin, &
+                                           pGrd%Cells(iCol,iRow)%rTMax)
     end do
 
   end do
@@ -185,7 +185,6 @@ end function ET0_hargreaves
 !!***
 
 end module et_hargreaves
-
 
 
 

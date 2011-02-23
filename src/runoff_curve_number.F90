@@ -36,12 +36,12 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
   ! Initialize all CNs to "bare rock"
   pGrd%Cells(:,:)%rBaseCN = real(5,T_SGL)
 
-  do iCol=1,pGrd%iNX
-    do iRow=1,pGrd%iNY
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
       ! Use the LU and SG in the grid cell, along with the LU option to
       ! look up the curve number
 
-	  cel => pGrd%Cells(iRow,iCol)
+	  cel => pGrd%Cells(iCol,iRow)
 	  lMatch = lFALSE
 
       ! iterate through all land use types
@@ -223,7 +223,12 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   real (kind=T_SGL) :: rP
   real (kind=T_SGL) :: rCN_05
 
-  rP = cel%rNetPrecip + cel%rSnowMelt + cel%rInFlow
+  rP = cel%rNetPrecip &
+       + cel%rSnowMelt &
+#ifdef IRRIGATION_MODULE
+       + cel%rIrrigationAmount &
+#endif
+       + cel%rInFlow
 
   call runoff_UpdateCurveNumber(pConfig,cel,iJulDay)
 

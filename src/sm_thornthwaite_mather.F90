@@ -78,10 +78,9 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
   ! Initialize the accumulated water loss for each cell according to the
   ! initial soil moisture.
 
-  do iCol=1,pGrd%iNX
-    do iRow=1,pGrd%iNY
-
-      cel => pGrd%Cells(iRow,iCol)
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+      cel => pGrd%Cells(iCol,iRow)
 
       if ( cel%rSoilWaterCap > rNEAR_ZERO ) then
 
@@ -127,8 +126,8 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
   end do
 
 #ifdef DEBUG_PRINT
- call grid_WriteArcGrid("initial_APWL.asc",rD_ZERO,rD_ONE,rD_ZERO, &
-    rD_ONE,pGrd%Cells(:,:)%rSM_AccumPotentWatLoss)
+ call grid_WriteArcGrid("initial_APWL.asc",dpZERO,dpONE,dpZERO, &
+    dpONE,pGrd%Cells(:,:)%rSM_AccumPotentWatLoss)
 #endif
 
   !! initialize Thorntwaite-Mather soil moisture accounting variables
@@ -196,9 +195,9 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
   ! array is traversed in column-major order (i.e. processed a column
   ! at a time, which should be more efficient in terms of Fortran
   ! memory management)
-  col_idx: do iCol=1,pGrd%iNX
-    row_idx: do iRow=1,pGrd%iNY
-      cel => pGrd%Cells(iRow,iCol)
+  row_idx: do iRow=1,pGrd%iNY
+    col_idx: do iCol=1,pGrd%iNX
+      cel => pGrd%Cells(iCol,iRow)
       iRowCounter = iRowCounter + 1
 
       ! calculate net infiltration
@@ -1024,9 +1023,9 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
       endif
 
-    end do row_idx
+    end do col_idx
 
-  end do col_idx
+  end do row_idx
 
   ! now issue the following calls to trigger calculation of daily averages
   !
@@ -1040,39 +1039,39 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
   !   2) if called with iNumGridCells > 0, the subroutine divides the accumulator
   !      by iNumGridCells to yield a mean value over all grid values.
   !
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iRECHARGE,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iCFGI,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iMIN_TEMP,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iMAX_TEMP,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iAVG_TEMP,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iRUNOFF_OUTSIDE,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iREJECTED_RECHARGE,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iSOIL_MOISTURE,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iP_MINUS_PET,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iPOT_ET,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iACT_ET,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iSM_DEFICIT,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iSM_SURPLUS,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iCHG_IN_SOIL_MOIST,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iNET_INFIL,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iSM_APWL,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iRECHARGE,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iCFGI,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iMIN_TEMP,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iMAX_TEMP,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iAVG_TEMP,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iRUNOFF_OUTSIDE,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iREJECTED_RECHARGE,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSOIL_MOISTURE,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iP_MINUS_PET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iPOT_ET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_DEFICIT,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_SURPLUS,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iCHG_IN_SOIL_MOIST,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iNET_INFIL,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_APWL,iMonth,iNumGridCells)
 
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iNET_INFLOW,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iNET_INFLOW,iMonth,iNumGridCells)
 
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iINFLOW,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iOUTFLOW,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iINFLOW,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iOUTFLOW,iMonth,iNumGridCells)
 
 #ifdef STREAM_INTERACTIONS
 
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iSTREAM_CAPTURE, &
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSTREAM_CAPTURE, &
       iMonth,iNumGridCells)
 
 #endif
 
 #ifdef IRRIGATION_MODULE
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iGDD, &
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iGDD, &
       iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(rD_ZERO, iIRRIGATION, &
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, &
       iMonth,iNumGridCells)
 #endif
 

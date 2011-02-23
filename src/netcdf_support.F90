@@ -668,8 +668,8 @@ end subroutine netcdf_chk_extent
     if(pNC%lInterpolate) then
 
       if(iScaleFactor==2) then
-        do iCol=1,pNC%iX_NumGridCells
-          do iRow=1,pNC%iY_NumGridCells
+        do iRow=1,pNC%iY_NumGridCells
+          do iCol=1,pNC%iX_NumGridCells
             j0 = pOutGrd%iNY - (iRow-1)*2
             i0 = 1 + (iCol-1)*2
             j1 = j0 - 1
@@ -681,8 +681,8 @@ end subroutine netcdf_chk_extent
           end do
         end do
       else if(iScaleFactor==4) then
-        do iCol=1,pNC%iX_NumGridCells
-          do iRow=1,pNC%iY_NumGridCells
+        do iRow=1,pNC%iY_NumGridCells
+          do iCol=1,pNC%iX_NumGridCells
             j0 = pOutGrd%iNY - (iRow-1)*4
             i0 = 1 + (iCol-1)*4
             j1 = j0 - 1
@@ -727,9 +727,9 @@ end subroutine netcdf_chk_extent
 
 
     else  ! no interpolation needed
-      do iCol=1,pOutGrd%iNX
-        do iRow=1,pOutGrd%iNY
-          pOutGrd%rData((pOutGrd%iNY - iRow + 1),iCol) = rValues(iCol,iRow)
+      do iRow=1,pOutGrd%iNY
+        do iCol=1,pOutGrd%iNX
+          pOutGrd%rData(iCol, (pOutGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
         end do
       end do
     end if
@@ -1002,11 +1002,11 @@ end subroutine netcdf_chk_extent
 
     pNC => pConfig%NETCDF_FILE(iVarNum, iMode)
 
-    do iCol=1,pGrd%iNX
-      do iRow=1,pGrd%iNY
+    do iRow=1,pGrd%iNY
+      do iCol=1,pGrd%iNX
         k =  pGrd%iNY - iRow + 1
         call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iVarID   , &
-           values = pGrd%rData(k,iCol), start = (/iCol,iRow, iTime/)), &
+           values = pGrd%rData(iCol,k), start = (/iCol,iRow, iTime/)), &
                 TRIM(__FILE__),__LINE__, pNC, iTime)
       end do
     end do
@@ -1146,8 +1146,8 @@ subroutine LLtoUTM(pConfig, rLat, rLong, rUTMNorthing, rUTMEasting, iZoneNumber)
    rLongTemp = ( rLong + 180_T_DBL)-INT((rLong+180_T_DBL)/360_T_DBL) &
                 *360_T_DBL - 180_T_DBL
 
-   rLatRad = rLat * rPI / 180_T_DBL
-   rLongRad = rLongTemp * rPI / 180_T_DBL
+   rLatRad = rLat * dpPI / 180_T_DBL
+   rLongRad = rLongTemp * dpPI / 180_T_DBL
 
    r_a = Ellipsoid(pConfig%iEllipsoidID)%rEquatorialRadius
    r_eccSquared = Ellipsoid(pConfig%iEllipsoidID)%rEccentricitySquared
@@ -1168,7 +1168,7 @@ subroutine LLtoUTM(pConfig, rLat, rLong, rUTMNorthing, rUTMEasting, iZoneNumber)
 	end if
 
 	rLongOrigin = (iZoneNumber - 1_T_DBL) * 6_T_DBL - 180_T_DBL + 3_T_DBL
-	rLongOriginRad = rLongOrigin * rPI / 180_T_DBL
+	rLongOriginRad = rLongOrigin * dpPI / 180_T_DBL
 
 	!compute the UTM Zone from the latitude and longitude
 	r_eccPrimeSquared = (r_eccSquared) / (1_T_DBL - r_eccSquared)
@@ -1262,7 +1262,7 @@ subroutine UTMtoLL(pConfig, rUTMEasting, rUTMNorthing, rLat, rLong)
 				    sin(4_T_DBL*r_mu) &
 				+(151_T_DBL*re1*re1*re1/96_T_DBL)*sin(6_T_DBL*r_mu)
 
-	r_phi1 = r_phi1Rad * 180_T_DBL / rPI
+	r_phi1 = r_phi1Rad * 180_T_DBL / dpPI
 	rN1 = r_a/sqrt(1_T_DBL-r_eccSquared*sin(r_phi1Rad)*sin(r_phi1Rad))
 	rT1 = tan(r_phi1Rad)*tan(r_phi1Rad)
 	rC1 = r_eccPrimeSquared*cos(r_phi1Rad)*cos(r_phi1Rad)
@@ -1276,14 +1276,14 @@ subroutine UTMtoLL(pConfig, rUTMEasting, rUTMNorthing, rLat, rLong)
 					*rT1-252_T_DBL*r_eccPrimeSquared &
 					-3_T_DBL*rC1*rC1)*rD*rD*rD*rD*rD*rD/720_T_DBL)
 
-	rLat = pConfig%rLatOrigin + rLat * 180_T_DBL / rPI
+	rLat = pConfig%rLatOrigin + rLat * 180_T_DBL / dpPI
 
 	rLong = (rD-(1_T_DBL+2_T_DBL*rT1+rC1)*rD*rD*rD/6_T_DBL &
 	        +(5_T_DBL-2_T_DBL*rC1+28_T_DBL*rT1-3_T_DBL*rC1*rC1+8_T_DBL* &
 	        r_eccPrimeSquared+24_T_DBL*rT1*rT1) &
 					*rD*rD*rD*rD*rD/120_T_DBL)/cos(r_phi1Rad)
 
-	rLong = pConfig%rLongOrigin + rLong * 180_T_DBL / rPI
+	rLong = pConfig%rLongOrigin + rLong * 180_T_DBL / dpPI
 
    return
 

@@ -42,7 +42,7 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(pConfig%lFirstDayOfSimulation) then
 
-    open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
+    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
           iostat=iStat, STATUS='REPLACE')
     call Assert ( iStat == 0, &
       "Could not open PEST statistics file")
@@ -61,7 +61,7 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   else   ! append to files
 
-    open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt",iostat=iStat, &
+    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt",iostat=iStat, &
         POSITION='APPEND', STATUS='OLD')
     call Assert ( iStat == 0, &
       "Could not open PEST statistics file")
@@ -135,7 +135,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   character (len=256) :: sBuf
 
   ! open basin mask file
-  open ( newunit=LU_MASK, file=pConfig%sBasinMaskFilename, &
+  open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
             status="OLD", iostat=iStat )
   call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
             "Open failed for file: " // pConfig%sBasinMaskFilename )
@@ -360,7 +360,7 @@ implicit none
   write(sBuf,FMT=*) "SWBSTATS_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(newunit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
+  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
       status='REPLACE')
   call Assert( iStat == 0, "Problem opening log file file for output.")
 
@@ -417,7 +417,7 @@ implicit none
 
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
-  open(newunit=LU_SWBSTATS, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
+  open(nextunit(LU_SWBSTATS), FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
        status='OLD',ACCESS='STREAM', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&

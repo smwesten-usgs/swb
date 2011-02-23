@@ -19,9 +19,9 @@ module swb_stats
   implicit none
   save
 
-  ! rVolConvert combines the conversion factor between inches and meters, and
+  ! dpVolConvert combines the conversion factor between inches and meters, and
   ! multiplies by the area of a grid cell (assumed to be meters)
-  real (kind=T_DBL), public :: rVolConvert
+  real (kind=T_DBL), public :: dpVolConvert
 
   !! Monthly accumulators - to hold SUM of daily values across all cells
   real (kind=T_DBL), dimension(iNUM_MONTHS,iNUM_STATS,iNUM_VARIABLES), public :: rMonthly
@@ -44,17 +44,17 @@ subroutine stats_InitializeVolumeConversion(pGrd)
 
   if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
 
-    rVolConvert = (rONE / 12.0_T_DBL) &
-               *(pGrd%rGridCellSize ** 2_T_DBL) &
-               * rSQM_to_SQFT &
-               / 43560.
+    dpVolConvert = (dpONE / 12.0_T_DBL) &
+               *(real(pGrd%rGridCellSize,kind=T_DBL) ** 2_T_DBL) &
+               * dpSQM_to_SQFT &
+               / 43560_T_DBL
     ! multiply by area of grid cell in acres (yields acre-ft of water)
 
   else if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_FEET) then
 
-    rVolConvert = (rONE / 12.0_T_DBL) &
-               *(pGrd%rGridCellSize ** 2_T_DBL) &
-               / 43560.
+    dpVolConvert = (dpONE / 12.0_T_DBL) &
+               *(real(pGrd%rGridCellSize,kind=T_DBL) ** 2_T_DBL) &
+               / 43560_T_DBL
     ! multiply by area of grid cell in acres (yields acre-ft of water)
 
   else
@@ -102,12 +102,12 @@ subroutine stats_FormatTextString(sText,rValue,pConfig, &
 
   ![ARGUMENTS]
   character(len=*), intent(in) :: sText
-  real(kind=T_SGL), intent(in), dimension(iNUM_STATS) :: rValue
+  real(kind=T_SGL), intent(in), dimension(:) :: rValue
   type (T_MODEL_CONFIGURATION), pointer :: pConfig
 
   integer(kind=T_INT), intent(in) :: iVarNum
 
-  character(len=256), dimension(iNUM_STATS) :: sFormattedText
+  character(len=256), dimension(size(rValue)) :: sFormattedText
   ![LOCALS]
   integer(kind=T_INT) :: i
   character(len=256) :: sBuf
@@ -132,7 +132,7 @@ subroutine stats_FormatTextString(sText,rValue,pConfig, &
     if(pConfig%lANSI_Colors) then
       if(rValue(i) > rNEAR_ZERO) then
         write(sBuf,'(A7,f14.3,$)') sGREEN,rValue(i)
-      else if(rValue(i) < -rZERO) then
+      else if(rValue(i) < -rNEAR_ZERO) then
         write(sBuf,'(A7,f14.3,$)') sRED,rValue(i)
       else
         write(sBuf,'(A7,f14.3,$)') sWHITE,rValue(i)
@@ -159,14 +159,14 @@ subroutine stats_FormatTextString(sText,rValue,pConfig, &
   else
     if(pConfig%lANSI_Colors) then
       if(rValue(i) > rNEAR_ZERO) then
-        write(sBuf,'(A7,F14.2,A7,$)') sGREEN,rValue(i),sMassBalanceOperator
-      else if(rValue(i) < -rZERO) then
-        write(sBuf,'(A7,F14.2,A7,$)') sRED,rValue(i),sMassBalanceOperator
+        write(sBuf,'(A7,F14.1,A7,$)') sGREEN,rValue(i),sMassBalanceOperator
+      else if(rValue(i) < -rNEAR_ZERO) then
+        write(sBuf,'(A7,F14.1,A7,$)') sRED,rValue(i),sMassBalanceOperator
       else
-        write(sBuf,'(A7,F14.2,A7,$)') sWHITE,rValue(i),sMassBalanceOperator
+        write(sBuf,'(A7,F14.1,A7,$)') sWHITE,rValue(i),sMassBalanceOperator
       end if
     else
-      write(sBuf,'(F14.2,A7,$)') rValue(i),sMassBalanceOperator
+      write(sBuf,'(F14.1,A7,$)') rValue(i),sMassBalanceOperator
     end if
   end if
 
@@ -234,8 +234,11 @@ subroutine stats_WriteAnnualAccumulatorValuesCSV(iLU,iYear)
 
    write(iLU,"(i4)", advance="no") iYear
    do i=1,iNUM_VARIABLES
-     if(STAT_INFO(i)%lActive) &
+     if(STAT_INFO(i)%lActive .and. STAT_INFO(i)%lShowSum) then
+       write(iLU,"(A, F12.3)" ,advance="no")  ",",rAnnual(iSUM,i)
+     elseif(STAT_INFO(i)%lActive .and. (.not. STAT_INFO(i)%lShowSum )) then
        write(iLU,"(A, F12.3)" ,advance="no")  ",",rAnnual(iMEAN,i)
+     endif
    enddo
 
    write(iLU,"(A)") ""
@@ -296,8 +299,11 @@ subroutine stats_WriteAnnualAccumulatorHeaderCSV(iLU)
 
    write(iLU,"(/,A)",advance="no") "Statistic"
    do i=1,iNUM_VARIABLES
-     if(STAT_INFO(i)%lActive) &
+     if(STAT_INFO(i)%lActive .and. STAT_INFO(i)%lShowSum) then
+       write(iLU,"(A)" ,advance="no")  ","//trim(STAT_NAMES(iSUM))
+     elseif(STAT_INFO(i)%lActive .and. (.not. STAT_INFO(i)%lShowSum )) then
        write(iLU,"(A)" ,advance="no")  ","//trim(STAT_NAMES(iMEAN))
+     endif
    enddo
 
    write(iLU,"(/,A)", advance="no") "Year"
@@ -331,9 +337,9 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
 
   rMassBalance = SUM(rTempArray(iSUM,:) &
                     * real(STAT_INFO(:)%iMassBalanceConst, kind=T_DBL) ) &
-                    * rVolConvert
+                    * dpVolConvert
 
-  rTempArray(iSUM,:) = rTempArray(iSUM,:) * rVolConvert
+  rTempArray(iSUM,:) = rTempArray(iSUM,:) * dpVolConvert
 
   if(pConfig%lANSI_Colors .and. iLU==LU_STD_OUT) write(iLU,FMT=*) sYELLOW
 
@@ -360,7 +366,7 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
   end do
 
   write(UNIT=iLU,FMT="(65x,a14)") REPEAT("-",14)
-  write(UNIT=iLU,FMT="(51x,a14,F14.2)") 'Mass Balance:', rMassBalance
+  write(UNIT=iLU,FMT="(49x,a14,F14.2)") 'Mass Balance:', rMassBalance
 
   return
 
@@ -386,12 +392,11 @@ subroutine stats_DumpMonthlyAccumulatorValues(iLU, iMonth, sMonthName, pConfig)
   rTempArray = rMonthly(iMonth,:,:)
 
   rMassBalance = SUM(rTempArray(iSUM,:)*STAT_INFO(:)%iMassBalanceConst) &
-                 * rVolConvert
+                 * dpVolConvert
 
-  rTempArray(iSUM,:) = rTempArray(iSUM,:) * rVolConvert
+  rTempArray = rMonthly(iMonth,:,:) * dpVolConvert
 
   if(pConfig%lANSI_Colors) write(iLU,FMT=*) sGREEN
-
 
   write(iLU,FMT=*)
   write(iLU,FMT=*) REPEAT('-',80)
@@ -420,7 +425,7 @@ subroutine stats_DumpMonthlyAccumulatorValues(iLU, iMonth, sMonthName, pConfig)
   if(pConfig%lANSI_Colors .and. iLU==LU_STD_OUT) write(iLU,FMT=*) sWHITE
 
   write(UNIT=iLU,FMT="(65x,a14)") REPEAT("-",14)
-  write(UNIT=iLU,FMT="(51x,a14,F14.3)") 'Mass Balance:', rMassBalance
+  write(UNIT=iLU,FMT="(51x,a14,F14.0)") 'Mass Balance:', rMassBalance
 
   return
 
@@ -441,9 +446,8 @@ subroutine stats_DumpAnnualAccumulatorValues(iLU, pConfig, iYear)
   real (kind=T_DBL),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
   real (kind=T_DBL) :: rMassBalance
 
-  rTempArray = rAnnual
-
-  rTempArray(iSUM,:) = rTempArray(iSUM,:) * rVolConvert
+  rTempArray(:,:) = rAnnual(:,:)
+  rTempArray(iSUM,:) = rAnnual(iSUM,:) * dpVolConvert
 
   write(iLU,FMT=*)
   write(iLU,FMT=*) REPEAT('*',80)
@@ -471,7 +475,7 @@ subroutine stats_DumpAnnualAccumulatorValues(iLU, pConfig, iYear)
 
   rMassBalance = SUM(rTempArray(iSUM,:)*STAT_INFO(:)%iMassBalanceConst)
   write(UNIT=iLU,FMT="(65x,a14)") REPEAT("-",14)
-  write(UNIT=iLU,FMT="(51x,a14,F14.3)") 'Mass Balance:', rMassBalance
+  write(UNIT=iLU,FMT="(51x,a14,F14.0)") 'Mass Balance:', rMassBalance
 
   return
 
@@ -632,6 +636,50 @@ end subroutine stats_WriteMinMeanMax
 
 !--------------------------------------------------------------------------
 
+subroutine stats_OpenMSBReport()
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iStat
+
+      open(LU_MSB_REPORT, file='SWB_daily_mass_balance_report.csv', &
+        iostat=iStat, status='REPLACE')
+      call Assert(iStat == 0, &
+         "Problem opening mass balance report file for output.", &
+         trim(__FILE__),__LINE__)
+
+      write(LU_MSB_REPORT,FMT="(300A)") 'Month,Day,Year,Date,Day of Year,' &
+      // 'Mean Avg Temp,' &
+      // 'Mean Min Temp,' &
+      // 'Mean Max Temp,' &
+      // 'CFGI,' &
+      // 'Min Adj CN,' &
+      // 'Mean Adj CN,' &
+      // 'Max Adj CN,' &
+      // 'Gross Precip,' &
+      // 'Interception,' &
+      // 'Net Rainfall,' &
+      // 'Snowfall,' &
+      // 'TOTAL Surface Storage (snow),' &
+      // 'Change in Surface Storage (snow),' &
+      // 'Snowmelt,' &
+#ifdef IRRIGATION_MODULE
+      // 'Irrigation,' &
+#endif
+      // 'TOTAL Soil Moisture Storage,' &
+      // 'Change in Soil Moisture Storage, Surface Flow Out of Grid,' &
+      // 'Rejected Recharge,' &
+      // 'Actual Evapotranspiration,' &
+      // 'Recharge,' &
+#ifdef STREAM_INTERACTIONS
+      // 'Stream Capture,' &
+#endif
+      // 'MASS BALANCE'
+
+end subroutine stats_OpenMSBReport
+
+!------------------------------------------------------------------------------
+
+
 subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
@@ -649,88 +697,53 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 !                   - rDaily(iSUM,iACT_ET) &
 !                   - rDaily(iSUM,iRECHARGE)
 
-#ifndef STREAM_INTERACTIONS
-       rDailyMSB =  rDaily(iSUM,iSNOWFALL_SWE) &
-                  - rDaily(iSUM,iCHG_IN_SNOW_COV) &
+       rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
-                  - rDaily(iSUM,iOUTFLOW) &
-                  - rDaily(iSUM,iRUNOFF_OUTSIDE) &
-                  - rDaily(iSUM,iREJECTED_RECHARGE) &
-                  - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
-                  - rDaily(iSUM,iACT_ET) &
-                  - rDaily(iSUM,iRECHARGE)
-      write( unit=LU_MSB_REPORT, &
-           fmt='(I2,",",I2,",",I4,",",I2,"/",I2,"/",I4,",",I3,",",21(F14.2,","),F14.2)' ) &
-                         iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
-                         SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
-                         SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
-                         SUM(pGrd%Cells(:,:)%rTMax)/SIZE(pGrd%Cells(:,:)%rTMax), &
-                         SUM(pGrd%Cells(:,:)%rCFGI)/SIZE(pGrd%Cells(:,:)%rCFGI), &
-						 MINVAL(pGrd%Cells(:,:)%rAdjCN), &
-						 SUM(pGrd%Cells(:,:)%rAdjCN) &
-						     / SIZE(pGrd%Cells(:,:)%rAdjCN), &
- 						 MAXVAL(pGrd%Cells(:,:)%rAdjCN), &
-                         rDaily(iSUM,iGROSS_PRECIP)*rVolConvert, &
-                         rDaily(iSUM,iINTERCEPTION)*rVolConvert, &
-                         (rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION)) &
-                                    *rVolConvert, &
-                         rDaily(iSUM,iSNOWFALL_SWE)*rVolConvert, &
-                         MAX((rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION) &
-                           - rDaily(iSUM,iSNOWFALL_SWE)),0.0D0)*rVolConvert, &
-                         rDaily(iSUM,iSNOWCOVER)*rVolConvert, &
-                         rDaily(iSUM,iCHG_IN_SNOW_COV)*rVolConvert, &
-                         rDaily(iSUM,iSNOWMELT)*rVolConvert, &
-                         rDaily(iSUM,iSOIL_MOISTURE)*rVolConvert, &
-                         rDaily(iSUM,iCHG_IN_SOIL_MOIST)*rVolConvert, &
-                         rDaily(iSUM,iRUNOFF_OUTSIDE)*rVolConvert, &
-                         rDaily(iSUM,iREJECTED_RECHARGE)*rVolConvert, &
-                         rDaily(iSUM,iACT_ET)*rVolConvert, &
-                         rDaily(iSUM,iRECHARGE)*rVolConvert, &
-                         rDailyMSB*rVolConvert
-#else
-       rDailyMSB =  rDaily(iSUM,iSNOWFALL_SWE) &
-                  - rDaily(iSUM,iCHG_IN_SNOW_COV) &
-                  + rDaily(iSUM,iNET_PRECIP) &
-                  + rDaily(iSUM,iINFLOW) &
-                  - rDaily(iSUM,iOUTFLOW) &
-                  - rDaily(iSUM,iRUNOFF_OUTSIDE) &
-                  - rDaily(iSUM,iREJECTED_RECHARGE) &
-                  - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
-                  - rDaily(iSUM,iACT_ET) &
-                  - rDaily(iSUM,iRECHARGE) &
-                  - rDaily(iSUM,iSTREAM_CAPTURE)
-      write( unit=LU_MSB_REPORT, &
-           fmt='(I2,",",I2,",",I4,",",I2,"/",I2,"/",I4,",",I3,",",22(F14.2,","),F14.2)' ) &
-                         iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
-                         SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
-                         SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
-                         SUM(pGrd%Cells(:,:)%rTMax)/SIZE(pGrd%Cells(:,:)%rTMax), &
-                         SUM(pGrd%Cells(:,:)%rCFGI)/SIZE(pGrd%Cells(:,:)%rCFGI), &
-						 MINVAL(pGrd%Cells(:,:)%rAdjCN), &
-						 SUM(pGrd%Cells(:,:)%rAdjCN) &
-						     / SIZE(pGrd%Cells(:,:)%rAdjCN), &
- 						 MAXVAL(pGrd%Cells(:,:)%rAdjCN), &
-                         rDaily(iSUM,iGROSS_PRECIP)*rVolConvert, &
-                         rDaily(iSUM,iINTERCEPTION)*rVolConvert, &
-                         (rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION)) &
-                                    *rVolConvert, &
-                         rDaily(iSUM,iSNOWFALL_SWE)*rVolConvert, &
-                         MAX((rDaily(iSUM,iGROSS_PRECIP) - rDaily(iSUM,iINTERCEPTION) &
-                           - rDaily(iSUM,iSNOWFALL_SWE)),0.0D0)*rVolConvert, &
-                         rDaily(iSUM,iSNOWCOVER)*rVolConvert, &
-                         rDaily(iSUM,iCHG_IN_SNOW_COV)*rVolConvert, &
-                         rDaily(iSUM,iSNOWMELT)*rVolConvert, &
-                         rDaily(iSUM,iSOIL_MOISTURE)*rVolConvert, &
-                         rDaily(iSUM,iCHG_IN_SOIL_MOIST)*rVolConvert, &
-                         rDaily(iSUM,iRUNOFF_OUTSIDE)*rVolConvert, &
-                         rDaily(iSUM,iREJECTED_RECHARGE)*rVolConvert, &
-                         rDaily(iSUM,iACT_ET)*rVolConvert, &
-                         rDaily(iSUM,iRECHARGE)*rVolConvert, &
-                         rDaily(iSUM,iSTREAM_CAPTURE)*rVolConvert, &
-                         rDailyMSB*rVolConvert
+#ifdef IRRIGATION_MODULE
+                  + rDaily(iSUM,iIRRIGATION) &
 #endif
+                  - rDaily(iSUM,iOUTFLOW) &
+                  - rDaily(iSUM,iRUNOFF_OUTSIDE) &
+                  - rDaily(iSUM,iREJECTED_RECHARGE) &
+                  - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
+                  - rDaily(iSUM,iACT_ET) &
+#ifdef STREAM_INTERACTIONS
+                  - rDaily(iSUM,iSTREAM_CAPTURE)
+#endif
+                  - rDaily(iSUM,iRECHARGE)
 
+      write( unit=LU_MSB_REPORT, &
+           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",22(F14.2,","),F14.2)' ) &
+                         iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
+                         SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
+                         SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
+                         SUM(pGrd%Cells(:,:)%rTMax)/SIZE(pGrd%Cells(:,:)%rTMax), &
+                         SUM(pGrd%Cells(:,:)%rCFGI)/SIZE(pGrd%Cells(:,:)%rCFGI), &
+						 MINVAL(pGrd%Cells(:,:)%rAdjCN), &
+						 SUM(pGrd%Cells(:,:)%rAdjCN) &
+						     / SIZE(pGrd%Cells(:,:)%rAdjCN), &
+ 						 MAXVAL(pGrd%Cells(:,:)%rAdjCN), &
+                         rDaily(iSUM,iGROSS_PRECIP)*dpVolConvert, &
+                         rDaily(iSUM,iINTERCEPTION)*dpVolConvert, &
+                         rDaily(iSUM,iNET_PRECIP) *dpVolConvert, &
+                         rDaily(iSUM,iSNOWFALL_SWE)*dpVolConvert, &
+                         rDaily(iSUM,iSNOWCOVER)*dpVolConvert, &
+                         rDaily(iSUM,iCHG_IN_SNOW_COV)*dpVolConvert, &
+                         rDaily(iSUM,iSNOWMELT)*dpVolConvert, &
+#ifdef IRRIGATION_MODULE
+                         rDaily(iSUM, iIRRIGATION)*dpVolConvert, &
+#endif
+                         rDaily(iSUM,iSOIL_MOISTURE)*dpVolConvert, &
+                         rDaily(iSUM,iCHG_IN_SOIL_MOIST)*dpVolConvert, &
+                         rDaily(iSUM,iRUNOFF_OUTSIDE)*dpVolConvert, &
+                         rDaily(iSUM,iREJECTED_RECHARGE)*dpVolConvert, &
+                         rDaily(iSUM,iACT_ET)*dpVolConvert, &
+                         rDaily(iSUM,iRECHARGE)*dpVolConvert, &
+#ifdef STREAM_INTERACTIONS
+                         rDaily(iSUM,iSTREAM_CAPTURE)*dpVolConvert, &
+#endif
+                         rDailyMSB*dpVolConvert
 
 
 	  flush(unit=LU_MSB_REPORT)
@@ -1182,19 +1195,19 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
       pGrd%rX1, pGrd%rY1, T_SGL_GRID)
 
-  open(newunit=LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
+  open(LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open basin mask statistics file")
 
-  open(newunit=LU_PEST_STATS,FILE="SWB_PEST_STATS.txt",iostat=iStat,STATUS='REPLACE')
+  open(LU_PEST_STATS,FILE="SWB_PEST_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST statistics file")
 
-  open(newunit=LU_PEST_OBS,FILE="SWB_PEST_OBSERVATIONS.txt",iostat=iStat,STATUS='REPLACE')
+  open(LU_PEST_OBS,FILE="SWB_PEST_OBSERVATIONS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST observations file")
 
-  open(newunit=LU_PEST_INS,FILE="SWB_PEST_INSTRUCTIONS.ins",iostat=iStat,STATUS='REPLACE')
+  open(LU_PEST_INS,FILE="SWB_PEST_INSTRUCTIONS.ins",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
     "Could not open PEST instructions file")
 
@@ -1556,7 +1569,7 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
 
     pSSF => pConfig%SSF_FILES(iSSFindex)
 
-    open(newunit=pSSF%iLU, file=TRIM(pSSF%sFileName),status='OLD', &
+    open(pSSF%iLU, file=TRIM(pSSF%sFileName),status='OLD', &
         access='APPEND', iostat=iStat)
 
     sBuf = TRIM(int2char(pSSF%iLU))//"; filename = "//TRIM(pSSF%sFileName)
@@ -1597,7 +1610,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(newunit=STAT_INFO(i)%iLU, FILE='output'//pConfig%sSlash// &
+      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
         TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')

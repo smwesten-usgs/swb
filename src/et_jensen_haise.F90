@@ -43,7 +43,7 @@ subroutine et_jh_configure( sRecord )
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rLatitude
   call Assert( iStat == 0, "Could not read the latitude" )
-  rLatitude = rTWOPI * rLatitude / 360.0_T_SGL
+  rLatitude = dpTWOPI * rLatitude / 360.0_T_SGL
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rAlbedo
@@ -92,21 +92,21 @@ subroutine et_jh_ComputeET( pGrd, iDayOfYear, rRH, &
   call Assert( LOGICAL(rSunPct>=rZERO, kind=T_LOGICAL),"Missing data for percent sunshine" )
   call Assert( LOGICAL(rRH>=rZERO, kind=T_LOGICAL),"Missing data for relative humidity" )
 
-  rD_r = rONE + 0.033_T_SGL * cos( rTWOPI * iDayOfYear / 365.0_T_SGL )
-  rDelta = 0.4093_T_SGL * sin( (rTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+  rD_r = rONE + 0.033_T_SGL * cos( dpTWOPI * iDayOfYear / 365.0_T_SGL )
+  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
   rOmega_s = acos( -tan(rLatitude) * tan(rDelta) )
   rSo = 2.44722_T_SGL * 15.392_T_SGL * rD_r * (     rOmega_s  * sin(rLatitude) * sin(rDelta) + &
                                                   sin(rOmega_s) * cos(rLatitude) * cos(rDelta) )
   rSn = rSo * ( rONE-rAlbedo ) * ( rAs + rBS * rSunPct / rHUNDRED )
 
-  do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
-    do iRow=1,pGrd%iNY
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
 
-      if ( pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(iRow,iCol)%rSM_PotentialET = rZERO
+      if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
+        pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
       else
-        rT = FtoC(pGrd%Cells(iRow,iCol)%rTAvg)
-        pGrd%Cells(iRow,iCol)%rSM_PotentialET = UNIT_CONV * ( 0.025_T_SGL * rT + 0.078_T_SGL ) * rSn
+        rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
+        pGrd%Cells(iCol,iRow)%rSM_PotentialET = UNIT_CONV * ( 0.025_T_SGL * rT + 0.078_T_SGL ) * rSn
       end if
 
     end do

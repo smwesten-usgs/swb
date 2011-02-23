@@ -17,6 +17,10 @@ set(PACKAGE_VERSION "1.0")
 
 cmake_minimum_required(VERSION 2.6)
 
+#
+option (MAKEFILE_VERBOSE
+      "Produce verbose makefiles?" OFF)
+
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
@@ -44,9 +48,6 @@ option (TARGET__SWBSTATS
 # Set PREPROCESSOR DEFINES for conditional compilation
 #------------------------------------------------------------------------
 
-set(STREAM_INTERACTIONS_VARS 0)
-set(IRRIGATION_MODULE_VARS 0)
-
 option (OPTION__GRAPHICS_SUPPORT
       "Compile the code with graphics (DISLIN) support?" ON)
 if(OPTION__GRAPHICS_SUPPORT)
@@ -64,6 +65,12 @@ option (OPTION__NETCDF_SUPPORT
       "Compile the code with NETCDF support?" ON)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
+endif()
+
+option (OPTION__THORNTHWAITE_MATHER_TABLES
+      "Use T-M tables (if not use T-M equations)?" ON)
+if(OPTION__THORNTHWAITE_MATHER_TABLES)
+  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "TM_TABLES")
 endif()
 
 option (OPTION__IRRIGATION_MODULE
@@ -97,8 +104,9 @@ if(CMAKE_HOST_WIN32)
      #------------------------------------------------------------------------
      # Set compilation and link preferences for GFORTRAN
      #------------------------------------------------------------------------
-     set (Fortran_FLAGS_RELEASE "-Ofast -ffree-form -ffree-line-length-none -cpp")
-     set (Fortran_FLAGS_DEBUG "-O0 -g -Wall -ffree-form -ffree-line-length-none -cpp")
+#     set (Fortran_FLAGS_RELEASE "-Ofast -ffree-form -ffree-line-length-none -cpp")
+     set (Fortran_FLAGS_RELEASE "-Ofast -ffpe-trap=invalid -ffree-line-length-none")
+     set (Fortran_FLAGS_DEBUG "-O0 -g -Wall -ffpe-trap=invalid,underflow,overflow,zero -ffree-form -ffree-line-length-none -cpp -fbacktrace")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
 
@@ -223,7 +231,7 @@ elseif(CMAKE_HOST_UNIX)
      # Set compilation and link preferences for Intel Fortran on Linux
      #------------------------------------------------------------------------
      set (Fortran_FLAGS_RELEASE "-fast -fPIC")
-     set (Fortran_FLAGS_DEBUG "-O0 ")
+     set (Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
 
@@ -263,7 +271,7 @@ elseif(CMAKE_HOST_UNIX)
 #       /usr/lib
 #       lib/ubuntu_x64/ifort)
 
-     set(OPEN_MOTIF_LIB "/usr/lib/libXm.so.3")
+#     set(OPEN_MOTIF_LIB "/usr/lib/libXm.so.3")
 
      # I have no idea why such effort was required to get DISLIN to link with SWB under Linux/ifort!
      set(X_LIB "/usr/lib/libXm.a;/usr/lib/libXt.a;/usr/lib/libX11.a;/usr/lib/libxcb.a")
@@ -288,7 +296,7 @@ elseif(CMAKE_HOST_UNIX)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
+#     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${X_LIB} )
 
      message("libs: " "${EXTRA_LIBS}")
@@ -312,28 +320,29 @@ else()
 #  add_definitions(${Fortran_FLAGS_RELEASE})
 endif()
 
-message("--------------------------------------------------------------------")
-message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-message ("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
-message ("Fortran compiler: " ${Fortran_COMPILER_NAME})
-message ("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
-message ("CMAKE_AR: " ${CMAKE_AR})
-message ("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
-message ("Fortran flags (Debug):      " ${Fortran_FLAGS_DEBUG})
-message ("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
-message ("Fortran flags (Release):    " ${Fortran_FLAGS_RELEASE})
-MESSAGE ("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
-message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
-message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
-message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
-message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
-message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
-message("--------------------------------------------------------------------")
-
 include_directories(${INCLUDE_DIR})
 set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
 link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+
+message("--------------------------------------------------------------------")
+message("   Summary of CMAKE environment variables")
+message("--------------------------------------------------------------------")
+message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
+message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
+message("Fortran compiler: " ${Fortran_COMPILER_NAME})
+message("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
+message("CMAKE_AR: " ${CMAKE_AR})
+message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
+message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
+MESSAGE("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
+message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
+message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
+message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
+message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
+message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
+message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
+message("--------------------------------------------------------------------")
 
 add_subdirectory(src)

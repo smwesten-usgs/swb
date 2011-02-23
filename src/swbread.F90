@@ -75,7 +75,7 @@ implicit none
   write(sBuf,FMT=*) "SWBREAD_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(newunit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
+  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
       status='REPLACE')
   call Assert( iStat == 0, "Problem opening log file file for output.")
 
@@ -120,8 +120,7 @@ implicit none
 
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
-
-  open(newunit=LU_SWBREAD, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
+  open(LU_SWBREAD, FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
        status='OLD',ACCESS='STREAM', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&

@@ -50,7 +50,7 @@ subroutine et_bc_configure( sRecord )
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rLatitude
   call Assert( LOGICAL(iStat==0,kind=T_LOGICAL), "Could not read the latitude" )
-  rLatitude = rTWOPI * rLatitude / 360.0_T_SGL
+  rLatitude = dpTWOPI * rLatitude / 360.0_T_SGL
 
   return
 end subroutine et_bc_configure
@@ -67,8 +67,8 @@ subroutine et_bc_initialize( grd, sFileName )
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Blaney-Criddle PET model"
   do iDay=1,365
-    rDelta = 0.4093_T_SGL * sin( (rTWOPI * iDay / 365.0_T_SGL) - 1.405_T_SGL )
-    rSunAnnual = rSunAnnual + 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / rPI
+    rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDay / 365.0_T_SGL) - 1.405_T_SGL )
+    rSunAnnual = rSunAnnual + 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI
   end do
 
   return
@@ -95,8 +95,8 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   call Assert( LOGICAL(rSunPct>=rZERO,kind=T_LOGICAL), "Missing data for percent sunshine" )
   call Assert( LOGICAL(rMinRH>=rZERO,kind=T_LOGICAL),"Missing data for relative humidity" )
 
-  rDelta = 0.4093_T_SGL * sin( (rTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
-  rPRatio = ( 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / rPI ) / rSunAnnual
+  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+  rPRatio = ( 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI ) / rSunAnnual
 
   rSunFrac = rSunPct / rHUNDRED
   rAbc = ( 0.0043_T_SGL * rMinRH) - rSunFrac - 1.41_T_SGL
@@ -119,18 +119,18 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
          - (0.00975*LOG(rWindSpd+1.)*(LOG(rMinRH+1.)**2)*LOG(rSunFrac+1.))
 
 
-  do iCol=1,pGrd%iNX
-    do iRow=1,pGrd%iNY
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
 
-      rT = FtoC(pGrd%Cells(iRow,iCol)%rTAvg)
+      rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
 
       rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)
 
-      if ( pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(iRow,iCol)%rSM_PotentialET = rZERO
+      if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
+        pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
       else
       !write(UNIT=LU_LOG,FMT=*)'TEST',iDayOfYear,rPratio,rAbc,rBbc
-        pGrd%Cells(iRow,iCol)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
+        pGrd%Cells(iCol,iRow)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
       end if
 
     end do

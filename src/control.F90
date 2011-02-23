@@ -74,7 +74,7 @@ subroutine control_setModelOptions(sControlFile)
   write(sBuf,FMT=*) "SWB_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(newunit=LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
+  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
       status='REPLACE')
   call Assert(iStat == 0, &
       "Problem opening log file file for output.")
@@ -135,7 +135,7 @@ subroutine control_setModelOptions(sControlFile)
   iVarNum = -99999
 
   ! Attempt to open CONTROL file
-  open ( newunit=LU_CONTROL, file=sControlFile, status="OLD", iostat=iStat )
+  open ( LU_CONTROL, file=sControlFile, status="OLD", iostat=iStat )
   call Assert( iStat == 0, "Cannot open control file " // sControlFile )
 
   ! Make sure the grids have not been initialized...
@@ -600,7 +600,7 @@ subroutine control_setModelOptions(sControlFile)
         //".ssf"
 
       ! opening and closing file to erase contents left over from previous runs
-      open(newunit=iLU_SSF, file=TRIM(sBuf),status='REPLACE', iostat=iStat)
+      open(iLU_SSF, file=TRIM(sBuf),status='REPLACE', iostat=iStat)
       call Assert(iStat==0,"Error opening file on unit " &
         //TRIM(int2char(iLU_SSF))//"; filename = "//TRIM(sBuf), &
         TRIM(__FILE__),__LINE__)
@@ -930,7 +930,7 @@ subroutine control_setModelOptions(sControlFile)
         pGrd%Cells%rSoilMoisturePct = input_grd%rData
         call grid_Destroy( input_grd )
       end if
-      write(UNIT=LU_LOG,FMT=*)  "Initial soil moisture grid MINUMUM VALUE:", &
+      write(UNIT=LU_LOG,FMT=*)  "Initial soil moisture grid MINIMUM VALUE:", &
          minval(pGrd%Cells%rSoilMoisturePct)
       write(UNIT=LU_LOG,FMT=*)  "Initial soil moisture grid MAXIMUM VALUE:", &
          maxval(pGrd%Cells%rSoilMoisturePct)
@@ -1380,7 +1380,7 @@ subroutine control_setModelOptions(sControlFile)
       ! if first time through, open file and grab the year so we know
       ! when the simulation starts
       if(pConfig%lFirstYearOfSimulation) then
-        open ( newunit=LU_TS, file=pConfig%sTimeSeriesFilename, status="OLD", iostat=iStat )
+        open ( LU_TS, file=pConfig%sTimeSeriesFilename, status="OLD", iostat=iStat )
         call Assert ( iStat == 0, &
          "Can't open time-series data file" )
         call model_ReadTimeSeriesFile(pTSt)

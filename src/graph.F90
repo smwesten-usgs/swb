@@ -75,14 +75,14 @@ module graph
       case(T_INT_GRID)
         do iCol=1,iX
           do iRow=1,iY
-            ZMAT(iCol,iRow) = REAL(pGrd%iData((iY-iRow+1),iCol))
+            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)))
           end do
         end do
 
       case(T_SGL_GRID)
         do iCol=1,iX
           do iRow=1,iY
-            ZMAT(iCol,iRow) = REAL(pGrd%rData((iY-iRow+1),iCol))
+            ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
           end do
         end do
 
@@ -249,7 +249,6 @@ module graph
     ! Set options specific to the desired output type
     ! ==> LEVEL 1 <==
     if(TRIM(pGraph(iVarNum)%cCDEV)=="PNG") then
-      CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
       if(len_trim(sDislin) > 0) then
         CALL BMPFNT(TRIM(pGraph(iVarNum)%cFONT_NAME))
       else
@@ -435,9 +434,9 @@ module graph
         ZOR = ZA
         ZSTEP = (ZE - ZA) / 10.
 
-        do iCol=1,iX
-          do iRow=1,iY
-            ZMAT(iCol,iRow) = REAL(pGrd%iData((iY-iRow+1),iCol),kind=T_SGL_DISLIN)
+        do iRow=1,iY
+          do iCol=1,iX
+            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),kind=T_SGL_DISLIN)
           end do
         end do
 
@@ -455,9 +454,9 @@ module graph
         ZSTEP = (ZE - ZA) / 10.
 
         ! flip array up-down
-        do iCol=1,iX
-          do iRow=1,iY
-            ZMAT(iCol,iRow) = pGrd%rData((iY-iRow+1),iCol)
+        do iRow=1,iY
+          do iCol=1,iX
+            ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
           end do
         end do
 

@@ -73,7 +73,7 @@ contains
   ! [ LOCALS ]
   real (kind=T_SGL) :: rN
 
-  rN = 24_T_SGL / rPI * rOmega_s
+  rN = 24_T_SGL / dpPI * rOmega_s
 
   return
 
@@ -129,7 +129,7 @@ function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(
   rPartB = cos(rLatitude) * cos(rDelta) * sin(rOmega_s)
 
 
-  rRa = 24_T_SGL * 60_T_SGL * rGsc * rDsubR * (rPartA + rPartB) / rPI
+  rRa = 24_T_SGL * 60_T_SGL * rGsc * rDsubR * (rPartA + rPartB) / dpPI
 
   return
 
@@ -159,7 +159,7 @@ function deg2rad(rDeg) result(rRad)
   ! [ LOCALS ]
   real (kind=T_SGL) :: rRad
 
-  rRad = rPI / 180_T_SGL * rDeg
+  rRad = dpPI / 180_T_SGL * rDeg
 
   return
 
@@ -510,7 +510,7 @@ function solar_declination(iDayOfYear, iNumDaysInYear) result(rDelta)
   real (kind=T_SGL) :: rDelta
 
   rDelta = 0.409_T_SGL &
-           * sin ( (2_T_SGL * rPI * iDayOfYear / iNumDaysInYear) &
+           * sin ( (2_T_SGL * dpPI * iDayOfYear / iNumDaysInYear) &
 		          - 1.39_T_SGL)
 
   return
@@ -554,7 +554,7 @@ function rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear) result(rDsubR)
   real (kind=T_SGL) :: rDsubR
 
   rDsubR = 1_T_SGL + 0.033_T_SGL &
-           * cos ( 2_T_SGL * rPI * iDayOfYear / iNumDaysInYear )
+           * cos ( 2_T_SGL * dpPI * iDayOfYear / iNumDaysInYear )
   return
 
 end function rel_Earth_Sun_dist

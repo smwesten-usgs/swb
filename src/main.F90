@@ -67,7 +67,7 @@ program main
 
   use types
   use control
-  use, intrinsic :: ISO_FORTRAN_ENV
+  use ISO_FORTRAN_ENV
 
   implicit none
 

@@ -42,7 +42,7 @@ subroutine et_turc_configure( sRecord )
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rLatitude
   call Assert( iStat == 0, "Could not read the latitude" )
-  rLatitude = rTWOPI * rLatitude / 360.0_T_SGL
+  rLatitude = dpTWOPI * rLatitude / 360.0_T_SGL
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rAlbedo
@@ -90,27 +90,27 @@ subroutine et_turc_ComputeET( pGrd, iDayOfYear, rRH, rSunPct )
   call Assert( LOGICAL(rSunPct>=rZERO,kind=T_LOGICAL), "Missing data for percent sunshine" )
   call Assert( LOGICAL(rRH>=rZERO,kind=T_LOGICAL), "Missing data for relative humidity" )
 
-  rD_r = rONE + 0.033_T_SGL * cos( rTWOPI * iDayOfYear / 365.0_T_SGL )
-  rDelta = 0.4093_T_SGL * sin( (rTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+  rD_r = rONE + 0.033_T_SGL * cos( dpTWOPI * iDayOfYear / 365.0_T_SGL )
+  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
   rOmega_s = acos( -tan(rLatitude) * tan(rDelta) )
   rSo = 2.44722_T_SGL * 15.392_T_SGL * rD_r * (     rOmega_s  * sin(rLatitude) * sin(rDelta) + &
                                                   sin(rOmega_s) * cos(rLatitude) * cos(rDelta) )
   rSn = rSo * ( rONE-rAlbedo ) * ( rAs + rBS * rSunPct / rHUNDRED )
 
-  do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
-    do iRow=1,pGrd%iNY
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
 
-      if ( pGrd%Cells(iRow,iCol)%rTAvg <= rFREEZING ) then
+      if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
         rPotET = rZERO
       else
-        rT = FtoC(pGrd%Cells(iRow,iCol)%rTAvg)
+        rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
         rPotET = UNIT_CONV * rT * ( rSn+2.1_T_SGL ) / ( rT + 15.0_T_SGL )
         if ( rRH < 50.0_T_SGL ) then
           rPotET = rPotET * ( rONE + (50.0_T_SGL - rRH) / 70.0_T_SGL )
         end if
       end if
 
-      pGrd%Cells(iRow,iCol)%rSM_PotentialET = rPotET
+      pGrd%Cells(iCol,iRow)%rSM_PotentialET = rPotET
 
     end do
 

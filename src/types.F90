@@ -26,30 +26,27 @@ module types
 
   !> @name Variables: Fortran logical unit numbers
   !> Global logical unit numbers for input and output
-  !> @note Original SWB has these hard-coded as parameters;
-  !> changed all file open statements to use "newunit" and
-  !> converted these to variables - Jan 2011
   !> @{
-  integer (kind=T_INT) :: LU_STD_OUT = 6
-  integer (kind=T_INT) :: LU_CONTROL
-  integer (kind=T_INT) :: LU_GRID
-  integer (kind=T_INT) :: LU_LOOKUP
-  integer (kind=T_INT) :: LU_TS
-  integer (kind=T_INT) :: LU_TEMP
-  integer (kind=T_INT) :: LU_MSB_REPORT
-  integer (kind=T_INT) :: LU_BIN_FILE
-  integer (kind=T_INT) :: LU_ROUTING
-  integer (kind=T_INT) :: LU_CSV_MIN
-  integer (kind=T_INT) :: LU_CSV_MEAN
-  integer (kind=T_INT) :: LU_CSV_MAX
-  integer (kind=T_INT) :: LU_CSV_ANNUAL
-  integer (kind=T_INT) :: LU_MASK
-  integer (kind=T_INT) :: LU_MASK_FILE
-  integer (kind=T_INT) :: LU_MASK_STATS_CSV
-  integer (kind=T_INT) :: LU_PEST_STATS
-  integer (kind=T_INT) :: LU_PEST_OBS
-  integer (kind=T_INT) :: LU_PEST_INS
-  integer (kind=T_INT) :: LU_LOG
+  integer (kind=T_INT), parameter :: LU_STD_OUT = 6
+  integer (kind=T_INT), parameter :: LU_CONTROL = 12
+  integer (kind=T_INT), parameter :: LU_GRID = 14
+  integer (kind=T_INT), parameter :: LU_LOOKUP = 16
+  integer (kind=T_INT), parameter :: LU_TS = 18
+  integer (kind=T_INT), parameter :: LU_TEMP = 20
+  integer (kind=T_INT), parameter :: LU_MSB_REPORT = 22
+  integer (kind=T_INT), parameter :: LU_BIN_FILE = 24
+  integer (kind=T_INT), parameter :: LU_ROUTING = 26
+  integer (kind=T_INT), parameter :: LU_CSV_MIN = 28
+  integer (kind=T_INT), parameter :: LU_CSV_MEAN = 30
+  integer (kind=T_INT), parameter :: LU_CSV_MAX = 32
+  integer (kind=T_INT), parameter :: LU_CSV_ANNUAL = 34
+  integer (kind=T_INT), parameter :: LU_MASK = 36
+  integer (kind=T_INT), parameter :: LU_MASK_FILE = 38
+  integer (kind=T_INT), parameter :: LU_MASK_STATS_CSV = 40
+  integer (kind=T_INT), parameter :: LU_PEST_STATS = 42
+  integer (kind=T_INT), parameter :: LU_PEST_OBS = 44
+  integer (kind=T_INT), parameter :: LU_PEST_INS = 46
+  integer (kind=T_INT), parameter :: LU_LOG = 48
   !> @}
 
   !> @name Constants: General conversion factors and flags
@@ -57,24 +54,24 @@ module types
   !> to ensure consistency throughout the code
   !> @{
   real (kind=T_SGL), parameter :: rZERO = 0.0_T_SGL
-  real (kind=T_DBL), parameter :: rD_ZERO = 0.0_T_DBL
+  real (kind=T_DBL), parameter :: dpZERO = 0.0_T_DBL
   real (kind=T_SGL), parameter :: rNEAR_ZERO = 1E-9_T_SGL
   real (kind=T_SGL), parameter :: rPOINT2 = 0.2_T_SGL
   real (kind=T_SGL), parameter :: rHALF = 0.5_T_SGL
   real (kind=T_SGL), parameter :: rPOINT8 = 0.8_T_SGL
   real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
-  real (kind=T_DBL), parameter :: rD_ONE = 1.0_T_DBL
+  real (kind=T_DBL), parameter :: dpONE = 1.0_T_DBL
   real (kind=T_SGL), parameter :: rFREEZING = 32.0_T_SGL
   real (kind=T_SGL), parameter :: rTEN = 10.0_T_SGL
   real (kind=T_SGL), parameter :: rHUNDRED = 100.0_T_SGL
   real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
-  real (kind=T_DBL), parameter :: rC_PER_F = 5.0_T_DBL / 9.0_T_DBL
-  real (kind=T_DBL), parameter :: rF_PER_C = 9.0_T_DBL / 5.0_T_DBL
+  real (kind=T_DBL), parameter :: dpC_PER_F = 5.0_T_DBL / 9.0_T_DBL
+  real (kind=T_DBL), parameter :: dpF_PER_C = 9.0_T_DBL / 5.0_T_DBL
   real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
   real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
-  real (kind=T_DBL), parameter :: rPI = 3.14159265_T_DBL
-  real (kind=T_DBL), parameter :: rTWOPI = 2.0_T_DBL * rPI
-  real (kind=T_DBL), parameter :: rSQM_to_SQFT = 10.76391_T_DBL
+  real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
+  real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
+  real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
   integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
   integer (kind=T_INT), parameter :: iROUTE_CELL_MARKED = -1
   integer (kind=T_INT), parameter :: iROUTE_DEPRESSION = -999
@@ -420,11 +417,11 @@ module types
   type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = [ &
 
     ! FIRST come the SOURCES (+) in the mass balance...
-    T_STATS ('GROSS_PRECIP',0,2,0,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('GROSS_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE, &
       'inches','gross precipitation', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
 
-    T_STATS ('SNOWMELT',0,2,0,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('SNOWMELT',0,0,1,lTRUE,lTRUE, lTRUE, &
        'inches','snowmelt', &
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
 
@@ -442,11 +439,11 @@ module types
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
-    T_STATS ('SNOWFALL',0,0,1,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('SNOWFALL',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','precipitation falling as snow (SWE)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
 
-    T_STATS ('INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('INTERCEPTION',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','interception', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
 
@@ -505,11 +502,11 @@ module types
       'degrees F','mean daily air temperature', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
-    T_STATS ('CHG_IN_SNOW_COV',0,0,-1,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('CHG_IN_SNOW_COV',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','snowfall minus snowmelt', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
-    T_STATS ('NET_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('NET_PRECIP',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','gross precipitation minus interception', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
@@ -529,11 +526,11 @@ module types
       'inches','net inflow minus potential et', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
-    T_STATS ('SM_DEFICIT',0,2,0,lTRUE,lFALSE, lTRUE, &
+    T_STATS ('SM_DEFICIT',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','daily soil moisture deficit', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
-    T_STATS ('SM_SURPLUS',0,2,0,lTRUE,lFALSE, lTRUE, &
+    T_STATS ('SM_SURPLUS',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','daily soil moisture surplus', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
 
@@ -990,6 +987,29 @@ module types
   end interface
 
 contains
+
+function nextunit(iLU)  result(iUnit)
+
+  integer (kind=T_INT), intent(out), optional :: iLU
+  integer (kind=T_INT) :: iUnit
+
+  ! [ LOCALS ]
+  logical (kind=T_LOGICAL) :: lOpened
+  integer (kind=T_INT) :: iStartLU = 100
+  integer (kind=T_INT) :: iStopLU = 10000
+
+  do iUnit=iStartLU, iStopLU
+    inquire(unit = iUnit, opened = lOpened )
+    if(.not. lOpened) exit
+
+  enddo
+
+  call assert(iUnit < iStopLU, "No available logical unit number could " &
+    //"be found.",trim(__FILE__),__LINE__)
+
+  if(present(iLU) ) iLU = iUnit
+
+end function nextunit
 
 !   !> @brief General-purpose error-checking routine.
 !   !>
@@ -1817,7 +1837,7 @@ end function lf_model_GrowingSeason
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rC
 
-  rC = (rF - rFREEZING) * rC_PER_F
+  rC = (rF - rFREEZING) * dpC_PER_F
 
   return
 end function FtoC
@@ -1845,7 +1865,7 @@ end function FtoC
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rF
 
-  rF = rC * rF_PER_C + rFREEZING
+  rF = rC * dpF_PER_C + rFREEZING
 
   return
 end function CtoF
@@ -1873,7 +1893,7 @@ end function CtoF
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rK
 
-  rK = (rF - rFREEZING) * rC_PER_F + 273.15_T_SGL
+  rK = (rF - rFREEZING) * dpC_PER_F + 273.15_T_SGL
 
   return
 end function FtoK
