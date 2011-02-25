@@ -48,7 +48,9 @@ if(TARGET__SWB_LIBRARY)
             sm_thornthwaite_mather.F90
             snow.F90
             stats.F90
-            types.F90)
+            types.F90
+            control.F90
+            swb_python_interface.F90)
 
   set_target_properties(swblib
             PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}")

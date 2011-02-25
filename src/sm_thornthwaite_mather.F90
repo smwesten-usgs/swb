@@ -1092,9 +1092,13 @@ function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(rValue)
   ! sm.df$x = APWL
   ! 10^(log10(sm.df$y) - (s.opt[[1]]*sm.df$y^e.opt[[1]]) * sm.df$x)
 
-  rValue = 10** ( log10(REAL(rSWC,kind=T_DBL)) - &
-            ( ABS(REAL(rAPWL,kind=T_DBL)) * rTM_slope_term * rSWC ** rTM_exp_term ) )
-  return
+  rValue = rZERO
+
+  if(rSWC > rZERO ) &
+
+    rValue = 10** ( log10(REAL(rSWC,kind=T_DBL)) - &
+              ( ABS(REAL(rAPWL,kind=T_DBL)) * rTM_slope_term * rSWC ** rTM_exp_term ) )
+
 
 end function sm_thornthwaite_mather_soil_storage
 
@@ -1110,10 +1114,12 @@ function sm_thornthwaite_mather_APWL(rSWC, rSoilStorage)  result(rValue)
   ! sm.df$x = APWL
   ! (log10(sm.df$y) - log10(sm.df$pred)) / (s.opt[[1]] * sm.df$y^e.opt[[1]])
 
-  rValue = -( log10(REAL(rSWC,kind=T_DBL)) - log10(REAL(rSoilStorage,kind=T_DBL))) / &
-        ( rTM_slope_term * REAL(rSWC,kind=T_DBL)**rTM_exp_term )
+rValue = rZERO
 
-  return
+  if(rSWC > rZERO .and. rSoilStorage > rZERO) &
+
+    rValue = -( log10(REAL(rSWC,kind=T_DBL)) - log10(REAL(rSoilStorage,kind=T_DBL))) / &
+          ( rTM_slope_term * REAL(rSWC,kind=T_DBL)**rTM_exp_term )
 
 end function sm_thornthwaite_mather_APWL
 
