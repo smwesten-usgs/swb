@@ -3,9 +3,9 @@
 !/**                                                            **/
 !/** Module file for DISLIN Fortran 90.                         **/
 !/**                                                            **/
-!/** Date     :  09.08.2010                                     **/
-!/** Routines :  727                                            **/
-!/** Version  :  10.0 / explicit-shape                          **/
+!/** Date     :  15.02.2011                                     **/
+!/** Routines :  728                                            **/
+!/** Version  :  10.1 / explicit-shape                          **/
 !/****************************************************************/
 
 module dislin
@@ -1043,7 +1043,7 @@ module dislin
       implicit none
       integer, intent (out) :: ix,iy,nw,nh
     end subroutine getwin
- 
+
     subroutine getxid (ival, copt)
       implicit none
       integer, intent (out) :: ival
@@ -3758,6 +3758,18 @@ module dislin
       implicit none
       character (len = *), intent (in) :: copt
     end subroutine winapp
+
+    subroutine wincbk (callbk,copt)
+      implicit none
+      character (len = *), intent (in) :: copt
+ 
+      interface
+         subroutine callbk(id,nx,ny,nw,nh)
+           implicit none
+           integer, intent (in) :: id,nx,ny,nw,nh
+         end subroutine callbk
+      end interface
+    end subroutine wincbk
 
     subroutine windbr(xk,nx,ny,nw,a)
       implicit none

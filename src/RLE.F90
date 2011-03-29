@@ -50,7 +50,6 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
   integer(kind=T_INT),dimension(1:iNUM_VARIABLES), save :: iPrevious, iCurr
   logical(kind=T_INT),dimension(1:iNUM_VARIABLES),save :: lRun
 
-
   ! iByteCount is incremented *EVERY* time this subroutine is called.
   ! This subroutine should be called a number of times that EXACTLY
   ! matches the number of items in the array to be compressed
@@ -96,23 +95,25 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
 
   endif
 
-!  if(iLU==201) then
-!
+
+!#ifdef DEBUG_PRINT
 !    write(UNIT=LU_LOG,FMT=*) iByteCount(iVarNum),"  rValue: ",real2char(rValue), &
 !      ":  iPrev: ",iPrevious(iVarNum),"  iCurr: ", iCurr(iVarNum), "  lRun: ", &
 !      lRun(iVarNum), "  iRunCount: ", iRunCount(iVarNum)
-!
-!  end if
-
+!#endif
 
   if(iByteCount(iVarNum) == iByteTotal) then  ! last byte of information... clean up and exit
 
       if(lRun(iVarNum)) then  ! EOF in middle of EXISTING RUN
       write(iLU) iRunCount(iVarNum)    ! - 1
-!	  write(UNIT=LU_LOG,FMT=*) "iByteCount == iByteTotal: EOF in EXISTING RUN"
+#ifdef DEBUG_PRINT
+	  write(UNIT=LU_LOG,FMT=*) "iByteCount == iByteTotal: EOF in EXISTING RUN"
+#endif
 	else
       write(iLU) iCurr(iVarNum)
-!  	  write(UNIT=LU_LOG,FMT=*) "iByteCount == iByteTotal: EOF: no existing run"
+#ifdef DEBUG_PRINT
+  	  write(UNIT=LU_LOG,FMT=*) "iByteCount == iByteTotal: EOF: no existing run"
+#endif
     end if
 
 	! write EOF flag to binary file
@@ -124,8 +125,10 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
 
   endif
 
+!#ifdef DEBUG_PRINT
 !  write(UNIT=LU_LOG,FMT=*) iByteCount,":  iPrev: ",iPrevious,"  iCurr: ", iCurr, "  lRun: ", &
 !     lRun, "  iRunCount: ", iRunCount
+!#endif
 
   return
 

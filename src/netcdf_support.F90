@@ -106,6 +106,7 @@ end function netcdf_open
   integer(kind=T_INT) :: iStat, iMonth, iDay, iYear
   real(kind=EightByteReal) :: rStartDay, rEndDay
 
+  iXDim = -999; iYDim = -999; iTDim = -999;iZVar = -999;iTVar = -999
 
   pNC => pConfig%NETCDF_FILE(iVarNum,iMode)
 
@@ -122,16 +123,17 @@ end function netcdf_open
   write(unit=LU_LOG,FMT="(/,a,/,t5,a,t34,a)") &
     "Summary of NetCDF dimensions: ","NAME","LENGTH"
   write(unit=LU_LOG,FMT=*) repeat("-",50)
+  flush(unit=LU_LOG)
 
   do i=1,nDimensions
 
     call netcdf_check(nf90_inquire_dimension(pNC%iNCID, i, sDimName(i), &
       iDimLen(i)),__FILE__,__LINE__)
     write(unit=LU_LOG,FMT="(i3,') ',a25,i8)") i, sDimName(i), iDimLen(i)
-    if(TRIM(sDimName(i)) == "x") then
+    if(TRIM(sDimName(i)) == "x" .or. TRIM(sDimName(i)) == "easting") then
       iXDim = i
       pNC%iX_NumGridCells = iDimLen(i)
-    elseif (TRIM(sDimName(i)) == "y") then
+    elseif (TRIM(sDimName(i)) == "y" .or. TRIM(sDimName(i)) == "northing") then
       iYDim = i
       pNC%iY_NumGridCells = iDimLen(i)
     elseif(TRIM(sDimName(i)) == "time") then
@@ -582,12 +584,12 @@ end subroutine netcdf_chk_extent
 
 !----------------------------------------------------------------------
 
-  subroutine netcdf_read(iVarNum, iMode, pConfig, pGrd, pOutGrd, iJulianDay)
+  subroutine netcdf_read(iVarNum, iMode, pConfig, pGrd, pDataGrd, iJulianDay)
 
     integer(kind=T_INT) :: iVarNum             ! Variable number in internal data struct
     integer (kind=T_INT) :: iMode              ! iINPUT, iOUTPUT, or iOBSERVED
     type ( T_GENERAL_GRID ),pointer :: pGrd    ! pointer to model grid
-    type ( T_GENERAL_GRID ),pointer :: pOutGrd ! pointer to OUTPUT grid
+    type ( T_GENERAL_GRID ),pointer :: pDataGrd ! pointer to OUTPUT grid (MUST ALREADY EXIST!!)
     type (T_MODEL_CONFIGURATION), pointer :: pConfig  ! pointer to data structure that contains
                                                       ! model options, flags, and other settings
     integer(kind=T_INT) :: iJulianDay
@@ -662,28 +664,32 @@ end subroutine netcdf_chk_extent
       pNC%iY_NumGridCells, MINVAL(rValues),MAXVAL(rValues)
 #endif
 
-    pOutGrd => grid_Create ( pGrd%iNX,  pGrd%iNY, &
-          pGrd%rX0, pGrd%rY0, pGrd%rX1,pGrd%rY1,T_SGL_GRID )
+!    pOutGrd => grid_Create ( pGrd%iNX,  pGrd%iNY, &
+!          pGrd%rX0, pGrd%rY0, pGrd%rX1,pGrd%rY1,T_SGL_GRID )
+
+    call assert(grid_conform(pGrd, pDataGrd), &
+      "Internal error - data grid does not conform to project grid", &
+      trim(__FILE__), __LINE__)
 
     if(pNC%lInterpolate) then
 
       if(iScaleFactor==2) then
         do iRow=1,pNC%iY_NumGridCells
           do iCol=1,pNC%iX_NumGridCells
-            j0 = pOutGrd%iNY - (iRow-1)*2
+            j0 = pDataGrd%iNY - (iRow-1)*2
             i0 = 1 + (iCol-1)*2
             j1 = j0 - 1
             i1 = i0 + 1
-            pOutGrd%rData(j0,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j0,i1) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i1) = rValues(iCol,iRow)
           end do
         end do
       else if(iScaleFactor==4) then
         do iRow=1,pNC%iY_NumGridCells
           do iCol=1,pNC%iX_NumGridCells
-            j0 = pOutGrd%iNY - (iRow-1)*4
+            j0 = pDataGrd%iNY - (iRow-1)*4
             i0 = 1 + (iCol-1)*4
             j1 = j0 - 1
             i1 = i0 + 1
@@ -691,22 +697,22 @@ end subroutine netcdf_chk_extent
             i2 = i1 + 1
             j3 = j2 - 1
             i3 = i2 + 1
-            pOutGrd%rData(j0,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j0,i1) = rValues(iCol,iRow)
-            pOutGrd%rData(j0,i2) = rValues(iCol,iRow)
-            pOutGrd%rData(j0,i3) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i1) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i2) = rValues(iCol,iRow)
-            pOutGrd%rData(j1,i3) = rValues(iCol,iRow)
-            pOutGrd%rData(j2,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j2,i1) = rValues(iCol,iRow)
-            pOutGrd%rData(j2,i2) = rValues(iCol,iRow)
-            pOutGrd%rData(j2,i3) = rValues(iCol,iRow)
-            pOutGrd%rData(j3,i0) = rValues(iCol,iRow)
-            pOutGrd%rData(j3,i1) = rValues(iCol,iRow)
-            pOutGrd%rData(j3,i2) = rValues(iCol,iRow)
-            pOutGrd%rData(j3,i3) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i2) = rValues(iCol,iRow)
+            pDataGrd%rData(j0,i3) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i2) = rValues(iCol,iRow)
+            pDataGrd%rData(j1,i3) = rValues(iCol,iRow)
+            pDataGrd%rData(j2,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j2,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j2,i2) = rValues(iCol,iRow)
+            pDataGrd%rData(j2,i3) = rValues(iCol,iRow)
+            pDataGrd%rData(j3,i0) = rValues(iCol,iRow)
+            pDataGrd%rData(j3,i1) = rValues(iCol,iRow)
+            pDataGrd%rData(j3,i2) = rValues(iCol,iRow)
+            pDataGrd%rData(j3,i3) = rValues(iCol,iRow)
           end do
         end do
       else
@@ -717,19 +723,19 @@ end subroutine netcdf_chk_extent
           //" the model domain grid cell size",TRIM(__FILE__),__LINE__)
       end if
 
-!      do iCol=1,pOutGrd%iNX
+!      do iCol=1,pDataGrd%iNX
 !        rXval = grid_GetGridX(pGrd,iCol)
-!        do iRow=1,pOutGrd%iNY
+!        do iRow=1,pDataGrd%iNY
 !          rYval = grid_GetGridY(pGrd,iRow)
-!          pOutGrd%rData(iRow,iCol) = grid_Interpolate(pGrd_nc,rXval,rYval)
+!          pDataGrd%rData(iRow,iCol) = grid_Interpolate(pGrd_nc,rXval,rYval)
 !        end do
 !      end do
 
 
     else  ! no interpolation needed
-      do iRow=1,pOutGrd%iNY
-        do iCol=1,pOutGrd%iNX
-          pOutGrd%rData(iCol, (pOutGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
         end do
       end do
     end if
@@ -1023,7 +1029,7 @@ end subroutine netcdf_chk_extent
 !----------------------------------------------------------------------
 
   subroutine netcdf_write_variable_byte(iVarNum, iMode, pConfig, &
-   rValue, pGrd, i, j, iTime)
+   rValue, pGrd, iRow, iCol, iTime)
 
     integer(kind=T_INT) :: iVarNum             ! Variable number in internal data struct
     integer (kind=T_INT) :: iMode              ! iINPUT, iOUTPUT, or iOBSERVED
@@ -1031,27 +1037,27 @@ end subroutine netcdf_chk_extent
     type (T_MODEL_CONFIGURATION), pointer :: pConfig  ! pointer to data structure that contains
                                                       ! model options, flags, and other settings
     type (T_GENERAL_GRID), pointer :: pGrd
-    integer(kind=T_INT) :: i,j
+    integer(kind=T_INT) :: iRow,iCol
     integer (kind=T_INT) :: iTime              ! current timestep value
 
     ! [LOCAL VARIABLES ]
     type (T_NETCDF_FILE), pointer :: pNC
     real (kind=T_DBL) :: rX, rY
-    integer (kind=T_INT) :: k
+    integer (kind=T_INT) :: iRowInverted
 !    integer (kind=T_INT) :: iValue
 
 
     pNC => pConfig%NETCDF_FILE(iVarNum, iMode)
 
-    k =  pGrd%iNY - j + 1
+    iRowInverted =  pGrd%iNY - iRow + 1
 
 !    iValue = INT(rValue / pNC%rScaleFactor - pNC%rAddOffset,kind=T_INT)
 
     call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iVarID   , &
-       values = rValue, start = (/i,j, iTime + 1 /)), &
+       values = rValue, start = (/iCol, iRowInverted, iTime + 1 /)), &
                 TRIM(__FILE__),__LINE__, pNC, iTime, rValue)
 
-    if(i==1 .and. j==1) then     ! only write out time once
+    if(iRow==1 .and. iCol==1) then     ! only write out time once
       ! must also write the current value for the time variable
 
       call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iTimeVarID   , &

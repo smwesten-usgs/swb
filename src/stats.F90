@@ -783,6 +783,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
   iNumGridCells = iNY * iNX
   rPad = -9999_T_SGL
 
+#ifdef DEBUG_PRINT
+  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
+#endif
+
   if(len_trim(pConfig%sOutputFilePrefix)==0) then
 
     sDelimiter = ""
@@ -797,6 +801,13 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
   ! we need a grid data structure in order that we might call
   ! the grid-writing subroutines elsewhere in code
   pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+
+#ifdef DEBUG_PRINT
+  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
+#endif
+
+
+  call stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
   do k=1,iNUM_VARIABLES
 
@@ -819,8 +830,16 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
     if(STAT_INFO(k)%iDailyOutput>iNONE) then
 
-      rewind(STAT_INFO(k)%iLU)
-      write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS)
+      rewind(STAT_INFO(k)%iLU,iostat=iStat)
+      call assert(iStat == 0, "Could not rewind binary file containing " &
+        //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+        trim(__FILE__), __LINE__)
+      write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
+      call assert(iStat == 0, &
+        "Could not advance to first data value in binary file containing " &
+        //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+        trim(__FILE__), __LINE__)
+
 
       write(LU_LOG, &
          fmt='("CALCULATING DAILY STATS for ",A)') &
@@ -834,8 +853,11 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       do
         read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
         if(iStat /= 0) then
-!        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
-!        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
+
+#ifdef DEBUG_PRINT
+        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
+        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
+#endif
           exit
         end if
 
@@ -851,6 +873,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
                        sMonthName,lMonthEnd)
 
         pGrd%rData(:,:)= rZERO
+
+#ifdef DEBUG_PRINT
+  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
+#endif
 
        ! name "RLE_readByte" is misleading, since the return value (rVal)
        ! is actually a vector of all daily values with dimension (iNY*iNX)
@@ -931,8 +957,15 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   if(STAT_INFO(k)%iMonthlyOutput>iNONE) then
 
-    rewind(STAT_INFO(k)%iLU)
-    write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS)
+    rewind(STAT_INFO(k)%iLU,iostat=iStat)
+    call assert(iStat == 0, "Could not rewind binary file containing " &
+      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+      trim(__FILE__), __LINE__)
+    write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
+    call assert(iStat == 0, &
+      "Could not advance to first data value in binary file containing " &
+      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+      trim(__FILE__), __LINE__)
 
     write(LU_LOG, &
        fmt="('CALCULATING MONTHLY SUMS for: ',A)") &
@@ -973,7 +1006,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           ": ",sMonthName,' ',iYear
 #endif
 
-       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNY,iNX/),PAD=rPad)
+       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNX,iNY/),PAD=rPad)
 
 #ifdef DEBUG_PRINT
        call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -1048,8 +1081,15 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   if(STAT_INFO(k)%iAnnualOutput>iNONE) then
 
-    rewind(STAT_INFO(k)%iLU)
-    write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS)
+    rewind(STAT_INFO(k)%iLU,iostat=iStat)
+    call assert(iStat == 0, "Could not rewind binary file containing " &
+      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+      trim(__FILE__), __LINE__)
+    write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
+    call assert(iStat == 0, &
+      "Could not advance to first data value in binary file containing " &
+      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
+      trim(__FILE__), __LINE__)
 
     rValSum(:) = rZERO
 
@@ -1090,7 +1130,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
      if(lMonthEnd .and. iMonth == 12) then
 
-       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNY,iNX/),PAD=rPad)
+       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNX,iNY/),PAD=rPad)
 
        call stats_WriteMinMeanMax(LU_LOG, STAT_INFO(k)%sVARIABLE_NAME, &
           pGrd%rData(:,:))
@@ -1639,12 +1679,89 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(int2char(iSTARTDATE_POS))
       write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(int2char(iENDDATE_POS))
+      write(unit=LU_LOG,fmt=*) "end-of-header offset: "//TRIM(int2char(iENDHEADER_POS))
+
+      write(UNIT=LU_LOG,fmt="('NX:',i5)") pGrd%iNX             ! Number of cells in the x-direction
+      write(UNIT=LU_LOG,fmt="('NY:',i5)") pGrd%iNY             ! Number of cells in the y-direction
+      write(UNIT=LU_LOG,fmt="('data type:',i5)") pGrd%iDataType       ! Type of the grid
+      write(UNIT=LU_LOG,fmt="('cell size:',f12.3)") pGrd%rGridCellSize   ! size of one side of a grid cell
+      write(UNIT=LU_LOG,fmt="('length units:',i5)") pGrd%iLengthUnits    ! length units code
+      write(UNIT=LU_LOG,fmt="('SI var:',i5)") i                    ! STAT_INFO variable number
+      write(UNIT=LU_LOG,fmt="('RLE_MULT:',i5)") pConfig%iRLE_MULT    ! RLE Multiplier
+      write(UNIT=LU_LOG,fmt="('RL__OFFSET:',f12.3)") pConfig%rRLE_OFFSET  ! RLE Offset
+      write(UNIT=LU_LOG,fmt="('X0, X1:',f12.3,3x,f12.3)") pGrd%rX0, pGrd%rX1   ! World-coordinate range in X
+      write(UNIT=LU_LOG,fmt="('Y0, Y1:',f12.3,3x,f12.3)") pGrd%rY0, pGrd%rY1   ! World-coordinate range in Y
 
 	end if
 
   end do
 
 end subroutine stats_OpenBinaryFiles
+
+!------------------------------------------------------------------------------
+
+subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
+
+  ![ARGUMENTS]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+  type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
+
+  ! [ LOCALS ]
+  integer(kind=T_INT) :: i
+
+  ! variables that are read in from the binary file header
+  integer (kind=T_INT) :: iNX
+  integer (kind=T_INT) :: iNY
+  integer (kind=T_INT) :: iDataType
+  real (kind=T_SGL)    :: rGridCellSize
+  integer (kind=T_INT) :: iLengthUnits
+  integer (kind=T_INT) :: iVariableNumber
+  integer (kind=T_INT) :: iRLE_MULT
+  real (kind=T_SGL)    :: rRLE_OFFSET
+  real (kind=T_DBL)    :: rX0, rX1
+  real (kind=T_DBL)    :: rY0, rY1
+  integer (kind=T_INT) :: iStartMM, iStartDD, iStartYYYY
+  integer (kind=T_INT) :: iEndMM, iEndDD, iEndYYYY
+
+  do i=1,iNUM_VARIABLES
+
+    if(STAT_INFO(i)%iDailyOutput > iNONE &
+        .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
+
+      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
+        TRIM(pConfig%sOutputFilePrefix) //"_" &
+        //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
+        status='OLD',ACCESS='STREAM', ACTION='READWRITE')
+
+      write(unit=LU_LOG,fmt=*) "Opened binary file for " &
+        //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
+        //TRIM(int2char(STAT_INFO(i)%iLU))
+
+      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(int2char(iSTARTDATE_POS))
+      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(int2char(iENDDATE_POS))
+
+      read(UNIT=STAT_INFO(i)%iLU) iNX             ! Number of cells in the x-direction
+      read(UNIT=STAT_INFO(i)%iLU) iNY             ! Number of cells in the y-direction
+      read(UNIT=STAT_INFO(i)%iLU) iDataType       ! Type of the grid
+      read(UNIT=STAT_INFO(i)%iLU) rGridCellSize   ! size of one side of a grid cell
+      read(UNIT=STAT_INFO(i)%iLU) iLengthUnits    ! length units code
+      read(UNIT=STAT_INFO(i)%iLU) iVariableNumber ! STAT_INFO variable number
+      read(UNIT=STAT_INFO(i)%iLU) iRLE_MULT       ! RLE Multiplier
+      read(UNIT=STAT_INFO(i)%iLU) rRLE_OFFSET     ! RLE Offset
+      read(UNIT=STAT_INFO(i)%iLU) rX0, rX1        ! World-coordinate range in X
+      read(UNIT=STAT_INFO(i)%iLU) rY0, rY1        ! World-coordinate range in Y
+      read(UNIT=STAT_INFO(i)%iLU) iStartMM, iStartDD, iStartYYYY
+      read(UNIT=STAT_INFO(i)%iLU) iEndMM, iEndDD, iEndYYYY
+      inquire(UNIT=STAT_INFO(i)%iLU,POS=iENDHEADER_POS)  ! establish location to return to
+
+      ! at this point, the file is ready for reading of Day 1 values
+
+	end if
+
+  end do
+
+end subroutine stats_OpenBinaryFilesReadOnly
 
 !--------------------------------------------------------------------------
 

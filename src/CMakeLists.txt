@@ -31,7 +31,7 @@ endif()
 
 if(TARGET__SWB_LIBRARY)
 
-  add_library(swblib
+  add_library(swblib STATIC
             et_blaney_criddle.F90
             et_hargreaves.F90
             et_jensen_haise.F90

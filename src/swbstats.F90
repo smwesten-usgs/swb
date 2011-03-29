@@ -123,7 +123,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   use swb_grid
   implicit none
 
-  !! reads the basin cacthment data file for subsequent processing
+  !! reads the basin catchment data file for subsequent processing
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
@@ -418,7 +418,7 @@ implicit none
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
   open(nextunit(LU_SWBSTATS), FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
-       status='OLD',ACCESS='STREAM', IOSTAT=iStat )
+       status='OLD',ACCESS='STREAM', ACTION='READ', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&
     TRIM(sBinFile),TRIM(__FILE__),__LINE__)
@@ -644,9 +644,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   allocate(rValSum(iNX*iNY))
   allocate(rPad(iNX*iNY))
 
-!  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-!  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-!  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
 
   rPad = -9999_T_SGL
 
@@ -702,7 +702,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     iYearCount = iYearCount + 1
 
-    pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad)
+    pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
     if(STAT_INFO(iVariableNumber)%iMonthlyOutput /= iNONE) then
         pMonthGrd%rData = pMonthGrd%rData + pGrd%rData

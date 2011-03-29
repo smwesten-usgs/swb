@@ -995,7 +995,7 @@ function nextunit(iLU)  result(iUnit)
 
   ! [ LOCALS ]
   logical (kind=T_LOGICAL) :: lOpened
-  integer (kind=T_INT) :: iStartLU = 100
+  integer (kind=T_INT) :: iStartLU = 201
   integer (kind=T_INT) :: iStopLU = 10000
 
   do iUnit=iStartLU, iStopLU

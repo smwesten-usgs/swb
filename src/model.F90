@@ -215,11 +215,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
 
     endif
 
-    if( pConfig%lGriddedData ) &
-       ! create the single, temporary grid to use for temperature and precip
-       ! data input
-       pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, T_SGL_GRID )
+    ! create the single, temporary grid to use for temperature and precip
+    ! data input
+    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+        pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   end if FIRST_YEAR
 
@@ -631,14 +630,14 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
     close ( unit=LU_CSV_ANNUAL )
   end if
 
+  ! close any binary output files
+  call stats_CloseBinaryFiles()
+
   ! trigger the call to reconstitute the output grids and plots from the
   ! compressed binary files, if desired
   if(.not. pConfig%lUseSWBRead) &
     call stats_RewriteGrids(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, pGrd%rX1, &
         pGrd%rY1, pConfig, pGraph)
-
-  ! close any binary output files
-  call stats_CloseBinaryFiles()
 
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)
@@ -654,8 +653,7 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   return
 end subroutine model_EndOfRun
 
-!!***
-
+!------------------------------------------------------------------------------
 
 function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
   !! Populates annual dynamic landuse value on a cell-by-cell basis
@@ -781,15 +779,16 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
       pGrd%Cells%rGrossPrecip = pDataGrd%rData
 
 #ifdef NETCDF_SUPPORT
-!    case( CONFIG_PRECIP_NETCDF )
-!      call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, input_grd, &
-!         JULIAN_DAY(iYear, iMonth, iDay))
-!      pGrd%Cells%rGrossPrecip = input_grd%rData
+    case( CONFIG_PRECIP_NETCDF )
+      call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, pDataGrd, &
+         JULIAN_DAY(iYear, iMonth, iDay))
+      pGrd%Cells%rGrossPrecip = pDataGrd%rData
 !      call grid_Destroy( input_grd )
 #endif
 
     case default
-        call Assert ( lFALSE, "Internal error -- unknown precipitation input type" )
+        call Assert ( lFALSE, "Internal error -- unknown precipitation input type", &
+          trim(__FILE__),__LINE__)
   end select
 
   where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
@@ -925,12 +924,12 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
 #ifdef NETCDF_SUPPORT
     case( CONFIG_TEMPERATURE_NETCDF )
-!      call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, input_grd, JULIAN_DAY(iYear, iMonth, iDay))
-!      pGrd%Cells%rTMax = input_grd%rData
+      call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
+      pGrd%Cells%rTMax = pDataGrd%rData
 !      call grid_Destroy( input_grd )
 !
-!      call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, input_grd, JULIAN_DAY(iYear, iMonth, iDay))
-!      pGrd%Cells%rTMin = input_grd%rData
+      call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
+      pGrd%Cells%rTMin = pDataGrd%rData
 !      call grid_Destroy( input_grd )
 
 #endif
@@ -1256,6 +1255,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
       dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
       dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
+      dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
       dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
 !      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
@@ -1287,7 +1287,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       ! NET PRECIP = GROSS PRECIP - INTERCEPTION
       dpNetRainfall = dpNetPrecip
-      dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
       ! Is it snowing?
       if (lFREEZING ) then
@@ -3384,11 +3383,20 @@ subroutine model_WriteGrids(pGrd, pConfig, sMonthName, iDay,iMonth, &
 !        trim(sYearText) // "." //trim(sBufSuffix), &
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
     else if ( sMonthName(1:3) == 'day' ) then
-!      call grid_WriteArcGrid("precip." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
+!        call grid_WriteArcGrid("output/daily/ALT_GrossPrecip_" // trim(sDayText) // &
+!            "." // sBufSuffix, &
+!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
 !      call grid_WriteArcGrid("output/daily/ALT_recharge" // trim(sDayText) // &
 !          "." // sBufSuffix, &
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
+!      call grid_WriteArcGrid("output/daily/ALT_Snowcover_" // trim(sDayText) // &
+!          "." // sBufSuffix, &
+!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowcover )
+
+!      call grid_WriteArcGrid("output/daily/TempRange_" // trim(sDayText) // &
+!        "." // sBufSuffix, &
+!        xmin,xmax,ymin,ymax,pGrd%Cells%rTAvg &
+!           - 0.33333*(pGrd%Cells%rTMax - pGrd%Cells%rTMin) )
 
 !        call grid_WriteArcGrid("output\\daily\\pot_et" // trim(sDayText) // &
 !          "." // sBufSuffix, &
