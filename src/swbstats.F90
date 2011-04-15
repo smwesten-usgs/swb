@@ -264,6 +264,124 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
 
 end subroutine ReadBasinMaskTable
 
+subroutine ReadSimpleMaskTable ( pConfig , pGrd)
+
+  use types
+  use graph
+  use swb_grid
+  implicit none
+
+  !! reads the mask data file for subsequent processing
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+                                                   ! model options, flags, and other settings
+  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iStat, iNumMaskFiles, i, iRecNum, iSize
+  character (len=256) :: sRecord                  ! Input file text buffer
+  character (len=256) :: sItem                    ! Key word read from sRecord
+  character (len=256) :: sBuf
+
+  ! open basin mask file
+  open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
+            status="OLD", iostat=iStat )
+  call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
+            "Open failed for file: " // pConfig%sBasinMaskFilename )
+
+  ! read first line of file
+  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
+  call Assert( iStat == 0, &
+     "Error reading first line of simple mask table" )
+
+  ! read mask file to obtain expected number of mask files
+  call chomp( sRecord, sItem, sTAB )
+  call Uppercase( sItem )
+  if ( sItem == "NUM_MASK_FILES" ) then
+    call chomp( sRecord, sItem, sTAB )
+    read ( unit=sItem, fmt=*, iostat=iStat ) iNumMaskFiles
+    call Assert( iStat == 0, "Failed to read number of mask files" )
+    write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumMaskFiles, &
+       " mask files within basin mask table"
+  else
+    call Assert( lFALSE, &
+       "Unknown option in simple mask table; was expecting NUM_MASK_FILES #")
+  end if
+
+  ! read (AND IGNORE) second line of file
+  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
+  call Assert( iStat == 0, &
+     "Error reading second line of simple mask table" )
+
+  ! now allocate memory for MASK table
+  allocate ( pConfig%BMASK( iNumMaskFiles ), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for simple mask data structure" )
+
+  iSize = size(pConfig%BMASK,1)
+
+  iRecNum = 1
+
+  BMASK: do
+
+    read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
+    if ( iStat < 0 ) exit     ! EOF mark
+    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
+
+    if(iRecNum > iSize) then
+      write(UNIT=LU_LOG,FMT=*) ""
+      write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of mask table elements has"
+      write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
+      write(UNIT=LU_LOG,FMT=*) ""
+      write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for SIMPLE MASK table: ",iSize
+      write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
+      exit
+    end if
+
+    write(UNIT=LU_LOG,FMT=*) ""
+    write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
+    write(UNIT=LU_LOG,FMT=*)  "Reading mask record number ",iRecNum, " of ",iNumMaskFiles
+    write(UNIT=LU_LOG,FMT=*) ""
+
+    call chomp( sRecord, sItem, sTAB )
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID
+    call Assert( iStat == 0, &
+      "Error reading ID number in mask table" )
+    write(UNIT=LU_LOG,FMT=*)  "Upstream order ID = ",TRIM(pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID)
+
+    call chomp( sRecord, sItem, sTAB )
+    call Uppercase(sItem)
+    pConfig%BMASK(iRecNum)%sBasinDescription = TRIM(sItem)
+    call Assert( iStat == 0, &
+      "Error reading description in mask table" )
+    write(UNIT=LU_LOG,FMT=*)  "Description = ",TRIM(pConfig%BMASK(iRecNum)%sBasinDescription)
+
+    call chomp( sRecord, sItem, sTAB )
+!    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sBasinMaskFilename
+    pConfig%BMASK(iRecNum)%sBasinMaskFilename = TRIM(ADJUSTL(sItem))
+    call Assert( iStat == 0, &
+      "Error reading filename in mask table" )
+    write(UNIT=LU_LOG,FMT=*)  "Mask filename = ",TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
+
+
+    write(UNIT=LU_LOG,FMT=*) " Attempting to read mask file: ", &
+       TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
+    pConfig%BMASK(iRecNum)%pGrd => &
+           grid_Read(TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
+          "ARC_GRID", T_SGL_GRID )
+    call Assert( grid_Conform( pGrd, pConfig%BMASK(iRecNum)%pGrd ), &
+              "Non-conforming grid - filename: " &
+              // TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
+              TRIM(__FILE__),__LINE__)
+
+    iRecNum = iRecNum + 1
+
+  end do BMASK
+
+  flush(UNIT=LU_LOG)
+
+end subroutine ReadSimpleMaskTable
+
+
 end module swbstats_support
 
 program swbstats
