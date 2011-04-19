@@ -92,8 +92,9 @@ program main
 #endif
 
 #ifdef __INTEL_COMPILER
-    write(UNIT=*,FMT="(a,/)") "Compiled with: Intel Fortran version " &
+    write(UNIT=*,FMT="(a)") "Compiled with: Intel Fortran version " &
       //TRIM(int2char(__INTEL_COMPILER))
+      write(UNIT=*,FMT="(a,/)") "Compiler build date:"//TRIM(int2char(__INTEL_COMPILER_BUILD_DATE))
 #endif
 
 #ifdef __G95__

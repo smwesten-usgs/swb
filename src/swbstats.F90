@@ -115,6 +115,132 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
 end subroutine CalcBasinStats
 
+subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE, &
+   lRESET, iNumDays)
+
+  use types
+  use graph
+  use swb_grid
+
+  implicit none
+
+  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
+  type (T_GENERAL_GRID), pointer :: pMaskGrd        ! pointer to grid mask to process
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+                                                   ! model options, flags, and other settings
+
+
+  character(len=*) :: sVarName
+  character (len=*) :: sLabel
+  logical (kind=T_LOGICAL) :: lCUMULATIVE
+  logical (kind=T_LOGICAL) :: lRESET
+  integer (kind=T_INT), optional :: iNumDays
+
+  ![LOCALS]
+  integer (kind=T_INT) :: j, k, iStat, iCount
+  integer (kind=T_INT) ::   iNumGridCells
+  real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
+  real (kind=T_SGL) :: rDenominator
+  real (kind=T_DBL), dimension(:), allocatable, save :: rRunningSum
+
+  character (len=256) :: sBuf
+
+  integer (kind=T_INT), save :: iNumRecs
+
+  type (T_GENERAL_GRID), pointer :: input_grd
+
+  if(present(iNumDays)) then
+    rDenominator = real(iNumDays, kind=T_SGL)
+  else
+    rDenominator = 1_T_SGL
+  end if
+
+  if(pConfig%lFirstDayOfSimulation) then
+
+    iNumRecs = maxval(pMaskGrd%rData)
+    allocate(rRunningSum(iNumRecs))
+
+    rRunningSum = 0_T_DBL
+
+    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
+          iostat=iStat, STATUS='REPLACE')
+    call Assert ( iStat == 0, &
+      "Could not open PEST statistics file")
+
+    write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
+
+    do k=1,iNumRecs-1
+      write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') &
+          trim(int2char(k)),sTAB
+    end do
+
+    write(UNIT=LU_PEST_STATS,FMT="(A)",advance='YES') trim(int2char(k))
+
+    pConfig%lFirstDayOfSimulation = lFALSE
+
+  end if
+
+  write(UNIT=LU_PEST_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
+
+  if(lRESET) rRunningSum = 0_T_DBL
+
+  do k = 1,iNumRecs
+
+    iCount = COUNT(pMaskGrd%rData == k)
+
+    ! sum of the sum of values within basin mask boundaries
+    rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+    rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+    rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+
+    rAvg = rSum / iCount
+
+    write(UNIT=LU_LOG,FMT="(A)") ""
+    write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
+       //trim(int2char(k) )
+    write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
+    write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
+        real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / 2.78784e+007
+    write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
+    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
+    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
+!
+    write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+
+    if(lCUMULATIVE) then
+
+      rRunningSum(k) = rRunningSum(k) + rAvg
+
+      if( k < iNumRecs ) then
+
+        write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
+
+      else
+
+        write(UNIT=LU_PEST_STATS,FMT="(g16.8)") rRunningSum(k)
+
+      endif
+
+    else
+
+      if( k < iNumRecs ) then
+
+        write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
+
+      else
+
+        write(UNIT=LU_PEST_STATS,FMT="(g16.8)") rAvg
+
+      endif
+
+    endif
+
+  end do
+
+  flush(UNIT=LU_PEST_STATS)
+
+end subroutine CalcMaskStats
+
 
 subroutine ReadBasinMaskTable ( pConfig , pGrd)
 
@@ -264,124 +390,6 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
 
 end subroutine ReadBasinMaskTable
 
-subroutine ReadSimpleMaskTable ( pConfig , pGrd)
-
-  use types
-  use graph
-  use swb_grid
-  implicit none
-
-  !! reads the mask data file for subsequent processing
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-                                                   ! model options, flags, and other settings
-  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
-
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: iStat, iNumMaskFiles, i, iRecNum, iSize
-  character (len=256) :: sRecord                  ! Input file text buffer
-  character (len=256) :: sItem                    ! Key word read from sRecord
-  character (len=256) :: sBuf
-
-  ! open basin mask file
-  open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
-            status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
-            "Open failed for file: " // pConfig%sBasinMaskFilename )
-
-  ! read first line of file
-  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-  call Assert( iStat == 0, &
-     "Error reading first line of simple mask table" )
-
-  ! read mask file to obtain expected number of mask files
-  call chomp( sRecord, sItem, sTAB )
-  call Uppercase( sItem )
-  if ( sItem == "NUM_MASK_FILES" ) then
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) iNumMaskFiles
-    call Assert( iStat == 0, "Failed to read number of mask files" )
-    write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumMaskFiles, &
-       " mask files within basin mask table"
-  else
-    call Assert( lFALSE, &
-       "Unknown option in simple mask table; was expecting NUM_MASK_FILES #")
-  end if
-
-  ! read (AND IGNORE) second line of file
-  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-  call Assert( iStat == 0, &
-     "Error reading second line of simple mask table" )
-
-  ! now allocate memory for MASK table
-  allocate ( pConfig%BMASK( iNumMaskFiles ), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for simple mask data structure" )
-
-  iSize = size(pConfig%BMASK,1)
-
-  iRecNum = 1
-
-  BMASK: do
-
-    read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-    if ( iStat < 0 ) exit     ! EOF mark
-    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
-
-    if(iRecNum > iSize) then
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of mask table elements has"
-      write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for SIMPLE MASK table: ",iSize
-      write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
-      exit
-    end if
-
-    write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-    write(UNIT=LU_LOG,FMT=*)  "Reading mask record number ",iRecNum, " of ",iNumMaskFiles
-    write(UNIT=LU_LOG,FMT=*) ""
-
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID
-    call Assert( iStat == 0, &
-      "Error reading ID number in mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Upstream order ID = ",TRIM(pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID)
-
-    call chomp( sRecord, sItem, sTAB )
-    call Uppercase(sItem)
-    pConfig%BMASK(iRecNum)%sBasinDescription = TRIM(sItem)
-    call Assert( iStat == 0, &
-      "Error reading description in mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Description = ",TRIM(pConfig%BMASK(iRecNum)%sBasinDescription)
-
-    call chomp( sRecord, sItem, sTAB )
-!    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sBasinMaskFilename
-    pConfig%BMASK(iRecNum)%sBasinMaskFilename = TRIM(ADJUSTL(sItem))
-    call Assert( iStat == 0, &
-      "Error reading filename in mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Mask filename = ",TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
-
-
-    write(UNIT=LU_LOG,FMT=*) " Attempting to read mask file: ", &
-       TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
-    pConfig%BMASK(iRecNum)%pGrd => &
-           grid_Read(TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-          "ARC_GRID", T_SGL_GRID )
-    call Assert( grid_Conform( pGrd, pConfig%BMASK(iRecNum)%pGrd ), &
-              "Non-conforming grid - filename: " &
-              // TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-              TRIM(__FILE__),__LINE__)
-
-    iRecNum = iRecNum + 1
-
-  end do BMASK
-
-  flush(UNIT=LU_LOG)
-
-end subroutine ReadSimpleMaskTable
-
-
 end module swbstats_support
 
 program swbstats
@@ -426,6 +434,9 @@ implicit none
   character (len=256) :: sMonthName = ""
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lYearEnd
+  logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
+  logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
+  logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE
 
   integer (kind=T_INT) :: LU_SWBSTATS
 
@@ -441,6 +452,7 @@ implicit none
   character (len=10) :: sDateTxt
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
+  type ( T_GENERAL_GRID ),pointer :: pMaskGrd
   type ( T_GENERAL_GRID ),pointer :: pMonthGrd
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
@@ -603,7 +615,9 @@ implicit none
 
   sVarName = TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)
 
-  do i=2,iNumArgs
+  i=2
+
+  do
 
    call GET_COMMAND_ARGUMENT(i,sBuf)
     sBuf2 = TRIM(ADJUSTL(sBuf))  ! make a copy
@@ -629,9 +643,6 @@ implicit none
       iSWBStatsOutputType = iBOTH
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD") then
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "STATS") then
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
-      iSWBStatsOutputType = iSTATS
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
       iSWBStatsType = iSUM
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "DEFAULT") then
@@ -652,6 +663,8 @@ implicit none
       STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "VERBOSE") then
       lVerbose = lTRUE
+      elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
+        lCUMULATIVE = lTRUE
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SURFER") then
       iOutputFormat = OUTPUT_SURFER
       sOutputFileSuffix = "grd"
@@ -660,13 +673,33 @@ implicit none
       call Assert(iDateNum <=2, "Too many dates entered on the command line", &
         TRIM(__FILE__),__LINE__)
       iTempDate(iDateNum) = mmddyyyy2julian(sBuf)
-    else
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_TABLE") then
+      i = i + 1
+      lBASINSTATS = lTRUE
+      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
+      iSWBStatsOutputType = iSTATS
+      call GET_COMMAND_ARGUMENT(i,sBuf)
       pConfig%sBasinMaskFilename = TRIM(ADJUSTL(sBuf))
       call ReadBasinMaskTable ( pConfig , pGrd)
       ALLOCATE (pConfig%SSF_FILES(size(pConfig%BMASK)), STAT=iStat)
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK") then
+    lMASKSTATS = lTRUE
+      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
+      iSWBStatsOutputType = iSTATS
+      i = i + 1
+      call GET_COMMAND_ARGUMENT(i,sBuf)
+      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", T_SGL_GRID )
+      ALLOCATE (pConfig%SSF_FILES(size(pConfig%BMASK)), STAT=iStat)
     endif
 
+    i = i + 1
+    if (i > iNumArgs) exit
+
   end do
+
+  call Assert(.not. (lBASINSTATS .and. lMASKSTATS), "Statistics may be generated" &
+    //" for a set of basin masks OR a single mask file, not both!", &
+    trim(__FILE__), __LINE__)
 
   call Assert(iDateNum == 0 .or. iDateNum == 2, &
     "Two dates must be entered in order to perform analysis on a subset of the data", &
@@ -858,8 +891,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     end if
 
     write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
-    if(STAT_INFO(iVariableNumber)%iDailyOutput==iSTATS) &
-        call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
+    if(lBASINSTATS) call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
+    if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+      lCUMULATIVE,lYearEnd)
 
     if(STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) then
@@ -879,7 +913,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 !------------------------- MONTHLY ANALYSIS
     if(lMonthEnd) then
 
-      if(STAT_INFO(iVariableNumber)%iMonthlyOutput==iSTATS) then
+      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
 
         write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
 
@@ -887,6 +921,19 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
           call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel, iMonthCount)
         else
           call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel)
+        endif
+      endif
+
+      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
+
+        write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
+
+        if(iSWBStatsType == iMEAN) then
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+            lCUMULATIVE, lYearEnd, iMonthCount)
+        else
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+            lCUMULATIVE, lYearEnd)
         endif
       endif
 
@@ -969,12 +1016,23 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     if(lYearEnd) then
 
-      if(STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
+      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
           call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel, iYearCount)
         else
           call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel)
+        endif
+      endif
+
+      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
+        write(sLabel,FMT="(i4.4)") iCurrYYYY
+        if(iSWBStatsType == iMEAN) then
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+            lCUMULATIVE, lYearEnd, iYearCount)
+        else
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+            lCUMULATIVE, lYearEnd)
         endif
       endif
 
@@ -1077,11 +1135,21 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       iSWBStatsStartDD, iSWBStatsStartYYYY, &
       iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
-  if( iSWBStatsOutputType == iSTATS ) then
+  if( iSWBStatsOutputType == iSTATS .and. lBASINSTATS) then
     if(iSWBStatsType == iMEAN) then
       call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel, iSWBStatsTotalNumDays)
     else
       call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel)
+    endif
+  endif
+
+  if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
+    if(iSWBStatsType == iMEAN) then
+      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+         lCUMULATIVE, lYearEnd, iSWBStatsTotalNumDays)
+    else
+      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, &
+         lCUMULATIVE, lYearEnd)
     endif
   endif
 

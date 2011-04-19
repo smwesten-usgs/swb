@@ -126,6 +126,7 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   pGrd%rX1 = rX1
   pGrd%rY0 = rY0
   pGrd%rY1 = rY1
+  pGrd%rGridCellSize = (pGrd%rX1 - pGrd%rX0) / real(pGrd%iNX, kind=T_SGL)
 
 end function grid_Create
 
