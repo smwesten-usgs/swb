@@ -58,6 +58,7 @@ subroutine control_setModelOptions(sControlFile)
   integer (kind=T_INT) :: i,iVarNum,iTimeFrame    ! loop counters
   integer (kind=T_INT) :: idx                    ! index counter for STREAM_CAPTURE routines
   integer (kind=T_INT) :: iLU_SSF = 300          ! last LU for SSF file
+  integer (kind=T_INT) :: iCurrentLineNumber
   real (kind=T_DBL) :: rX0, rY0                  ! Model grid extent (lower-left)
   real (kind=T_DBL) :: rX1, rY1                  ! Model grid extent (upper-right)
   real (kind=T_DBL) :: rXp, rYp                  ! Coordinates at a point within a grid
@@ -126,6 +127,7 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%iHeaderPrintInterval = 7
   pConfig%lWriteToScreen = lTRUE
   pConfig%lReportDaily = lTRUE
+  iCurrentLineNumber = 0
 
 #ifdef STREAM_INTERACTIONS
   pConfig%rStreamMaxInflow = rBIGVAL
@@ -155,16 +157,18 @@ subroutine control_setModelOptions(sControlFile)
     if ( iStat < 0 ) exit     ! EOF mark
     call Assert( iStat == 0, &
        "Terminating due to read error" )
-    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
+    iCurrentLineNumber = iCurrentLineNumber + 1
+    if ( sRecord(1:1) == "#" ) cycle     ! ignore comment lines
+    if (len_trim(sRecord) == 0) cycle    ! ignore blank lines
     call Assert( iStat == 0, &
         "Terminating due to read error" )
     write (UNIT=LU_LOG,FMT=*) ">> " // trim(sRecord)
     flush(UNIT=LU_LOG)
 
     call Chomp( sRecord, sItem )
-    call Uppercase( sItem )
+    call uppercase(sItem)
 
-    if ( sItem == "GRID" ) then
+    if ( str_compare(sItem,"GRID") ) then
       write(UNIT=LU_LOG,FMT=*) "Reading in grid dimensions"
       ! Read NX
       call Chomp ( sRecord, sItem )
@@ -207,7 +211,7 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
 #ifdef DEBUG_PRINT
-    else if ( sItem == "MEM_TEST" ) then
+    elseif ( str_compare(sItem,"MEM_TEST") ) then
 
       rX0 = 10000.
       rY0 = 10000.
@@ -220,7 +224,7 @@ subroutine control_setModelOptions(sControlFile)
       end do
 #endif
 
-    else if ( sItem == "GROWING_SEASON" ) then
+    elseif ( str_compare(sItem,"GROWING_SEASON") ) then
       write(UNIT=LU_LOG,FMT=*) "Reading growing season"
       call Chomp ( sRecord, sArgument )
       read ( sArgument, fmt=*, iostat=iStat ) rValue
@@ -240,28 +244,28 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Northern Hemisphere = ",pConfig%lNorthernHemisphere
       flush(UNIT=LU_LOG)
 
-    else if ( sItem == "PRECIPITATION" ) then
+    else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
-      if ( trim(sOption) == "SINGLE_STATION" ) then
+      if ( str_compare(sOption,"SINGLE_STATION") ) then
         pConfig%iConfigurePrecip = CONFIG_PRECIP_SINGLE_STATION
         write(UNIT=LU_LOG,FMT=*) "  Precip data will be read for a single station"
       else
-        if ( trim(sOption) == "ARC_GRID" ) then
+        if ( str_compare(sOption,"ARC_GRID") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_ARC_GRID
           write(UNIT=LU_LOG,FMT=*) "Precip data will be read as a series of ARC grids"
           pConfig%sPrecipFilePrefix = sArgument
           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
           TRIM(pConfig%sPrecipFilePrefix)
-        else if ( trim(sOption) == "SURFER" ) then
+        else if ( str_compare(sOption,"SURFER") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER_GRID
           write(UNIT=LU_LOG,FMT=*) "Precip data will be read as a series of SURFER grids"
           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
           TRIM(pConfig%sPrecipFilePrefix)
 #ifdef NETCDF_SUPPORT
-        else if( trim(sOption) == "NETCDF" ) then
+        else if( str_compare(sOption,"NETCDF") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_NETCDF
           write(UNIT=LU_LOG,FMT=*) &
             "Precip data will be read from a NetCDF file"
@@ -998,6 +1002,11 @@ subroutine control_setModelOptions(sControlFile)
       call Assert(lMatch,"Output requested for unknown variable: "//TRIM(sArgument), &
         TRIM(__FILE__),__LINE__)
 
+      call assert(STAT_INFO(iVarNum)%lActive, "The variable "//squote(STAT_INFO(i)%sVARIABLE_NAME) &
+        //" is not accessible given the current compilation options.~" &
+        //"GDD (growing-degree days), for example, is only available if the~" &
+        //"code has been compiled with irrigation module support.",trim(__FILE__), __LINE__)
+
       ! set daily output options
       call Chomp ( sRecord, sArgument )
       if (TRIM(sArgument)== "GRID") then
@@ -1496,8 +1505,11 @@ subroutine control_setModelOptions(sControlFile)
       exit
 
     else
-      call Assert( lFALSE, "Illegal directive was detected - " // sItem )
-      end if
+      call Assert( lFALSE, "Illegal directive:~" &
+        //"~ >>"//squote(sItem) &
+        // "~found on line number "//trim(int2char(iCurrentLineNumber)) &
+        //" of control file "//squote(sControlfile) )
+    end if
 
   end do CTL_READ  ! end of control file read loop
 

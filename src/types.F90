@@ -1055,6 +1055,52 @@ end function nextunit
 
 !------------------------------------------------------------------------------
 
+function squote(sString)                                   result(sQuotedString)
+
+  character (len=*), intent(in) :: sString
+  character (len=len_trim(adjustl(sString))+2) :: sQuotedString
+
+  sQuotedString = "'"//trim(adjustl(sString))//"'"
+
+end function squote
+
+!------------------------------------------------------------------------------
+
+function dquote(sString)                                   result(sQuotedString)
+
+  character (len=*), intent(in) :: sString
+  character (len=len_trim(adjustl(sString))+2) :: sQuotedString
+
+  sQuotedString = '"'//trim(adjustl(sString))//'"'
+
+end function dquote
+
+!------------------------------------------------------------------------------
+
+function str_compare(sString1, sString2)                   result(lBool)
+
+  character(len=*), intent(in) :: sString1
+  character(len=*), intent(in) :: sString2
+  logical (kind=T_LOGICAL) :: lBool
+
+#ifdef DEBUG_PRINT
+  write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
+  write(*,fmt="(a)") "Incoming sString1: "//dquote(sString1)
+  write(*,fmt="(a)") "Incoming sString2: "//dquote(sString2)
+  write(*,fmt="(a)") "Munged sString1: "//dquote(adjustl(uppercase_fn(sString1)) )
+  write(*,fmt="(a)") "Munged sString2: "//dquote(adjustl(uppercase_fn(sString2)) )
+#endif
+
+  if(trim(adjustl(uppercase_fn(sString1))) .eq. trim(adjustl(uppercase_fn(sString2)))) then
+    lBool = lTRUE
+  else
+    lBool = lFALSE
+  end if
+
+end function str_compare
+
+!------------------------------------------------------------------------------
+
 subroutine assert_simple_sub(lCondition,sErrorMessage)
 
   ! ARGUMENTS
@@ -1082,7 +1128,7 @@ subroutine assert_simple_sub(lCondition,sErrorMessage)
 
     do i=1,2
       sRecord = sErrorMessage
-      write(UNIT=iLU(i),FMT="(/,a)") 'FATAL ERROR - HALTING SWB'
+      write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
       do
         call chomp(sRecord, sItem, "~")
         if(len_trim(sItem) == 0) exit
@@ -1130,15 +1176,15 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
 
     do i=1,2
       sRecord = sErrorMessage
-      write(UNIT=iLU(i),FMT="(/,a)") 'FATAL ERROR - HALTING SWB'
+      write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
       do
         call chomp(sRecord, sItem, "~")
         if(len_trim(sItem) == 0) exit
         write(UNIT=iLU(i),FMT="(a)") trim(sItem)
       enddo
 
-      write(UNIT=iLU(i),FMT="(/,'   fortran module:       ',a)") trim(sFilename)
-      write(UNIT=iLU(i),FMT="('   module line number:    ',a)") trim(sLineNum)
+      write(UNIT=iLU(i),FMT="(/,'   fortran module:',t27, a)") trim(sFilename)
+      write(UNIT=iLU(i),FMT="('   module line number:',t27,a)") trim(adjustl(sLineNum))
     enddo
 
     stop
@@ -1150,13 +1196,20 @@ end subroutine assert_module_details_sub
 subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
 
   ! ARGUMENTS
-  character (len=*), intent(inout)           :: sRecord
-  character (len=256), intent(out)           :: sItem
-  character (len=*), intent(in)              :: sDelimiters
+  character (len=*), intent(inout)                 :: sRecord
+  character (len=256), intent(out)   :: sItem
+  character (len=*), intent(in)                    :: sDelimiters
   ! LOCALS
   integer (kind=T_INT) :: iR                      ! Index in sRecord
   integer (kind=T_INT) :: iB                      !
   integer (kind=T_INT) :: iLen
+
+  iB = 0
+
+#ifdef DEBUG_PRINT
+  write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
+  write(*,fmt="(a)") "Incoming sRecord: "//dquote(sRecord)
+#endif
 
   ! eliminate any leading spaces
   sRecord = adjustl(sRecord)
@@ -1176,6 +1229,14 @@ subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
     sRecord = trim(sRecord(iR+iB-1:))
   end if
 
+#ifdef DEBUG_PRINT
+  write(*,fmt="(a)") "Exit sRecord: "//dquote(sRecord)
+  write(*,fmt="(a)") "Exit sItem: "//dquote(sItem)
+  write(*,fmt="(a,i3)") "  iR: ", iR
+  write(*,fmt="(a,i3)") "  iB: ", iB
+#endif
+
+
 end subroutine Chomp_delim_sub
 
 !------------------------------------------------------------------------------
@@ -1183,14 +1244,19 @@ end subroutine Chomp_delim_sub
 subroutine Chomp_default_sub(sRecord, sItem)
 
   ! ARGUMENTS
-  character (len=*), intent(inout)           :: sRecord
-  character (len=256), intent(out)           :: sItem
+  character (len=*), intent(inout)                 :: sRecord
+  character (len=256), intent(out)   :: sItem
 
   ! LOCALS
   integer (kind=T_INT) :: iR                      ! Index in sRecord
   integer (kind=T_INT) :: iB                      !
   integer (kind=T_INT) :: iLen
   character (len=2) :: sDefaultDelimiters = " "//sTAB
+
+#ifdef DEBUG_PRINT
+  write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
+  write(*,fmt="(a)") "Incoming sRecord: "//dquote(sRecord)
+#endif
 
   ! eliminate any leading spaces
   sRecord = adjustl(sRecord)
@@ -1208,6 +1274,12 @@ subroutine Chomp_default_sub(sRecord, sItem)
     sItem = trim(adjustl(sRecord(1:iR-1)))
     sRecord = trim(adjustl(sRecord(iR+1:)))
   end if
+
+#ifdef DEBUG_PRINT
+  write(*,fmt="(a)") "Exit sRecord: "//dquote(sRecord)
+  write(*,fmt="(a)") "Exit sItem: "//dquote(sItem)
+  write(*,fmt="(a,i3)") "  iR: ", iR
+#endif
 
 end subroutine Chomp_default_sub
 
@@ -1329,8 +1401,8 @@ end subroutine Chomp_default_sub
  subroutine Chomp_tab(sRecord, sItem)
 
    ! ARGUMENTS
-   character (len=*), intent(inout) :: sRecord
-   character (len=256), intent(out) :: sItem
+   character (len=*), intent(inout)                :: sRecord
+   character (len=256), intent(out)   :: sItem
    ! LOCALS
    integer (kind=T_INT) :: iR                      ! Index in sRecord
    character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
@@ -1380,8 +1452,8 @@ end subroutine Chomp_default_sub
 subroutine Chomp_slash(sRecord, sItem)
 
   ! ARGUMENTS
-  character (len=*), intent(inout) :: sRecord
-  character (len=256), intent(out) :: sItem
+  character (len=*), intent(inout)                 :: sRecord
+  character (len=256), intent(out)   :: sItem
   ! LOCALS
   integer (kind=T_INT) :: iR                      ! Index in sRecord
   character (len=1), parameter :: cSlash = "/"
@@ -1494,39 +1566,74 @@ function mmddyyyy2doy(sMMDDYYYY)  result(iDOY)
 
 end function mmddyyyy2doy
 
-!--------------------------------------------------------------------------
-!****s* types/Uppercase
-! NAME
-!   Uppercase - Converts a text string to all uppercase letters.
-!
-! SYNOPSIS
-!   Converts a text string to all uppercase letters.
-!
-! INPUTS
-!   s - Character string to operate on.
-!
-! OUTPUTS
-!   s - Character string to operate on.
-! SOURCE
+!----------------------------------------------------------------------------
 
-subroutine Uppercase ( s )
+function uppercase_fn ( s )                               result(sOut)
+
+  ! ARGUMENTS
+  character (len=*), intent(in) :: s
+  character(len=len(s)) :: sOut
+  ! LOCALS
+  integer (kind=T_INT) :: i    ! do loop index
+  ! CONSTANTS
+  integer (kind=T_INT), parameter :: LOWER_TO_UPPER = -32
+
+!  LOWER_TO_UPPER = ichar( "A" ) - ichar( "a" )
+
+  sOut = s
+
+  do i=1,len_trim(sOut)
+      if ( ichar(sOut(i:i) ) >= ichar("a") .and. ichar(sOut(i:i)) <= ichar("z") ) then
+          sOut(i:i) = char( ichar( sOut(i:i) ) + LOWER_TO_UPPER )
+      end if
+  end do
+
+  return
+end function uppercase_fn
+
+!--------------------------------------------------------------------------
+
+function lowercase_fn ( s )                               result(sOut)
+
+  ! ARGUMENTS
+  character (len=*), intent(in) :: s
+  character(len=len(s)) :: sOut
+  ! LOCALS
+  integer (kind=T_INT) :: i    ! do loop index
+  ! CONSTANTS
+  integer (kind=T_INT), parameter :: UPPER_TO_LOWER = 32
+
+!  UPPER_TO_LOWER = ichar( "a" ) - ichar( "A" )
+
+  sOut = s
+
+  do i=1,len_trim(sOut)
+      if ( ichar(sOut(i:i) ) >= ichar("A") .and. ichar(sOut(i:i)) <= ichar("Z") ) then
+          sOut(i:i) = char( ichar( sOut(i:i) ) + UPPER_TO_LOWER )
+      end if
+  end do
+
+end function lowercase_fn
+
+!--------------------------------------------------------------------------
+
+subroutine uppercase ( s )
 
   ! ARGUMENTS
   character (len=*), intent(inout) :: s
   ! LOCALS
   integer (kind=T_INT) :: i    ! do loop index
   ! CONSTANTS
-  integer (kind=T_INT) :: FIX_CHAR = ichar( "a" ) - ichar( "A" )
+  integer (kind=T_INT) :: LOWER_TO_UPPER = ichar( "A" ) - ichar( "a" )
 
   do i=1,len_trim(s)
-      if ( ichar(s(i:i) ) >= ichar("a") .and. ichar(s) <= ichar("z") ) then
-          s(i:i) = char( ichar( s(i:i) ) - ichar( "a" ) + ichar( "A" ) )
+      if ( ichar(s(i:i) ) >= ichar("a") .and. ichar(s(i:i)) <= ichar("z") ) then
+          s(i:i) = char( ichar( s(i:i) ) + LOWER_TO_UPPER )
       end if
   end do
 
   return
-end subroutine Uppercase
-
+end subroutine uppercase
 
 !--------------------------------------------------------------------------
 !****s* types/CleanUpCsv

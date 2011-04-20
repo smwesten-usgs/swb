@@ -2719,9 +2719,9 @@ subroutine model_ReadLanduseLookupTable( pConfig )
      "Error reading first line of landuse lookup table" )
 
   ! read landuse file to obtain expected number of landuse types
-  call chomp_tab( sRecord, sItem )
-  call Uppercase( sItem )
-  if ( sItem == "NUM_LANDUSE_TYPES" ) then
+  call chomp(sRecord, sItem , sTAB )
+!  call chomp_tab( sRecord, sItem )
+  if ( str_compare(sItem,"NUM_LANDUSE_TYPES") ) then
     call chomp_tab( sRecord, sItem )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
     call Assert( iStat == 0, "Failed to read number of landuse types" )
@@ -3265,9 +3265,10 @@ subroutine model_InitializeSM(pGrd, pConfig )
         end do
 !      write(UNIT=LU_LOG,FMT=*)  iRow,iCol," table: ",pLU%iLandUseType," cell: ",cel%iLandUse
         if(.not. lMATCH) then
-          write(UNIT=LU_LOG,FMT=*)  "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
           call Assert(lFALSE,&
-          "Failed to match landuse grid with landuse table during soil moisture initialization")
+          "Failed to match landuse grid with landuse table during soil moisture initialization~" &
+          //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
+          //"  cell LU: "//trim(int2char(cel%iLandUse)) )
         endif
       end do
     end do
