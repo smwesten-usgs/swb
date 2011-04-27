@@ -1,5 +1,22 @@
 module swbstats_support
 
+  use types
+  implicit none
+
+  logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE
+  logical (kind=T_LOGICAL) :: lPERIOD_SUM = lFALSE
+  logical (kind=T_LOGICAL) :: lPERIOD_AVG = lFALSE
+  logical (kind=T_LOGICAL) :: lRESET = lFALSE
+  logical (kind=T_LOGICAL) :: lVERBOSE = lFALSE
+  integer (kind=T_INT) :: iANALYSIS_PERIOD = 1
+  character (len=256) :: sStatsDescription = ""
+  integer (kind=T_INT) :: LU_STATS
+
+  integer (kind=T_INT) :: iSlcStartMM
+  integer (kind=T_INT) :: iSlcStartDD
+  integer (kind=T_INT) :: iSlcEndMM
+  integer (kind=T_INT) :: iSlcEndDD
+
 contains
 
 subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
@@ -42,33 +59,33 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(pConfig%lFirstDayOfSimulation) then
 
-    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
+    open(newunit=LU_STATS,FILE="SWB_BASIN_STATS_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt", &
           iostat=iStat, STATUS='REPLACE')
     call Assert ( iStat == 0, &
-      "Could not open PEST statistics file")
+      "Could not open BASIN statistics file")
 
-    write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
+    write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
 
     do k=1,iNumRecs-1
-      write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') &
+      write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
           ADJUSTL(TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID)),sTAB
     end do
 
-    write(UNIT=LU_PEST_STATS,FMT="(A)") &
+    write(UNIT=LU_STATS,FMT="(A)") &
        ADJUSTL(TRIM(pConfig%BMASK(iNumRecs)%sUSGS_UpstreamOrderID))
 
     pConfig%lFirstDayOfSimulation = lFALSE
 
   else   ! append to files
 
-    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt",iostat=iStat, &
+    open(LU_STATS,FILE="SWB_BASIN_STATS_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt", &
         POSITION='APPEND', STATUS='OLD')
     call Assert ( iStat == 0, &
-      "Could not open PEST statistics file")
+      "Could not open BASIN statistics file")
 
   end if
 
-  write(UNIT=LU_PEST_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
+  write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
   do k = 1,iNumRecs
 
@@ -98,11 +115,11 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
     if( k < iNumRecs ) then
 
-      write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
+      write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
 
     else
 
-      write(UNIT=LU_PEST_STATS,FMT="(g16.8)") rAvg
+      write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
 
     endif
 
@@ -110,13 +127,12 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   end do
 
-  flush(UNIT=LU_PEST_STATS)
-  close(UNIT=LU_PEST_STATS)
+  flush(UNIT=LU_STATS)
+  close(UNIT=LU_STATS)
 
 end subroutine CalcBasinStats
 
-subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE, &
-   lRESET, iNumDays)
+subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   use types
   use graph
@@ -132,16 +148,16 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE,
 
   character(len=*) :: sVarName
   character (len=*) :: sLabel
-  logical (kind=T_LOGICAL) :: lCUMULATIVE
-  logical (kind=T_LOGICAL) :: lRESET
   integer (kind=T_INT), optional :: iNumDays
 
   ![LOCALS]
-  integer (kind=T_INT) :: j, k, iStat, iCount
+  integer (kind=T_INT) :: j, k, iStat, iCount, m, n
   integer (kind=T_INT) ::   iNumGridCells
   real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
   real (kind=T_SGL) :: rDenominator
   real (kind=T_DBL), dimension(:), allocatable, save :: rRunningSum
+  real (kind=T_DBL), dimension(:,:), allocatable, save :: rPeriodSum
+  integer (kind=T_INT), save :: i
 
   character (len=256) :: sBuf
 
@@ -158,31 +174,39 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE,
   if(pConfig%lFirstDayOfSimulation) then
 
     iNumRecs = maxval(pMaskGrd%rData)
-    allocate(rRunningSum(iNumRecs))
+    if(lCUMULATIVE) then
+      allocate(rRunningSum(iNumRecs))
+      rRunningSum = 0_T_DBL
+    elseif(lPERIOD_SUM .or. lPERIOD_AVG) then
+      allocate(rPeriodSum(iANALYSIS_PERIOD, iNumRecs))
+      rPeriodSum = 0_T_DBL
+      i = 1
+    endif
 
-    rRunningSum = 0_T_DBL
 
-    open(LU_PEST_STATS,FILE="SWB_PEST_STATS_"//trim(sVarName)//".txt", &
+    sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt"
+    open(newunit=LU_STATS,FILE=trim(sBuf), &
           iostat=iStat, STATUS='REPLACE')
     call Assert ( iStat == 0, &
-      "Could not open PEST statistics file")
+      "Could not open PEST statistics file "//dquote(sBuf))
 
-    write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
+    write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
 
-    do k=1,iNumRecs-1
-      write(UNIT=LU_PEST_STATS,FMT="(A,a)",advance='NO') &
+    do k=1,iNumRecs - 1
+      write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
           trim(int2char(k)),sTAB
     end do
 
-    write(UNIT=LU_PEST_STATS,FMT="(A)",advance='YES') trim(int2char(k))
+    write(UNIT=LU_STATS,FMT="(A)",advance='YES') trim(int2char(k))
 
     pConfig%lFirstDayOfSimulation = lFALSE
 
   end if
 
-  write(UNIT=LU_PEST_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
-  if(lRESET) rRunningSum = 0_T_DBL
+  write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
+
+  if(lRESET .and. lCUMULATIVE) rRunningSum = 0_T_DBL
 
   do k = 1,iNumRecs
 
@@ -195,17 +219,18 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE,
 
     rAvg = rSum / iCount
 
-    write(UNIT=LU_LOG,FMT="(A)") ""
-    write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
-       //trim(int2char(k) )
-    write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
-    write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
-        real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / 2.78784e+007
-    write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
-    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
-    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
-!
-    write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+    if(lVERBOSE) then
+      write(UNIT=LU_LOG,FMT="(A)") ""
+      write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
+         //trim(int2char(k) )
+      write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
+      write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
+          real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / 2.78784e+007
+      write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
+      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
+      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
+      write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+    endif
 
     if(lCUMULATIVE) then
 
@@ -213,23 +238,59 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE,
 
       if( k < iNumRecs ) then
 
-        write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
+        write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
 
       else
 
-        write(UNIT=LU_PEST_STATS,FMT="(g16.8)") rRunningSum(k)
+        write(UNIT=LU_STATS,FMT="(g16.8)") rRunningSum(k)
 
       endif
+
+    elseif(lPERIOD_SUM) then
+
+        rPeriodSum(i, k) = rAvg
+
+        if( k < iNumRecs ) then
+
+          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') SUM(rPeriodSum(:,k)),sTAB
+
+        else
+
+          write(UNIT=LU_STATS,FMT="(g16.8)") SUM(rPeriodSum(:,k))
+!          do m=1,iANALYSIS_PERIOD
+!            do n=1,iNumRecs-1
+!              write(*,fmt="(f5.2,1x)", advance="no") rPeriodSum(m,n)
+!            enddo
+!            write(*,fmt="(f5.2)") rPeriodSum(m,iNumRecs)
+!          enddo
+
+        endif
+
+    elseif(lPERIOD_AVG) then
+
+        rPeriodSum(i, k) = rAvg
+
+        if( k < iNumRecs ) then
+
+          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') &
+            SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD,sTAB
+
+        else
+
+          write(UNIT=LU_STATS,FMT="(g16.8)", advance='YES') &
+            SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD
+
+        endif
 
     else
 
       if( k < iNumRecs ) then
 
-        write(UNIT=LU_PEST_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
+        write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
 
       else
 
-        write(UNIT=LU_PEST_STATS,FMT="(g16.8)") rAvg
+        write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
 
       endif
 
@@ -237,7 +298,12 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, lCUMULATIVE,
 
   end do
 
-  flush(UNIT=LU_PEST_STATS)
+  if(lPERIOD_SUM .or. lPERIOD_AVG) then
+    i = i + 1
+    if(i > iANALYSIS_PERIOD) i = 1
+  endif
+
+  flush(UNIT=LU_STATS)
 
 end subroutine CalcMaskStats
 
@@ -436,7 +502,6 @@ implicit none
   logical (kind=T_LOGICAL) :: lYearEnd
   logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
   logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
-  logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE
 
   integer (kind=T_INT) :: LU_SWBSTATS
 
@@ -469,8 +534,8 @@ implicit none
   character (len=256) :: sVarName
   character (len=256) :: sLabel = ""
 
-  logical (kind=T_LOGICAL) :: lVerbose = lFALSE
   integer (kind=T_INT) :: iOutputFormat = OUTPUT_ARC
+  logical (kind=T_LOGICAL) :: lYearBegin
   logical (kind=T_LOGICAL) :: lEOF
   logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
   integer (kind=T_INT) :: iMonthCount, iYearCount
@@ -525,7 +590,8 @@ implicit none
 
     write(UNIT=*,FMT="(/,/,a)") &
       "Usage: swbstats [binary file name] [PERIOD|YEARLY|MONTHLY|DAILY]" &
-        //" {SUM} {SURFER} {GRID|PLOT|BOTH|STATS} "
+        //" {SUM} {SURFER} {GRID|PLOT|BOTH|STATS} {BASIN_MASK basin mask filename }" &
+        //"{MASK mask filename} {CUMULATIVE}"
     write(UNIT=*,FMT="(t17,a,/)") "{start date (mm/dd/yyyy)} {end date (mm/dd/yyyy)} {VERBOSE} {basin_mask_filename}"
 
     write(UNIT=*,FMT="(/,t5,a)") "A filename and output frequency must be specified. All other arguments are OPTIONAL."
@@ -539,7 +605,9 @@ implicit none
     write(UNIT=*,FMT="(/,t7,a)") "3) SUM: will calculate statistics based on SUMS rather than MEAN values"
     write(UNIT=*,FMT="(/,t7,a)") "4) VERBOSE: writes daily min, mean, and max values to logfile"
     write(UNIT=*,FMT="(/,t7,a)") "5) SURFER: directs output to Surfer grids rather than Arc ASCII grids"
-    write(UNIT=*,FMT="(/,t7,a)") "6) basin_mask_filename: specifies a list of basins for which stats will be calculated"
+    write(UNIT=*,FMT="(/,t7,a)") "6) BASIN_MASK: specifies a list of basins for which stats will be calculated"
+    write(UNIT=*,FMT="(/,t7,a)") "7) MASK: specifies a single mask file; stats are calculated for each integer value"
+    write(UNIT=*,FMT="(/,t7,a)") "8) CUMULATIVE: specifies that MASK statistics are cumulative, resetting each year"
 
     stop
 
@@ -576,11 +644,6 @@ implicit none
     iEndYYYY = 2199
     lPrematureEOF = lTRUE
   endif
-
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
 
   ! set default values for program options
   iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
@@ -662,9 +725,20 @@ implicit none
       STAT_INFO(iVariableNumber)%iMonthlyOutput = iSWBStatsOutputType
       STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "VERBOSE") then
-      lVerbose = lTRUE
-      elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
+      lVERBOSE = lTRUE
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
         lCUMULATIVE = lTRUE
+        iSWBStatsType = iSUM
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD_SUM") then
+      lPERIOD_SUM = lTRUE
+      i = i + 1
+      call GET_COMMAND_ARGUMENT(i,sBuf)
+      read(sBuf,fmt=*) iANALYSIS_PERIOD
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD_AVG") then
+      lPERIOD_AVG = lTRUE
+      i = i + 1
+      call GET_COMMAND_ARGUMENT(i,sBuf)
+      read(sBuf,fmt=*) iANALYSIS_PERIOD
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SURFER") then
       iOutputFormat = OUTPUT_SURFER
       sOutputFileSuffix = "grd"
@@ -673,7 +747,19 @@ implicit none
       call Assert(iDateNum <=2, "Too many dates entered on the command line", &
         TRIM(__FILE__),__LINE__)
       iTempDate(iDateNum) = mmddyyyy2julian(sBuf)
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_TABLE") then
+    elseif(trim(adjustl(sBuf)) .eq. "PERIOD_SLICE") then
+        i = i + 1
+        call GET_COMMAND_ARGUMENT(i,sBuf)
+        call chomp_delim(sBuf,sSlcStartMM,"/-")
+        sSlcStartDD = trim(sBuf)
+
+        i = i + 1
+        call GET_COMMAND_ARGUMENT(i,sBuf)
+        read(sBuf,fmt=*) iANALYSIS_PERIOD
+        call chomp_delim(sBuf,sSlcEndMM,"/-")
+        sSlcEndDD = trim(sBuf)
+
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_MASK") then
       i = i + 1
       lBASINSTATS = lTRUE
       STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
@@ -734,6 +820,19 @@ implicit none
   write(unit=LU_STD_OUT,fmt="(/,a,/)") "  Summary of output to be generated:"
   write(unit=LU_STD_OUT,fmt="(t20,a,t28,a,t36,a,t44,a)") &
     "NONE","PLOT","GRID","STATS"
+
+  write(sStatsDescription,fmt="(i02.2,i02.2,i04.4,'-',i02.2,i02.2,i04.4)") &
+    iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
+    iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  if(lPERIOD_AVG) sStatsDescription = trim(sStatsDescription) // "_" &
+    //trim(int2char(iANALYSIS_PERIOD))//"-day_MEAN"
+
+  if(lPERIOD_SUM) sStatsDescription = trim(sStatsDescription) // "_" &
+    //trim(int2char(iANALYSIS_PERIOD))//"-day_SUM"
+
+  if(lCUMULATIVE) sStatsDescription = trim(sStatsDescription) // "_" &
+    //"CUMULATIVE"
 
   k = STAT_INFO(iVariableNumber)%iDailyOutput
   if(k==iNONE) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily"," **","",""
@@ -798,6 +897,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
   pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
   pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
 
   rPad = -9999_T_SGL
 
@@ -824,8 +924,6 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     write(sDateTxt,fmt="(i2.2,'/',i2.2,'/',i4.4)") &
       iCurrMM, iCurrDD, iCurrYYYY
 
-    write(*,fmt="(a,a)") "Processing: ",trim(sDateTxt)
-
     ! figure out whether the current date is the end of a month or year
     iCurrJD = julian_day ( iCurrYYYY, iCurrMM, iCurrDD )
     iTomorrowJD = iCurrJD + 1
@@ -834,6 +932,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     lYearEnd = (.not. iTomorrowYYYY == iCurrYYYY)
     call LookupMonth(iCurrMM, iCurrDD, iCurrYYYY,iCurrDOY, &
                    sMonthName, lMonthEnd)
+    lRESET = ( iCurrMM == 1 .and. iCurrDD == 1)
     pGrd%rData(:,:)= rZERO
 
     ! name "RLE_readByte" is misleading, since the return value (rVal)
@@ -867,10 +966,23 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
 
-    if(lVerbose) &
+    if(lVERBOSE) then
       call stats_WriteMinMeanMax(LU_LOG, &
          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
          pGrd%rData(:,:))
+
+      if(lCUMULATIVE) then
+        call stats_WriteMinMeanMax(LU_STD_OUT, &
+          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
+          pSummaryGrd%rData(:,:))
+      else
+        call stats_WriteMinMeanMax(LU_STD_OUT, &
+          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
+          pGrd%rData(:,:))
+      endif
+    else
+      write(LU_STD_OUT, fmt="(a)") TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt)
+    endif
 
     if(STAT_INFO(iVariableNumber)%iDailyOutput==iGRID &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) then
@@ -892,8 +1004,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
     if(lBASINSTATS) call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
-    if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-      lCUMULATIVE,lYearEnd)
+    if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
 
     if(STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) then
@@ -929,11 +1040,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
         write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
 
         if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-            lCUMULATIVE, lYearEnd, iMonthCount)
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iMonthCount)
         else
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-            lCUMULATIVE, lYearEnd)
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
         endif
       endif
 
@@ -1028,11 +1137,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-            lCUMULATIVE, lYearEnd, iYearCount)
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
         else
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-            lCUMULATIVE, lYearEnd)
+          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
         endif
       endif
 
@@ -1143,13 +1250,13 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     endif
   endif
 
+  lRESET = lFALSE
+
   if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
     if(iSWBStatsType == iMEAN) then
-      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-         lCUMULATIVE, lYearEnd, iSWBStatsTotalNumDays)
+      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iSWBStatsTotalNumDays)
     else
-      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, &
-         lCUMULATIVE, lYearEnd)
+      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
     endif
   endif
 
