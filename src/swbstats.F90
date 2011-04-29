@@ -8,14 +8,19 @@ module swbstats_support
   logical (kind=T_LOGICAL) :: lPERIOD_AVG = lFALSE
   logical (kind=T_LOGICAL) :: lRESET = lFALSE
   logical (kind=T_LOGICAL) :: lVERBOSE = lFALSE
+  logical (kind=T_LOGICAL) :: lMASKSSF = lFALSE
+  logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
+  logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
+
   integer (kind=T_INT) :: iANALYSIS_PERIOD = 1
   character (len=256) :: sStatsDescription = ""
   integer (kind=T_INT) :: LU_STATS
 
-  integer (kind=T_INT) :: iSlcStartMM
-  integer (kind=T_INT) :: iSlcStartDD
-  integer (kind=T_INT) :: iSlcEndMM
-  integer (kind=T_INT) :: iSlcEndDD
+  integer (kind=T_INT) :: iSlcStartMM = 1
+  integer (kind=T_INT) :: iSlcStartDD = 1
+  integer (kind=T_INT) :: iSlcEndMM = 12
+  integer (kind=T_INT) :: iSlcEndDD = 31
+  logical (kind=T_LOGICAL) :: lPRINT
 
 contains
 
@@ -98,16 +103,17 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
     rAvg = rSum / iCount
 
-    write(UNIT=LU_LOG,FMT="(A)") ""
-    write(UNIT=LU_LOG,FMT="(5x,A)") TRIM(pConfig%BMASK(k)%sBasinDescription)
-    write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
-    write(UNIT=LU_LOG,FMT="(5x,'Drainage area (sq mi):', f14.2)") &
-        pConfig%BMASK(k)%rDrainageArea
-    write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
-    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
-    write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
-!
-    write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+    if(lVERBOSE) then
+      write(UNIT=LU_LOG,FMT="(A)") ""
+      write(UNIT=LU_LOG,FMT="(5x,A)") TRIM(pConfig%BMASK(k)%sBasinDescription)
+      write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
+      write(UNIT=LU_LOG,FMT="(5x,'Drainage area (sq mi):', f14.2)") &
+          pConfig%BMASK(k)%rDrainageArea
+      write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
+      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
+      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
+      write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+    endif
 
     ! convert average value in inches to cubic feet
     rAvg = real(rAvg,kind=T_DBL) * real(pConfig%BMASK(k)%rDrainageArea,kind=T_DBL) &
@@ -131,6 +137,7 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
   close(UNIT=LU_STATS)
 
 end subroutine CalcBasinStats
+
 
 subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
@@ -158,12 +165,19 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   real (kind=T_DBL), dimension(:), allocatable, save :: rRunningSum
   real (kind=T_DBL), dimension(:,:), allocatable, save :: rPeriodSum
   integer (kind=T_INT), save :: i
+  real (kind=T_DBL) :: rConversionFactor
 
   character (len=256) :: sBuf
 
   integer (kind=T_INT), save :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
+
+  if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
+    rConversionFactor = 2589988.11_T_DBL
+  else
+    rConversionFactor = 27878400_T_DBL
+  endif
 
   if(present(iNumDays)) then
     rDenominator = real(iNumDays, kind=T_SGL)
@@ -204,7 +218,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   end if
 
 
-  write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
+  if(lPRINT) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
   if(lRESET .and. lCUMULATIVE) rRunningSum = 0_T_DBL
 
@@ -225,7 +239,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
          //trim(int2char(k) )
       write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
       write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
-          real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / 2.78784e+007
+          real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
       write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
       write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
       write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
@@ -236,13 +250,17 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
       rRunningSum(k) = rRunningSum(k) + rAvg
 
-      if( k < iNumRecs ) then
+      if(lPRINT) then
 
-        write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
+        if( k < iNumRecs ) then
 
-      else
+          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
 
-        write(UNIT=LU_STATS,FMT="(g16.8)") rRunningSum(k)
+        else
+
+          write(UNIT=LU_STATS,FMT="(g16.8)") rRunningSum(k)
+
+        endif
 
       endif
 
@@ -250,19 +268,17 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
         rPeriodSum(i, k) = rAvg
 
-        if( k < iNumRecs ) then
+        if(lPRINT) then
 
-          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') SUM(rPeriodSum(:,k)),sTAB
+          if( k < iNumRecs ) then
 
-        else
+            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') SUM(rPeriodSum(:,k)),sTAB
 
-          write(UNIT=LU_STATS,FMT="(g16.8)") SUM(rPeriodSum(:,k))
-!          do m=1,iANALYSIS_PERIOD
-!            do n=1,iNumRecs-1
-!              write(*,fmt="(f5.2,1x)", advance="no") rPeriodSum(m,n)
-!            enddo
-!            write(*,fmt="(f5.2)") rPeriodSum(m,iNumRecs)
-!          enddo
+          else
+
+            write(UNIT=LU_STATS,FMT="(g16.8)") SUM(rPeriodSum(:,k))
+
+          endif
 
         endif
 
@@ -270,27 +286,35 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
         rPeriodSum(i, k) = rAvg
 
-        if( k < iNumRecs ) then
+        if(lPRINT) then
 
-          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') &
-            SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD,sTAB
+          if( k < iNumRecs ) then
 
-        else
+            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') &
+              SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD,sTAB
 
-          write(UNIT=LU_STATS,FMT="(g16.8)", advance='YES') &
-            SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD
+          else
+
+            write(UNIT=LU_STATS,FMT="(g16.8)", advance='YES') &
+              SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD
+
+          endif
 
         endif
 
     else
 
-      if( k < iNumRecs ) then
+      if(lPRINT) then
 
-        write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
+        if( k < iNumRecs ) then
 
-      else
+          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
 
-        write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
+        else
+
+          write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
+
+        endif
 
       endif
 
@@ -307,6 +331,98 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
 end subroutine CalcMaskStats
 
+subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabel, iNumDays)
+
+  use types
+  use graph
+  use swb_grid
+
+  implicit none
+
+  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
+  type (T_GENERAL_GRID), pointer :: pMaskGrd        ! pointer to grid mask to process
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+                                                   ! model options, flags, and other settings
+
+
+  character(len=*) :: sVarName
+  integer (kind=T_INT) :: iGridValue
+  character (len=*) :: sLabel
+  integer (kind=T_INT), optional :: iNumDays
+
+  ![LOCALS]
+  integer (kind=T_INT) :: j, iStat, iCount, m, n
+  integer (kind=T_INT) ::   iNumGridCells
+  real (kind=T_DBL) :: rSum, rAvg, rMin, rMax
+  real (kind=T_DBL) :: rDenominator
+  real (kind=T_DBL),save :: rConversionFactor
+  real (kind=T_DBL),save :: rGridCellAreaSF
+
+  character (len=256) :: sBuf
+
+  integer (kind=T_INT), save :: iNumRecs
+
+  type (T_GENERAL_GRID), pointer :: input_grd
+
+  if(present(iNumDays)) then
+    rDenominator = real(iNumDays, kind=T_DBL)
+  else
+    rDenominator = 1_T_DBL
+  end if
+
+  if(pConfig%lFirstDayOfSimulation) then
+
+    ! conversion factor: grid cell sum to square feet
+    if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
+      rConversionFactor = 10.76391042_T_DBL
+    else
+      rConversionFactor = 1_T_DBL
+    endif
+
+    rGridCellAreaSF = real(pGrd%rGridCellSize, kind=T_DBL) &
+      * real(pGrd%rGridCellSize, kind=T_DBL) * rConversionFactor
+
+    sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".ssf"
+    open(newunit=LU_STATS,FILE=trim(sBuf), &
+          iostat=iStat, STATUS='REPLACE')
+    call Assert ( iStat == 0, &
+      "Could not open PEST ssf file "//dquote(sBuf))
+
+    pConfig%lFirstDayOfSimulation = lFALSE
+
+  end if
+
+  iCount = COUNT(pMaskGrd%rData == iGridValue)
+
+  ! sum of the sum of values within basin mask boundaries
+  rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
+  rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
+  rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
+
+  rAvg = rSum / iCount
+
+  if(lVERBOSE) then
+    write(UNIT=LU_LOG,FMT="(A)") ""
+    write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
+       //trim(int2char(iGridValue) )
+    write(UNIT=LU_LOG,FMT="(A)") "==> "//TRIM(sLabel)
+    write(UNIT=LU_LOG,FMT="(2x,A,t30,i12)") "count:",iCount
+    write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "cell area:", &
+       rGridCellAreaSF
+    write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "sum cell area:", &
+      real(iCount, kind=T_DBL) * rGridCellAreaSF
+    write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "sum:",rSum
+    write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "avg:",rAvg
+    write(UNIT=LU_LOG,FMT="(2x,'avg (cfs):',t30,g14.3)") rSum * rGridCellAreaSF / 86400_T_DBL / 12_T_DBL
+    write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+  endif
+
+  if(lPRINT) write(UNIT=LU_STATS,FMT="(a,3x,g16.8)") TRIM(sLabel), &
+     rSum * rGridCellAreaSF / 86400_T_DBL / 12_T_DBL
+
+  flush(UNIT=LU_STATS)
+
+end subroutine CalcMaskStatsSSF
 
 subroutine ReadBasinMaskTable ( pConfig , pGrd)
 
@@ -425,19 +541,6 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
       "Error reading basin mask file type in basin mask table" )
     write(UNIT=LU_LOG,FMT=*)  "Basin mask filetype = ",TRIM(pConfig%BMASK(iRecNum)%sFileType)
 
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rQb
-    call Assert( iStat == 0, &
-      "Error reading baseflow estimate Qb in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Qb = ",pConfig%BMASK(iRecNum)%rQb
-
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rDrainageArea
-    call Assert( iStat == 0, &
-      "Error reading basin drainage area in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Drainage area = ", &
-        pConfig%BMASK(iRecNum)%rDrainageArea
-
     write(UNIT=LU_LOG,FMT=*) " Attempting to read mask file: ", &
        TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
     pConfig%BMASK(iRecNum)%pGrd => &
@@ -471,6 +574,7 @@ implicit none
   ! general temporary variables
   character (len=256)  :: sBinFile, sBuf, sBuf2, sBuf3 = ""
   character (len=256)  :: sOutputFilename = ""
+  character (len=256)  :: sItem
   integer (kind=T_INT) :: iNumArgs
   integer (kind=T_INT) :: iNumGridCells
   integer (kind=T_INT) :: iStat
@@ -479,6 +583,8 @@ implicit none
   integer (kind=T_INT) :: iNumDaysInYear
   integer (kind=T_INT) :: iLen1, iLen2
   integer (kind=T_INT), dimension(2) :: iTempDate
+  character (len=256) :: sSiteNumber
+  character (len=7) :: sLengthUnits
 
   ! variables that are read in from the binary file header
   integer (kind=T_INT) :: iNX
@@ -500,8 +606,6 @@ implicit none
   character (len=256) :: sMonthName = ""
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lYearEnd
-  logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
-  logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
 
   integer (kind=T_INT) :: LU_SWBSTATS
 
@@ -539,6 +643,7 @@ implicit none
   logical (kind=T_LOGICAL) :: lEOF
   logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
   integer (kind=T_INT) :: iMonthCount, iYearCount
+  integer (kind=T_INT) :: iGridCellValue
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -672,6 +777,17 @@ implicit none
       TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
       TRIM(STAT_INFO(iVariableNumber)%sLongName), &
       TRIM(STAT_INFO(iVariableNumber)%sUNITS)
+    write(unit=LU_STD_OUT,fmt="(/,'  Grid dimensions (x,y): ',t28,a,', ',a)") &
+      trim(int2char(iNX)), trim(int2char(iNY))
+    write(sBuf,fmt="(f14.2)") rGridCellSize
+    write(unit=LU_STD_OUT,fmt="('  Grid cell size: ',t28,a)") trim(adjustl(sBuf))
+    write(unit=LU_STD_OUT,fmt="('  Grid cell units: ',t28)", advance="no")
+    if(iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
+      write(unit=LU_STD_OUT,fmt="('meters',/)")
+    else
+      write(unit=LU_STD_OUT,fmt="('feet',/)")
+    endif
+
     stop
 
   end if
@@ -750,14 +866,18 @@ implicit none
     elseif(trim(adjustl(sBuf)) .eq. "PERIOD_SLICE") then
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        call chomp_delim(sBuf,sSlcStartMM,"/-")
-        sSlcStartDD = trim(sBuf)
+        call chomp(sBuf,sItem,"/-")
+        read(sItem,*) iSlcStartMM
+        read(sBuf,*) iSlcStartDD
 
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        read(sBuf,fmt=*) iANALYSIS_PERIOD
-        call chomp_delim(sBuf,sSlcEndMM,"/-")
-        sSlcEndDD = trim(sBuf)
+        call chomp(sBuf,sItem,"/-")
+        read(sItem,*) iSlcEndMM
+        read(sBuf,*) iSlcEndDD
+
+        print *, iSlcStartMM, iSlcStartDD
+        print *, iSlcEndMM, iSlcEndDD
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_MASK") then
       i = i + 1
@@ -775,7 +895,19 @@ implicit none
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
       pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", T_SGL_GRID )
-      ALLOCATE (pConfig%SSF_FILES(size(pConfig%BMASK)), STAT=iStat)
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
+        lMASKSSF = lTRUE
+        STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
+        iSWBStatsOutputType = iSTATS
+        i = i + 1
+        call GET_COMMAND_ARGUMENT(i,sBuf)
+        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", T_SGL_GRID )
+        i = i + 1
+        call GET_COMMAND_ARGUMENT(i,sBuf)
+        sSiteNumber = trim(sBuf)
+        i = i + 1
+        call GET_COMMAND_ARGUMENT(i,sBuf)
+        read(sBuf,*) iGridCellValue
     endif
 
     i = i + 1
@@ -833,6 +965,9 @@ implicit none
 
   if(lCUMULATIVE) sStatsDescription = trim(sStatsDescription) // "_" &
     //"CUMULATIVE"
+
+  if(lMASKSSF) sStatsDescription = trim(sStatsDescription) // "_" &
+    //trim(sSiteNumber)
 
   k = STAT_INFO(iVariableNumber)%iDailyOutput
   if(k==iNONE) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily"," **","",""
@@ -899,6 +1034,11 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
   pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
 
+  ! copy some key information into the grid data structure
+  pGrd%iDataType =iDataType              ! Type of the grid
+  pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
+  pGrd%iLengthUnits = iLengthUnits       ! length units code
+
   rPad = -9999_T_SGL
 
   write(LU_LOG, &
@@ -923,6 +1063,11 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     write(sDateTxt,fmt="(i2.2,'/',i2.2,'/',i4.4)") &
       iCurrMM, iCurrDD, iCurrYYYY
+
+    ! this logical allows us to output results for a season or period each year
+    lPRINT = (iCurrMM > iSlcStartMM .and. iCurrMM < iSlcEndMM) &
+             .or. (iCurrMM == iSlcStartMM .and. iCurrDD >= iSlcStartDD) &
+             .or. (iCurrMM == iSlcEndMM .and. iCurrDD <= iSlcEndDD)
 
     ! figure out whether the current date is the end of a month or year
     iCurrJD = julian_day ( iCurrYYYY, iCurrMM, iCurrDD )
@@ -954,11 +1099,13 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
+    ! keep track of how many days' worth of results are stored in the month grid
     if(STAT_INFO(iVariableNumber)%iMonthlyOutput /= iNONE) then
         pMonthGrd%rData = pMonthGrd%rData + pGrd%rData
         iMonthCount = iMonthCount + 1
     endif
 
+    ! keep track of how many days' worth of results are stored in the year grid
     if(STAT_INFO(iVariableNumber)%iAnnualOutput /= iNONE) then
         pYearGrd%rData = pYearGrd%rData + pGrd%rData
         iYearCount = iYearCount + 1
@@ -984,8 +1131,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       write(LU_STD_OUT, fmt="(a)") TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt)
     endif
 
-    if(STAT_INFO(iVariableNumber)%iDailyOutput==iGRID &
-       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) then
+    if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRID &
+       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
+       .and. lPRINT ) then
 
       write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1002,12 +1150,17 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     end if
 
+
     write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
+
     if(lBASINSTATS) call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
     if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+    if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
+       trim(sSiteNumber)//"   "//trim(sLabel)//"    23:59:59 ")
 
-    if(STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
-       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) then
+    if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
+       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
+       .and. lPRINT ) then
 
       write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'_',i2.2,'.png')") &
         TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1022,7 +1175,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     end if
 
 !------------------------- MONTHLY ANALYSIS
-    if(lMonthEnd) then
+    if(lMonthEnd .and. lPRINT) then
 
       if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
 
@@ -1123,7 +1276,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   !------------------------- YEARLY ANALYSIS
 
-    if(lYearEnd) then
+    if( lYearEnd .and. lPRINT ) then
 
       if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
