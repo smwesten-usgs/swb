@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, et_jensen_haise, which
+!>  calculates potential evapotranspiration by means of the Jensen-Haise (1963) method.
+
+
+!> @brief  Calculates potential evapotranspiration by means of the
+!>  Jensen-Haise (1963) method.
 module et_jensen_haise
 !!****h* SWB/et_jensen_haise
 ! NAME

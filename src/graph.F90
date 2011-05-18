@@ -1,19 +1,13 @@
+!> @file
+!> @brief  Contains a single module, \ref graph, which
+!>  creates plots through calls to the DISLIN library
+
+
+!> @brief  Creates plots through calls to the DISLIN library.
 module graph
-!!****h* SWB/graph
-! NAME
-!
-!   graph.f95 - Outputs gridded data to a graphics file.
-!
-! SYNOPSIS
-!   This module creates a DISLIN "3D Color Plot" given a gridded data
-!   set.  KML files may also be generated, allowing a time series of
-!   image files to be viewed sequentially with Google Earth.
-!
-!!***
 
 #ifdef GRAPHICS_SUPPORT
 
-!  use DISLIN
   use dislin
   use types
   implicit none

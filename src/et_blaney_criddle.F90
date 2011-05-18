@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, et_blaney_criddle, which
+!>  calculates potential evapotranspiration by means of the Blaney-Criddle (1950)
+!>  method, as modified by Jensen and others (1990).
+
+!> @brief  Calculates potential evapotranspiration by means of the
+!> Blaney-Criddle (1950) method, as modified by Jensen and others (1990).
 module et_blaney_criddle
 !!****h* SWB/et_blaney_criddle
 ! NAME

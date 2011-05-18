@@ -1,3 +1,8 @@
+!> @file
+!> @brief Contains a single module, @ref runoff_curve_number, which estimates runoff by
+!> means of the NRCS/SCS curve number method.
+
+!> @brief Updates runoff curve numbers and calculates runoff based on those curve numbers.
 module runoff_curve_number
 !!****h* SWB/runoff_curve_number
 ! NAME

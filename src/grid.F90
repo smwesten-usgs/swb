@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, swb_grid, which
+!>  provides support for gridded ASCII data file and data structure operations
+
+
+!> @brief  Provides support for input and output of gridded ASCII data,
+!> as well as for creation and destruction of grid data structures (defined types).
 module swb_grid
 !!****h* SWB/grid
 ! NAME

@@ -1,7 +1,8 @@
 !> @file
-!> @brief The routines in this file read SWB program options and
-!>    set program configuration flags
+!> @brief Contains a single module, @ref control, which reads program options from
+!> an SWB control file and sets program configuration flags
 
+!> @brief Reads program options from an SWB control file and sets program configuration flags.
 module control
 
   use types
@@ -20,7 +21,6 @@ module control
 !>
 !> @param[in]  sControlFile  Name of the control file to use for the current simulation.
 !> @retval NONE
-
 subroutine control_setModelOptions(sControlFile)
 
   ! [ARGUMENTS]

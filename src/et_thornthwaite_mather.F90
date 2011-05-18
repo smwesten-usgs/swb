@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, et_thornthwaite_mather, which
+!>  calculates potential evapotranspiration by means of the Thornthwaite-Mather (1955, 1957) method.
+
+
+!> @brief  Calculates potential evapotranspiration by means of the
+!> Thornthwaite-Mather (1955, 1957) method.
 module et_thornthwaite_mather
 !!****h* SWB/et_thornthwaite_mather
 ! NAME

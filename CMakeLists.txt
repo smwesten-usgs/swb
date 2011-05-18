@@ -16,6 +16,7 @@ set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.0")
 
 cmake_minimum_required(VERSION 2.6)
+set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26")
 
 #
 option (MAKEFILE_VERBOSE
@@ -31,6 +32,10 @@ set( CMAKE_BUILD_TYPE "Release" CACHE STRING
 # What Fortran compiler are we using?
 #------------------------------------------------------------------------
 get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+
+#------------------------------------------------------------------------
+# Enable or disable compilation TARGETS from the GUI
+#------------------------------------------------------------------------
 
 option (TARGET__SWB_EXECUTABLE
       "Compile the main SWB executable?" ON)
@@ -85,10 +90,6 @@ option (OPTION__DEBUG_PRINT
 if(OPTION__DEBUG_PRINT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
 endif()
-
-#math(EXPR TOTAL_T_STATS_VARS "(26 + ${STREAM_INTERACTIONS_VARS} + ${IRRIGATION_MODULE_VARS})")
-#set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "CPP_NUM_VARS=${TOTAL_T_STATS_VARS}")
-#message("Setting dimension for number of T_STATS elements to: " ${TOTAL_T_STATS_VARS})
 
 #------------------------------------------------------------------------
 # Set platform-specific options
@@ -346,6 +347,10 @@ elseif(CMAKE_HOST_UNIX)
 
    endif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
 
+else()
+
+  message(FATAL_ERROR "Windows 32/gfortran/MinGW or Linux-64/Intel environments were not detected!")   
+   
 endif()
 
 set ( CMAKE_Fortran_FLAGS_DEBUG ${Fortran_FLAGS_DEBUG})

@@ -1,3 +1,9 @@
+!> @file
+!> @brief  Contains a single module, @ref netcdf_support, which
+!>  provides support for use of NetCDF files as input or output.
+
+!> @brief Provides support for use of NetCDF files as input for time-varying,
+!>  gridded meteorlogic data, or output for any SWB-generated variable.
 module netcdf_support
 
 #ifdef NETCDF_SUPPORT

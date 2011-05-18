@@ -1,5 +1,4 @@
-!> @mainpage SWB - A Modified Thornthwaite-Mather soil-water-balance
-!>    Code for Estimating Groundwater Recharge
+!> @mainpage SWB - A Modified Thornthwaite-Mather Soil-Water-Balance Code for Estimating Groundwater Recharge
 !>
 !> The SWB model calculates recharge
 !> by use of commonly available geographic information system
@@ -43,6 +42,8 @@
 !>      example: iCount
 !>  - \b real: names begin with \em r \n
 !>      example: rValue
+!>  - \b double precision: names begin with \em dp \n
+!>      example: dpValue
 !>  - \b logical: names begin with \em l \n
 !>      example: lMatch
 !>  - \b character: names begin with \em s \n
@@ -59,10 +60,14 @@
 !>  - Parameters of derived type have prefix \em T_
 
 
-!> @brief Main control routine makes calls to functions in model.
+!> @file
+!> @brief  Main program which references all other modules; execution begins here.
+
+
+!> @brief  Main program which references all other modules; execution begins here.
 !>
-!> Program SWB accepts command-line arguments and makes a single call
-!> to the model_Run routine in module model.
+!> Accepts command-line arguments and makes a single call
+!> to the control_setModelOptions routine in module \ref control.
 program main
 
   use types

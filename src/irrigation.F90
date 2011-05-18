@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, \ref irrigation, which
+!>  provides support for estimating irrigation amounts
+
+!> @brief  Provides support for assessing the effect of irrigation on recharge
+!> values by estimating the irrigation required to maintain soil moisture levels
+!> for specific crop types.
 module irrigation
 
 #ifdef IRRIGATION_MODULE
@@ -8,10 +15,14 @@ module irrigation
   contains
 
 !> @brief This subroutine estimates the amount of water required
-!> to keep soil moisture values above the MAD for each landuse and soil type.
-!> If the mean soil moisture for a given landuse/soil type falls below the MAD,
-!> the routine assumes that irrigation is used to bring the soil up to
-!> field capacity.
+!> to keep soil moisture values above the maximum allowable depletion (MAD)
+!> for each landuse and soil type. If the mean soil moisture for a given
+!> landuse/soil type falls below the MAD, the routine assumes that irrigation
+!> is used to bring the soil up to field capacity.
+!> \note If the irrigation module is enabled, potential evapotranspiration is calculated
+!> differently: potential ET is considered reference ET (i.e. potential ET for grass),
+!> and is modified by means of crop coefficients. This calculation affects irrigated
+!> as well as non-irrigated landuses.
 subroutine update_irrigation_amounts(pGrd, pConfig)
 
   ! [ ARGUMENTS ]

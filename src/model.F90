@@ -1,29 +1,11 @@
 !> @file
-!> @brief Main program module - handles initialization and execution
-!>    of all process modules.
+!> @brief Contains a single module, @ref model, which keeps track of the model date and executes
+!>  necessary process modules.
 
-
-!> @brief Initializes and executes all process modules.
+!> @brief Allocates memory to store intermediate and final calculation results,
+!> keeps track of the model date, reads tabular climate data, and calls the
+!> necessary process modules in turn.
 module model
-!!****h* SWB/model
-! NAME
-!
-!   model.f95 - Main program module - Handles initialization and execution
-!               of process modules.
-!
-! SYNOPSIS
-!   Module model coordinates execution of all process modules that make up
-!   the SWB model. Initializes model configuration parameters, allocates memory to store
-!   intermediate calculation results, and handles execution of
-!   process modules.
-!
-! NOTES
-!   The first section of this code reads the model control file and
-!   sets model configuration parameters. Program control shifts to the
-!   model_Solve subroutine once the code encounters a SOLVE statement
-!   in the control file.
-!
-!!***
 
   use types
   use swb_grid
@@ -3268,7 +3250,7 @@ subroutine model_InitializeSM(pGrd, pConfig )
           call Assert(lFALSE,&
           "Failed to match landuse grid with landuse table during soil moisture initialization~" &
           //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
-          //"  cell LU: "//trim(int2char(cel%iLandUse)) )
+          //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=T_INT) ) ) )
         endif
       end do
     end do

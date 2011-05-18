@@ -1,7 +1,12 @@
-!> @brief User-defined types for the SWB code.
+!> @file
+!> @brief Contains a single module, @ref types, which contains types definitions
+!>  and general utility functions used by the SWB code.
+
+!> @brief Contains a single module, @ref types, which contains types definitions
+!>  and general utility functions used by the SWB code.
 !>
-!> This module defines parameters and project specific data types for the
-!> SWB model.  This module also contains a number of utility functions
+!> This module defines parameters and derived data types for use throughout
+!> the SWB code.  This module also contains a number of utility functions
 !> that perform string manipulations, convert Celcius to Fahrenheit, and
 !> convert between Julian days and Gregorian dates.
 module types
@@ -104,7 +109,8 @@ module types
   integer (kind=T_INT), parameter :: iNC_OBSERVATION = 3
 
 
-  !> Define ANSI.sys-like text colors
+  !> @name Constants: Definitions for ANSI.sys-like text colors
+  !> @{
   character (len=7), parameter :: sRED = char(27)//'[1;31m'
   character (len=7), parameter :: sGREEN =char(27)//'[1;32m'
   character (len=7), parameter :: sYELLOW = char(27)//'[1;33m'
@@ -113,7 +119,7 @@ module types
   character (len=7), parameter :: sWHITE = char(27)//'[0;37m'
   character (len=7), parameter :: sBOLDWHITE = char(27)//'[1;37m'
   character (len=7), parameter :: sCLRSCR = char(27)//'[2J'
-
+  !> @}
 
 
 !> @brief Type that contains the data for an individual grid cell.
@@ -216,6 +222,9 @@ module types
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
 
+!> @brief Type that contains pointers to one or more grid data structures.
+!>
+!> Type that contains pointers to one or more grid data structures.
   type T_GRID_COLLECTION
     type (T_GENERAL_GRID), dimension(:), pointer :: Grids
   end type T_GRID_COLLECTION
@@ -223,33 +232,66 @@ module types
 
   !> @brief Container for land-use related data
   !>
-  !> Includes curve number and rooting-depth generalizations
+  !> Container for land-use related data. Includes curve number
+  !> and rooting-depth generalizations.
   type T_LANDUSE_LOOKUP
-	integer (kind=T_INT) :: iLandUseType ! land use code corresponding to
-	                                     ! the codes specified in land use grid
-   character (len=256) :: sLandUseDescription  ! land use description
-	character (len=256) :: sAssumedPercentImperviousness  ! assumed % imperviousness
-	real (kind=T_SGL) :: rIntercept_GrowingSeason  ! Interception value during growing season
-	real (kind=T_SGL) :: rIntercept_NonGrowingSeason  ! Interception value outside of growing season
-	logical (kind=T_LOGICAL) :: lCONSTANT_ROOT_ZONE_DEPTH
+    !> Land use type; values are expected to correspond to those provided
+    !> by the user in the input landuse grid.
+	integer (kind=T_INT) :: iLandUseType
+    !> Land use description
+    character (len=256) :: sLandUseDescription
+    !> Assumed percent imperviousness (not used in any calculations)
+	character (len=256) :: sAssumedPercentImperviousness
+    !> Interception value (inches per day) during growing season
+	real (kind=T_SGL) :: rIntercept_GrowingSeason
+    !> Interception value (inches per day) outside of growing season
+	real (kind=T_SGL) :: rIntercept_NonGrowingSeason
+!	logical (kind=T_LOGICAL) :: lCONSTANT_ROOT_ZONE_DEPTH
 !    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rX_ROOT_ZONE
 !    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rY_ROOT_ZONE
   end type T_LANDUSE_LOOKUP
 
 #ifdef IRRIGATION_MODULE
+
+  !> @brief Type that contains information needed to calculate irrigation for
+  !> each land use.
+  !>
+  !> Type that contains information needed to estimate crop coefficients and
+  !> calculate irrigation for each land use.
   type T_IRRIGATION_LOOKUP
- 	 integer (kind=T_INT) :: iLandUseType ! land use code corresponding to
-	                                     ! the codes specified in land use grid
-    real (kind=T_SGL) :: rKc_Max        = 1.3   ! Maximum crop coefficient
-    real (kind=T_SGL) :: rK0            = 0.2   ! Crop coefficient for first phenological stage
-    real (kind=T_SGL) :: rGDD_Kc_Max = 1400  ! GDD corresponding to Kc_Max
-    real (kind=T_SGL) :: rGDD_Death  = 2000  ! GDD corresponding to plant death (alpha0)
+
+    !> Landuse code corresponding to the codes specified in landuse grid
+ 	integer (kind=T_INT) :: iLandUseType
+
+    !> Maximum crop coefficient
+    real (kind=T_SGL) :: rKc_Max        = 1.3
+
+    !> Crop coefficient for first phenological stage
+    real (kind=T_SGL) :: rK0            = 0.2
+
+    !> GDD corresponding to Kc_Max
+    real (kind=T_SGL) :: rGDD_Kc_Max = 1400
+
+    !> GDD corresponding to plant death (alpha0)
+    real (kind=T_SGL) :: rGDD_Death  = 2000
+
+    !> Spread of error function around GDD_Kc_MAx
+    !> range 0-1; 0 ~= Dirac delta; 1 ~= maximum spread
     real (kind=T_SGL) :: rAlpha1        = 0.65  ! range 0-1; spread of error function around GDD_Kc_MAx
                                                ! 0 ~= Dirac delta; 1 ~= maximum spread
-    real (kind=T_SGL) :: rGDD_BaseTemp  = 50.   ! for corn, 10 degrees C and 30 degrees C
+    !> Growing degree-day base temperature (10 degrees C for corn)
+    real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
+
+    !> Growing degree-day maximum temperature (cutoff; 30 degrees C for corn)
     real (kind=T_SGL) :: rGDD_MaxTemp   = 130.
-    real (kind=T_SGL) :: rMAD           = 100.   ! MAD = maximum allowed water depletion (percent)
+
+    ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (in percent)
+    real (kind=T_SGL) :: rMAD           = 100.
+
+    !> Day of year before which no irrigation is assumed to take place
     integer (kind=T_INT) :: iBeginIrrigation = 120
+
+    !> Day of year after which no irrigation is assumed to take place
     integer (kind=T_INT) :: iEndIrrigation = 240
   end type T_IRRIGATION_LOOKUP
 #endif

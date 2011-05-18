@@ -1,14 +1,17 @@
+!> @file
+!> @brief Contains a single module, @ref swb_stats, which calculates
+!> daily, monthly, and annual statistics for an SWB model run.
+
 !> @brief Calculates daily, monthly, and annual statistics
 !>    for an SWB model run.
 !>
-!> Calculates daily, monthly, and annual statistics
+!> @par Calculates daily, monthly, and annual statistics
 !> for an SWB model run. Also contains routines to:
 !> - Extract data from a compressed binary file in order
 !> to output grids or plots
 !> - Write to a PEST *.ssf file
 !> - Calculate statistics for a subset of the model domain (i.e. catchment, county)
 !> - Write daily, annual, and mass balance reports
-
 module swb_stats
 
   use types

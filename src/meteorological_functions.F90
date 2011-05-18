@@ -1,14 +1,16 @@
+!> @file
+!> @brief  Contains a single module, @ref meteorological_functions, which
+!>  provides support functions used by evapotranspiration and snow routines.
+
+!> @brief  Provides support functions used by evapotranspiration and snow routines.
+!> @note  Many of the routines included here are based on equations given in
+!>   the following reference:
+!> @par
+!>   Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
+!>    "Crop Evapotranspiration (Guidelines for computing crop water
+!>    requirements)", Food and Agriculture Organization, Rome, Italy.
+
 module meteorological_functions
-!!****h* SWB/meteorological_functions
-! NAME
-!   meteorological_functions.f95 - Support functions for any of the
-!   evapotranspiration calculation methods.
-!
-! SYNOPSIS
-!   This module calculates provides support functions for any of the
-!   evapotranspiration calculation methods.
-!
-! NOTES
 !
 !   Many of the routines included here are based on equations given in
 !   the following reference:
@@ -49,14 +51,14 @@ contains
 ! SOURCE
 
 
+!!  The distance between \f$(x_1,y_1)\f$ and \f$(x_2,y_2)\f$ is
+!!  \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
+
 
 !> @brief Calculates the number of daylight hours at a location.
 !>
 !> @param  rOmega_s The sunset hour angle in Radians.
 !> @return rN The number of daylight hours.
-!> @par
-!> The distance between \f$(x_1,y_1)\f$ and \f$(x_2,y_2)\f$ is
-!> \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
 !>
 !> @note Implemented as equation 34, Allen and others (2006).
 !> @par
