@@ -2,8 +2,7 @@
 !> @brief Contains a single module, @ref types, which contains types definitions
 !>  and general utility functions used by the SWB code.
 
-!> @brief Contains a single module, @ref types, which contains types definitions
-!>  and general utility functions used by the SWB code.
+!> @brief Contains types definitions and general utility functions used by the SWB code.
 !>
 !> This module defines parameters and derived data types for use throughout
 !> the SWB code.  This module also contains a number of utility functions

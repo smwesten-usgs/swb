@@ -8,7 +8,9 @@ message("Processing top-level CMakelists.txt for project swb")
 #------------------------------------------------------------------------
 # Set basic project settings
 #------------------------------------------------------------------------
-project(swb Fortran)
+project (swb)
+enable_language (Fortran)
+
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
 set(PACKAGE_STRING "swb 1.0")
@@ -16,7 +18,7 @@ set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.0")
 
 cmake_minimum_required(VERSION 2.6)
-set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26")
+set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26;c:/Program Files (x86)")
 
 #
 option (MAKEFILE_VERBOSE
@@ -98,118 +100,8 @@ if(CMAKE_HOST_WIN32)
 
    if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
 
-
-   set(CMAKE_MAKE_PROGRAM "c:/gfortran_32/bin/make.exe")
-   set(CMAKE_LINKER "c:/gfortran_32/bin/ld.exe")
-   set(CMAKE_AR "c:/gfortran_32/bin/ar.exe")
-     #------------------------------------------------------------------------
-     # Set compilation and link preferences for GFORTRAN
-     #------------------------------------------------------------------------
-#     set (Fortran_FLAGS_RELEASE "-Ofast -ffree-form -ffree-line-length-none -cpp")
-
-     set (Fortran_FLAGS_RELEASE " -Ofast -ffree-line-length-none -static-libgfortran -static -static-libgcc")
-
-#     set (Fortran_FLAGS_DEBUG " -O0 -g -Wall -ffpe-trap=invalid,underflow,overflow,zero -ffree-form -ffree-line-length-none -cpp -fbacktrace -static-libgfortran -static -static-libgcc")
-     set (Fortran_FLAGS_DEBUG " -O0 -g -Wall -fbounds-check -frange-check -ffpe-trap=zero -ffree-form -ffree-line-length-none -cpp -fbacktrace -static-libgfortran -static -static-libgcc")
-
-     set(CMAKE_EXE_LINKER_FLAGS "")
-
-
-     set(CMAKE_FIND_LIBRARY_PREFIXES lib)
-     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a; .so")
-
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
-
-#     set (CMAKE_PREFIX_PATH "C:/gfortran_32")
-
-#     find_program(CMAKE_MAKE_PROGRAM make make.exe
-#       DOC "Find a suitable make program for building under Windows/MinGW"
-#       PATHS
-#       C:/gfortran_32/bin
-#       C:/MinGW/bin
-#       D:/MinGW/bin
-#       NO_DEFAULT_PATH)
-##       NO_SYSTEM_ENVIRONMENT_PATH)
-      message("CMAKE_MAKE_PROGRAM: " ${CMAKE_MAKE_PROGRAM})
-
-#     find_program(CMAKE_LINKER ld.exe ld
-#       DOC "Find a suitable linker for building under Windows/MinGW"
-#       HINTS
-#       C:/gfortran_32/bin)
-      message("CMAKE_LINKER: " ${CMAKE_LINKER})
-
-#     find_program(CMAKE_AR ar.exe ar
-#       DOC "Find a suitable archiving program for building under Windows/MinGW"
-#       HINTS
-#       C:/gfortran_32/bin )
-      message("CMAKE_AR: " ${CMAKE_AR})
-
-     find_program(CMAKE_SH sh cmd.exe
-       DOC "Find a suitable shell for building under Windows/MinGW"
-       HINTS
-       C:/Windows/System32)
-      message("CMAKE_SH: " ${CMAKE_SH})
-
-     find_path(INCLUDE_DIR netcdf.mod NETCDF.mod
-       DOC "Include directory (must contain netcdf.mod)"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/include/win32/gfortran_mingw
-       PATH_SUFFIXES
-       include/win32/gfortran_mingw)
-      message("Using include directory: " ${INCLUDE_DIR})
-
-     find_library(NETCDF_FORTRAN_LIB
-       NAMES libnetcdf.a netcdf NETCDF
-       DOC "NetCDF Fortran library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/win32/gfortran_mingw
-       PATH_SUFFIXES
-       lib/win32/gfortran_mingw)
-
-     find_library(DISLIN_FORTRAN_LIB
-       NAMES disgf.a
-       DOC "DISLIN Fortran library"
-       HINTS
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/win32/gfortran_mingw
-       PATH_SUFFIXES
-       lib/win32/gfortran_mingw)
-
-     find_library(GCC_LIB
-       NAMES libgcc.a gcc
-       DOC "GCC library"
-       HINTS
-       C:/gfortran_32/lib/gcc/i686-pc-mingw32/4.6.0 )
-
-     find_library(GFORTRAN_LIB
-       NAMES gfortran libgfortran.a
-       DOC "GFORTRAN library"
-       HINTS
-       C:/gfortran_32/lib )
-
-      find_library(USER32_LIB
-        NAMES user32 libuser32.a
-        DOC "MinGW USER32 library"
-        HINTS
-        C:/gfortran_32/lib )
-
-      find_library(GDI32_LIB
-        NAMES gdi32 libgdi32.a
-        DOC "MinGW GDI32 library"
-        HINTS
-        C:/gfortran_32/lib )
-
-      find_library(OPENGL32_LIB
-        NAMES opengl32 libopengl32.a
-        DOC "MinGW OPENGL32 library"
-        HINTS
-        C:/gfortran_32/lib )
-
-      find_library(GLU32_LIB
-        NAMES glu32 libglu32.a
-        DOC "MinGW GLU32 library"
-        HINTS
-        C:/gfortran_32/lib )
 
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
@@ -349,23 +241,23 @@ elseif(CMAKE_HOST_UNIX)
 
 else()
 
-  message(FATAL_ERROR "Windows 32/gfortran/MinGW or Linux-64/Intel environments were not detected!")   
-   
+  message(FATAL_ERROR "Windows 32/gfortran/MinGW or Linux-64/Intel environments were not detected!")
+
 endif()
 
-set ( CMAKE_Fortran_FLAGS_DEBUG ${Fortran_FLAGS_DEBUG})
-set ( CMAKE_Fortran_FLAGS_RELEASE ${Fortran_FLAGS_RELEASE})
+#set ( CMAKE_Fortran_FLAGS_DEBUG ${Fortran_FLAGS_DEBUG})
+#set ( CMAKE_Fortran_FLAGS_RELEASE ${Fortran_FLAGS_RELEASE})
 
-if( CMAKE_BUILD_TYPE STREQUAL "Debug")
-#  add_definitions(${Fortran_FLAGS_DEBUG})
-else()
-  set(CMAKE_BUILD_TYPE "Release")
-#  add_definitions(${Fortran_FLAGS_RELEASE})
-endif()
+#if( CMAKE_BUILD_TYPE STREQUAL "Debug")
+##  add_definitions(${Fortran_FLAGS_DEBUG})
+#else()
+#  set(CMAKE_BUILD_TYPE "Release")
+##  add_definitions(${Fortran_FLAGS_RELEASE})
+#endif()
 
-include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
+#include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
 #set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
-link_libraries( ${EXTRA_LIBS} )
+#link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
