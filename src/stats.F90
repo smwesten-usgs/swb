@@ -712,7 +712,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
                   - rDaily(iSUM,iACT_ET) &
 #ifdef STREAM_INTERACTIONS
-                  - rDaily(iSUM,iSTREAM_CAPTURE)
+                  - rDaily(iSUM,iSTREAM_CAPTURE) &
 #endif
                   - rDaily(iSUM,iRECHARGE)
 

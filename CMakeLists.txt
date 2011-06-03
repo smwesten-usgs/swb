@@ -100,8 +100,27 @@ if(CMAKE_HOST_WIN32)
 
    if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
 
+     message(" <-- setting options for gfortran on MinGW (32-bit) -->")
+
+     set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none")
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none")
+
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
+
+     set (MINGW_BASE_DIR "c:/MinGW-32" CACHE FILEPATH "Path to base MinGW install")
+     set (CMAKE_MAKE_PROGRAM ${MINGW_BIN_DIR}/bin/make.exe CACHE FILEPATH "MinGW make executable")
+
+     set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/libnetcdf.a
+       CACHE FILEPATH "Location of NetCDF library")
+     set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/disgf.a )
+
+     set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)
+     set(USER32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libuser32.a)
+     set(GDI32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libgdi32.a)
+     set(OPENGL32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libopengl32.a)
+
+     set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/gfortran_mingw )
 
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
@@ -112,11 +131,11 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GLU32_LIB} )
 
-     SET(CMAKE_INSTALL_PREFIX "d:/dos")
+     SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
 
-     add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe D:/dos/swb.exe
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe D:/dos/swbread.exe
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe D:/dos/swbstats.exe )
+     add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe
+           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe )
 
      add_custom_target(makelib
          ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${NETCDF_FORTRAN_LIB}
@@ -140,8 +159,8 @@ elseif(CMAKE_HOST_UNIX)
      #------------------------------------------------------------------------
      # Set compilation and link preferences for Intel Fortran on Linux
      #------------------------------------------------------------------------
-     set (Fortran_FLAGS_RELEASE "-fast -fPIC")
-     set (Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all -fPIC")
+     set (CMAKE_Fortran_FLAGS_RELEASE "-fast -fPIC")
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all -fPIC")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
 #     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" "")
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" "")
@@ -255,8 +274,8 @@ endif()
 ##  add_definitions(${Fortran_FLAGS_RELEASE})
 #endif()
 
-#include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
-#set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
+include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
+set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
 #link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
@@ -265,8 +284,6 @@ message("--------------------------------------------------------------------")
 message("   Summary of CMAKE environment variables")
 message("--------------------------------------------------------------------")
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
-message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
 message("CMAKE_AR: " ${CMAKE_AR})
 message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
@@ -278,6 +295,10 @@ message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
+message( " ")
+message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
+message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
+message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("--------------------------------------------------------------------")
 
 add_subdirectory(src)
