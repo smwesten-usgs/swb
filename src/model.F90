@@ -2701,7 +2701,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
      "Error reading first line of landuse lookup table" )
 
   ! read landuse file to obtain expected number of landuse types
-  call chomp(sRecord, sItem , sTAB )
+  call chomp(sRecord, sItem , sWHITESPACE )
 !  call chomp_tab( sRecord, sItem )
   if ( str_compare(sItem,"NUM_LANDUSE_TYPES") ) then
     call chomp_tab( sRecord, sItem )
@@ -2719,7 +2719,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
      "Error reading second line of landuse lookup table" )
 
   ! read landuse file to obtain expected number of soil types
-  call chomp_tab( sRecord, sItem )
+  call chomp(sRecord, sItem , sWHITESPACE )
   call Uppercase( sItem )
   if ( sItem == "NUM_SOIL_TYPES" ) then
     call chomp_tab( sRecord, sItem )
@@ -2784,16 +2784,16 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "Reading landuse record number ",iRecNum, " of ",iNumLandUses
     write(UNIT=LU_LOG,FMT=*) ""
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem , sWHITESPACE )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%iLandUseType
     call Assert( iStat == 0, "Error reading land use type in landuse lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  landuse type = ",pConfig%LU(iRecNum)%iLandUseType
 
-    call chomp( sRecord, pConfig%LU(iRecNum)%sLandUseDescription, sTAB )
+    call chomp( sRecord, pConfig%LU(iRecNum)%sLandUseDescription, sWHITESPACE )
     write(UNIT=LU_LOG,FMT=*)  "  landuse description = ", &
       TRIM(pConfig%LU(iRecNum)%sLandUseDescription)
 
-    call chomp( sRecord, pConfig%LU(iRecNum)%sAssumedPercentImperviousness, sTAB )
+    call chomp( sRecord, pConfig%LU(iRecNum)%sAssumedPercentImperviousness, sWHITESPACE )
     write(UNIT=LU_LOG,FMT=*)  "  assumed % imperviousness = ", &
       TRIM(pConfig%LU(iRecNum)%sAssumedPercentImperviousness)
 
@@ -2813,12 +2813,12 @@ subroutine model_ReadLanduseLookupTable( pConfig )
       write(UNIT=LU_LOG,FMT=*)  "  MAXIMUM RECHARGE for soil group",i,": ",pConfig%MAX_RECHARGE(iRecNum,i)
     end do
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem , sWHITESPACE )
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason
     call Assert( iStat == 0, "Error reading interception values in landuse file" )
     write(UNIT=LU_LOG,FMT=*)  "  Interception value for growing season = ",pConfig%LU(iRecNum)%rIntercept_GrowingSeason
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem , sWHITESPACE )
    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason
     call Assert( iStat == 0, "Error reading interception values in landuse file" )
     write(UNIT=LU_LOG,FMT=*)  "  Interception value for non-growing season = ", &
@@ -2826,7 +2826,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
 
     ! now read in a rooting depth for each landuse/soil type combination
     do i=1,iNumSoilTypes
-      call chomp_tab( sRecord, sItem )
+      call chomp(sRecord, sItem , sWHITESPACE )
       read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%ROOTING_DEPTH(iRecNum,i)
       call Assert( iStat == 0, &
         "Error reading rooting depth for soil group in landuse lookup table" )

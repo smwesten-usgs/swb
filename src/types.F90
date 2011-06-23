@@ -89,6 +89,7 @@ module types
   integer(kind=T_INT), parameter :: iEOF = HUGE(iZERO)
   real (kind=T_SGL), parameter :: rBIGVAL = 1.0e20_T_SGL
   character (len=1), parameter :: sTAB = achar(9)
+  character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
   character (len=1), parameter :: sFORWARDSLASH = achar(47)
   !> @}
