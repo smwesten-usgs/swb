@@ -2701,10 +2701,10 @@ subroutine model_ReadLanduseLookupTable( pConfig )
      "Error reading first line of landuse lookup table" )
 
   ! read landuse file to obtain expected number of landuse types
-  call chomp(sRecord, sItem , sWHITESPACE )
+  call chomp(sRecord, sItem , sTAB )
 !  call chomp_tab( sRecord, sItem )
   if ( str_compare(sItem,"NUM_LANDUSE_TYPES") ) then
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem , sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
     call Assert( iStat == 0, "Failed to read number of landuse types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumLandUses,"landuse types within lookup table"
@@ -2719,10 +2719,10 @@ subroutine model_ReadLanduseLookupTable( pConfig )
      "Error reading second line of landuse lookup table" )
 
   ! read landuse file to obtain expected number of soil types
-  call chomp(sRecord, sItem , sWHITESPACE )
+  call chomp(sRecord, sItem , sTAB )
   call Uppercase( sItem )
   if ( sItem == "NUM_SOIL_TYPES" ) then
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem , sTAB )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumSoilTypes
     call Assert( iStat == 0, "Failed to read number of soil types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumSoilTypes,"soil types within lookup table"
@@ -2784,41 +2784,41 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "Reading landuse record number ",iRecNum, " of ",iNumLandUses
     write(UNIT=LU_LOG,FMT=*) ""
 
-    call chomp(sRecord, sItem , sWHITESPACE )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%iLandUseType
     call Assert( iStat == 0, "Error reading land use type in landuse lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  landuse type = ",pConfig%LU(iRecNum)%iLandUseType
 
-    call chomp( sRecord, pConfig%LU(iRecNum)%sLandUseDescription, sWHITESPACE )
+    call chomp( sRecord, pConfig%LU(iRecNum)%sLandUseDescription, sTAB)
     write(UNIT=LU_LOG,FMT=*)  "  landuse description = ", &
       TRIM(pConfig%LU(iRecNum)%sLandUseDescription)
 
-    call chomp( sRecord, pConfig%LU(iRecNum)%sAssumedPercentImperviousness, sWHITESPACE )
+    call chomp( sRecord, pConfig%LU(iRecNum)%sAssumedPercentImperviousness, sTAB)
     write(UNIT=LU_LOG,FMT=*)  "  assumed % imperviousness = ", &
       TRIM(pConfig%LU(iRecNum)%sAssumedPercentImperviousness)
 
     do i=1,iNumSoilTypes
-      call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
       read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%CN(iRecNum,i)
       call Assert( iStat == 0, &
-        "Error reading curve number for soil group in landuse lookup table" )
+        "Error reading curve number for soil group "//trim(int2char(i))//" in landuse lookup table" )
       write(UNIT=LU_LOG,FMT=*)  "  curve number for soil group",i,": ",pConfig%CN(iRecNum,i)
     end do
 
     do i=1,iNumSoilTypes
-      call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
       read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%MAX_RECHARGE(iRecNum,i)
       call Assert( iStat == 0, &
-        "Error reading maximum recharge for soil group in landuse lookup table" )
+        "Error reading maximum recharge for soil group "//trim(int2char(i))//" in landuse lookup table" )
       write(UNIT=LU_LOG,FMT=*)  "  MAXIMUM RECHARGE for soil group",i,": ",pConfig%MAX_RECHARGE(iRecNum,i)
     end do
 
-    call chomp(sRecord, sItem , sWHITESPACE )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason
     call Assert( iStat == 0, "Error reading interception values in landuse file" )
     write(UNIT=LU_LOG,FMT=*)  "  Interception value for growing season = ",pConfig%LU(iRecNum)%rIntercept_GrowingSeason
 
-    call chomp(sRecord, sItem , sWHITESPACE )
+    call chomp(sRecord, sItem, sTAB)
    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason
     call Assert( iStat == 0, "Error reading interception values in landuse file" )
     write(UNIT=LU_LOG,FMT=*)  "  Interception value for non-growing season = ", &
@@ -2826,39 +2826,12 @@ subroutine model_ReadLanduseLookupTable( pConfig )
 
     ! now read in a rooting depth for each landuse/soil type combination
     do i=1,iNumSoilTypes
-      call chomp(sRecord, sItem , sWHITESPACE )
+      call chomp(sRecord, sItem, sTAB)
       read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%ROOTING_DEPTH(iRecNum,i)
       call Assert( iStat == 0, &
-        "Error reading rooting depth for soil group in landuse lookup table" )
+        "Error reading rooting depth for soil group "//trim(int2char(i))//" in landuse lookup table" )
       write(UNIT=LU_LOG,FMT=*)  "  ROOTING DEPTH for soil group",i,": ",pConfig%ROOTING_DEPTH(iRecNum,i)
     end do
-
-!    call chomp_tab( sRecord, sItem )
-!    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%lCONSTANT_ROOT_ZONE_DEPTH
-!    call Assert( iStat == 0, "Error reading root-zone depth constant in landuse file" )
-!    write(UNIT=LU_LOG,FMT=*)  "  Root zone treated as a constant value?  ", &
-!        pConfig%LU(iRecNum)%lCONSTANT_ROOT_ZONE_DEPTH
-
-!    do i=1,iNUM_ROOT_ZONE_PAIRS
-!
-!      call chomp_tab( sRecord, sItem )
-!      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rX_ROOT_ZONE(i)
-!      call Assert( iStat == 0, &
-!       "Error reading root zone X value number in landuse file" )
-!      write(UNIT=LU_LOG,FMT=*)  "    Root zone available water capacity (in/ft): X(",i,") = ", &
-!          pConfig%LU(iRecNum)%rX_ROOT_ZONE(i)
-!
-!    end do
-!
-!    do i=1,iNUM_ROOT_ZONE_PAIRS
-!
-!      call chomp_tab( sRecord, sItem )
-!      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rY_ROOT_ZONE(i)
-!      call Assert( iStat == 0, "Error reading root zone Y values in landuse file" )
-!      write(UNIT=LU_LOG,FMT=*)  "    Root zone root zone depth (ft):             Y(",i,") = ", &
-!          pConfig%LU(iRecNum)%rY_ROOT_ZONE(i)
-!
-!    end do
 
     iRecNum = iRecNum + 1
 
@@ -2902,10 +2875,10 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
      "Error reading first line of irrigation lookup table" )
 
   ! read landuse file to obtain expected number of landuse types
-  call chomp( sRecord, sItem, sTAB )
+  call chomp(sRecord, sItem, sTAB)
   call Uppercase( sItem )
   if ( sItem == "NUM_LANDUSE_TYPES" ) then
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
     call Assert( iStat == 0, "Failed to read number of landuse types" )
     call Assert(iNumLandUses == size(pConfig%IRRIGATION), &
@@ -2945,7 +2918,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
     write(UNIT=LU_LOG,FMT=*) ""
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
     call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
     call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
@@ -2953,68 +2926,68 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
         trim(__FILE__), __LINE__)
     pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKc_Max
     call Assert( iStat == 0, &
       "Error reading maximum crop coefficient in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  maximum crop coefficient ", &
         pConfig%IRRIGATION(iRecNum)%rKc_Max
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rK0
     call Assert( iStat == 0, &
       "Error reading first phenological stage crop coefficient in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   first phenological stage crop coefficient ", &
         pConfig%IRRIGATION(iRecNum)%rK0
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rAlpha1
     call Assert( iStat == 0, &
       "Error reading shape coefficient (Alpha1) in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   shape coefficient (Alpha1) ", &
         pConfig%IRRIGATION(iRecNum)%rAlpha1
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
     call Assert( iStat == 0, &
       "Error reading GDD associated with max crop coefficient in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD associated with max crop coefficient ", &
         pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Death
     call Assert( iStat == 0, &
       "Error reading GDD associated with plant death in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD associated with plant death ", &
         pConfig%IRRIGATION(iRecNum)%rGDD_Death
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
     call Assert( iStat == 0, &
       "Error reading GDD base temperature in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
         pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
     call Assert( iStat == 0, &
       "Error reading GDD max temperature in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
         pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rMAD
     call Assert( iStat == 0, &
       "Error reading management allowable deficit (MAD) in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
         pConfig%IRRIGATION(iRecNum)%rMAD
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     pConfig%IRRIGATION(iRecNum)%iBeginIrrigation = mmddyyyy2doy(sItem)
     write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
         pConfig%IRRIGATION(iRecNum)%iBeginIrrigation
 
-    call chomp_tab( sRecord, sItem )
+    call chomp(sRecord, sItem, sTAB)
     pConfig%IRRIGATION(iRecNum)%iEndIrrigation = mmddyyyy2doy(sItem)
     write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
         pConfig%IRRIGATION(iRecNum)%iEndIrrigation

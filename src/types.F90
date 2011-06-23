@@ -1265,10 +1265,8 @@ subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
     sItem = trim(sRecord)   ! no delimiters found; return entirety of sRecord
     sRecord = ""            ! as sItem
   else
-    ! find *next* occurance of *NON*-delimiter (needed to skip over multiple delimiters)
-    iB = verify(string = sRecord(max(iR,1):iLen), set = sDelimiters)
     sItem = trim(sRecord(1:iR-1))
-    sRecord = trim(sRecord(iR+iB-1:))
+    sRecord = trim( adjustl(sRecord(iR+1:)) )
   end if
 
 #ifdef DEBUG_PRINT
@@ -1293,7 +1291,6 @@ subroutine Chomp_default_sub(sRecord, sItem)
   integer (kind=T_INT) :: iR                      ! Index in sRecord
   integer (kind=T_INT) :: iB                      !
   integer (kind=T_INT) :: iLen
-  character (len=2) :: sDefaultDelimiters = " "//sTAB
 
 #ifdef DEBUG_PRINT
   write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
@@ -1303,16 +1300,15 @@ subroutine Chomp_default_sub(sRecord, sItem)
   ! eliminate any leading spaces
   sRecord = adjustl(sRecord)
   ! find the end position of 'sRecord'
-  iLen = len_trim(sRecord)
+!  iLen = len_trim(sRecord)
 
   ! find the POSITION of the first delimiter found
-  iR = SCAN(trim(sRecord),sDefaultDelimiters)
+  iR = SCAN(trim(sRecord),sWHITESPACE)
 
   if(iR==0) then
     sItem = trim(sRecord)   ! no delimiters found; return entirety of sRecord
     sRecord = ""            ! as sItem
   else
-!    iB = verify(string = sRecord(max(iR,1):iLen), set = sDefaultDelimiters)
     sItem = trim(adjustl(sRecord(1:iR-1)))
     sRecord = trim(adjustl(sRecord(iR+1:)))
   end if
