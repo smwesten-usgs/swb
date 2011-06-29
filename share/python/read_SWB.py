@@ -84,7 +84,7 @@ def makePlot(rPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt):
 
 
 
-ifp = open('_RECHARGE.bin','rb')
+ifp = open('swb_CFGI.bin','rb')
 
 # read in HEADER values from Fortran binary file
 iNX = np.fromfile(ifp,dtype='i',count=1)
@@ -115,25 +115,29 @@ print "End Date:         {0}/{1}/{2}".format(iEndMM,iEndDD,iEndYYYY)
 
 iNumElements = iNX * iNY
 
-iEndDate = date(1989, 02, 28)
+iEndDate = date(2100, 02, 28)
 
 while True:
     iDD, iMM, iYYYY, iDOY = np.fromfile(ifp,dtype='i',count=4)
 
     iCurrDate = date(iYYYY, iMM, iDD)
     
-    print "current date: {0}/{1}/{2}    day of year = {3}".format(iMM,iDD,iYYYY,iDOY)
     fileprefix = str(iYYYY)+"_"+str(iMM)+"_"+str(iDD)
-    
+    sTitleTxt = "current date: {0}/{1}/{2}    day of year = {3}".format(iMM,iDD,iYYYY,iDOY)
     rValues = readSWBbinary(ifp)    
     npPlotVals = np.flipud(rValues.reshape(iNY,iNX,order='C'))
-    makePlot(npPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt)
+    print "current date: {0}/{1}/{2} day of year = {3}; min = {4}  mean = {5} max= {6}".format(iMM,iDD,iYYYY,iDOY, 
+                                                                                               npPlotVals.min(), 
+                                                                                               npPlotVals.mean(), 
+                                                                                               npPlotVals.max())
+    
+#    makePlot(npPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt)
 
-    filename = fileprefix + '.asc'
-    ofp = open(filename,'w')    
-    writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npPlotVals)
-    ofp.close()    
-    ofp = file(filename,'a')    
+#    filename = fileprefix + '.asc'
+#    ofp = open(filename,'w')    
+#    writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npPlotVals)
+#    ofp.close()    
+#    ofp = file(filename,'a')    
             
     if iCurrDate >= iEndDate:
         break
