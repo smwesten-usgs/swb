@@ -423,6 +423,13 @@ end function netcdf_open
   call netcdf_check(nf90_get_var(pNC%iNCID, iYDim, rYCoord ), &
     TRIM(__FILE__),__LINE__)
 
+  do i=1,size(pNC%rXCoord)
+    print *, "X: ", i, pNC%rXCoord
+  enddo
+
+  do i=1,size(pNC%rYCoord)
+    print *, "Y: ",i, pNC%rYCoord
+  enddo
 
   write(unit=LU_LOG,FMT="(/,a)") 'Grid point coordinates'
   write(unit=LU_LOG,FMT="('min X: ', f14.3,'  max X: ',f14.3)") &
