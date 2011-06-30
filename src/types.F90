@@ -87,7 +87,7 @@ module types
   logical (kind=T_LOGICAL), parameter :: lTRUE = .true._T_LOGICAL
   logical (kind=T_LOGICAL), parameter :: lFALSE = .false._T_LOGICAL
   integer(kind=T_INT), parameter :: iEOF = HUGE(iZERO)
-  real (kind=T_SGL), parameter :: rBIGVAL = 1.0e20_T_SGL
+  real (kind=T_SGL), parameter :: rBIGVAL = HUGE(rZERO)
   character (len=1), parameter :: sTAB = achar(9)
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
@@ -730,8 +730,9 @@ module types
       real (kind=T_SGL) :: rRainfall_Corr_Factor = 1.0
       real (kind=T_SGL) :: rSnowFall_SWE_Corr_Factor = 1.0
 
-      ! minimum value for valid precip data
+      ! minimum value for valid precip  and temperature data
       real (kind=T_SGL) :: rMinValidPrecip = -99999.0
+      real (kind=T_SGL) :: rMinValidTemp = -99999.0      
 
       ! define temperature values at which precip is all rain or all snow
       real (kind=T_SGL) :: rTMaxAllSnow = 30.5
@@ -1234,6 +1235,33 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
   endif
 
 end subroutine assert_module_details_sub
+
+!-------------------------------------------------------------------------------  
+
+!> @brief echo to screen AND write to logfile
+  subroutine echolog(sMessage, sFormat)
+
+    character(len=*), intent(in)             :: sMessage
+    character(len=*), intent(in), optional   :: sFormat
+
+    ! [ LOCALS ]
+    character (len=256) :: sFormatString = ""
+    logical (kind=T_LOGICAL) :: lOpened
+
+    if(present(sFormat)) then
+      sFormatString = '('//trim(sFormat)//')'
+    else
+      sFormatString = '(3x,a)'
+    endif
+
+    write(unit=LU_STD_OUT, fmt=trim(sFormatString)) sMessage
+
+    inquire(unit=LU_LOG, opened = lOpened)
+    if(lOpened)  write(unit=LU_LOG, fmt=trim(sFormatString)) sMessage
+
+  end subroutine echolog
+
+!-------------------------------------------------------------------------------  
 
 subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
 

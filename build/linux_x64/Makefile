@@ -49,7 +49,7 @@ CMAKE_BINARY_DIR = /home/smwesten/Source_Code/swb/build/linux_x64
 
 # Special rule for the target edit_cache
 edit_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake cache editor..."
+	@echo "Running CMake cache editor..."
 	/usr/bin/cmake-gui -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : edit_cache
 
@@ -59,7 +59,7 @@ edit_cache/fast: edit_cache
 
 # Special rule for the target rebuild_cache
 rebuild_cache:
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
+	@echo "Running CMake to regenerate build system..."
 	/usr/bin/cmake -H$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR)
 .PHONY : rebuild_cache
 
@@ -124,45 +124,6 @@ swb/fast:
 	$(MAKE) -f src/CMakeFiles/swb.dir/build.make src/CMakeFiles/swb.dir/build
 .PHONY : swb/fast
 
-#=============================================================================
-# Target rules for targets named swblib
-
-# Build rule for target.
-swblib: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 swblib
-.PHONY : swblib
-
-# fast build rule for target.
-swblib/fast:
-	$(MAKE) -f src/CMakeFiles/swblib.dir/build.make src/CMakeFiles/swblib.dir/build
-.PHONY : swblib/fast
-
-#=============================================================================
-# Target rules for targets named swbread
-
-# Build rule for target.
-swbread: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 swbread
-.PHONY : swbread
-
-# fast build rule for target.
-swbread/fast:
-	$(MAKE) -f src/CMakeFiles/swbread.dir/build.make src/CMakeFiles/swbread.dir/build
-.PHONY : swbread/fast
-
-#=============================================================================
-# Target rules for targets named swbstats
-
-# Build rule for target.
-swbstats: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 swbstats
-.PHONY : swbstats
-
-# fast build rule for target.
-swbstats/fast:
-	$(MAKE) -f src/CMakeFiles/swbstats.dir/build.make src/CMakeFiles/swbstats.dir/build
-.PHONY : swbstats/fast
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -173,9 +134,6 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... swb"
-	@echo "... swblib"
-	@echo "... swbread"
-	@echo "... swbstats"
 .PHONY : help
 
 

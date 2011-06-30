@@ -131,18 +131,19 @@ end function netcdf_open
   write(unit=LU_LOG,FMT=*) repeat("-",50)
   flush(unit=LU_LOG)
 
+  ! loop through NetCDF dimensions; identify which correponds to x, y, and time
   do i=1,nDimensions
 
     call netcdf_check(nf90_inquire_dimension(pNC%iNCID, i, sDimName(i), &
       iDimLen(i)),__FILE__,__LINE__)
     write(unit=LU_LOG,FMT="(i3,') ',a25,i8)") i, sDimName(i), iDimLen(i)
-    if(TRIM(sDimName(i)) == "x" .or. TRIM(sDimName(i)) == "easting") then
+    if( str_compare(sDimName(i),"x") .or. str_compare(sDimName(i),"easting") ) then
       iXDim = i
       pNC%iX_NumGridCells = iDimLen(i)
-    elseif (TRIM(sDimName(i)) == "y" .or. TRIM(sDimName(i)) == "northing") then
+    elseif( str_compare(sDimName(i),"y") .or. str_compare(sDimName(i),"northing") ) then
       iYDim = i
       pNC%iY_NumGridCells = iDimLen(i)
-    elseif(TRIM(sDimName(i)) == "time") then
+    elseif( str_compare(sDimName(i),"time") ) then
       iTDim = i
     endif
 
@@ -161,66 +162,66 @@ end function netcdf_open
      TRIM(__FILE__),__LINE__)
 
   allocate(sVarName(nVariables),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(iVarDim(nVariables),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(rXCoord(iDimLen(iXDim)),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(rYCoord(iDimLen(iYDim)),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(iValue(iDimLen(iXDim),iDimLen(iYDim)),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(iVarNumAttribs(nVariables),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(sAttribName(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   sAttribName = ""
 
   allocate(iAttribType(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(iVarType(nVariables),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(sAttribValue(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   sAttribValue = ""
 
   allocate(rAttribValue(0:nVariables,MAX_ATTRIBUTES),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
   allocate(iVarDimID(nVariables,MAX_DIMENSIONS),stat=iStat)
-   call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+   call Assert(iStat == 0, &
      "Problem allocating memory for variable", &
      TRIM(__FILE__),__LINE__)
 
@@ -343,15 +344,14 @@ end function netcdf_open
   read(sTextFragment,FMT="(i4,1x,i2,1x,i2)", iostat=iStat) &
     pNC%iOriginYear, pNC%iOriginMonth, pNC%iOriginDay
 
-  call Assert(LOGICAL(iStat==0,kind=T_LOGICAL), &
+  call Assert(iStat == 0, &
     "Problem reading starting date from NC file",&
     TRIM(__FILE__),__LINE__)
 
-  pNC%iOriginJulianDay = &
-    julian_day ( pNC%iOriginYear, pNC%iOriginMonth, pNC%iOriginDay)
+  pNC%iOriginJulianDay = julian_day ( pNC%iOriginYear, pNC%iOriginMonth, &
+                                        pNC%iOriginDay)
 
   pNC%iStartJulianDay = pNC%iOriginJulianDay + rStartDay
-
   pNC%iEndJulianDay = pNC%iOriginJulianDay + rEndDay
 
   ! determine origin, start, and end date of NC time-series data
@@ -423,14 +423,6 @@ end function netcdf_open
   call netcdf_check(nf90_get_var(pNC%iNCID, iYDim, rYCoord ), &
     TRIM(__FILE__),__LINE__)
 
-  do i=1,size(pNC%rXCoord)
-    print *, "X: ", i, pNC%rXCoord
-  enddo
-
-  do i=1,size(pNC%rYCoord)
-    print *, "Y: ",i, pNC%rYCoord
-  enddo
-
   write(unit=LU_LOG,FMT="(/,a)") 'Grid point coordinates'
   write(unit=LU_LOG,FMT="('min X: ', f14.3,'  max X: ',f14.3)") &
       MINVAL(rXCoord), MAXVAL(rXCoord)
@@ -452,13 +444,11 @@ end function netcdf_open
 
   ! we're assuming that the coordinates are ordered from lower to higher
   ! values increase as row num and col num are increased
-
+  
   pNC%rX_LowerLeft = rXCoord(1) - rCellSize/2.
   pNC%rY_LowerLeft = rYCoord(1) - rCellSize/2.
-  pNC%rX_UpperRight = &
-     rXCoord(iDimLen(iVarDimID(iZVar,1))) + rCellSize/2.
-  pNC%rY_UpperRight = &
-     rYCoord(iDimLen(iVarDimID(iZVar,2))) + rCellSize/2.
+  pNC%rX_UpperRight = MAXVAL(rXCoord) + rCellSize/2.
+  pNC%rY_UpperRight = MAXVAL(rYCoord) + rCellSize/2.
 
 !  write(unit=LU_LOG,FMT="('[',i3,',',i3,']: ',i6)") 1,1,iValue(1,1)
 !  write(unit=LU_LOG,FMT="('[',i3,',',i3,']: ',i6)") iDimLen(iVarDimID(iZVar,1)),&
@@ -606,9 +596,6 @@ end subroutine netcdf_chk_extent
     type (T_MODEL_CONFIGURATION), pointer :: pConfig  ! pointer to data structure that contains
                                                       ! model options, flags, and other settings
     integer(kind=T_INT) :: iJulianDay
-    integer(kind=T_INT) :: iScaleFactor        ! factor by which NetCDF grid
-                                               ! cell size varies from model
-                                               ! grid cell size
 
     ! [ LOCALS ]
     type ( T_GENERAL_GRID ),pointer :: pGrd_nc  ! pointer to NetCDF grid
@@ -635,14 +622,12 @@ end subroutine netcdf_chk_extent
     pNC%rGridCellSize = (pNC%rX_UpperRight - pNC%rX_LowerLeft) / &
                                                  pNC%iX_NumGridCells
 
-    iScaleFactor = INT(pNC%rGridCellSize / pGrd%rGridCellSize)
-
-    allocate(rValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+    allocate(rValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
     call Assert( iStat == 0, &
      "Could not allocate memory for rValues", &
      TRIM(__FILE__),__LINE__)
 
-    allocate(iValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+    allocate(iValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
     call Assert( iStat == 0, &
      "Could not allocate memory for iValues", &
      TRIM(__FILE__),__LINE__)
@@ -654,8 +639,8 @@ end subroutine netcdf_chk_extent
 
     call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
       start= (/1,1,iTime/), &
-      count= (/ pNC%iX_NumGridCells, &
-                pNC%iY_NumGridCells,1/) ), &
+      count= (/ pNC%iY_NumGridCells, &
+                pNC%iX_NumGridCells,1/) ), &
                 TRIM(__FILE__),__LINE__, pNC, iTime)
 
 #ifdef DEBUG_PRINT
@@ -667,7 +652,11 @@ end subroutine netcdf_chk_extent
       pNC%iY_NumGridCells, MINVAL(iValues),MAXVAL(iValues)
 #endif
 
-    rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+    where(iValues /= -999)
+      rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+    elsewhere
+      rValues = -rBIGVAL
+    endwhere  
 
 #ifdef DEBUG_PRINT
     write(*,FMT="(a)") 'netcdf_support - after scaling'
@@ -684,57 +673,6 @@ end subroutine netcdf_chk_extent
       "Internal error - data grid does not conform to project grid", &
       trim(__FILE__), __LINE__)
 
-    if(pNC%lInterpolate) then
-
-      if(iScaleFactor==2) then
-        do iRow=1,pNC%iY_NumGridCells
-          do iCol=1,pNC%iX_NumGridCells
-            j0 = pDataGrd%iNY - (iRow-1)*2
-            i0 = 1 + (iCol-1)*2
-            j1 = j0 - 1
-            i1 = i0 + 1
-            pDataGrd%rData(j0,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j0,i1) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i1) = rValues(iCol,iRow)
-          end do
-        end do
-      else if(iScaleFactor==4) then
-        do iRow=1,pNC%iY_NumGridCells
-          do iCol=1,pNC%iX_NumGridCells
-            j0 = pDataGrd%iNY - (iRow-1)*4
-            i0 = 1 + (iCol-1)*4
-            j1 = j0 - 1
-            i1 = i0 + 1
-            j2 = j1 - 1
-            i2 = i1 + 1
-            j3 = j2 - 1
-            i3 = i2 + 1
-            pDataGrd%rData(j0,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j0,i1) = rValues(iCol,iRow)
-            pDataGrd%rData(j0,i2) = rValues(iCol,iRow)
-            pDataGrd%rData(j0,i3) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i1) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i2) = rValues(iCol,iRow)
-            pDataGrd%rData(j1,i3) = rValues(iCol,iRow)
-            pDataGrd%rData(j2,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j2,i1) = rValues(iCol,iRow)
-            pDataGrd%rData(j2,i2) = rValues(iCol,iRow)
-            pDataGrd%rData(j2,i3) = rValues(iCol,iRow)
-            pDataGrd%rData(j3,i0) = rValues(iCol,iRow)
-            pDataGrd%rData(j3,i1) = rValues(iCol,iRow)
-            pDataGrd%rData(j3,i2) = rValues(iCol,iRow)
-            pDataGrd%rData(j3,i3) = rValues(iCol,iRow)
-          end do
-        end do
-      else
-        print *
-        print *, "   NetCDF grid cell size: "//real2char(pGrd_nc%rGridCellSize)
-        print *, "   Model grid cell size: "//real2char(pGrd%rGridCellSize)
-        call Assert(lFALSE,"NetCDF grid cell size must be a factor of" &
-          //" the model domain grid cell size",TRIM(__FILE__),__LINE__)
-      end if
 
 !      do iCol=1,pDataGrd%iNX
 !        rXval = grid_GetGridX(pGrd,iCol)
@@ -745,13 +683,11 @@ end subroutine netcdf_chk_extent
 !      end do
 
 
-    else  ! no interpolation needed
-      do iRow=1,pDataGrd%iNY
-        do iCol=1,pDataGrd%iNX
-          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
-        end do
+    do iRow=1,pDataGrd%iNY
+      do iCol=1,pDataGrd%iNX
+        pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
       end do
-    end if
+    end do
 
     deallocate(rValues)
 
