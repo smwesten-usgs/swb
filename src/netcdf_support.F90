@@ -444,7 +444,7 @@ end function netcdf_open
 
   ! we're assuming that the coordinates are ordered from lower to higher
   ! values increase as row num and col num are increased
-  
+
   pNC%rX_LowerLeft = rXCoord(1) - rCellSize/2.
   pNC%rY_LowerLeft = rYCoord(1) - rCellSize/2.
   pNC%rX_UpperRight = MAXVAL(rXCoord) + rCellSize/2.
@@ -656,7 +656,7 @@ end subroutine netcdf_chk_extent
       rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
     elsewhere
       rValues = -rBIGVAL
-    endwhere  
+    endwhere
 
 #ifdef DEBUG_PRINT
     write(*,FMT="(a)") 'netcdf_support - after scaling'
@@ -776,27 +776,27 @@ end subroutine netcdf_chk_extent
        "grid_spacing", pGrd%rGridCellSize),TRIM(__FILE__),__LINE__)
 
 
-    ! define LATITUDE and LONGITUDE variables
-    call netcdf_check(nf90_def_var(pNC%iNCID, "lat", NF90_DOUBLE, &
-      (/pNC%iXDimID, pNC%iYDimID/),pNC%iLatVarID),TRIM(__FILE__),__LINE__)
-    ! add attributes to variable "lat"
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
-       "units", "degrees_north"))
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
-       "standard_name", "latitude"))
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
-       "long_name", "latitude"))
-
-
-    call netcdf_check(nf90_def_var(pNC%iNCID, "lon", NF90_DOUBLE, &
-      (/pNC%iXDimID, pNC%iYDimID/),pNC%iLonVarID),TRIM(__FILE__),__LINE__)
-    ! add attributes to variable "lon"
-   call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
-       "units", "degrees_east"))
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
-       "standard_name", "longitude"))
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
-       "long_name", "longitude"))
+!     ! define LATITUDE and LONGITUDE variables
+!     call netcdf_check(nf90_def_var(pNC%iNCID, "lat", NF90_DOUBLE, &
+!       (/pNC%iXDimID, pNC%iYDimID/),pNC%iLatVarID),TRIM(__FILE__),__LINE__)
+!     ! add attributes to variable "lat"
+!     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
+!        "units", "degrees_north"))
+!     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
+!        "standard_name", "latitude"))
+!     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLatVarID, &
+!        "long_name", "latitude"))
+!
+!
+!     call netcdf_check(nf90_def_var(pNC%iNCID, "lon", NF90_DOUBLE, &
+!       (/pNC%iXDimID, pNC%iYDimID/),pNC%iLonVarID),TRIM(__FILE__),__LINE__)
+!     ! add attributes to variable "lon"
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
+!        "units", "degrees_east"))
+!     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
+!        "standard_name", "longitude"))
+!     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iLonVarID, &
+!        "long_name", "longitude"))
 
 
     ! define variable TIME
@@ -812,7 +812,7 @@ end subroutine netcdf_chk_extent
 
     ! define PROJECTION variable
     call netcdf_check(nf90_def_var(pNC%iNCID, TRIM(pNC%sProjectionName), &
-        NF90_INT, pNC%iProjID),TRIM(__FILE__),__LINE__)
+        NF90_CHAR, pNC%iProjID),TRIM(__FILE__),__LINE__)
    ! add attributes to variable "wtm" (or UTM16 etc.)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "units", "meters"),TRIM(__FILE__),__LINE__)
@@ -828,20 +828,31 @@ end subroutine netcdf_chk_extent
        "false_easting", pNC%rFalseEasting),TRIM(__FILE__),__LINE__)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "false_northing", pNC%rFalseNorthing),TRIM(__FILE__),__LINE__)
-
-    ! define "CRS" variable
-    call netcdf_check(nf90_def_var(pNC%iNCID, "crs", &
-        NF90_INT, pNC%iCRSID),TRIM(__FILE__),__LINE__)
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
-       "units", "decimal_degrees"))
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
-       "grid_mapping_name", "latitude_longitude"),TRIM(__FILE__),__LINE__)
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
-       "longitude_of_prime_meridian", 0.0_T_DBL),TRIM(__FILE__),__LINE__)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
        "semi_major_axis", 6378137.0_T_DBL ),TRIM(__FILE__),__LINE__)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
-       "inverse_flattening", 298.257223563_T_DBL ),TRIM(__FILE__),__LINE__)
+        "semi_minor_axis", 6356752.314140356_T_DBL ),TRIM(__FILE__),__LINE__)
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+       "inverse_flattening", 298.257222101_T_DBL ),TRIM(__FILE__),__LINE__)
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
+       "_CoordinateTransformType", "Projection"),TRIM(__FILE__),__LINE__)
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
+       "_CoordinateAxisTypes", "GeoX GeoY"),TRIM(__FILE__),__LINE__)
+
+
+    ! define "CRS" variable
+!    call netcdf_check(nf90_def_var(pNC%iNCID, "crs", &
+!        NF90_INT, pNC%iCRSID),TRIM(__FILE__),__LINE__)
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+!       "units", "decimal_degrees"))
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+!       "grid_mapping_name", "latitude_longitude"),TRIM(__FILE__),__LINE__)
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+!       "longitude_of_prime_meridian", 0.0_T_DBL),TRIM(__FILE__),__LINE__)
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+!       "semi_major_axis", 6378137.0_T_DBL ),TRIM(__FILE__),__LINE__)
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+!       "inverse_flattening", 298.257223563_T_DBL ),TRIM(__FILE__),__LINE__)
 
     ! define OUTPUT VARIABLE as function of X, Y and TIME
 !    call netcdf_check(nf90_def_var(pNC%iNCID, pNC%sVarName, NF90_SHORT, &
@@ -857,10 +868,10 @@ end subroutine netcdf_chk_extent
        "standard_name", pNC%sVarName))
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
        "long_name", pNC%sVarName))
-!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
-!       "coordinates", "y x"))
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
-       "coordinates", "lat lon"))
+       "coordinates", "x y"))
+!    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
+!       "coordinates", "lat lon"))
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
        "units", pNC%sUnits))
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iVarID, &
