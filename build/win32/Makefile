@@ -38,10 +38,10 @@ RM = "C:\Program Files (x86)\CMake 2.8\bin\cmake.exe" -E remove -f
 CMAKE_EDIT_COMMAND = "C:\Program Files (x86)\CMake 2.8\bin\cmake-gui.exe"
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = D:\SMWData\Source_Code\SWB
+CMAKE_SOURCE_DIR = D:\SMWData\Source_Code\swb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = D:\SMWData\Source_Code\SWB\build\win32
+CMAKE_BINARY_DIR = D:\SMWData\Source_Code\swb\build\win32
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -68,9 +68,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start D:\SMWData\Source_Code\SWB\build\win32\CMakeFiles D:\SMWData\Source_Code\SWB\build\win32\CMakeFiles\progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start D:\SMWData\Source_Code\swb\build\win32\CMakeFiles D:\SMWData\Source_Code\swb\build\win32\CMakeFiles\progress.marks
 	$(MAKE) -f CMakeFiles\Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start D:\SMWData\Source_Code\SWB\build\win32\CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start D:\SMWData\Source_Code\swb\build\win32\CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -150,19 +150,6 @@ swblib/fast:
 .PHONY : swblib/fast
 
 #=============================================================================
-# Target rules for targets named swbread
-
-# Build rule for target.
-swbread: cmake_check_build_system
-	$(MAKE) -f CMakeFiles\Makefile2 swbread
-.PHONY : swbread
-
-# fast build rule for target.
-swbread/fast:
-	$(MAKE) -f src\CMakeFiles\swbread.dir\build.make src/CMakeFiles/swbread.dir/build
-.PHONY : swbread/fast
-
-#=============================================================================
 # Target rules for targets named swbstats
 
 # Build rule for target.
@@ -187,7 +174,6 @@ help:
 	@$(CMAKE_COMMAND) -E echo "... rebuild_cache"
 	@$(CMAKE_COMMAND) -E echo "... swb"
 	@$(CMAKE_COMMAND) -E echo "... swblib"
-	@$(CMAKE_COMMAND) -E echo "... swbread"
 	@$(CMAKE_COMMAND) -E echo "... swbstats"
 .PHONY : help
 
