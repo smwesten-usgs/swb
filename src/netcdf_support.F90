@@ -229,6 +229,8 @@ end function netcdf_open
     "NAME","DIMENSIONS","TYPE"
   write(unit=LU_LOG,FMT=*) repeat("-",58)
 
+  ! scan through the variables present in this file; we're looking for the variable name associated with
+  ! the data input to SWB
   do i=1,nVariables
 
     call netcdf_check(nf90_inquire_variable(pNC%iNCID, i, name=sVarName(i), &
@@ -296,26 +298,31 @@ end function netcdf_open
     "variable name "//TRIM(sVariableName)//" not found in NetCDF file", &
     TRIM(__FILE__),__LINE__)
 
-
+  ! look for "scale_factor" attribute associated with the Z variable
   call netcdf_check(nf90_get_att(pNC%iNCID,iZVar,"scale_factor",&
      pNC%rScaleFactor), &
      TRIM(__FILE__),__LINE__)
 
+! look for "add_offset" attribute associated with the Z variable     
   call netcdf_check(nf90_get_att(pNC%iNCID,iZVar,"add_offset",&
      pNC%rAddOffset), &
      TRIM(__FILE__),__LINE__)
 
+  ! obtain the variable ID for the "time" variable   
   call netcdf_check(nf90_inq_varid(pNC%iNCID, "time", iTVar),&
      TRIM(__FILE__),__LINE__)
 
+! look for "start_day" attribute associated with the time variable     
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"start_day",&
      rStartDay), &
      TRIM(__FILE__),__LINE__)
-
+    
+! look for "end_day" attribute associated with the time variable     
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"end_day",&
      rEndDay), &
      TRIM(__FILE__),__LINE__)
 
+! look for "units" attribute associated with the time variable          
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"units",sUnitsString), &
      TRIM(__FILE__),__LINE__)
 
@@ -345,8 +352,8 @@ end function netcdf_open
     pNC%iOriginYear, pNC%iOriginMonth, pNC%iOriginDay
 
   call Assert(iStat == 0, &
-    "Problem reading starting date from NC file",&
-    TRIM(__FILE__),__LINE__)
+    "Problem reading starting date from NC file~was expecting to find units something like:" &
+    //" 'days since 1960-01-01 00:00:00'", TRIM(__FILE__),__LINE__)
 
   pNC%iOriginJulianDay = julian_day ( pNC%iOriginYear, pNC%iOriginMonth, &
                                         pNC%iOriginDay)
