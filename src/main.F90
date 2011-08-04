@@ -108,30 +108,43 @@ program main
 #endif
 
     write(UNIT=*,FMT="(a)") "Compilation options:"
-    write(UNIT=*,FMT="(a)") "-------------------------------"
+    write(UNIT=*,FMT="(a)") "----------------------------------"
 #ifdef STREAM_INTERACTIONS
-    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS      yes"
+    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS         yes"
 #else
-    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS       no"
+    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS          no"
 #endif
 
 #ifdef GRAPHICS_SUPPORT
-    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT         yes"
+    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT            yes"
 #else
-    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT          no"
+    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT             no"
 #endif
 
 #ifdef NETCDF_SUPPORT
-    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT           yes"
+    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT              yes"
 #else
-    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT            no"
+    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT               no"
 #endif
 
 #ifdef IRRIGATION_MODULE
-    write(UNIT=*,FMT="(a)") " IRRIGATION calculations  yes"
+    write(UNIT=*,FMT="(a)") " IRRIGATION calculations     yes"
 #else
-    write(UNIT=*,FMT="(a)") " IRRIGATION calculations   no"
+    write(UNIT=*,FMT="(a)") " IRRIGATION calculations      no"
 #endif
+
+#ifdef STRICT_DATE_CHECKING
+    write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING        yes"
+#else
+    write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING         no"
+#endif
+
+#ifdef THORNTHWAITE_MATHER_TABLE
+    write(UNIT=*,FMT="(a)") " THORNTHWAITE_MATHER_TABLE   yes"
+#else
+    write(UNIT=*,FMT="(a)") " THORNTHWAITE_MATHER_TABLE    no"
+#endif
+
 
 #ifdef DEBUG_PRINT
     write(UNIT=*,FMT="(a)") " DEBUG_PRINT              yes"

@@ -120,6 +120,14 @@ end function netcdf_open
 !  call netcdf_check(nf90_inquire(iNCID,nDimensions, nVariables, nAttributes, &
 !    unlimitedDimID, formatNum),__FILE__,__LINE__)
 
+  ! the following ('XVarPOS' and 'YVarPOS') indicate how the variable is referenced
+  ! within the netcdf file. If the variable is defined as: myvar(y, x, time),
+  ! then YVarPOS = 1 and XVarPOS = 2. This is important to know later on when the
+  ! variable is read in and we need to know how or whether the matrix must be
+  ! transposed or flipped.
+  pNC%iXVarPOS = -999
+  pNC%iYVarPOS = -999
+
   call netcdf_check(nf90_inquire(pNC%iNCID,nDimensions, nVariables, nAttributes, &
     unlimitedDimID),__FILE__,__LINE__)
 
@@ -149,6 +157,8 @@ end function netcdf_open
 
   enddo
 
+  ! check to see that the key dimensions are included and are found in
+  ! the NetCDF file
   call Assert(LOGICAL(iXDim > 0,kind=T_LOGICAL), &
      "'x' dimension not found in NetCDF file", &
      TRIM(__FILE__),__LINE__)
@@ -229,8 +239,8 @@ end function netcdf_open
     "NAME","DIMENSIONS","TYPE"
   write(unit=LU_LOG,FMT=*) repeat("-",58)
 
-  ! scan through the variables present in this file; we're looking for the variable name associated with
-  ! the data input to SWB
+  ! scan through the variables present in this file; we're looking for the
+  ! variable name associated with the data input to SWB
   do i=1,nVariables
 
     call netcdf_check(nf90_inquire_variable(pNC%iNCID, i, name=sVarName(i), &
@@ -258,6 +268,16 @@ end function netcdf_open
           FMT="(i3,') ',a,'(',a,',',a,',',a,')',t30,'type: ',i3)") &
            i, TRIM(sVarName(i)), &
            (TRIM(sDimName( iVarDimID(i,j) ) ),j=1,iVarDim(i) ),iVarType(i)
+           if( str_compare(sDimName(iVarDimID(i,1)),"x") &
+              .or. str_compare(sDimName(iVarDimID(i,1)),"easting") ) then
+              pNC%iXVarPOS = 1
+              pNC%iYVarPOS = 2
+           elseif( str_compare(sDimName(iVarDimID(i,1)),"y") &
+              .or. str_compare(sDimName(iVarDimID(i,1)),"northing") ) then
+             pNC%iXVarPOS = 2
+             pNC%iYVarPOS = 1
+           endif
+
       case default
 
         ! Die if we have greater than 3 dimensions assigned to this variable
@@ -267,29 +287,31 @@ end function netcdf_open
 
     end select
 
-    ! sVariableName is supplied by the calling routine
-    if(TRIM(sVarName(i))==TRIM(sVariableName)) iZVar = i
+    ! sVariableName is supplied by the calling routine;
+    if(TRIM(sVarName(i))==TRIM(sVariableName)) then
+      iZVar = i
       pNC%iVarID = iZVar
+    endif
 
-     do j=1,iVarNumAttribs(i)
-       call netcdf_check(nf90_inq_attname(pNC%iNCID, i, j,sAttribName(i,j)), &
-         TRIM(__FILE__),__LINE__)
-       call netcdf_check(nf90_inquire_attribute(pNC%iNCID, i, &
-         TRIM(sAttribName(i,j)), xtype=iAttribType(i,j)), &
-         TRIM(__FILE__),__LINE__)
-       if(iAttribType(i,j)==2) then
-         call netcdf_check(nf90_get_att(pNC%iNCID,i,TRIM(sAttribName(i,j)),&
-           sAttribValue(i,j)),TRIM(__FILE__),__LINE__)
-         write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,a)") &
-           TRIM(sAttribName(i,j)),TRIM(sAttribValue(i,j))
-       else
-         call netcdf_check(nf90_get_att(pNC%iNCID,i,TRIM(sAttribName(i,j)),&
-         rAttribValue(i,j)),TRIM(__FILE__),__LINE__)
-         write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,f14.3)") &
-           TRIM(sAttribName(i,j)),rAttribValue(i,j)
-       endif
-     enddo  ! loop over attributes for this particular variable
-     write(unit=LU_LOG,fmt="(/)")
+    do j=1,iVarNumAttribs(i)
+      call netcdf_check(nf90_inq_attname(pNC%iNCID, i, j,sAttribName(i,j)), &
+        TRIM(__FILE__),__LINE__)
+      call netcdf_check(nf90_inquire_attribute(pNC%iNCID, i, &
+        TRIM(sAttribName(i,j)), xtype=iAttribType(i,j)), &
+        TRIM(__FILE__),__LINE__)
+      if(iAttribType(i,j)==2) then
+        call netcdf_check(nf90_get_att(pNC%iNCID,i,TRIM(sAttribName(i,j)),&
+          sAttribValue(i,j)),TRIM(__FILE__),__LINE__)
+        write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,a)") &
+          TRIM(sAttribName(i,j)),TRIM(sAttribValue(i,j))
+      else
+        call netcdf_check(nf90_get_att(pNC%iNCID,i,TRIM(sAttribName(i,j)),&
+        rAttribValue(i,j)),TRIM(__FILE__),__LINE__)
+        write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,f14.3)") &
+          TRIM(sAttribName(i,j)),rAttribValue(i,j)
+      endif
+    enddo  ! loop over attributes for this particular variable
+    write(unit=LU_LOG,fmt="(/)")
 
   enddo  ! loop over all variables
 
@@ -303,26 +325,28 @@ end function netcdf_open
      pNC%rScaleFactor), &
      TRIM(__FILE__),__LINE__)
 
-! look for "add_offset" attribute associated with the Z variable     
-  call netcdf_check(nf90_get_att(pNC%iNCID,iZVar,"add_offset",&
-     pNC%rAddOffset), &
-     TRIM(__FILE__),__LINE__)
+! look for "add_offset" (or "offset") attribute associated with the Z variable
+  iStat = nf90_get_att(pNC%iNCID,iZVar,"offset",pNC%rAddOffset)
+  if(iStat /= nf90_noerr) &
+    call netcdf_check(nf90_get_att(pNC%iNCID,iZVar,"add_offset",&
+       pNC%rAddOffset), &
+       TRIM(__FILE__),__LINE__)
 
-  ! obtain the variable ID for the "time" variable   
+  ! obtain the variable ID for the "time" variable
   call netcdf_check(nf90_inq_varid(pNC%iNCID, "time", iTVar),&
      TRIM(__FILE__),__LINE__)
 
-! look for "start_day" attribute associated with the time variable     
+! look for "start_day" attribute associated with the time variable
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"start_day",&
      rStartDay), &
      TRIM(__FILE__),__LINE__)
-    
-! look for "end_day" attribute associated with the time variable     
+
+! look for "end_day" attribute associated with the time variable
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"end_day",&
      rEndDay), &
      TRIM(__FILE__),__LINE__)
 
-! look for "units" attribute associated with the time variable          
+! look for "units" attribute associated with the time variable
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"units",sUnitsString), &
      TRIM(__FILE__),__LINE__)
 
@@ -542,7 +566,7 @@ subroutine netcdf_chk_extent(pConfig, iVarNum, iMode, pGrd)
 
   ! [LOCALS]
   type (T_NETCDF_FILE), pointer :: pNC
-  logical(kind=T_LOGICAL) :: congruent, larger_extent
+  logical(kind=T_LOGICAL) :: congruent
 
   pNC => pConfig%NETCDF_FILE(iVarNum, iMode)
 
@@ -552,17 +576,11 @@ subroutine netcdf_chk_extent(pConfig, iVarNum, iMode, pGrd)
   write(unit=LU_LOG,FMT="(t10,'--------------',t28,'---------------')")
 
   ! test to see whether all descriptors of the grid extent are approximately equal
-  congruent = approx_equal(pNC%rX_LowerLeft, pGrd%rX0) &
-     .and. approx_equal(pNC%rY_LowerLeft, pGrd%rY0) &
-     .and. approx_equal(pNC%rX_UpperRight, pGrd%rX1) &
-     .and. approx_equal(pNC%rY_UpperRight, pGrd%rY1) &
-     .and. approx_equal(pNC%rGridCellSize, pGrd%rGridCellSize)
-
-  ! test to see if the NetCDF boundaries cover the complete extent of the model grid
-  larger_extent = LOGICAL(pNC%rX_LowerLeft <= pGrd%rX0,kind=T_LOGICAL) &
-       .and. LOGICAL(pNC%rY_LowerLeft <= pGrd%rY0,kind=T_LOGICAL) &
-       .and. LOGICAL(pNC%rX_UpperRight >= pGrd%rX1,kind=T_LOGICAL) &
-       .and. LOGICAL(pNC%rY_UpperRight >= pGrd%rY1,kind=T_LOGICAL)
+  congruent = approx_equal(pNC%rX_LowerLeft, pGrd%rX0, 0.1_T_DBL) &
+     .and. approx_equal(pNC%rY_LowerLeft, pGrd%rY0, 0.1_T_DBL) &
+     .and. approx_equal(pNC%rX_UpperRight, pGrd%rX1, 0.1_T_DBL) &
+     .and. approx_equal(pNC%rY_UpperRight, pGrd%rY1, 0.1_T_DBL) &
+     .and. approx_equal(pNC%rGridCellSize, pGrd%rGridCellSize, 10._T_SGL)
 
   write(unit=LU_LOG,FMT="(a6,f14.3,'    ',f14.3)") "x0:", &
       pNC%rX_LowerLeft, pGrd%rX0
@@ -579,10 +597,6 @@ subroutine netcdf_chk_extent(pConfig, iVarNum, iMode, pGrd)
     pNC%lInterpolate=lFALSE
     write(unit=LU_LOG,FMT="(//,1x,a,/)") &
       "Grids are approximately equal. No interpolation will be required"
-  else if(larger_extent) then
-    pNC%lInterpolate=lTRUE
-    write(unit=LU_LOG,FMT="(//,1x,a,/)") &
-      "NetCDF area is greater than model domain. Interpolation will be used to assign values to model grids."
   else
     call Assert(lFALSE,"NetCDF file does not completely cover the model grid extent.", &
       TRIM(__FILE__),__LINE__)
@@ -606,7 +620,7 @@ end subroutine netcdf_chk_extent
 
     ! [ LOCALS ]
     type ( T_GENERAL_GRID ),pointer :: pGrd_nc  ! pointer to NetCDF grid
-    integer (kind=T_INT) :: iTime, iCol, iRow, i0, i1, j0, j1, i2, j2, i3, j3
+    integer (kind=T_INT) :: iTime, iCol, iRow
     type (T_NETCDF_FILE), pointer :: pNC
     real(kind=T_SGL), allocatable, dimension(:,:) :: rValues
     real (kind=T_SGL) :: rXval, rYval
@@ -625,53 +639,79 @@ end subroutine netcdf_chk_extent
       "Data file ends before end of simulation: "//TRIM(pNC%sFileName), &
       TRIM(__FILE__),__LINE__)
 
-
     pNC%rGridCellSize = (pNC%rX_UpperRight - pNC%rX_LowerLeft) / &
                                                  pNC%iX_NumGridCells
 
-    allocate(rValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
-    call Assert( iStat == 0, &
-     "Could not allocate memory for rValues", &
-     TRIM(__FILE__),__LINE__)
-
-    allocate(iValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
-    call Assert( iStat == 0, &
-     "Could not allocate memory for iValues", &
-     TRIM(__FILE__),__LINE__)
-
-    rValues = -9999.
-    iValues = -9999
-
     iTime = iJulianDay - pNC%iStartJulianDay + 1
 
-    call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
-      start= (/1,1,iTime/), &
-      count= (/ pNC%iY_NumGridCells, &
-                pNC%iX_NumGridCells,1/) ), &
-                TRIM(__FILE__),__LINE__, pNC, iTime)
+    if(pNC%iYVarPOS == 1 .and. pNC%iXVarPOS == 2) then
 
-#ifdef DEBUG_PRINT
-    write(*,FMT="(a)") repeat('-',30)
-    write(*,FMT="(a)") 'netcdf_support - before scaling'
-    write(*,FMT="(' ncID:',i3,' varID:',i3,' ncTime:',i6,' iX:',i5," &
-      //"' iY:',i5,'  min value:',i10,'  max value:',i10)") &
-    pNC%iNCID, pNC%iVarID, iTime, pNC%iX_NumGridCells, &
-      pNC%iY_NumGridCells, MINVAL(iValues),MAXVAL(iValues)
-#endif
+      allocate(rValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
+      call Assert( iStat == 0, &
+       "Could not allocate memory for rValues", &
+       TRIM(__FILE__),__LINE__)
 
-    where(iValues /= -999)
-      rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
-    elsewhere
+      allocate(iValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
+      call Assert( iStat == 0, &
+       "Could not allocate memory for iValues", &
+       TRIM(__FILE__),__LINE__)
+
       rValues = -rBIGVAL
-    endwhere
+      iValues = -999
 
-#ifdef DEBUG_PRINT
-    write(*,FMT="(a)") 'netcdf_support - after scaling'
-    write(*,FMT="(' ncID:',i3,' varID:',i3,' ncTime:',i6,' iX:',i5," &
-      //"' iY:',i5,'  min value:',f14.4,'  max value:',f14.4)") &
-     pNC%iNCID, pNC%iVarID, iTime, pNC%iX_NumGridCells, &
-      pNC%iY_NumGridCells, MINVAL(rValues),MAXVAL(rValues)
-#endif
+      call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
+        start= (/1,1,iTime/), &
+        count= (/ pNC%iY_NumGridCells, &
+                  pNC%iX_NumGridCells,1/) ), &
+                  TRIM(__FILE__),__LINE__, pNC, iTime)
+
+      where(iValues /= -999)
+        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      endwhere
+
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
+        end do
+      end do
+
+    elseif(pNC%iXVarPOS == 1 .and. pNC%iYVarPOS == 2) then
+
+      allocate(rValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+      call Assert( iStat == 0, &
+        "Could not allocate memory for rValues", &
+        TRIM(__FILE__),__LINE__)
+
+      allocate(iValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+      call Assert( iStat == 0, &
+        "Could not allocate memory for iValues", &
+        TRIM(__FILE__),__LINE__)
+
+      rValues = -rBIGVAL
+      iValues = -999
+
+      call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
+      start= (/1,1,iTime/), &
+      count= (/ pNC%iX_NumGridCells, &
+              pNC%iY_NumGridCells,1/) ), &
+              TRIM(__FILE__),__LINE__, pNC, iTime)
+
+      where(iValues /= -999)
+        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      endwhere
+
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
+        end do
+      end do
+
+    else
+
+      call assert(lFALSE, "Internal logic error encountered while reading NetCDF file", &
+        TRIM(__FILE__),__LINE__)
+
+    endif
 
 !    pOutGrd => grid_Create ( pGrd%iNX,  pGrd%iNY, &
 !          pGrd%rX0, pGrd%rY0, pGrd%rX1,pGrd%rY1,T_SGL_GRID )
@@ -689,14 +729,8 @@ end subroutine netcdf_chk_extent
 !        end do
 !      end do
 
-
-    do iRow=1,pDataGrd%iNY
-      do iCol=1,pDataGrd%iNX
-        pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
-      end do
-    end do
-
     deallocate(rValues)
+    deallocate(iValues)
 
     return
 
@@ -835,11 +869,11 @@ end subroutine netcdf_chk_extent
        "false_easting", pNC%rFalseEasting),TRIM(__FILE__),__LINE__)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "false_northing", pNC%rFalseNorthing),TRIM(__FILE__),__LINE__)
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "semi_major_axis", 6378137.0_T_DBL ),TRIM(__FILE__),__LINE__)
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
         "semi_minor_axis", 6356752.314140356_T_DBL ),TRIM(__FILE__),__LINE__)
-    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iCRSID, &
+    call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "inverse_flattening", 298.257222101_T_DBL ),TRIM(__FILE__),__LINE__)
     call netcdf_check(nf90_put_att(pNC%iNCID, pNC%iProjID, &
        "_CoordinateTransformType", "Projection"),TRIM(__FILE__),__LINE__)
@@ -917,28 +951,28 @@ end subroutine netcdf_chk_extent
       rMultFactor = rONE
     end if
 
-    do iCol=1,pGrd%iNX
-      do iRow=1,pGrd%iNY
-        k =  pGrd%iNY - iRow + 1
-        rX = grid_GetGridX(pGrd,iCol) * rMultFactor
-        rY = grid_GetGridY(pGrd,iRow) * rMultFactor
-        call UTMtoLL(pConfig, rX, rY, rLat, rLon)
-        if(iCol==1 .and. iRow==1 .or. iCol==pGrd%iNX .and. iRow==pGrd%iNY) then
-           write(unit=LU_LOG,FMT="('grid coordinate (',i4,',',i4,'): ',2f14.3)") &
-             iCol,iRow,rX, rY
-           write(unit=LU_LOG,FMT="('lat / long      (',i4,',',i4,'): ',2f14.3)") &
-             iCol,iRow,rLon, rLat
-        end if
-        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLatVarID   , &
-           values = rLat, start = (/iCol,iRow/)))
-        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLonVarID   , &
-           values = rLon, start = (/iCol,iRow/)))
+!    do iCol=1,pGrd%iNX
+!      do iRow=1,pGrd%iNY
+!        k =  pGrd%iNY - iRow + 1
+!        rX = grid_GetGridX(pGrd,iCol) * rMultFactor
+!        rY = grid_GetGridY(pGrd,iRow) * rMultFactor
+!        call UTMtoLL(pConfig, rX, rY, rLat, rLon)
+!        if(iCol==1 .and. iRow==1 .or. iCol==pGrd%iNX .and. iRow==pGrd%iNY) then
+!           write(unit=LU_LOG,FMT="('grid coordinate (',i4,',',i4,'): ',2f14.3)") &
+!             iCol,iRow,rX, rY
+!           write(unit=LU_LOG,FMT="('lat / long      (',i4,',',i4,'): ',2f14.3)") &
+!             iCol,iRow,rLon, rLat
+!        end if
+!        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLatVarID   , &
+!           values = rLat, start = (/iCol,iRow/)))
+!        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iLonVarID   , &
+!           values = rLon, start = (/iCol,iRow/)))
 !        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iXVarID   , &
 !           values = rX, start = (/iCol,iRow/)))
 !        call netcdf_check(nf90_put_var(pNC%iNCID,pNC%iYVarID   , &
 !           values = rY, start = (/iCol,iRow/)))
-      end do
-    end do
+!      end do
+!    end do
 
     do iCol=1,pGrd%iNX
       rX = grid_GetGridX(pGrd,iCol) * rMultFactor

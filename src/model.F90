@@ -316,7 +316,7 @@ end if
       cel%rSoilMoisturePct = rZERO
     endif
 
-#ifdef TM_TABLE
+#ifdef THORNTHWAITE_MATHER_TABLE
   ! look up soil moisture in T-M tables
     cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
   cel%rSM_AccumPotentWatLoss)
@@ -384,8 +384,8 @@ endif
     write(UNIT=LU_STD_OUT,FMT="(1x,'DAY: ',i3,4x,A3,4x,i2,'/',i2,'/',i4)") &
       pConfig%iDayOfYear,sMonthName,pConfig%iMonth,pConfig%iDay,pConfig%iYear
 !      write(UNIT=LU_STD_OUT,FMT="(1x,a80)") REPEAT('-',80)
-  write(UNIT=LU_STD_OUT,FMT=*)
-end if
+    write(UNIT=LU_STD_OUT,FMT=*)
+  end if
 
   ! write timestamp to the unformatted fortran file(s)
   do k=1,iNUM_VARIABLES
@@ -394,7 +394,7 @@ end if
       .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
     write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
       pConfig%iYear, pConfig%iDayOfYear
-  end if
+    end if
   end do
 
   ! Initialize precipitation value for current day
@@ -465,15 +465,14 @@ end if
   ! if desired, output daily mass balance file and daily model grids
   if ( pConfig%lReportDaily ) then
 
-  call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MIN,pConfig%iMonth, &
-    pConfig%iDay,pConfig%iYear,iMIN)
-  call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MEAN,pConfig%iMonth, &
-    pConfig%iDay,pConfig%iYear,iMEAN)
-  call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MAX,pConfig%iMonth, &
-    pConfig%iDay,pConfig%iYear,iMAX)
-
-  call stats_WriteMSBReport(pGrd,pConfig%iMonth,pConfig%iDay, &
-    pConfig%iYear,pConfig%iDayOfYear)
+    call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MIN,pConfig%iMonth, &
+      pConfig%iDay,pConfig%iYear,iMIN)
+    call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MEAN,pConfig%iMonth, &
+      pConfig%iDay,pConfig%iYear,iMEAN)
+    call stats_WriteDailyAccumulatorValuesCSV(LU_CSV_MAX,pConfig%iMonth, &
+      pConfig%iDay,pConfig%iYear,iMAX)
+    call stats_WriteMSBReport(pGrd,pConfig%iMonth,pConfig%iDay, &
+      pConfig%iYear,pConfig%iDayOfYear)
 
   end if
 
@@ -894,8 +893,8 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
     trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
   call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount      
-  where(pDataGrd%rData > pConfig%rMinValidTemp)      
+  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
+  where(pDataGrd%rData > pConfig%rMinValidTemp)
     pGrd%Cells%rTMax = pDataGrd%rData
   endwhere
 
@@ -903,46 +902,46 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
     write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
       trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
     call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)    
-    where(pDataGrd%rData > pConfig%rMinValidTemp)    
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
       pGrd%Cells%rTMin = pDataGrd%rData
     endwhere
-      
+
     write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
       trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
     call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount        
-    where(pDataGrd%rData > pConfig%rMinValidTemp)  
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
       pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere  
+    endwhere
 
 #ifdef NETCDF_SUPPORT
   case( CONFIG_TEMPERATURE_NETCDF )
     call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)    
-    where(pDataGrd%rData > pConfig%rMinValidTemp)    
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
       pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere  
+    endwhere
 
     call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount    
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
     where(pDataGrd%rData > pConfig%rMinValidTemp)
       pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere  
+    endwhere
 #endif
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
 end select
 
-   
+
   if(iCount > 0) then
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
       "Missing minimum or maximum TEMPERATURE values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
     call echolog("  ==> Temperature values from the previous day will be used in place of" &
       //" missing values")
-  endif  
+  endif
 
   pGrd%Cells%rTAvg = (pGrd%Cells%rTMax + pGrd%Cells%rTMin) / 2_T_SGL
 
@@ -955,16 +954,17 @@ end select
     do iCol=1,pGrd%iNX
       cel=>pGrd%Cells(iCol,iRow)
 
-  if( cel%rTMax < cel%rTMin )then
+      if( cel%rTMax < cel%rTMin )then
 
-  ! swap min and max values to maintain a positive delta T
-  rTempVal = cel%rTMax
-  cel%rTMax = cel%rTMin
-  cel%rTMin = cel%rTMax
+        ! swap min and max values to maintain a positive delta T
+         rTempVal = cel%rTMax
+        cel%rTMax = cel%rTMin
+        cel%rTMin = cel%rTMax
 
-  end if
-end do
-end do
+      end if
+
+    end do
+  end do
 
   !$OMP END DO
 

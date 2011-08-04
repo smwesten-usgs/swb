@@ -337,6 +337,8 @@ module types
     integer(kind=T_INT) :: iLonVarID
     integer(kind=T_INT) :: iXVarID
     integer(kind=T_INT) :: iYVarID
+    integer(kind=T_INT) :: iXVarPOS   ! POS = 1 if we have var(x, y, t)
+    integer(kind=T_INT) :: iYVarPOS
     integer(kind=T_INT) :: iXDimID
     integer(kind=T_INT) :: iYDimID
     integer(kind=T_INT) :: iTimeDimID
@@ -440,12 +442,6 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  !> Global parameter defining the number of elements in the STAT_INFO array.
-  !> @note This parameter value is set to the value of the
-  !> C preprocessor macro variable "CPP_NUM_VARS". If this macro value
-  !> is undefined or improperly defined, compilation will fail.
-  !> As of Feb. 2011, this value is calculated within the cmake system
-  !> on the basis of the \#defines included in conditional compilation.
   integer(kind=T_INT), parameter :: iNUM_VARIABLES = 29
 
   ! constants defining T_STATS output types
@@ -732,7 +728,7 @@ module types
 
       ! minimum value for valid precip  and temperature data
       real (kind=T_SGL) :: rMinValidPrecip = -99999.0
-      real (kind=T_SGL) :: rMinValidTemp = -99999.0      
+      real (kind=T_SGL) :: rMinValidTemp = -99999.0
 
       ! define temperature values at which precip is all rain or all snow
       real (kind=T_SGL) :: rTMaxAllSnow = 30.5
@@ -1236,7 +1232,7 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
 
 end subroutine assert_module_details_sub
 
-!-------------------------------------------------------------------------------  
+!-------------------------------------------------------------------------------
 
 !> @brief echo to screen AND write to logfile
   subroutine echolog(sMessage, sFormat)
@@ -1261,7 +1257,7 @@ end subroutine assert_module_details_sub
 
   end subroutine echolog
 
-!-------------------------------------------------------------------------------  
+!-------------------------------------------------------------------------------
 
 subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
 
@@ -1893,18 +1889,26 @@ end subroutine LookupMonth
 
 !----------------------------------------------------------------------
 
-function approx_equal_dbl(rA, rB)  result(lTest)
+function approx_equal_dbl(rA, rB, rTol)  result(lTest)
 
    real(kind=T_DBL) :: rA
    real(kind=T_DBL) :: rB
+   real(kind=T_DBL), optional :: rTol
    logical(kind=T_LOGICAL) :: lTest
 
    ! [ LOCALS ]
    real (kind=T_DBL) :: rDiff
    integer (kind=T_INT) :: iDiff
+   real(kind=T_DBL) :: rMultiplier
+
+   if(present(rTol) ) then
+     rMultiplier = rTol
+   else
+     rTol = 10000.
+   endif
 
    rDiff = ABS(rA - rB)
-   iDiff = int(rDiff * 10000., kind=T_INT)
+   iDiff = int(rDiff * rMultiplier, kind=T_INT)
 
    if(iDiff == 0) then
      lTest = lTRUE
@@ -1917,18 +1921,26 @@ function approx_equal_dbl(rA, rB)  result(lTest)
 end function approx_equal_dbl
 
 
-function approx_equal_sgl(rA, rB)  result(lTest)
+function approx_equal_sgl(rA, rB, rTol)  result(lTest)
 
    real(kind=T_SGL) :: rA
    real(kind=T_SGL) :: rB
+   real(kind=T_SGL), optional :: rTol
    logical(kind=T_LOGICAL) :: lTest
 
    ! [ LOCALS ]
    real (kind=T_DBL) :: rDiff
    integer (kind=T_INT) :: iDiff
+   real(kind=T_SGL) :: rMultiplier
+
+   if(present(rTol) ) then
+     rMultiplier = rTol
+   else
+     rTol = 10000.
+   endif
 
    rDiff = ABS(rA - rB)
-   iDiff = int(rDiff * 10000., kind=T_INT)
+   iDiff = int(rDiff * rMultiplier, kind=T_INT)
 
    if(iDiff == 0) then
      lTest = lTRUE
