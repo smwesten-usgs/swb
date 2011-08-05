@@ -147,9 +147,9 @@ program main
 
 
 #ifdef DEBUG_PRINT
-    write(UNIT=*,FMT="(a)") " DEBUG_PRINT              yes"
+    write(UNIT=*,FMT="(a)") " DEBUG_PRINT                 yes"
 #else
-    write(UNIT=*,FMT="(a)") " DEBUG_PRINT               no"
+    write(UNIT=*,FMT="(a)") " DEBUG_PRINT                  no"
 #endif
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"
