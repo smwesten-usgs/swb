@@ -577,29 +577,31 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   do k=1,iNUM_VARIABLES
 
 #ifdef NETCDF_SUPPORT
-  ! close any NetCDF files that have been opened for output
-  if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
+    ! close any NetCDF files that have been opened for output
+    if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
 
-  pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-  call netcdf_check(nf90_close(pNC%iNCID))
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: closed NetCDF file "// &
-    TRIM(STAT_INFO(k)%sVARIABLE_NAME)//".nc"
-  flush(unit=LU_LOG)
+      pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
+      call netcdf_check(nf90_close(pNC%iNCID))
+      write(UNIT=LU_LOG,FMT=*)  "model.f95: closed NetCDF file "// &
+        TRIM(STAT_INFO(k)%sVARIABLE_NAME)//".nc"
+      flush(unit=LU_LOG)
 
-  end if
+    end if
 
 #endif
 
-  ! write the end date of the simulation into the header of
-  ! the binary file (*.bin)
-  if(STAT_INFO(k)%iDailyOutput > iNONE &
-    .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-    .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-  write(UNIT=STAT_INFO(k)%iLU,POS=iENDDATE_POS) &
-    pConfig%iMonth,pConfig%iDay, pConfig%iYear
-  end if
+    ! write the end date of the simulation into the header of
+    ! the binary file (*.bin)
+    if(STAT_INFO(k)%iDailyOutput > iNONE &
+      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+      write(UNIT=STAT_INFO(k)%iLU,POS=iENDDATE_POS) &
+        pConfig%iMonth,pConfig%iDay, pConfig%iYear
+    end if
 
   end do
+
+  print *, __LINE__
 
   ! clean up
   close ( unit=LU_TS )

@@ -16,6 +16,9 @@ module types
 
   implicit none
 
+  character(len=16), public, parameter :: &
+      SWB_VERSION = "1.0.1"
+
   !> Define the sizes of base types used in the model
   integer, public, parameter :: T_LOGICAL = 4
   integer, public, parameter :: T_INT = 4

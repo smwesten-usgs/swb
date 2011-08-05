@@ -1,5 +1,5 @@
 <!-- Project file for the Zeus for Windows IDE - http://www.zeusedit.com -->
-<Project name="swb" sorted="Yes">
+<Project name="swb" sorted="Yes" autosynch="" filename="" st_mtime="">
     <SccEnable>On</SccEnable>
     <SccComment></SccComment>
     <SccProject></SccProject>
@@ -46,12 +46,14 @@
     <EnvInclude></EnvInclude>
     <EnvClassPath></EnvClassPath>
     <DoxygenAsJava>On</DoxygenAsJava>
-    <DebugTagNoIntellisense>Off</DebugTagNoIntellisense>
+    <DebugCaptureStdOut>Off</DebugCaptureStdOut>
+    <DebugCaptureStdErr>Off</DebugCaptureStdErr>
     <DebugExecutable></DebugExecutable>
     <DebugArguments></DebugArguments>
     <DebugDirectory></DebugDirectory>
     <DebugDebugger></DebugDebugger>
-    <ReleaseTagNoIntellisense>Off</ReleaseTagNoIntellisense>
+    <ReleaseCaptureStdOut>Off</ReleaseCaptureStdOut>
+    <ReleaseCaptureStdErr>Off</ReleaseCaptureStdErr>
     <ReleaseExecutable></ReleaseExecutable>
     <ReleaseArguments></ReleaseArguments>
     <ReleaseDirectory></ReleaseDirectory>

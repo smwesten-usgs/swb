@@ -86,7 +86,7 @@ program main
   if(iNumArgs/=1) then
 
     write(UNIT=*,FMT="(/,a,/)") &
-      "Soil Water Balance Code -- compiled on: "// &
+      "Soil Water Balance Code version "//trim(SWB_VERSION)//" -- compiled on: "// &
       TRIM(__DATE__) //" "// TRIM(__TIME__)
 #ifdef __GFORTRAN__
     write(UNIT=*,FMT="(a,/)") "Compiled with: GNU gfortran version "//TRIM(__VERSION__)

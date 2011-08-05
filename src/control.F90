@@ -1520,10 +1520,12 @@ subroutine control_setModelOptions(sControlFile)
   call Assert( iStat == 0, &
      "Could not deallocate memory for plot control data structure")
 
-  DEALLOCATE(pTSt, STAT=iStat)
-  call Assert( iStat == 0, &
-     "Could not deallocate memory for time-series data structure", &
-     TRIM(__FILE__),__LINE__)
+  if(associated(pTst) ) then
+    DEALLOCATE(pTSt, STAT=iStat)
+    call Assert( iStat == 0, &
+       "Could not deallocate memory for time-series data structure", &
+       TRIM(__FILE__),__LINE__)
+  endif
 
   close(UNIT=LU_CONTROL)
 
