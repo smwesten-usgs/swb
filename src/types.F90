@@ -325,9 +325,6 @@ module types
   end type T_SSF_FILES
 
 !if_defined NETCDF_SUPPORT
-
-  iNC_
-
   type T_NETCDF_FILE
     integer(kind=T_INT) :: iNCID
     character(len=64)  :: sFilename
