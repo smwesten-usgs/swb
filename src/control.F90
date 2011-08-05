@@ -1505,8 +1505,7 @@ subroutine control_setModelOptions(sControlFile)
       exit
 
     else
-      call Assert( lFALSE, "Illegal directive:~" &
-        //" ~ >>"//squote(sItem) &
+      call Assert( lFALSE, "Illegal directive: "//squote(sItem) &
         // "~found on line number "//trim(int2char(iCurrentLineNumber)) &
         //" of control file "//squote(sControlfile) )
     end if
