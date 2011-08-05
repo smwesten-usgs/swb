@@ -325,16 +325,20 @@ module types
   end type T_SSF_FILES
 
 !if_defined NETCDF_SUPPORT
+
+  iNC_
+
   type T_NETCDF_FILE
     integer(kind=T_INT) :: iNCID
     character(len=64)  :: sFilename
     character(len=24)  :: sVarName = ""
     character(len=24) :: sUnits
     integer(kind=T_INT) :: iProjID
-    integer(kind=T_INT) :: iCRSID
+!    integer(kind=T_INT) :: iCRSID
     integer(kind=T_INT) :: iVarID
-    integer(kind=T_INT) :: iLatVarID
-    integer(kind=T_INT) :: iLonVarID
+    integer(kind=T_INT) :: iVarType
+!    integer(kind=T_INT) :: iLatVarID
+!    integer(kind=T_INT) :: iLonVarID
     integer(kind=T_INT) :: iXVarID
     integer(kind=T_INT) :: iYVarID
     integer(kind=T_INT) :: iXVarPOS   ! POS = 1 if we have var(x, y, t)

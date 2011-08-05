@@ -350,7 +350,6 @@ end function netcdf_open
   call netcdf_check(nf90_get_att(pNC%iNCID,iTVar,"units",sUnitsString), &
      TRIM(__FILE__),__LINE__)
 
-
 !  call netcdf_check(nf90_get_var(iNCID, iTVar, rTimeValues(iDimLen(iTDim):iDimLen(iTDim)), &
 !    start=(/iDimLen(iTDim) - 1/),count=(/1/)), &
 !    TRIM(__FILE__),__LINE__)
@@ -665,7 +664,9 @@ end subroutine netcdf_chk_extent
                   pNC%iX_NumGridCells,1/) ), &
                   TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      where(iValues /= -999)
+      where(iValues /= -999. and. pNC%rScaleFactor > 0.)
+        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+      elsewhere(iValues /= -999. and. pNC%rScaleFactor < 0.)
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
       endwhere
 
@@ -696,7 +697,9 @@ end subroutine netcdf_chk_extent
               pNC%iY_NumGridCells,1/) ), &
               TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      where(iValues /= -999)
+      where(iValues /= -999. and. pNC%rScaleFactor > 0.)
+        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+      elsewhere(iValues /= -999. and. pNC%rScaleFactor < 0.)
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
       endwhere
 
