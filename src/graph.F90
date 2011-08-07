@@ -69,6 +69,7 @@ module graph
       case(T_INT_GRID)
         do iCol=1,iX
           do iRow=1,iY
+            print *, iCol, iRow
             ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)))
           end do
         end do
@@ -76,6 +77,7 @@ module graph
       case(T_SGL_GRID)
         do iCol=1,iX
           do iRow=1,iY
+            print *, iCol, iRow
             ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
           end do
         end do
@@ -88,7 +90,8 @@ module graph
 
     ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
     ! accordingly
-    if(approx_equal(ZA, ZE) ) then
+!    if(approx_equal(real(ZA,kind=T_SGL), real(ZE,kind=T_SGL) ) ) then
+     if( int(ZA) == int(ZE) ) then
       ZE = ZA * 1.1 + .1
       ZSTEP = (ZE - ZA) / 10.
     endif

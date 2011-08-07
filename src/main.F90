@@ -164,5 +164,8 @@ program main
   ! pass control to control module
   call control_setModelOptions(sControlFile)
 
+  close(unit=LU_LOG)
+
   stop
+
 end program main

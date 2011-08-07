@@ -1411,12 +1411,15 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   call stats_WriteMinMeanMax(LU_LOG, "MEAN RECHARGE", &
           pTmpGrd%rData)
 
+  print *, __LINE__
+
   write(LU_LOG,FMT="('MEAN RECHARGE, EXCLUDING OPEN WATER CELLS:',f14.3)") &
     SUM(pTmpGrd%rData,pGrd%Cells%rSoilWaterCap > rNear_ZERO &
             .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU) / &
     COUNT(pGrd%Cells%rSoilWaterCap > rNear_ZERO &
             .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU)
 
+  print *, __LINE__
 
   write(sBuf,FMT="('output',a,'MEAN_',a,'_',i4.4,'_',i4.4,'.asc')") &
     TRIM(pConfig%sSlash), &
@@ -1425,6 +1428,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   call grid_WriteArcGrid(sBuf,pGrd%rX0,pGrd%rX1,pGrd%rY0,pGrd%rY1, &
       pTmpGrd%rData)
 
+  print *, __LINE__
 
   write(sBuf,FMT="('images',a,'MEAN_',a,i4.4,'_'i4.4,a)") &
             TRIM(pConfig%sSlash), &
@@ -1433,15 +1437,21 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
             "."//TRIM(pGraph(iRECHARGE)%cCDEV)
   pGraph(iRECHARGE)%cSETFIL = TRIM(sBuf)
 
+  print *, __LINE__
+
   write(sBuf,FMT="(A,A,' ',i4.4,'-',i4.4)") "MEAN ", &
     "RECHARGE", pConfig%iStartYearforCalculation, &
       pConfig%iEndYearforCalculation
+
+  print *, __LINE__
 
 #ifdef GRAPHICS_SUPPORT
   pGraph(iRECHARGE)%cTITLE = TRIM(sBuf)
   pGraph(iRECHARGE)%iTimeFrame = iANNUAL
   call makegraph(pGraph,pTmpGrd,iRECHARGE)
 #endif
+
+  print *, __LINE__
 
   write(LU_LOG,FMT=*) REPEAT("-",80)
 

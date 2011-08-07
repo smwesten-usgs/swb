@@ -188,6 +188,7 @@ module types
       real (kind=T_SGL),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
       real (kind=T_SGL) :: rDailyRecharge          ! Daily recharge
       real (kind=T_SGL) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
+      real (kind=T_SGL) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
       real (kind=T_SGL) :: rMSB                    ! cellular mass balance
       integer(kind=T_SHORT) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
 

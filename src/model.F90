@@ -601,8 +601,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   end do
 
-  print *, __LINE__
-
   ! clean up
   close ( unit=LU_TS )
   if ( pConfig%lReportDaily ) then
@@ -629,9 +627,9 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   ! how long did all this take, anyway?
   call cpu_time(rEndTime)
   print "(//1x,'SWB run completed in: ',f10.2,' minutes')", &
-    (rEndTime-rStartTime)/60.0_T_SGL
+    (rEndTime - rStartTime) / 60.0_T_SGL
   write(unit=LU_LOG,fmt="(//1x,'SWB run completed in: ',f10.2, ' minutes')"), &
-    (rEndTime-rStartTime)/60.0_T_SGL
+    (rEndTime - rStartTime) / 60.0_T_SGL
 
   return
 end subroutine model_EndOfRun
@@ -3349,6 +3347,16 @@ integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
         trim(sDayText) // "." //trim(sBufSuffix), &
         xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
     elseif ( trim(sMonthName) == "ANNUAL" ) then
+      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rej_rch." // trim(sBufSuffix), &
+               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_RejectedRecharge )
+      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rch." // trim(sBufSuffix), &
+               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_Recharge )
+      call grid_WriteArcGrid( trim(sBufOut) // "_row_tgt." // trim(sBufSuffix), &
+               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Row) )
+
+      call grid_WriteArcGrid( trim(sBufOut) // "_col_tgt." // trim(sBufSuffix), &
+               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Col) )
+
 !      call grid_WriteArcGrid( trim(sBufOut) // "_rch." // trim(sBufSuffix), &
 !               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
 !      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &

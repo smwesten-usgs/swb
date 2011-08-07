@@ -945,6 +945,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
            iYear<= pConfig%iEndYearforCalculation) then
 
         cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
+        cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
 
       end if
 

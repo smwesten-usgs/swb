@@ -1501,7 +1501,6 @@ subroutine control_setModelOptions(sControlFile)
       call stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       write(UNIT=LU_LOG,FMT=*) "Job complete."
       call model_EndOfRun(pGrd, pConfig, pGraph)
-      close(unit=LU_LOG)
       exit
 
     else
@@ -1528,7 +1527,6 @@ subroutine control_setModelOptions(sControlFile)
   endif
 
   close(UNIT=LU_CONTROL)
-
   return
 
 end subroutine control_setModelOptions
