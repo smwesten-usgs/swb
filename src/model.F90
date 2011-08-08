@@ -814,7 +814,7 @@ end select
       //"("//trim(int2char(iNegCount))//" cells with values < " &
       //real2char(pConfig%rMinValidPrecip)//")",TRIM(__FILE__),__LINE__)
   elseif(iNegCount > 0) then
-    write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
+    write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iNegCount, &
       "Missing PRECIPITATION values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
     call echolog("  ==> Missing precipitation values will be set to zero")
