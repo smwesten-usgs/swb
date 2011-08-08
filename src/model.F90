@@ -808,11 +808,22 @@ end select
   iCount = count(pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
+  where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
+    pGrd%Cells%rGrossPrecip = rZERO
+  end where
+
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= rZERO,"Precipitation values less than " &
       //real2char(pConfig%rMinValidPrecip)//" are not allowed. " &
-      //"("//trim(int2char(iNegCount))//" cells with values < 0.0)",TRIM(__FILE__),__LINE__)
+      //"("//trim(int2char(iNegCount))//" cells with values < " &
+      //real2char(pConfig%rMinValidPrecip)//")",TRIM(__FILE__),__LINE__)
+  elseif(iNegCount > 0) then
+    write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
+      "Missing PRECIPITATION values detected: ", iMonth, iDay, iYear
+    call echolog(sBuf)
+    call echolog("  ==> Missing precipitation values will be set to zero")
   endif
+
 
   if(iCount>0) then
     rMean = rSum / iCount
@@ -969,7 +980,7 @@ end select
       //real2char(pConfig%rMinValidTemp)//" are not allowed. " &
       //"("//trim(int2char(iCount) )//" cells with values < " &
       //real2char(pConfig%rMinValidTemp)//")",TRIM(__FILE__),__LINE__)
-  else
+  elseif(iCount > 0) then
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
       "Missing minimum or maximum TEMPERATURE values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
