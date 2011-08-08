@@ -656,7 +656,7 @@ end subroutine netcdf_chk_extent
        TRIM(__FILE__),__LINE__)
 
       rValues = -rBIGVAL
-      iValues = -999
+      iValues = 0
 
       call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
         start= (/1,1,iTime/), &
@@ -664,11 +664,11 @@ end subroutine netcdf_chk_extent
                   pNC%iX_NumGridCells,1/) ), &
                   TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      where(iValues /= -999. .and. pNC%rScaleFactor > 0.)
+      if( pNC%rScaleFactor > 0.) then
         rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elsewhere(iValues /= -999. .and. pNC%rScaleFactor < 0.)
+      elseif( pNC%rScaleFactor < 0. ) then
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
-      endwhere
+      endif
 
       do iRow=1,pDataGrd%iNY
         do iCol=1,pDataGrd%iNX
@@ -689,7 +689,7 @@ end subroutine netcdf_chk_extent
         TRIM(__FILE__),__LINE__)
 
       rValues = -rBIGVAL
-      iValues = -999
+      iValues = 0
 
       call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
       start= (/1,1,iTime/), &
@@ -697,11 +697,11 @@ end subroutine netcdf_chk_extent
               pNC%iY_NumGridCells,1/) ), &
               TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      where(iValues /= -999. .and. pNC%rScaleFactor > 0.)
+      if( pNC%rScaleFactor > 0.) then
         rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elsewhere(iValues /= -999. .and. pNC%rScaleFactor < 0.)
+      elseif( pNC%rScaleFactor < 0. ) then
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
-      endwhere
+      endif
 
       do iRow=1,pDataGrd%iNY
         do iCol=1,pDataGrd%iNX
