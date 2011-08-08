@@ -798,10 +798,6 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
       trim(__FILE__),__LINE__)
 end select
 
-  where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
-    pGrd%Cells%rGrossPrecip = rZERO
-  end where
-
   rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
   rMax = maxval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
   rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
