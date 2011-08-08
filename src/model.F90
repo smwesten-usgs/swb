@@ -802,14 +802,17 @@ end select
     pGrd%Cells%rGrossPrecip = rZERO
   end where
 
-  rMin = minval(pGrd%Cells%rGrossPrecip)
-  rMax = maxval(pGrd%Cells%rGrossPrecip)
-  rSum = sum(pGrd%Cells%rGrossPrecip)
-  iCount = size(pGrd%Cells%rGrossPrecip)
-  iNegCount = COUNT(pGrd%Cells%rGrossPrecip<rZERO)
+  rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
+  rMax = maxval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
+  rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
+  iCount = count(pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
+  iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
-  call Assert(rMin >= rZERO,"Negative or missing precipitation values are not allowed. " &
-    //"("//trim(int2char(iNegCount))//" cells with values < 0.0)",TRIM(__FILE__),__LINE__)
+  if(pConfig%lHaltIfMissingClimateData) then
+    call Assert(rMin >= rZERO,"Precipitation values less than " &
+      //real2char(pConfig%rMinValidPrecip)//" are not allowed. " &
+      //"("//trim(int2char(iNegCount))//" cells with values < 0.0)",TRIM(__FILE__),__LINE__)
+  endif
 
   if(iCount>0) then
     rMean = rSum / iCount
@@ -961,7 +964,12 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 end select
 
 
-  if(iCount > 0) then
+  if(pConfig%lHaltIfMissingClimateData) then
+    call Assert(iCount == 0,"Temperature values less than " &
+      //real2char(pConfig%rMinValidTemp)//" are not allowed. " &
+      //"("//trim(int2char(iCount) )//" cells with values < " &
+      //real2char(pConfig%rMinValidTemp)//")",TRIM(__FILE__),__LINE__)
+  else
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
       "Missing minimum or maximum TEMPERATURE values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)

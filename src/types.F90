@@ -211,6 +211,7 @@ module types
 !      integer (kind=T_INT) :: iGridType            ! One of the grid type options above
       integer (kind=T_INT) :: iNX                   ! Number of cells in the x-direction
       integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
+      integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
       integer (kind=T_INT) :: iDataType             ! Type of the grid
       real (kind=T_SGL) :: rGridCellSize            ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
@@ -708,6 +709,7 @@ module types
       integer (kind=T_INT) :: iEndYearforCalculation = 99999
       logical (kind=T_LOGICAL) :: lGriddedData = lFALSE
       logical (kind=T_LOGICAL) :: lUseSWBRead = lFALSE
+      logical (kind=T_LOGICAL) :: lHaltIfMissingClimateData = lTRUE
 
       ! flag indicating whether a previous downhill routing table exists
       logical (kind=T_LOGICAL) :: lDownhillRoutingTableExists = lFALSE
@@ -732,8 +734,8 @@ module types
       real (kind=T_SGL) :: rSnowFall_SWE_Corr_Factor = 1.0
 
       ! minimum value for valid precip  and temperature data
-      real (kind=T_SGL) :: rMinValidPrecip = -99999.0
-      real (kind=T_SGL) :: rMinValidTemp = -99999.0
+      real (kind=T_SGL) :: rMinValidPrecip = 0.
+      real (kind=T_SGL) :: rMinValidTemp = -100.0
 
       ! define temperature values at which precip is all rain or all snow
       real (kind=T_SGL) :: rTMaxAllSnow = 30.5

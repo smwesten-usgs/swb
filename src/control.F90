@@ -208,6 +208,8 @@ subroutine control_setModelOptions(sControlFile)
       call assert(pGrd%rGridCellSize == rGridCellSize, "Grid cell size entered in the " &
         //"control file does not match calculated grid cell size. Check the control file.", &
         trim(__FILE__), __LINE__)
+      pGrd%iNumGridCells = iNX * iNY
+      write(UNIT=LU_LOG,FMT="('    total number of gridcells: ',i8)") pGrd%iNumGridCells
       flush(UNIT=LU_LOG)
 
 #ifdef DEBUG_PRINT
@@ -494,6 +496,14 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) &
         "SWB will write an observations snippet and a *.ins file"
       pConfig%lWriteExtraPestFiles = lTRUE
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "IGNORE_MISSING_CLIMATE_DATA" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "SWB will ignore missing climate data. Missing precip will be set to zero."
+      write(UNIT=LU_LOG,FMT=*) &
+        "  Missing temperature data will be filled with the values from the previous day."
+      pConfig%lHaltIfMissingClimateData = lFALSE
       flush(UNIT=LU_LOG)
 
     !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

@@ -619,7 +619,7 @@ end subroutine netcdf_chk_extent
 
     ! [ LOCALS ]
     type ( T_GENERAL_GRID ),pointer :: pGrd_nc  ! pointer to NetCDF grid
-    integer (kind=T_INT) :: iTime, iCol, iRow
+    integer (kind=T_INT) :: iTime, iCol, iRow, iCount
     type (T_NETCDF_FILE), pointer :: pNC
     real(kind=T_SGL), allocatable, dimension(:,:) :: rValues
     real (kind=T_SGL) :: rXval, rYval
@@ -655,19 +655,22 @@ end subroutine netcdf_chk_extent
        "Could not allocate memory for iValues", &
        TRIM(__FILE__),__LINE__)
 
-      rValues = -rBIGVAL
-      iValues = 0
-
       call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
         start= (/1,1,iTime/), &
         count= (/ pNC%iY_NumGridCells, &
                   pNC%iX_NumGridCells,1/) ), &
                   TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      if( pNC%rScaleFactor > 1.) then
-        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elseif( pNC%rScaleFactor < 1. ) then
-        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      iCount = count(iValues == -999)
+
+      if(iCount == pGrd%iNumGridCells) then
+        rValues = -rBIGVAL
+      else
+        if( pNC%rScaleFactor > 1.) then
+          rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+        elseif( pNC%rScaleFactor < 1. ) then
+          rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+        endif
       endif
 
       do iRow=1,pDataGrd%iNY
@@ -688,19 +691,22 @@ end subroutine netcdf_chk_extent
         "Could not allocate memory for iValues", &
         TRIM(__FILE__),__LINE__)
 
-      rValues = -rBIGVAL
-      iValues = 0
-
       call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
       start= (/1,1,iTime/), &
       count= (/ pNC%iX_NumGridCells, &
               pNC%iY_NumGridCells,1/) ), &
               TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      if( pNC%rScaleFactor > 1.) then
-        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elseif( pNC%rScaleFactor < 1. ) then
-        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      iCount = count(iValues == -999)
+
+      if(iCount == pGrd%iNumGridCells) then
+        rValues = -rBIGVAL
+      else
+        if( pNC%rScaleFactor > 1.) then
+          rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+        elseif( pNC%rScaleFactor < 1. ) then
+          rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+        endif
       endif
 
       do iRow=1,pDataGrd%iNY
