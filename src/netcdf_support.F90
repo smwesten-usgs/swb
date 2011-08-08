@@ -664,9 +664,9 @@ end subroutine netcdf_chk_extent
                   pNC%iX_NumGridCells,1/) ), &
                   TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      if( pNC%rScaleFactor > 0.) then
+      if( pNC%rScaleFactor > 1.) then
         rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elseif( pNC%rScaleFactor < 0. ) then
+      elseif( pNC%rScaleFactor < 1. ) then
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
       endif
 
@@ -697,9 +697,9 @@ end subroutine netcdf_chk_extent
               pNC%iY_NumGridCells,1/) ), &
               TRIM(__FILE__),__LINE__, pNC, iTime)
 
-      if( pNC%rScaleFactor > 0.) then
+      if( pNC%rScaleFactor > 1.) then
         rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-      elseif( pNC%rScaleFactor < 0. ) then
+      elseif( pNC%rScaleFactor < 1. ) then
         rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
       endif
 
