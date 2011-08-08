@@ -127,13 +127,13 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
     open(LU_CSV_MAX, file='SWB_daily_MAXIMUM_values.csv',iostat=iStat,&
       status='REPLACE')
 
-  call Assert(iStat == 0, &
-    "Problem opening CSV files for summary statistics output.")
+    call Assert(iStat == 0, &
+      "Problem opening CSV files for summary statistics output.")
 
-  call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MIN,iMIN)
-  call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MEAN,iMEAN)
-  call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MAX,iMAX)
-end if
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MIN,iMIN)
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MEAN,iMEAN)
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MAX,iMAX)
+  end if
 
   ! open CSV file for annual stats summary
   open(LU_CSV_ANNUAL, file='SWB_annual_statistics.csv',iostat=iStat,&
@@ -179,21 +179,26 @@ end if
   flush(unit=LU_LOG)
   call model_InitializeET( pGrd, pConfig )
 
+#ifdef DEBUG_PRINT
+    print *, trim(__FILE__)//": ",__LINE__
+#endif
+
+
   if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
 
-  ! Initialize the model
-  write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-  flush(unit=LU_LOG)
-  call model_InitializeSM(pGrd, pConfig)
+    ! Initialize the model
+    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+    flush(unit=LU_LOG)
+    call model_InitializeSM(pGrd, pConfig)
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-  flush(unit=LU_LOG)
-  call runoff_InitializeCurveNumber( pGrd ,pConfig)
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+    flush(unit=LU_LOG)
+    call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-  flush(unit=LU_LOG)
-  call model_InitializeMaxInfil(pGrd, pConfig )
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+    flush(unit=LU_LOG)
+    call model_InitializeMaxInfil(pGrd, pConfig )
 
   endif
 
@@ -204,8 +209,18 @@ end if
 
   end if FIRST_YEAR
 
+#ifdef DEBUG_PRINT
+    print *, trim(__FILE__)//": ",__LINE__
+#endif
+
+
   ! close any existing open time-series files...
   close(LU_TS)
+
+#ifdef DEBUG_PRINT
+    print *, trim(__FILE__)//": ",__LINE__,pConfig%lGriddedData
+#endif
+
 
   if(.not. pConfig%lGriddedData) then
   ! Connect to the single-site time-series file
@@ -213,6 +228,7 @@ end if
       status="OLD", iostat=iStat )
     write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
       TRIM(pConfig%sTimeSeriesFilename)
+    flush(LU_LOG)
     call Assert ( iStat == 0, &
       "Can't open time-series data file" )
     pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
@@ -226,7 +242,6 @@ end if
   ! Zero out monthly and annual accumulators
   call stats_InitializeMonthlyAccumulators()
   call stats_InitializeAnnualAccumulators()
-
 
   ! ***************************
   ! ***** BEGIN MAIN LOOP *****
@@ -248,45 +263,51 @@ end if
   pTS%lEOF = lFALSE
 
   if(.not. pConfig%lGriddedData) then
+#ifdef DEBUG_PRINT
+    print *, trim(__FILE__)//": ",__LINE__
+#endif
     call model_ReadTimeSeriesFile(pTS)
     if(pTS%lEOF) then
-#ifdef STRICT_DATE_CHECKING
-  if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
-    write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
-    write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
-    write(unit=sBuf,FMT=*) "Time series file ends prematurely: "//TRIM(pConfig%sTimeSeriesFilename)
-    call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
-  end if
-#endif
-  close(unit=LU_TS)
-  exit MAIN_LOOP
-end if
 
-  ! check to ensure that we have not skipped a day
-  if(.not. (pConfig%iYear == pTS%iYear &
-    .and. pConfig%iMonth == pTS%iMonth &
-    .and. pConfig%iDay == pTS%iDay)) then
-    write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
-    write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
-    write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
-      //TRIM(int2char(pTS%iDay))//"/" &
-      //TRIM(int2char(pTS%iYear))
-    write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
-      //TRIM(int2char(pConfig%iDay))//"/" &
-      //TRIM(int2char(pConfig%iYear))
 #ifdef STRICT_DATE_CHECKING
-  call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
+      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
+        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
+        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
+        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
+           //TRIM(pConfig%sTimeSeriesFilename)
+        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
+      end if
+#endif
+      close(unit=LU_TS)
+      exit MAIN_LOOP
+    end if
+
+    ! check to ensure that we have not skipped a day
+    if(.not. (pConfig%iYear == pTS%iYear &
+      .and. pConfig%iMonth == pTS%iMonth &
+      .and. pConfig%iDay == pTS%iDay)) then
+      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
+      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
+      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
+        //TRIM(int2char(pTS%iDay))//"/" &
+        //TRIM(int2char(pTS%iYear))
+      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
+        //TRIM(int2char(pConfig%iDay))//"/" &
+        //TRIM(int2char(pConfig%iYear))
+#ifdef STRICT_DATE_CHECKING
+      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
 #else
-  ! reset date to that of the input time-series data
-  pConfig%iYear = pTS%iYear
-  pConfig%iMonth = pTS%iMonth
-  pConfig%iDay = pTS%iDay
-  pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
+      ! reset date to that of the input time-series data
+      pConfig%iYear = pTS%iYear
+      pConfig%iMonth = pTS%iMonth
+      pConfig%iDay = pTS%iDay
+      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
 #endif
-  end if
+    end if
 
-  pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
-end if
+    pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
+
+  end if
 
   call LookupMonth(pConfig%iMonth,pConfig%iDay,pConfig%iYear, &
     pConfig%iDayOfYear,sMonthName,lMonthEnd)
@@ -306,28 +327,28 @@ end if
   ! the same percent moisture. This implies a discontinuity in
   ! the mass balance from one year to the next.
 
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX
-      cel => pGrd%Cells(iCol,iRow)
-      if(cel%rSoilWaterCap > rZERO) then
-        cel%rSoilMoisturePct = cel%rSoilMoisture &
-          / cel%rSoilWaterCap * 100.
-    else
-      cel%rSoilMoisturePct = rZERO
-    endif
+    do iRow=1,pGrd%iNY
+       do iCol=1,pGrd%iNX
+        cel => pGrd%Cells(iCol,iRow)
+        if(cel%rSoilWaterCap > rZERO) then
+          cel%rSoilMoisturePct = cel%rSoilMoisture &
+            / cel%rSoilWaterCap * 100.
+        else
+          cel%rSoilMoisturePct = rZERO
+        endif
 
 #ifdef THORNTHWAITE_MATHER_TABLE
-  ! look up soil moisture in T-M tables
-    cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-  cel%rSM_AccumPotentWatLoss)
+        ! look up soil moisture in T-M tables
+        cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
+        cel%rSM_AccumPotentWatLoss)
 #else
-  ! calculate soil moisture w equation SUMMARIZING T-M tables
-    cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-      cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
+        ! calculate soil moisture w equation SUMMARIZING T-M tables
+        cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
+        cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
 #endif
 
-  enddo
-enddo
+      enddo
+    enddo
 
   endif
 
@@ -339,24 +360,29 @@ enddo
 
   if(iStat == 0) then
 
-  ! Initialize the model
-  write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-  flush(unit=LU_LOG)
-  call model_InitializeSM(pGrd, pConfig)
+    ! Initialize the model
+    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+    flush(unit=LU_LOG)
+    call model_InitializeSM(pGrd, pConfig)
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-  flush(unit=LU_LOG)
-  call runoff_InitializeCurveNumber( pGrd ,pConfig)
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+    flush(unit=LU_LOG)
+    call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-  flush(unit=LU_LOG)
-  call model_InitializeMaxInfil(pGrd, pConfig )
-endif
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+    flush(unit=LU_LOG)
+    call model_InitializeMaxInfil(pGrd, pConfig )
+  endif
 
   end if DYNAMIC_LANDUSE
 
 
   if(pConfig%lFirstDayOfSimulation) then
+    ! scan through list of potential output variables; if any
+    ! output is desired for a variable, note the current position
+    ! within the file, move to the position reserved for the first day's
+    ! date, write the date, and return to the position where the data
+    ! for the first day will be written
     do k=1,iNUM_VARIABLES
       if(STAT_INFO(k)%iDailyOutput > iNONE &
         .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
@@ -370,7 +396,7 @@ endif
     end do
 
 #ifdef NETCDF_SUPPORT
-  call model_write_NetCDF_attributes(pConfig, pGrd)
+    call model_write_NetCDF_attributes(pConfig, pGrd)
 #endif
   end if
 
@@ -3093,7 +3119,6 @@ subroutine model_InitializeET( pGrd, pConfig )
       call et_hargreaves_initialize ( pGrd, pConfig%sTimeSeriesFilename)
   end select
 
-  return
 end subroutine model_InitializeET
 
 !--------------------------------------------------------------------------
@@ -3347,16 +3372,16 @@ integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
         trim(sDayText) // "." //trim(sBufSuffix), &
         xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
     elseif ( trim(sMonthName) == "ANNUAL" ) then
-      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rej_rch." // trim(sBufSuffix), &
-               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_RejectedRecharge )
-      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rch." // trim(sBufSuffix), &
-               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_Recharge )
-      call grid_WriteArcGrid( trim(sBufOut) // "_row_tgt." // trim(sBufSuffix), &
-               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Row) )
-
-      call grid_WriteArcGrid( trim(sBufOut) // "_col_tgt." // trim(sBufSuffix), &
-               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Col) )
-
+!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rej_rch." // trim(sBufSuffix), &
+!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_RejectedRecharge )
+!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rch." // trim(sBufSuffix), &
+!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_Recharge )
+!      call grid_WriteArcGrid( trim(sBufOut) // "_row_tgt." // trim(sBufSuffix), &
+!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Row) )
+!
+!      call grid_WriteArcGrid( trim(sBufOut) // "_col_tgt." // trim(sBufSuffix), &
+!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Col) )
+!
 !      call grid_WriteArcGrid( trim(sBufOut) // "_rch." // trim(sBufSuffix), &
 !               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
 !      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
@@ -3542,38 +3567,37 @@ subroutine model_ReadTimeSeriesFile(pTS)
 
   do
 
-  read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
-  if ( iStat<0 ) then
-    pTS%lEOF = lTRUE
-    exit ! END OF FILE
-  end if
-  call Assert ( iStat == 0, &
-    "Cannot read record from time-series file", &
-    TRIM(__FILE__),__LINE__)
-  if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
-  call CleanUpCsv ( sBuf )
-  read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
-    pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
-    pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
-  if (iStat/=0) then
-    write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
-    write(UNIT=LU_LOG,FMT=*)
-    cycle
-  end if
+    read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
+#ifdef DEBUG_PRINT
+    print *, trim(sBuf)
+#endif
+    if ( iStat<0 ) then
+      pTS%lEOF = lTRUE
+      exit ! END OF FILE
+    end if
+    call Assert ( iStat == 0, &
+      "Cannot read record from time-series file", TRIM(__FILE__),__LINE__)
+    if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
+    call CleanUpCsv ( sBuf )
+    read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
+      pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
+      pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
+    if (iStat/=0) then
+      write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
+      write(UNIT=LU_LOG,FMT=*)
+      cycle
+    end if
 
-  if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
-    .or. pTS%rPrecip < 0.) then
-  write(UNIT=LU_LOG,fmt=*) &
-    "Missing or corrupt data in climate file"
-  call Assert(lFALSE, &
-    "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
-  end if
+    if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
+      .or. pTS%rPrecip < 0.) then
+      write(UNIT=LU_LOG,fmt=*) "Missing or corrupt data in climate file"
+      call Assert(lFALSE, &
+        "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
+    end if
 
-  exit
+    exit
 
   end do
-
-  return
 
 end subroutine model_ReadTimeSeriesFile
 

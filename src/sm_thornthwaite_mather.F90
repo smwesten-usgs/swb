@@ -453,8 +453,8 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
             cel%iTgt_Row == iROUTE_DEPRESSION) then
           ! Don't route any further; the water pools here.
           ! nothing to do; leave rDailyRejectedRecharge value alone
-        elseif ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNY &
-           .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNX) then
+        elseif ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNX &
+           .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNY) then
 
           ! CAUTION!! We must *not* access illegal values for target cells
           if(pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%iLandUse == pConfig%iOPEN_WATER_LU &

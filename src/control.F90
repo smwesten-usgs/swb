@@ -252,6 +252,7 @@ subroutine control_setModelOptions(sControlFile)
       if ( str_compare(sOption,"SINGLE_STATION") ) then
         pConfig%iConfigurePrecip = CONFIG_PRECIP_SINGLE_STATION
         write(UNIT=LU_LOG,FMT=*) "  Precip data will be read for a single station"
+        pConfig%lGriddedData = lFALSE
       else
         if ( str_compare(sOption,"ARC_GRID") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_ARC_GRID
@@ -259,11 +260,13 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%sPrecipFilePrefix = sArgument
           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
           TRIM(pConfig%sPrecipFilePrefix)
+          pConfig%lGriddedData = lTRUE
         else if ( str_compare(sOption,"SURFER") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER_GRID
           write(UNIT=LU_LOG,FMT=*) "Precip data will be read as a series of SURFER grids"
           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
           TRIM(pConfig%sPrecipFilePrefix)
+          pConfig%lGriddedData = lTRUE
 #ifdef NETCDF_SUPPORT
         else if( str_compare(sOption,"NETCDF") ) then
           pConfig%iConfigurePrecip = CONFIG_PRECIP_NETCDF
@@ -277,11 +280,11 @@ subroutine control_setModelOptions(sControlFile)
           call netcdf_info(pConfig, iGROSS_PRECIP,iNC_INPUT, TRIM(sArgument))
           pConfig%NETCDF_FILE(iGROSS_PRECIP,iNC_INPUT)%sVarName = TRIM(sArgument)
           call netcdf_chk_extent(pConfig,iGROSS_PRECIP,iNC_INPUT,pGrd)
+          pConfig%lGriddedData = lTRUE
 #endif
         else
           call Assert( .false._T_LOGICAL, "Illegal precipitation input format specified" )
         end if
-        pConfig%lGriddedData = lTRUE
       end if
       flush(UNIT=LU_LOG)
 
@@ -1401,6 +1404,8 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iCurrentJulianDay = pConfig%iStartJulianDay - 1
         close( unit=LU_TS )
       end if
+
+      pConfig%lGriddedData = lFALSE
       ! actual call to "model_Solve" subroutine
       call model_Solve( pGrd, pConfig, pGraph)
 

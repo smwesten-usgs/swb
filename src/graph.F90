@@ -69,7 +69,6 @@ module graph
       case(T_INT_GRID)
         do iCol=1,iX
           do iRow=1,iY
-            print *, iCol, iRow
             ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)))
           end do
         end do
@@ -77,7 +76,6 @@ module graph
       case(T_SGL_GRID)
         do iCol=1,iX
           do iRow=1,iY
-            print *, iCol, iRow
             ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
           end do
         end do

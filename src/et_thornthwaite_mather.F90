@@ -144,7 +144,6 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   write(UNIT=LU_LOG,FMT=*) "  Thornthwaite-Mather annual heat index = ",rAnnualIndex
   write(UNIT=LU_LOG,FMT=*) "  Thornthwaite-Mather exponent 'a' = ",rExponentA
 
-  return
 end subroutine et_tm_initialize
 
 subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rSunPct )

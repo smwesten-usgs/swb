@@ -136,32 +136,6 @@ swb/fast:
 	$(MAKE) -f src\CMakeFiles\swb.dir\build.make src/CMakeFiles/swb.dir/build
 .PHONY : swb/fast
 
-#=============================================================================
-# Target rules for targets named swblib
-
-# Build rule for target.
-swblib: cmake_check_build_system
-	$(MAKE) -f CMakeFiles\Makefile2 swblib
-.PHONY : swblib
-
-# fast build rule for target.
-swblib/fast:
-	$(MAKE) -f src\CMakeFiles\swblib.dir\build.make src/CMakeFiles/swblib.dir/build
-.PHONY : swblib/fast
-
-#=============================================================================
-# Target rules for targets named swbstats
-
-# Build rule for target.
-swbstats: cmake_check_build_system
-	$(MAKE) -f CMakeFiles\Makefile2 swbstats
-.PHONY : swbstats
-
-# fast build rule for target.
-swbstats/fast:
-	$(MAKE) -f src\CMakeFiles\swbstats.dir\build.make src/CMakeFiles/swbstats.dir/build
-.PHONY : swbstats/fast
-
 # Help Target
 help:
 	@$(CMAKE_COMMAND) -E echo "The following are some of the valid targets for this Makefile:"
@@ -173,8 +147,6 @@ help:
 	@$(CMAKE_COMMAND) -E echo "... makelib"
 	@$(CMAKE_COMMAND) -E echo "... rebuild_cache"
 	@$(CMAKE_COMMAND) -E echo "... swb"
-	@$(CMAKE_COMMAND) -E echo "... swblib"
-	@$(CMAKE_COMMAND) -E echo "... swbstats"
 .PHONY : help
 
 
