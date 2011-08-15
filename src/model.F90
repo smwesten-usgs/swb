@@ -147,20 +147,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
   ! Time the run
   call cpu_time(rStartTime)
 
-  !!! TESTING BLOCK - NetCDF output
-!    pTempGrid=>grid_Create( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-!             pGrd%rX1, pGrd%rY1, T_SGL_GRID )
-!   pTempGrid%rData = pGrd%Cells%rSoilMoisture
-!    pNC => pConfig%NETCDF_FILE(iSOIL_MOISTURE,iNC_OUTPUT)
-!    pNC%sVarName = "soil_moist"
-!    pNC%iNCID = netcdf_create("Initial_Soil_Moisture.nc")
-!    call netcdf_write_attributes(iSOIL_MOISTURE, iNC_OUTPUT, pConfig, pGrd)
-!    call netcdf_write_variable(iSOIL_MOISTURE, iNC_OUTPUT, pConfig, &
-!        pTempGrid, 1)
-!    call grid_destroy(pTempGrid)
-!    call netcdf_check(nf90_close(pNC%iNCID),TRIM(__FILE__),__LINE__)
-  !!! END OF TESTING BLOCK - NetCDF output
-
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
     ! if a routing table exists, read it in; else initialize and
@@ -182,7 +168,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
 #ifdef DEBUG_PRINT
     print *, trim(__FILE__)//": ",__LINE__
 #endif
-
 
   if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
@@ -213,14 +198,12 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
     print *, trim(__FILE__)//": ",__LINE__
 #endif
 
-
   ! close any existing open time-series files...
   close(LU_TS)
 
 #ifdef DEBUG_PRINT
     print *, trim(__FILE__)//": ",__LINE__,pConfig%lGriddedData
 #endif
-
 
   if(.not. pConfig%lGriddedData) then
   ! Connect to the single-site time-series file
@@ -315,64 +298,69 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
   ! initialize landuse-associated variables; must be done each year if
   ! dynamic landuse is being used
   DYNAMIC_LANDUSE: if( ( pConfig%lFirstDayOfSimulation &
-    .or. pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) &
+    .or. ( pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) ) &
     .and.(pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_SURFER) ) then
 
-  iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
+    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-  if(.not. pConfig%lFirstDayOfSimulation) then
+    iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
 
-  ! calculate percent moisture; when landuse changes, it will assume
-  ! the same percent moisture. This implies a discontinuity in
-  ! the mass balance from one year to the next.
+    if(.not. pConfig%lFirstDayOfSimulation) then
 
-    do iRow=1,pGrd%iNY
-       do iCol=1,pGrd%iNX
-        cel => pGrd%Cells(iCol,iRow)
-        if(cel%rSoilWaterCap > rZERO) then
-          cel%rSoilMoisturePct = cel%rSoilMoisture &
-            / cel%rSoilWaterCap * 100.
-        else
-          cel%rSoilMoisturePct = rZERO
-        endif
+    ! calculate percent moisture; when landuse changes, it will assume
+    ! the same percent moisture. This implies a discontinuity in
+    ! the mass balance from one year to the next.
 
-#ifdef THORNTHWAITE_MATHER_TABLE
-        ! look up soil moisture in T-M tables
-        cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-        cel%rSM_AccumPotentWatLoss)
-#else
-        ! calculate soil moisture w equation SUMMARIZING T-M tables
-        cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-        cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
-#endif
+    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-      enddo
-    enddo
+!       do iRow=1,pGrd%iNY
+!         do iCol=1,pGrd%iNX
+!           cel => pGrd%Cells(iCol,iRow)
+!           if(cel%rSoilWaterCap > rZERO) then
+!             cel%rSoilMoisturePct = cel%rSoilMoisture &
+!               / cel%rSoilWaterCap * 100.
+!
+! #ifdef THORNTHWAITE_MATHER_TABLE
+!             ! look up soil moisture in T-M tables
+!             cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
+!                 cel%rSM_AccumPotentWatLoss)
+! #else
+!             ! calculate soil moisture w equation SUMMARIZING T-M tables
+!             cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
+!                 cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
+! #endif
+!           else
+!             cel%rSoilMoisturePct = rZERO
+!             cel%rSoilMoisture = rZERO
+!           endif
+!
+!         enddo
+!       enddo
 
-  endif
+    endif
 
-  if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
-    call assert( lFALSE, &
-    "Dynamic landuse option requires that landuse data be provided~" &
-    //"for at least the first year of simulation. No dynamic landuse~" &
-    //"file was found.", trim(__FILE__), __LINE__)
+    if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
+      call assert( lFALSE, &
+      "Dynamic landuse option requires that landuse data be provided~" &
+      //"for at least the first year of simulation. No dynamic landuse~" &
+      //"file was found.", trim(__FILE__), __LINE__)
 
-  if(iStat == 0) then
+    if(iStat == 0) then
 
-    ! Initialize the model
-    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-    flush(unit=LU_LOG)
-    call model_InitializeSM(pGrd, pConfig)
+      ! (Re)-initialize the model
+      write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+      flush(unit=LU_LOG)
+      call model_InitializeSM(pGrd, pConfig)
 
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-    flush(unit=LU_LOG)
-    call runoff_InitializeCurveNumber( pGrd ,pConfig)
+      write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+      flush(unit=LU_LOG)
+      call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-    flush(unit=LU_LOG)
-    call model_InitializeMaxInfil(pGrd, pConfig )
-  endif
+      write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+      flush(unit=LU_LOG)
+      call model_InitializeMaxInfil(pGrd, pConfig )
+    endif
 
   end if DYNAMIC_LANDUSE
 
@@ -3257,41 +3245,29 @@ subroutine model_InitializeSM(pGrd, pConfig )
     do iRow=1,pGrd%iNY
       do iCol=1,pGrd%iNX
 
-  lMatch = lFALSE
-  cel => pGrd%Cells(iCol,iRow)
-  ! loop over all LAND USE types...
-  do k=1,size(pConfig%LU,1)
-    pLU => pConfig%LU(k)
-    if ( pLU%iLandUseType == cel%iLandUse ) then
-!            if( pLU%lCONSTANT_ROOT_ZONE_DEPTH ) then
+        lMatch = lFALSE
+        cel => pGrd%Cells(iCol,iRow)
+        ! loop over all LAND USE types...
+        do k=1,size(pConfig%LU,1)
+          pLU => pConfig%LU(k)
+          if ( pLU%iLandUseType == cel%iLandUse ) then
 
-  cel%rSoilWaterCap = cel%rSoilWaterCapInput * &
-    pConfig%ROOTING_DEPTH(k,cel%iSoilGroup)
+            cel%rSoilWaterCap = cel%rSoilWaterCapInput * &
+               pConfig%ROOTING_DEPTH(k,cel%iSoilGroup)
+            lMatch=lTRUE
+            exit
+          end if
+        end do
 
-!            else
-!              cel%rSoilWaterCap = cel%rSoilWaterCapInput * &
-!                interpolate(pLU%rX_ROOT_ZONE,pLU%rY_ROOT_ZONE,cel%rSoilWaterCapInput)
-!            end if
-!            if(cel%iLandUse == 82) then
-!             write(UNIT=LU_LOG,FMT=*)  "LU:", cel%iLandUse,"  SOIL:",cel%iSoilGroup,"  out:", &
-!              "  in:",cel%rSoilWaterCapInput,"  product:",cel%rSoilWaterCap
-!             write(UNIT=LU_LOG,FMT=*)  "   ",pLU%rX_ROOT_ZONE
-!             write(UNIT=LU_LOG,FMT=*)  "   ",pLU%rY_ROOT_ZONE
-!            endif
-  lMatch=lTRUE
-  exit
-end if
-end do
-!      write(UNIT=LU_LOG,FMT=*)  iRow,iCol," table: ",pLU%iLandUseType," cell: ",cel%iLandUse
-  if(.not. lMATCH) then
-    call Assert(lFALSE,&
-    "Failed to match landuse grid with landuse table during soil moisture initialization~" &
-    //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
-    //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=T_INT) ) ) )
-  endif
-end do
-end do
-end if
+        if(.not. lMATCH) then
+          call Assert(lFALSE,&
+            "Failed to match landuse grid with landuse table during soil moisture initialization~" &
+            //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
+            //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=T_INT) ) ) )
+        endif
+      end do
+    end do
+  end if
 
   select case ( pConfig%iConfigureSM )
     case ( CONFIG_SM_NONE )
@@ -3302,7 +3278,6 @@ end if
 
   return
 end subroutine model_InitializeSM
-
 
 !--------------------------------------------------------------------------
 
@@ -3322,33 +3297,32 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
-  lMatch = lFALSE
-  cel => pGrd%Cells(iCol,iRow)
-  do k=1,size(pConfig%LU,1)
-    pLU => pConfig%LU(k)
-    if ( pLU%iLandUseType == cel%iLandUse ) then
-      ! save index of matching landuse for ease of processing land use properties later
-      cel%iLandUseIndex = k
-      ! need to ensure that the soil type doesn't exceed
-      ! the max number of soil types or we get a core dump
-      call Assert(LOGICAL(INT(cel%iSoilGroup,kind=T_INT) &
-        <= size(pConfig%MAX_RECHARGE,2),kind=T_LOGICAL), &
-        "Value in soil type grid exceeds the maximum " &
-        // "number of soil types in the land use lookup table.")
-      cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
-      lMatch=lTRUE
-      exit
-    end if
+      lMatch = lFALSE
+      cel => pGrd%Cells(iCol,iRow)
+      do k=1,size(pConfig%LU,1)
+        pLU => pConfig%LU(k)
+        if ( pLU%iLandUseType == cel%iLandUse ) then
+          ! save index of matching landuse for ease of processing land use properties later
+          cel%iLandUseIndex = k
+          ! need to ensure that the soil type doesn't exceed
+          ! the max number of soil types or we get a core dump
+          call Assert(INT(cel%iSoilGroup, kind=T_INT) &
+            <= size(pConfig%MAX_RECHARGE,2), &
+            "Value in soil type grid exceeds the maximum " &
+            // "number of soil types in the land use lookup table.")
+          cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
+          lMatch=lTRUE
+          exit
+        end if
+      end do
+      if(.not. lMATCH) then
+        write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
+        call Assert(lFALSE,&
+          "Failed to match landuse grid with landuse table during maximum infiltration initialization")
+      endif
+    end do
   end do
-    if(.not. lMATCH) then
-      write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
-      call Assert(lFALSE,&
-      "Failed to match landuse grid with landuse table during maximum infiltration initialization")
-    endif
-end do
-end do
 
-  return
 end subroutine model_InitializeMaxInfil
 
 !--------------------------------------------------------------------------

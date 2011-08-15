@@ -122,7 +122,6 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_CALCULATE
   pConfig%iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
   pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_TR55
-  pConfig%iConfigureMissingData = CONFIG_END_IF_MISSING_DATA
   pConfig%sOutputFileSuffix = "grd"
   pConfig%iHeaderPrintInterval = 7
   pConfig%lWriteToScreen = lTRUE

@@ -53,21 +53,19 @@ subroutine sm_thornthwaite_mather_Configure ( sRecord )
 
   ! Read the grid for the water-loss table
   call Chomp( sRecord, sOption )
-  call Assert( LOGICAL(len_trim(sOption) > 0,kind=T_LOGICAL), &
-     "No Soil-moisture retention table file was specified" )
+  call Assert( len_trim(sOption) > 0, &
+     "No Soil-moisture retention table file was specified", &
+     TRIM(__FILE__), __LINE__)
   write(UNIT=LU_LOG,FMT=*)"Reading ",trim(sOption)," for soil-moisture retention information"
   gWLT => grid_Read( sOption, "SURFER", T_SGL_GRID )
 
-  print *
   write(UNIT=LU_LOG,FMT=*)"Read in the soil-moisture retention file with the following dimensions:"
   write(UNIT=LU_LOG,FMT=*)"iNX = ",gWLT%iNX
   write(UNIT=LU_LOG,FMT=*)"iNY = ",gWLT%iNY
   write(UNIT=LU_LOG,FMT=*)"iDataType = ",gWLT%iDataType
   write(UNIT=LU_LOG,FMT=*)"rX0, rX1 = ",gWLT%rX0, gWLT%rX1
   write(UNIT=LU_LOG,FMT=*)"rY0, rY1 = ",gWLT%rY0, gWLT%rY1
-  print *
 
-  return
 end subroutine sm_thornthwaite_mather_Configure
 
 !------------------------------------------------------------------------------
@@ -141,7 +139,6 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
   pGrd%Cells%rSM_PotentialET = rZERO
 
-  return
 end subroutine sm_thornthwaite_mather_Initialize
 
 !------------------------------------------------------------------------------
@@ -1131,5 +1128,21 @@ rValue = rZERO
 
 end function sm_thornthwaite_mather_APWL
 
+!------------------------------------------------------------------------------
+
+subroutine sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd
+
+  where(pGrd%Cells%rSoilWaterCap > rNEAR_ZERO )
+
+    pGrd%Cells%rSoilMoisturePct = pGrd%Cells%rSoilMoisture  &
+       / pGrd%Cells%rSoilWaterCap
+
+  endwhere
+
+end subroutine sm_thornthwaite_mather_UpdatePctSM
+
+!------------------------------------------------------------------------------
 
 end module sm_thornthwaite_mather

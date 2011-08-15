@@ -1098,7 +1098,9 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
 
   call grid_LookupColumn(pGrd,rXval,ib,ia,u)
   call Assert ( LOGICAL(ib>0 .and. ia>0,kind=T_LOGICAL), &
-               "Requested column value out of range" )
+               "Requested column value out of range~" &
+               //"rXval: "//trim(real2char(rXval)), &
+               TRIM(__FILE__),__LINE__)
 
   ! In some cases, when things really dry out, the y value gets out of range. - truncate.
   if ( rYval < pGrd%rY0 ) then
@@ -1111,7 +1113,10 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   call grid_LookupRow(pGrd,ylocal,jb,ja,v)
 
   call Assert ( LOGICAL(jb>0 .and. ja>0,kind=T_LOGICAL) , &
-               "Requested row value out of range" )
+               "Requested row value out of range~" &
+               //"rYval: "//trim(real2char(rXval)), &
+               TRIM(__FILE__),__LINE__)
+
   rValue = (rONE-u) * (rONE-v) * pGrd%rData(jb,ib)   + &
               u  * (rONE-v) * pGrd%rData(jb,ia)   + &
            (rONE-u) *       v  * pGrd%rData(ja,ib)   + &

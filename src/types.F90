@@ -672,27 +672,30 @@ module types
       integer (kind=T_INT) :: iConfigureTemperature
       !> Landuse data input option
       integer (kind=T_INT) :: iConfigureLanduse
-      integer (kind=T_INT) :: iConfigureSM          ! soil moisture calculation option
-      integer (kind=T_INT) :: iConfigureSnow        ! snowfall and snowmelt option
-      integer (kind=T_INT) :: iConfigureSMCapacity  ! maximum soil water capacity option
-      integer (kind=T_INT) :: iConfigureInitialAbstraction  ! use 0.2S or 0.05S as
-                                                            ! estimate of initial abstraction
-      integer (kind=T_INT) :: iConfigureMissingData ! what do we do if missing data?
+      !> Soil moisture calculation option
+      integer (kind=T_INT) :: iConfigureSM
+      !> Snowfall and snowmelt option
+      integer (kind=T_INT) :: iConfigureSnow
+      !> Maximum soil water capacity option
+      integer (kind=T_INT) :: iConfigureSMCapacity
+      !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
+      integer (kind=T_INT) :: iConfigureInitialAbstraction
+      !> Option to write extra files when using PEST
       logical (kind=T_LOGICAL) :: lWriteExtraPestFiles = lFALSE
 
-      ! flag indicating whether or not screen output should include
-      ! ANSI.sys-like colors
+      !> flag indicating whether or not screen output should include
+      !> ANSI.sys-like colors
       logical (kind=T_LOGICAL) :: lANSI_Colors = lFALSE
 
-      ! allow for alternate methods of delimiting subdirectories;
-      ! needed for operation on Windows *and* Linux platforms
+      !> allow for alternate methods of delimiting subdirectories;
+      !> needed for operation on Windows *and* Linux platforms
       character(len=1) :: sSlash = sBACKSLASH
 
       integer(kind=T_INT) :: iRLE_MULT = 10000
       real (kind=T_SGL) :: rRLE_OFFSET = 0.
 
-      ! flag indicating whether this is the first year of a
-      ! multiple-year simulation
+      !> flag indicating whether this is the first year of a
+      !> multiple-year simulation
       logical (kind=T_LOGICAL) :: lFirstYearOfSimulation  = lTRUE
       logical (kind=T_LOGICAL) :: lFirstDayOfSimulation  = lTRUE
       integer (kind=T_INT) :: iStartYear
