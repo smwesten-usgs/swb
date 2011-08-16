@@ -805,12 +805,9 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
       trim(__FILE__),__LINE__)
 end select
 
-  rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
-  rMax = maxval(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
-  rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
-  iCount = count(pGrd%Cells%rGrossPrecip >= pConfig%rMinValidPrecip)
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
+  ! convert values less than the minimum valid amount to zero
   where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
     pGrd%Cells%rGrossPrecip = rZERO
   end where
@@ -827,12 +824,13 @@ end select
     call echolog("  ==> Missing precipitation values will be set to zero")
   endif
 
+  rMin = minval(pGrd%Cells%rGrossPrecip)
+  rMax = maxval(pGrd%Cells%rGrossPrecip)
+  rSum = sum(pGrd%Cells%rGrossPrecip)
+  iCount = size(pGrd%Cells%rGrossPrecip)
 
-  if(iCount>0) then
-    rMean = rSum / iCount
-  else
-    rMean = -9999.
-  end if
+  ! We are ignoring any missing or bogus values in this calculation
+  rMean = rSum / iCount
 
   call stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iGROSS_PRECIP,iMonth)
 
