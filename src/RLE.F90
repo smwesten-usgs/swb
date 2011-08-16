@@ -265,8 +265,9 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
                            / REAL(iRLE_MULT, kind=T_SGL) &
                            - rRLE_OFFSET
 
-        call Assert(LOGICAL(iCurr>=-iEOF,kind=T_LOGICAL), &
-         "Integer overflow in module RLE.f95, subroutine RLE_readByte.  Use a smaller value for pConfig%iRLE_MULT.")
+        call Assert( iCurr >= -iEOF, &
+         "Integer overflow; use a smaller value for RLE_MULTIPLIER", &
+         TRIM(__FILE__), __LINE__)
 
 !    	write(UNIT=LU_LOG,FMT=*) iByteCount,":  iPrev: ",iPrevious,"  iCurr: ", iCurr, "  rValue: ", &
 !          rValue(iByteCount)
@@ -275,15 +276,17 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	else
 
-	  call Assert(lFALSE,"Uncaught condition in IF-THEN block: module RLE.f95, subroutine RLE_readByte")
+	  call Assert(lFALSE,"Uncaught condition in IF-THEN block: module RLE.f95", &
+	    TRIM(__FILE__), __LINE__)
 
 	end if
 
     if(iByteCount == iByteTotal) then  ! we have already assigned the last
 	                                   ! value to rValue....check for EOF
 
-      call Assert(LOGICAL( iCurr == iEOF,kind=T_LOGICAL), &
-        "Expected to find an EOF marker in binary file: module RLE, subroutine RLE_readByte (line 236)")
+      call Assert( iCurr == iEOF, &
+        "Expected to find an EOF marker in binary file", &
+        TRIM(__FILE__), __LINE__)
 
 	  exit LOOP
 

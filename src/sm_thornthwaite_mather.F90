@@ -1137,7 +1137,11 @@ subroutine sm_thornthwaite_mather_UpdatePctSM( pGrd )
   where(pGrd%Cells%rSoilWaterCap > rNEAR_ZERO )
 
     pGrd%Cells%rSoilMoisturePct = pGrd%Cells%rSoilMoisture  &
-       / pGrd%Cells%rSoilWaterCap
+       / pGrd%Cells%rSoilWaterCap * 100.
+
+  elsewhere
+
+    pGrd%Cells%rSoilMoisturePct = rZERO
 
   endwhere
 

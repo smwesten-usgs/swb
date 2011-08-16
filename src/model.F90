@@ -80,7 +80,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
   integer (kind=T_INT) :: tj, ti
   integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
   integer (kind=T_INT) :: iPos
-  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses
+  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=T_INT) :: iCol, iRow
   character(len=3) :: sMonthName
   logical (kind=T_LOGICAL) :: lMonthEnd
@@ -408,6 +408,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
       .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
     write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
       pConfig%iYear, pConfig%iDayOfYear
+    inquire(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
+    write(UNIT=STAT_INFO(k)%iLU) iNO_DATA_NCDC  ! dummy value for now
     end if
   end do
 
@@ -490,6 +492,23 @@ end if
 
   end if
 
+  ! write OFFSET VALUE to the unformatted fortran file(s)
+  do k=1,iNUM_VARIABLES
+    if(STAT_INFO(k)%iDailyOutput > iNONE &
+      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+      ! get current file position
+      inquire(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
+      ! rewind to location of today's header, at the location
+      ! where the offset is to be written
+      write(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
+      ! write an offset amount at the end of the current header
+      write(UNIT=STAT_INFO(k)%iLU) iTempval - STAT_INFO(k)%iPos
+      ! return to last file position
+      write(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
+    end if
+  end do
+
   write ( unit=sBuf, fmt='("day",i3.3)' ) pConfig%iDayOfYear
   call model_WriteGrids(pGrd, pConfig, sBuf, pConfig%iDay, pConfig%iMonth, &
     pConfig%iYear, pConfig%iDayOfYear)
@@ -499,16 +518,16 @@ end if
 
 !      if ( pConfig%lReportDaily ) call stats_CalcMonthlyMeans(pConfig%iMonth, pConfig%iDay)
 !      call stats_WriteMonthlyReport (LU_STD_OUT, pGrd, sMonthName, iMonth)
-  call model_WriteGrids(pGrd, pConfig, sMonthName,  pConfig%iDay, &
-    pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
+    call model_WriteGrids(pGrd, pConfig, sMonthName,  pConfig%iDay, &
+      pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
 
   if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
     pConfig%iMonth, sMonthName, pConfig)
 
-  write(UNIT=LU_LOG,FMT="(A,i2,A,i4)") &
-    "finished monthly calculations for: ", &
-      pConfig%iMonth, "/", pConfig%iYear
-  flush(UNIT=LU_LOG)
+    write(UNIT=LU_LOG,FMT="(A,i2,A,i4)") &
+      "finished monthly calculations for: ", &
+        pConfig%iMonth, "/", pConfig%iYear
+    flush(UNIT=LU_LOG)
 
   end if
 

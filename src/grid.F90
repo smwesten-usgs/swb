@@ -834,9 +834,13 @@ subroutine grid_WriteSurferGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues)
   integer (kind=T_INT) :: iCol,iRow
   integer (kind=T_INT) :: istat
   character(len=256) :: sBuf
+  integer (kind=T_INT) :: iNumCols, iNumRows
+
+  iNumCols = size(rValues,1)
+  iNumRows = size(rValues,2)
 
   ! dynamically create the Fortran output format
-  write(sBuf,FMT="(a,a,a)") '(',TRIM(int2char(size(rValues,2))),'(a,1x))'
+  write(sBuf,FMT="(a,a,a)") '(',TRIM(int2char(iNumCols)),'(a,1x))'
 
   open (LU_TEMP, file=cFilename, iostat=istat, status="REPLACE" )
   call Assert( istat==0, "Could not open output file " // cFilename, &
@@ -845,19 +849,24 @@ subroutine grid_WriteSurferGrid(cFilename,rXmin,rXmax,rYmin,rYmax,rValues)
   write ( unit=LU_TEMP, fmt="('DSAA')", iostat=istat )
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), &
      "Error writing SURFER header" )
-  write ( unit=LU_TEMP, fmt=*, iostat=istat ) size(rValues,2),size(rValues,1)
-  call Assert( LOGICAL(istat==0,kind=T_LOGICAL), &
-     "Error writing SURFER dimensions" )
-  write ( unit=LU_TEMP, fmt=*, iostat=istat ) rXmin,rXmax
-  call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER X limits" )
-  write ( unit=LU_TEMP, fmt=*, iostat=istat ) rYmin,rYmax
-  call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER Y limits" )
-  write ( unit=LU_TEMP, fmt=*, iostat=istat ) minval(rValues),maxval(rValues)
-  call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER Z limits" )
-  do iRow=1,size(rValues,1)
+  write ( unit=LU_TEMP, fmt="(2i8)", iostat=istat ) iNumCols, iNumRows
+  call Assert( istat==0, "Error writing SURFER dimensions", &
+    trim(__FILE__), __LINE__)
+  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) rXmin,rXmax
+  call Assert( istat==0, "Error writing SURFER X limits", &
+    trim(__FILE__), __LINE__)
+  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) rYmin,rYmax
+  call Assert( istat==0, "Error writing SURFER Y limits", &
+    trim(__FILE__), __LINE__)
+  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) minval(rValues),maxval(rValues)
+  call Assert( istat==0, "Error writing SURFER Z limits", &
+    trim(__FILE__), __LINE__)
+
+  do iRow=iNumRows,1,-1
     write( unit=LU_TEMP, fmt=TRIM(sBuf), iostat=istat ) &
-      (TRIM(real2char(rValues(iCol,iRow))),iCol=1,size(rValues,2))
-    call Assert( LOGICAL(istat==0,kind=T_LOGICAL), "Error writing SURFER data" )
+      (TRIM(real2char(rValues(iCol,iRow),iNUM_DIGITS,iFIELD_WIDTH)),iCol=1,iNumCols)
+    call Assert( istat==0, "Error writing SURFER grid data" , &
+      trim(__FILE__), __LINE__)
   end do
 
   close (unit=LU_TEMP)

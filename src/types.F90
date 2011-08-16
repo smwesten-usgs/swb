@@ -444,6 +444,10 @@ module types
     integer(kind=T_INT) :: iNetCDFOutput
     !> Description of utility of variable in calculating mass balance
     character (len=24) :: sMSB_Note
+    !> Offset value; contains number of bytes written for a given day
+    integer (kind=T_INT) :: iOffset
+    !> Position value; location of current day's position marker
+    integer (kind=T_INT) :: iPos
   end type T_STATS
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
@@ -463,15 +467,15 @@ module types
     ! FIRST come the SOURCES (+) in the mass balance...
     T_STATS ('GROSS_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE, &
       'inches','gross precipitation', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('SNOWMELT',0,0,1,lTRUE,lTRUE, lTRUE, &
        'inches','snowmelt', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('INFLOW',0,0,1,lTRUE,lTRUE, lTRUE, &
       'inches','incoming flow from adjacent cells', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
 #ifdef IRRIGATION_MODULE
@@ -480,40 +484,40 @@ module types
       lFALSE, &
 #endif
        'inches','daily estimated irrigation amount', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source'), &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
     T_STATS ('SNOWFALL',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','precipitation falling as snow (SWE)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('INTERCEPTION',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','interception', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('OUTFLOW',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','outgoing flow to adjacent cells', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('RUNOFF_OUTSIDE',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','runoff leaving model domain', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('ACT_ET',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','actual evapotranspiration', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('CHG_IN_SOIL_MOIS',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','daily change in soil moisture', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','daily potential recharge', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('REJECTED_RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','recharge exceeding max recharge rate', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     T_STATS ('STREAM_CAPTURE',0,0,-1,lTRUE,lTRUE, &
 #ifdef STREAM_INTERACTIONS
@@ -522,69 +526,69 @@ module types
       lFALSE, &
 #endif
         'inches','runoff or recharge captured by a stream or fracture', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink'), &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     ! The following items are tracked and provided as outputs
     ! but are not part of the mass balance calculation...
     T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','water equivalent of snow cover', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('CFGI',0,2,0,lFALSE,lFALSE, lTRUE, &
       'unitless','continuous frozen ground index', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('MIN_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
       'degrees F','minimum daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('MAX_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
       'degrees F','maximum daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('AVG_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
       'degrees F','mean daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('CHG_IN_SNOW_COV',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','snowfall minus snowmelt', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('NET_PRECIP',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','gross precipitation minus interception', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('NET_INFLOW',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','sum of net precip and inflow', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('NET_INFIL',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','precip and inflow minus outflow', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('POT_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','potential evapotranspiration', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE, &
       'inches','net inflow minus potential et', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('SM_DEFICIT',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','daily soil moisture deficit', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('SM_SURPLUS',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','daily soil moisture surplus', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('SM_APWL',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','accumulated potential water loss', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('SOIL_MOISTURE',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','daily soil moisture', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info'), &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
 #ifdef IRRIGATION_MODULE
@@ -593,7 +597,7 @@ module types
       lFALSE, &
 #endif
       'degree-day','growing degree day', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info') ]
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) ]
 
   !> @anchor const_stat
   !> @name Constants: Statistics that SWB knows how to calculate and store
@@ -1059,48 +1063,6 @@ function nextunit(iLU)  result(iUnit)
   if(present(iLU) ) iLU = iUnit
 
 end function nextunit
-
-!   !> @brief General-purpose error-checking routine.
-!   !>
-!   !> General-purpose error-checking routine. If lCondition is .false.,
-!   !> prints the error message and stops!
-!   subroutine Assert(lCondition,sErrorMessage,sFilename,iLineNo)
-!
-!     ! ARGUMENTS
-!     logical (kind=T_LOGICAL), intent(in) :: lCondition
-!     character (len=*), intent(in) :: sErrorMessage
-!     character (len=*), optional :: sFilename
-!     integer (kind=T_INT), optional :: iLineNo
-!     logical :: lFileOpen
-!
-!     if ( .not. lCondition ) then
-!       write(UNIT=LU_STD_OUT,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
-!       print *,trim(sErrorMessage)
-!       print *, " "
-!       if(present(sFilename)) print *,"swb module: ", trim(sFilename)
-!       if(present(iLineNo)) print *,"line no.: ",iLineNo
-!
-!       ! echo error condition to the log file ONLY if it is open!
-!       inquire (unit=LU_LOG, opened=lFileOpen)
-!       if(lFileOpen) then
-!
-!         write(UNIT=LU_LOG,FMT="(/,1x,a)") 'FATAL ERROR - HALTING MODEL RUN'
-!         write(UNIT=LU_LOG,FMT=*) trim(sErrorMessage)
-!         write(UNIT=LU_LOG,FMT=*) " "
-!         if(present(sFilename)) write(UNIT=LU_LOG,FMT=*) "swb module: ", &
-!            trim(sFilename)
-!         if(present(iLineNo)) write(UNIT=LU_LOG,FMT=*) "line no.: ",iLineNo
-!
-!       end if
-!
-!       flush(unit=LU_LOG)
-!
-!       stop
-!     end if
-!
-!     return
-!
-!   end subroutine Assert
 
 !------------------------------------------------------------------------------
 
@@ -1882,17 +1844,6 @@ subroutine LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
   mo => YEAR_INFO(iMonth)
 
   sMonthName = mo%sName
-
-!  do i=1,12
-!    mo => YEAR_INFO(i)
-!    if ( iDayOfYear >= mo%iStart .and. iDayOfYear <= mo%iEnd ) then
-!      iMonth = i
-!      iDayOfMonth = iDayOfYear - mo%iStart + 1
-!      sMonthName = mo%sName
-!      lMonthEnd = iDayOfYear == mo%iEnd
-!      exit
-!    end if
-!  end do
 
   return
 end subroutine LookupMonth

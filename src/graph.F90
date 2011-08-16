@@ -461,7 +461,8 @@ module graph
 
       ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
       ! accordingly
-      if(approx_equal(ZA, ZE) ) then
+!      if(approx_equal(ZA, ZE) ) then
+      if( int(ZA) == int(ZE) ) then
         ZE = ZA * 1.1 + .1
         ZSTEP = (ZE - ZA) / 10.
       endif

@@ -4,15 +4,14 @@ module swbstats_support
   implicit none
 
   logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE
-  logical (kind=T_LOGICAL) :: lPERIOD_SUM = lFALSE
-  logical (kind=T_LOGICAL) :: lPERIOD_AVG = lFALSE
+  logical (kind=T_LOGICAL) :: lSUM = lFALSE
+  logical (kind=T_LOGICAL) :: lPERIOD_SLICE = lFALSE
   logical (kind=T_LOGICAL) :: lRESET = lFALSE
   logical (kind=T_LOGICAL) :: lVERBOSE = lFALSE
   logical (kind=T_LOGICAL) :: lMASKSSF = lFALSE
   logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
   logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
 
-  integer (kind=T_INT) :: iANALYSIS_PERIOD = 1
   character (len=256) :: sStatsDescription = ""
   integer (kind=T_INT) :: LU_STATS
 
@@ -21,6 +20,42 @@ module swbstats_support
   integer (kind=T_INT) :: iSlcEndMM = 12
   integer (kind=T_INT) :: iSlcEndDD = 31
   logical (kind=T_LOGICAL) :: lPRINT
+
+  character (len=78), dimension(34), parameter :: sUsageText = &
+    [ "Usage: swbstats [binary file name]                                            ", &
+      "                {YEARLY|MONTHLY|DAILY}                                        ", &
+      "                {SUM}                                                         ", &
+      "                {SURFER}                                                      ", &
+      "                {GRID|PLOT|BOTH|STATS}                                        ", &
+      "                {BASIN_MASK basin mask filename }                             ", &
+      "                {MASK mask filename}                                          ", &
+      "                {CUMULATIVE}                                                  ", &
+      "                {PERIOD_SLICE start date (mm/dd) end date (mm/dd)}            ", &
+      "                {start date (mm/dd/yyyy)}                                     ", &
+      "                {end date (mm/dd/yyyy)}                                       ", &
+      "                {VERBOSE}                                                     ", &
+      "                                                                              ", &
+      "A filename MUST be specified. All other arguments are OPTIONAL.               ", &
+      "                                                                              ", &
+      "NOTES:                                                                        ", &
+      "                                                                              ", &
+      "  1) SWBSTATS will generate output at all frequencies less than               ", &
+      "     that specified; for example, MONTHLY will also generate YEARLY output    ", &
+      "  2) If no output frequency is provided, a summary for the entire             ", &
+      "     model simulation period is calculated                                    ", &
+      "  3) SUM: will calculate statistics based on SUMS rather than MEAN values     ", &
+      "  4) VERBOSE: writes daily min, mean, and max values to logfile               ", &
+      "  5) SURFER: directs output to Surfer grids rather than Arc ASCII grids       ", &
+      "  6) BASIN_MASK: specifies a list of basins for which stats will be calculated", &
+      "     each entry in the basin list specifies an ARC ASCII basin mask for which ", &
+      "     statistics will be calculated                                            ", &
+      "  7) MASK: specifies a single mask file; stats are calculated for each        ", &
+      "     distinct integer value present in the mask file                          ", &
+      "  8) CUMULATIVE: specifies that MASK statistics are cumulative;               ", &
+      "     these cumulative statistics are reset at the beginning of each year      ", &
+      "  9) PERIOD_SLICE: calculates stats on a specified subset of days each year   ", &
+      "     for example, 'PERIOD_SLICE 06/01 08/31' will report stats for the        ", &
+      "     subset of output that occurs between June 1st and Aug. 31st of each year " ]
 
 contains
 
@@ -138,6 +173,7 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
 end subroutine CalcBasinStats
 
+!------------------------------------------------------------------------------
 
 subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
@@ -191,10 +227,6 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     if(lCUMULATIVE) then
       allocate(rRunningSum(iNumRecs))
       rRunningSum = 0_T_DBL
-    elseif(lPERIOD_SUM .or. lPERIOD_AVG) then
-      allocate(rPeriodSum(iANALYSIS_PERIOD, iNumRecs))
-      rPeriodSum = 0_T_DBL
-      i = 1
     endif
 
 
@@ -264,44 +296,6 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
       endif
 
-    elseif(lPERIOD_SUM) then
-
-        rPeriodSum(i, k) = rAvg
-
-        if(lPRINT) then
-
-          if( k < iNumRecs ) then
-
-            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') SUM(rPeriodSum(:,k)),sTAB
-
-          else
-
-            write(UNIT=LU_STATS,FMT="(g16.8)") SUM(rPeriodSum(:,k))
-
-          endif
-
-        endif
-
-    elseif(lPERIOD_AVG) then
-
-        rPeriodSum(i, k) = rAvg
-
-        if(lPRINT) then
-
-          if( k < iNumRecs ) then
-
-            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') &
-              SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD,sTAB
-
-          else
-
-            write(UNIT=LU_STATS,FMT="(g16.8)", advance='YES') &
-              SUM(rPeriodSum(:,k)) / iANALYSIS_PERIOD
-
-          endif
-
-        endif
-
     else
 
       if(lPRINT) then
@@ -321,11 +315,6 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     endif
 
   end do
-
-  if(lPERIOD_SUM .or. lPERIOD_AVG) then
-    i = i + 1
-    if(i > iANALYSIS_PERIOD) i = 1
-  endif
 
   flush(UNIT=LU_STATS)
 
@@ -585,6 +574,7 @@ implicit none
   integer (kind=T_INT), dimension(2) :: iTempDate
   character (len=256) :: sSiteNumber
   character (len=7) :: sLengthUnits
+  integer (kind=T_INT) :: iPos
 
   ! variables that are read in from the binary file header
   integer (kind=T_INT) :: iNX
@@ -597,8 +587,11 @@ implicit none
   real (kind=T_SGL)    :: rRLE_OFFSET
   real (kind=T_DBL)    :: rX0, rX1
   real (kind=T_DBL)    :: rY0, rY1
+  real (kind=T_DBL)    :: rX0_cntr, rX1_cntr
+  real (kind=T_DBL)    :: rY0_cntr, rY1_cntr
   integer (kind=T_INT) :: iStartMM, iStartDD, iStartYYYY
   integer (kind=T_INT) :: iEndMM, iEndDD, iEndYYYY
+  integer (kind=T_INT) :: iOffset
 
   integer (kind=T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD
   integer (kind=T_INT) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
@@ -613,7 +606,6 @@ implicit none
                           iSWBStatsStartDD,iSWBStatsStartYYYY
   integer (kind=T_INT) :: iSWBStatsEndDate, iSWBStatsEndMM, &
                           iSWBStatsEndDD,iSWBStatsEndYYYY
-  integer (kind=T_INT) :: iSWBStatsTotalNumDays
   integer (kind=T_INT) :: iSWBStatsOutputType = iBOTH
   integer (kind=T_INT) :: iSWBStatsType = iMEAN
 
@@ -642,7 +634,7 @@ implicit none
   logical (kind=T_LOGICAL) :: lYearBegin
   logical (kind=T_LOGICAL) :: lEOF
   logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
-  integer (kind=T_INT) :: iMonthCount, iYearCount
+  integer (kind=T_INT) :: iMonthCount, iYearCount, iPeriodCount
   integer (kind=T_INT) :: iGridCellValue
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
@@ -693,26 +685,9 @@ implicit none
       //TRIM(int2char(__G95_MINOR__))
 #endif
 
-    write(UNIT=*,FMT="(/,/,a)") &
-      "Usage: swbstats [binary file name] [PERIOD|YEARLY|MONTHLY|DAILY]" &
-        //" {SUM} {SURFER} {GRID|PLOT|BOTH|STATS} {BASIN_MASK basin mask filename }" &
-        //"{MASK mask filename} {CUMULATIVE}"
-    write(UNIT=*,FMT="(t17,a,/)") "{start date (mm/dd/yyyy)} {end date (mm/dd/yyyy)} {VERBOSE} {basin_mask_filename}"
-
-    write(UNIT=*,FMT="(/,t5,a)") "A filename and output frequency must be specified. All other arguments are OPTIONAL."
-    write(UNIT=*,FMT="(/,t5,a)") "NOTES:"
-    write(UNIT=*,FMT="(/,t7,a)") "1) output frequency will generate output at all frequencies less than"
-    write(UNIT=*,FMT="(t10,a)") "that specified (i.e. MONTHLY will also generate YEARLY)"
-    write(UNIT=*,FMT="(t12,a)") " - PERIOD: generates output for the entire period of"
-    write(UNIT=*,FMT="(t15,a)") "simulation *or* the start and end dates entered on the command line"
-    write(UNIT=*,FMT="(/,t7,a)") "2) If no output frequency is provided, a summary for the entire"
-    write(UNIT=*,FMT="(t10,a)") "model simulation period is calculated"
-    write(UNIT=*,FMT="(/,t7,a)") "3) SUM: will calculate statistics based on SUMS rather than MEAN values"
-    write(UNIT=*,FMT="(/,t7,a)") "4) VERBOSE: writes daily min, mean, and max values to logfile"
-    write(UNIT=*,FMT="(/,t7,a)") "5) SURFER: directs output to Surfer grids rather than Arc ASCII grids"
-    write(UNIT=*,FMT="(/,t7,a)") "6) BASIN_MASK: specifies a list of basins for which stats will be calculated"
-    write(UNIT=*,FMT="(/,t7,a)") "7) MASK: specifies a single mask file; stats are calculated for each integer value"
-    write(UNIT=*,FMT="(/,t7,a)") "8) CUMULATIVE: specifies that MASK statistics are cumulative, resetting each year"
+    do i=1,ubound(sUsageText,1)
+      write(unit=*,fmt="(a)") sUsageText(i)
+    enddo
 
     stop
 
@@ -721,7 +696,7 @@ implicit none
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
   open(nextunit(LU_SWBSTATS), FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
-       status='OLD',ACCESS='STREAM', ACTION='READ', IOSTAT=iStat )
+       status='OLD',ACCESS='STREAM', ACTION='READWRITE', IOSTAT=iStat )
 
   call Assert(iStat==0,"Failed to open input binary file: "//&
     TRIM(sBinFile),TRIM(__FILE__),__LINE__)
@@ -738,6 +713,11 @@ implicit none
   read(UNIT=LU_SWBSTATS) rY0, rY1        ! World-coordinate range in Y
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
   read(UNIT=LU_SWBSTATS) iEndMM, iEndDD, iEndYYYY
+
+  rX0_cntr = rX0 + rGridCellSize /2.
+  rX1_cntr = rX1 - rGridCellSize /2.
+  rY0_cntr = rY0 + rGridCellSize /2.
+  rY1_cntr = rY1 - rGridCellSize /2.
 
   ! check to see if binary file was closed normally or not. If SWB
   ! stopped prematurely, iEndMM, iEndDD, iEndYYYY will all have the
@@ -820,10 +800,9 @@ implicit none
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BOTH") then
       STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
       iSWBStatsOutputType = iBOTH
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD") then
-
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
       iSWBStatsType = iSUM
+      lSUM = lTRUE
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "DEFAULT") then
       iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
       iSWBStatsEndDate = julian_day ( iEndYYYY, iEndMM, iEndDD)
@@ -845,16 +824,6 @@ implicit none
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
         lCUMULATIVE = lTRUE
         iSWBStatsType = iSUM
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD_SUM") then
-      lPERIOD_SUM = lTRUE
-      i = i + 1
-      call GET_COMMAND_ARGUMENT(i,sBuf)
-      read(sBuf,fmt=*) iANALYSIS_PERIOD
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PERIOD_AVG") then
-      lPERIOD_AVG = lTRUE
-      i = i + 1
-      call GET_COMMAND_ARGUMENT(i,sBuf)
-      read(sBuf,fmt=*) iANALYSIS_PERIOD
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SURFER") then
       iOutputFormat = OUTPUT_SURFER
       sOutputFileSuffix = "grd"
@@ -864,6 +833,7 @@ implicit none
         TRIM(__FILE__),__LINE__)
       iTempDate(iDateNum) = mmddyyyy2julian(sBuf)
     elseif(trim(adjustl(sBuf)) .eq. "PERIOD_SLICE") then
+        lPERIOD_SLICE = lTRUE
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         call chomp(sBuf,sItem,"/-")
@@ -957,12 +927,6 @@ implicit none
     iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
     iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
-  if(lPERIOD_AVG) sStatsDescription = trim(sStatsDescription) // "_" &
-    //trim(int2char(iANALYSIS_PERIOD))//"-day_MEAN"
-
-  if(lPERIOD_SUM) sStatsDescription = trim(sStatsDescription) // "_" &
-    //trim(int2char(iANALYSIS_PERIOD))//"-day_SUM"
-
   if(lCUMULATIVE) sStatsDescription = trim(sStatsDescription) // "_" &
     //"CUMULATIVE"
 
@@ -1052,11 +1016,13 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   pSummaryGrd%rData(:,:)= rZERO
   iMonthCount = 0
   iYearCount = 0
+  iPeriodCount = 0
 
   do
     ! read in the current date
     read(UNIT=LU_SWBSTATS,iostat=iStat) &
-       iCurrDD, iCurrMM, iCurrYYYY, iCurrDOY
+       iCurrDD, iCurrMM, iCurrYYYY, iCurrDOY, iOffset
+
     if(iStat /= 0) then
       exit
     end if
@@ -1080,22 +1046,32 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     lRESET = ( iCurrMM == 1 .and. iCurrDD == 1)
     pGrd%rData(:,:)= rZERO
 
-    ! name "RLE_readByte" is misleading, since the return value (rVal)
-    ! is actually a vector of all daily values with dimension (iNY*iNX)
-    call RLE_readByte(LU_SWBSTATS,iRLE_MULT, &
-       rRLE_OFFSET, rVal,iNumGridCells,lEOF)
-    if(lEOF) exit
-
     !> if current date does not fall within desired date range, keep
     !> reading data, or if current date is after the end of the
     !> desired date range, stop reading and get out
-    if(iCurrJD < iSWBStatsStartDate) then
+    if(iCurrJD < iSWBStatsStartDate .or. .not. lPRINT) then
+
+      ! get current file position
+      inquire(UNIT=LU_SWBSTATS,pos=iPos, iostat=iStat)
+      call assert(iStat == 0, "Problem reading file position", &
+        trim(__FILE__), __LINE__)
+      ! skip all of the RLE nonsense if we don't care about the contents
+      ! note that we must subtract 4 to account for the fact that by this
+      ! point in the program execution, we've already read in the 4-byte
+      ! offset value; the offset is counted from the location extant just prior
+      ! to the writing of the offset value
+      write(UNIT=LU_SWBSTATS,pos=iPos + iOffset - 4,  iostat=iStat)
+      call assert(iStat == 0, "Problem fast-forwarding binary file", &
+        trim(__FILE__), __LINE__)
       cycle
     elseif(iCurrJD > iSWBStatsEndDate) then
       exit
     endif
 
-    iYearCount = iYearCount + 1
+    ! name "RLE_readByte" is misleading, since the return value (rVal)
+    ! is actually a vector of all daily values with dimension (iNY*iNX)
+    call RLE_readByte(LU_SWBSTATS,iRLE_MULT, rRLE_OFFSET, rVal,iNumGridCells,lEOF)
+    if(lEOF) exit
 
     pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
@@ -1112,6 +1088,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     endif
 
     pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
+    iPeriodCount = iPeriodCount + 1
 
     if(lVERBOSE) then
       call stats_WriteMinMeanMax(LU_LOG, &
@@ -1142,7 +1119,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
       if ( iOutputFormat == OUTPUT_SURFER ) then
          call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-           rX0,rX1,rY0,rY1,pGrd%rData(:,:))
+            rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pGrd%rData(:,:))
       else
          call grid_WriteArcGrid(TRIM(sOutputFilename), &
             rX0,rX1,rY0,rY1,pGrd%rData(:,:))
@@ -1210,7 +1187,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
           if ( iOutputFormat == OUTPUT_SURFER ) then
              call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
+               rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pGrd%rData(:,:))
           else
              call grid_WriteArcGrid(TRIM(sOutputFilename), &
                 rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
@@ -1224,7 +1201,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
           if ( iOutputFormat == OUTPUT_SURFER ) then
              call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0,rX1,rY0,rY1,&
+                rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
                  pMonthGrd%rData(:,:) / REAL(iMonthCount))
           else
              call grid_WriteArcGrid(TRIM(sOutputFilename), &
@@ -1307,7 +1284,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
           if ( iOutputFormat == OUTPUT_SURFER ) then
              call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
+               rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pYearGrd%rData(:,:))
           else
              call grid_WriteArcGrid(TRIM(sOutputFilename), &
                 rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
@@ -1322,7 +1299,8 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
           if ( iOutputFormat == OUTPUT_SURFER ) then
              call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iYearCount))
+                rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
+                pYearGrd%rData / REAL(iYearCount))
           else
              call grid_WriteArcGrid(TRIM(sOutputFilename), &
                 rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iYearCount))
@@ -1388,16 +1366,25 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   !------------------------- SUMMARY ANALYSIS
 
-  iSWBStatsTotalNumDays = iSWBStatsEndDate - iSWBStatsStartDate + 1
+  if(lPERIOD_SLICE) then
 
-  write(sLabel,fmt="(i02.2,'_',i02.2,'_',i04.4,"// &
-      "'_to_',i02.2,'_',i02.2,'_',i04.4)") iSWBStatsStartMM, &
-      iSWBStatsStartDD, iSWBStatsStartYYYY, &
-      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+    write(sLabel,fmt="(i02.2,'_',i02.2,"// &
+      "'_to_ ',i02.2,'_',i02.2,'_for_years_',i04.4,'_to_',i04.4)") &
+      iSlcStartMM, iSlcStartDD, iSlcEndMM, iSlcEndDD, &
+      iSWBStatsStartYYYY, iSWBStatsEndYYYY
+
+  else
+
+    write(sLabel,fmt="(i02.2,'_',i02.2,'_',i04.4,"// &
+        "'_to_',i02.2,'_',i02.2,'_',i04.4)") iSWBStatsStartMM, &
+        iSWBStatsStartDD, iSWBStatsStartYYYY, &
+        iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  endif
 
   if( iSWBStatsOutputType == iSTATS .and. lBASINSTATS) then
     if(iSWBStatsType == iMEAN) then
-      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel, iSWBStatsTotalNumDays)
+      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel, iPeriodCount)
     else
       call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel)
     endif
@@ -1407,7 +1394,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
     if(iSWBStatsType == iMEAN) then
-      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iSWBStatsTotalNumDays)
+      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iPeriodCount)
     else
       call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
     endif
@@ -1430,22 +1417,35 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
      trim(sLabel),trim(sOutputFileSuffix)
 
-  if ( iOutputFormat == OUTPUT_SURFER ) then
+  if ( iOutputFormat == OUTPUT_SURFER .and. iPeriodCount > 0) then
     call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-       rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays))
+        rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
+        pSummaryGrd%rData / REAL(iPeriodCount))
   else
-    call grid_WriteArcGrid(TRIM(sOutputFilename), &
-       rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays))
+    if(iPeriodCount > 0) then
+      call grid_WriteArcGrid(TRIM(sOutputFilename), &
+        rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iPeriodCount))
+    endif
   end if
 
   write(sOutputFilename,FMT="(A,'_',a,'.png')") &
     "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), trim(sLabel)
 
-  write(sTitleTxt,fmt="('SUM of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
-      "' to ',i02.2,'/',i02.2,'/',i04.4)") &
-      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
-      iSWBStatsStartDD, iSWBStatsStartYYYY, &
-      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+  if(lPERIOD_SLICE) then
+
+    write(sTitleTxt,fmt="('SUM of daily ',a,' for ',i02.2,'/',i02.2,"// &
+      "' to ',i02.2,'/',i02.2,' for years ',i04.4,' to ',i04.4)") &
+      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSlcStartMM, &
+      iSlcStartDD, iSlcEndMM, iSlcEndDD, iSWBStatsStartYYYY, iSWBStatsEndYYYY
+
+  else
+
+    write(sTitleTxt,fmt="('SUM of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
+        "' to ',i02.2,'/',i02.2,'/',i04.4)") &
+        TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
+        iSWBStatsStartDD, iSWBStatsStartYYYY, &
+        iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+  endif
 
   call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
     TRIM(STAT_INFO(iVariableNumber)%sUNITS))
@@ -1454,13 +1454,25 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   write(sOutputFilename,FMT="(A,'_',a,'.png')") &
      "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), trim(sLabel)
 
-  write(sTitleTxt,fmt="('MEAN of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
-      "' to ',i02.2,'/',i02.2,'/',i04.4)") &
-      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
-      iSWBStatsStartDD, iSWBStatsStartYYYY, &
-      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+  if(lPERIOD_SLICE) then
 
-  pSummaryGrd%rData = pSummaryGrd%rData / REAL(iSWBStatsTotalNumDays)
+    write(sTitleTxt,fmt="('MEAN of daily ',a,' for ',i02.2,'/',i02.2,"// &
+      "' to ',i02.2,'/',i02.2,' for years ',i04.4,' to ',i04.4)") &
+      TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSlcStartMM, &
+      iSlcStartDD, iSlcEndMM, iSlcEndDD, iSWBStatsStartYYYY, iSWBStatsEndYYYY
+
+  else
+
+    write(sTitleTxt,fmt="('MEAN of daily ',a,' for ',i02.2,'/',i02.2,'/',i04.4,"// &
+        "' to ',i02.2,'/',i02.2,'/',i04.4)") &
+        TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), iSWBStatsStartMM, &
+        iSWBStatsStartDD, iSWBStatsStartYYYY, &
+        iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+  endif
+
+  if(iPeriodCount > 0) then
+    pSummaryGrd%rData = pSummaryGrd%rData / REAL(iPeriodCount)
+  endif
 
   call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
     TRIM(STAT_INFO(iVariableNumber)%sUNITS))
