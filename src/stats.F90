@@ -770,7 +770,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   ![LOCALS]
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth, iOffset
+  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=T_INT) :: iDay, iYear, iVar, iVal, iRep, iTemp
   integer (kind=T_INT) :: iStartYear, iEndYear
   integer (kind=T_INT) :: iJulianDay, iNumGridCells, iCount
@@ -854,7 +854,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       ! the app should die violently!@!
 
       do
-        read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear, iOffset
+        read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
         if(iStat /= 0) then
 
 #ifdef DEBUG_PRINT
@@ -979,7 +979,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
     rValSum = rZERO
 
     do
-      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear, iOffset
+      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
       if(iStat /= 0) then
 !        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
 !        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
@@ -1101,7 +1101,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
     flush(LU_LOG)
 
     do
-      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear, iOffset
+      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
       if(iStat /= 0) then
 !        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
 !        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
@@ -1658,7 +1658,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNY             ! Number of cells in the y-direction
-      write(UNIT=STAT_INFO(i)%iLU) pGrd%iDataType       ! Type of the grid
+      write(UNIT=STAT_INFO(i)%iLU) T_SGL_GRID           ! Type of the grid
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iLengthUnits    ! length units code
       write(UNIT=STAT_INFO(i)%iLU) i                    ! STAT_INFO variable number

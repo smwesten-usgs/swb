@@ -596,9 +596,8 @@ implicit none
   real (kind=T_DBL)    :: rY0_cntr, rY1_cntr
   integer (kind=T_INT) :: iStartMM, iStartDD, iStartYYYY
   integer (kind=T_INT) :: iEndMM, iEndDD, iEndYYYY
-  integer (kind=T_INT) :: iOffset
 
-  integer (kind=T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD
+  integer (kind=T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD, iTemp
   integer (kind=T_INT) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
   integer (kind=T_INT) :: iTempStartDate, iTempEndDate
   character (len=256) :: sMonthName = ""
@@ -1038,7 +1037,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   do
     ! read in the current date
     read(UNIT=LU_SWBSTATS,iostat=iStat) &
-       iCurrDD, iCurrMM, iCurrYYYY, iCurrDOY, iOffset
+       iCurrDD, iCurrMM, iCurrYYYY, iCurrDOY
 
     if(iStat /= 0) then
       exit
@@ -1069,18 +1068,22 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     !> desired date range, stop reading and get out
     if( (iCurrJD < iSWBStatsStartDate .or. .not. lPRINT) .and. .not. lCUMULATIVE ) then
 
-      ! get current file position
-      inquire(UNIT=LU_SWBSTATS,pos=iPos, iostat=iStat)
-      call assert(iStat == 0, "Problem reading file position", &
-        trim(__FILE__), __LINE__)
-      ! skip all of the RLE nonsense if we don't care about the contents
-      ! note that we must subtract 4 to account for the fact that by this
-      ! point in the program execution, we've already read in the 4-byte
-      ! offset value; the offset is counted from the location extant just prior
-      ! to the writing of the offset value
-      write(UNIT=LU_SWBSTATS,pos=iPos + iOffset - 4,  iostat=iStat)
-      call assert(iStat == 0, "Problem fast-forwarding binary file", &
-        trim(__FILE__), __LINE__)
+      do
+        read(UNIT=LU_SWBSTATS,iostat=iStat) iTemp
+
+        ! skip all of the RLE nonsense if we don't care about the contents
+        ! note that we must subtract 4 to account for the fact that by this
+        ! point in the program execution
+        call assert(iStat == 0, "Problem fast-forwarding binary file", &
+          trim(__FILE__), __LINE__)
+        if(iTemp == iEOF) then
+          exit
+        else
+          cycle
+        endif
+
+      enddo
+
       cycle
 
     elseif(iCurrJD > iSWBStatsEndDate) then
