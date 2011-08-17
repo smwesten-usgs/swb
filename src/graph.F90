@@ -82,7 +82,8 @@ module graph
 
       case(T_CELL_GRID)
 
-        call Assert(lFALSE,"graph.f95: unsupported grid type was used in call")
+        call Assert(lFALSE,"Unsupported grid type (T_GRID_CELL) was used in call", &
+          TRIM(__FILE__), __LINE__)
 
     end select
 
@@ -456,7 +457,10 @@ module graph
         end do
 
       case(T_CELL_GRID)
-        call Assert(lFALSE,"graph.f95: unsupported grid type was used in call")
+
+        call Assert(lFALSE,"Unsupported grid type (T_GRID_CELL) was used in call", &
+          TRIM(__FILE__), __LINE__)
+
       end select
 
       ! if no data and ZA == ZE, make up a maximum and calc ZSTEP

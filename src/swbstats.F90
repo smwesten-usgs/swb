@@ -320,6 +320,8 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
 end subroutine CalcMaskStats
 
+!------------------------------------------------------------------------------
+
 subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabel, iNumDays)
 
   use types
@@ -550,6 +552,9 @@ end subroutine ReadBasinMaskTable
 
 end module swbstats_support
 
+!------------------------------------------------------------------------------
+!------------------------------------------------------------------------------
+
 program swbstats
 
 use types
@@ -767,6 +772,8 @@ implicit none
     else
       write(unit=LU_STD_OUT,fmt="('feet',/)")
     endif
+    write(unit=LU_STD_OUT,fmt="('  Grid data type: ',t28,a)") trim(int2char(iDataType))
+    write(unit=LU_STD_OUT,fmt="('  Length units code: ',t28,a)") trim(int2char(iLengthUnits))
 
     stop
 
@@ -923,9 +930,19 @@ implicit none
   write(unit=LU_STD_OUT,fmt="(t20,a,t28,a,t36,a,t44,a)") &
     "NONE","PLOT","GRID","STATS"
 
-  write(sStatsDescription,fmt="(i02.2,i02.2,i04.4,'-',i02.2,i02.2,i04.4)") &
-    iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
-    iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+  if(lPERIOD_SLICE) then
+
+    write(sStatsDescription,fmt="(i02.2,'-',i02.2,"// &
+      "'_to_',i02.2,'-',i02.2,'_for_years_',i04.4,'-',i04.4)") &
+      iSlcStartMM, iSlcStartDD, iSlcEndMM, iSlcEndDD, iSWBStatsStartYYYY, iSWBStatsEndYYYY
+
+  else
+
+    write(sStatsDescription,fmt="(i02.2,i02.2,i04.4,'-',i02.2,i02.2,i04.4)") &
+      iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
+      iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
+
+  endif
 
   if(lCUMULATIVE) sStatsDescription = trim(sStatsDescription) // "_" &
     //"CUMULATIVE"
@@ -1043,13 +1060,14 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     lYearEnd = (.not. iTomorrowYYYY == iCurrYYYY)
     call LookupMonth(iCurrMM, iCurrDD, iCurrYYYY,iCurrDOY, &
                    sMonthName, lMonthEnd)
+
     lRESET = ( iCurrMM == 1 .and. iCurrDD == 1)
     pGrd%rData(:,:)= rZERO
 
     !> if current date does not fall within desired date range, keep
     !> reading data, or if current date is after the end of the
     !> desired date range, stop reading and get out
-    if(iCurrJD < iSWBStatsStartDate .or. .not. lPRINT) then
+    if( (iCurrJD < iSWBStatsStartDate .or. .not. lPRINT) .and. .not. lCUMULATIVE ) then
 
       ! get current file position
       inquire(UNIT=LU_SWBSTATS,pos=iPos, iostat=iStat)
@@ -1064,6 +1082,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       call assert(iStat == 0, "Problem fast-forwarding binary file", &
         trim(__FILE__), __LINE__)
       cycle
+
     elseif(iCurrJD > iSWBStatsEndDate) then
       exit
     endif
@@ -1368,15 +1387,15 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   if(lPERIOD_SLICE) then
 
-    write(sLabel,fmt="(i02.2,'_',i02.2,"// &
-      "'_to_ ',i02.2,'_',i02.2,'_for_years_',i04.4,'_to_',i04.4)") &
+    write(sLabel,fmt="(i02.2,'-',i02.2,"// &
+      "'_to_',i02.2,'-',i02.2,'_for_years_',i04.4,'_to_',i04.4)") &
       iSlcStartMM, iSlcStartDD, iSlcEndMM, iSlcEndDD, &
       iSWBStatsStartYYYY, iSWBStatsEndYYYY
 
   else
 
-    write(sLabel,fmt="(i02.2,'_',i02.2,'_',i04.4,"// &
-        "'_to_',i02.2,'_',i02.2,'_',i04.4)") iSWBStatsStartMM, &
+    write(sLabel,fmt="(i02.2,'-',i02.2,'-',i04.4,"// &
+        "'_to_',i02.2,'-',i02.2,'-',i04.4)") iSWBStatsStartMM, &
         iSWBStatsStartDD, iSWBStatsStartYYYY, &
         iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
