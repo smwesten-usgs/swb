@@ -124,6 +124,19 @@ swb/fast:
 	$(MAKE) -f src/CMakeFiles/swb.dir/build.make src/CMakeFiles/swb.dir/build
 .PHONY : swb/fast
 
+#=============================================================================
+# Target rules for targets named swbstats
+
+# Build rule for target.
+swbstats: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 swbstats
+.PHONY : swbstats
+
+# fast build rule for target.
+swbstats/fast:
+	$(MAKE) -f src/CMakeFiles/swbstats.dir/build.make src/CMakeFiles/swbstats.dir/build
+.PHONY : swbstats/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -134,6 +147,7 @@ help:
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
 	@echo "... swb"
+	@echo "... swbstats"
 .PHONY : help
 
 

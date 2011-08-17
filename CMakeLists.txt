@@ -259,7 +259,6 @@ elseif(CMAKE_HOST_UNIX)
 
      SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread /usr/local/bin/swbread
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats /usr/local/bin/swbstats )
 
    endif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
