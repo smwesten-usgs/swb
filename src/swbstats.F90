@@ -11,6 +11,8 @@ module swbstats_support
   logical (kind=T_LOGICAL) :: lMASKSSF = lFALSE
   logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
   logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
+  logical (kind=T_LOGICAL) :: lF_TO_C = lFALSE
+  logical (kind=T_LOGICAL) :: lGAP_DIFFERENCE = lFALSE
 
   character (len=256) :: sStatsDescription = ""
   integer (kind=T_INT) :: LU_STATS
@@ -197,11 +199,11 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   integer (kind=T_INT) :: j, k, iStat, iCount, m, n
   integer (kind=T_INT) ::   iNumGridCells
   real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
-  real (kind=T_SGL) :: rDenominator
+  real (kind=T_SGL) :: rBaseSum, rBaseAvg
   real (kind=T_DBL), dimension(:), allocatable, save :: rRunningSum
-  real (kind=T_DBL), dimension(:,:), allocatable, save :: rPeriodSum
   integer (kind=T_INT), save :: i
   real (kind=T_DBL) :: rConversionFactor
+  real (kind=T_SGL) :: rDenominator
 
   character (len=256) :: sBuf
 
@@ -209,17 +211,17 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   type (T_GENERAL_GRID), pointer :: input_grd
 
+  if(present(iNumDays)) then
+    rDenominator = real(iNumDays, kind=T_DBL)
+  else
+    rDenominator = 1_T_DBL
+  end if
+
   if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
     rConversionFactor = 2589988.11_T_DBL
   else
     rConversionFactor = 27878400_T_DBL
   endif
-
-  if(present(iNumDays)) then
-    rDenominator = real(iNumDays, kind=T_SGL)
-  else
-    rDenominator = 1_T_SGL
-  end if
 
   if(pConfig%lFirstDayOfSimulation) then
 
@@ -234,16 +236,34 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     open(newunit=LU_STATS,FILE=trim(sBuf), &
           iostat=iStat, STATUS='REPLACE')
     call Assert ( iStat == 0, &
-      "Could not open PEST statistics file "//dquote(sBuf))
+      "Could not open MASK statistics file "//dquote(sBuf))
 
     write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
 
-    do k=1,iNumRecs - 1
-      write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
-          trim(int2char(k)),sTAB
-    end do
 
-    write(UNIT=LU_STATS,FMT="(A)",advance='YES') trim(int2char(k))
+    if(.not. lGAP_DIFFERENCE) then
+
+      do k=1,iNumRecs - 1
+        write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
+            trim(int2char(k)),sTAB
+      end do
+
+      write(UNIT=LU_STATS,FMT="(A)",advance='YES') trim(int2char(iNumRecs))
+
+    else
+
+      write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
+          trim(int2char(iNumRecs)),sTAB
+
+      do k=2,iNumRecs - 2
+        write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
+            trim(int2char(k)),sTAB
+      end do
+
+      write(UNIT=LU_STATS,FMT="(A)",advance='YES') &
+          trim(int2char(iNumRecs - 1))
+
+    endif
 
     pConfig%lFirstDayOfSimulation = lFALSE
 
@@ -254,67 +274,121 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(lRESET .and. lCUMULATIVE) rRunningSum = 0_T_DBL
 
-  do k = 1,iNumRecs
+  if(.not. lGAP_DIFFERENCE) then
 
-    iCount = COUNT(pMaskGrd%rData == k)
+    do k = 1,iNumRecs
+
+      iCount = COUNT(pMaskGrd%rData == k)
+
+      ! sum of the sum of values within basin mask boundaries
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+      rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+      rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+
+      rAvg = rSum / iCount
+
+      if(lVERBOSE) then
+        write(UNIT=LU_LOG,FMT="(A)") ""
+        write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
+           //trim(int2char(k) )
+        write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
+        write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
+            real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
+        write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
+        write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
+        write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
+        write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+      endif
+
+      if(lCUMULATIVE) then
+
+        rRunningSum(k) = rRunningSum(k) + rAvg
+
+        if(lPRINT) then
+
+          if( k < iNumRecs ) then
+
+            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
+
+          else
+
+            write(UNIT=LU_STATS,FMT="(g16.8)") rRunningSum(k)
+
+          endif
+
+        endif
+
+      else
+
+        if(lPRINT) then
+
+          if( k < iNumRecs ) then
+
+            write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
+
+          else
+
+            write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
+
+          endif
+
+        endif
+
+      endif
+
+    enddo
+
+  else
+
+    iCount = COUNT(pMaskGrd%rData == iNumRecs)
 
     ! sum of the sum of values within basin mask boundaries
-    rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
-    rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
-    rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+    rBaseSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == iNumRecs) / rDenominator
 
-    rAvg = rSum / iCount
+    rBaseAvg = rBaseSum / iCount
 
-    if(lVERBOSE) then
-      write(UNIT=LU_LOG,FMT="(A)") ""
-      write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
-         //trim(int2char(k) )
-      write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
-      write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
-          real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
-      write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
-      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
-      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
-      write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
-    endif
+    if(lPRINT) &
+      write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rBaseAvg,sTAB
 
-    if(lCUMULATIVE) then
+    do k = 2,iNumRecs-1
 
-      rRunningSum(k) = rRunningSum(k) + rAvg
+      iCount = COUNT(pMaskGrd%rData == k)
+
+      ! sum of the sum of values within basin mask boundaries
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+
+      rAvg = rSum / iCount
+
+      if(lVERBOSE) then
+        write(UNIT=LU_LOG,FMT="(A)") ""
+        write(UNIT=LU_LOG,FMT="(5x,A)") "Summary for cells with mask value of: " &
+           //trim(int2char(k) )
+        write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
+        write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
+            real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
+        write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
+        write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
+        write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
+        write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
+      endif
 
       if(lPRINT) then
 
-        if( k < iNumRecs ) then
+        if( k < iNumRecs -1 ) then
 
-          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rRunningSum(k),sTAB
+          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rBaseAvg  - rAvg,sTAB
 
         else
 
-          write(UNIT=LU_STATS,FMT="(g16.8)") rRunningSum(k)
+          write(UNIT=LU_STATS,FMT="(g16.8)") rBaseAvg - rAvg
 
         endif
 
       endif
 
-    else
+    enddo
 
-      if(lPRINT) then
-
-        if( k < iNumRecs ) then
-
-          write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
-
-        else
-
-          write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
-
-        endif
-
-      endif
-
-    endif
-
-  end do
+  endif
 
   flush(UNIT=LU_STATS)
 
@@ -622,7 +696,7 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
 
-  real(kind=T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad
+  real(kind=T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad, rValTmp
 
   character (len=8) :: sDate
   character (len=10) :: sTime
@@ -809,6 +883,10 @@ implicit none
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
       iSWBStatsType = iSUM
       lSUM = lTRUE
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "F_TO_C") then
+      lF_TO_C = lTRUE
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "GAP_DIFFERENCE") then
+      lGAP_DIFFERENCE = lTRUE
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "DEFAULT") then
       iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
       iSWBStatsEndDate = julian_day ( iEndYYYY, iEndMM, iEndDD)
@@ -1006,6 +1084,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 !  write(STAT_INFO(iVariableNumber)%iLU,POS=iENDHEADER_POS)
 
   allocate(rVal(iNX*iNY))
+  allocate(rValTmp(iNX*iNY))
   allocate(rValSum(iNX*iNY))
   allocate(rPad(iNX*iNY))
 
@@ -1095,7 +1174,12 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     call RLE_readByte(LU_SWBSTATS,iRLE_MULT, rRLE_OFFSET, rVal,iNumGridCells,lEOF)
     if(lEOF) exit
 
-    pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
+    if(lF_TO_C) then
+      rValTmp = 5./9. * (rVal -32.)
+      pGrd%rData(:,:)=RESHAPE(rValTmp,(/iNX,iNY/),PAD=rPad)
+    else
+      pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
+    endif
 
     ! keep track of how many days' worth of results are stored in the month grid
     if(STAT_INFO(iVariableNumber)%iMonthlyOutput /= iNONE) then
