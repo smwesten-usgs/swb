@@ -255,7 +255,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
       write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
           trim(int2char(iNumRecs)),sTAB
 
-      do k=2,iNumRecs - 2
+      do k=1,iNumRecs - 2
         write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
             trim(int2char(k)),sTAB
       end do
@@ -350,7 +350,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     if(lPRINT) &
       write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rBaseAvg,sTAB
 
-    do k = 2,iNumRecs-1
+    do k = 1,iNumRecs-1
 
       iCount = COUNT(pMaskGrd%rData == k)
 
