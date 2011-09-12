@@ -160,8 +160,10 @@ Section "Executables" SEC04
   File "..\build\win32\src\swbstats.exe"
   File "..\build\win32\src\swb.exe"
   File "..\dist\swb.cmd"
-  CreateShortCut "$SMPROGRAMS\Soil Water Balance Code\Soil Water Balance Code.lnk" "$INSTDIR\bin\swb.cmd"
-  CreateShortCut "$DESKTOP\Soil Water Balance Code.lnk" "$INSTDIR\bin\swb.cmd"
+  CreateShortCut "$SMPROGRAMS\Soil Water Balance Code\Soil Water Balance Code.lnk" "$INSTDIR\bin\swb.cmd" \
+    "" "${NSISDIR}\Contrib\Graphics\Icons\swb_recharge.ico" 0
+  CreateShortCut "$DESKTOP\Soil Water Balance Code.lnk" "$INSTDIR\bin\swb.cmd" \
+    "" "${NSISDIR}\Contrib\Graphics\Icons\swb_recharge.ico" 0
 SectionEnd
 
 Section "Add to path"
