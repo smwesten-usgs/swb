@@ -343,8 +343,7 @@ module types
 !    integer(kind=T_INT) :: iLonVarID
     integer(kind=T_INT) :: iXVarID
     integer(kind=T_INT) :: iYVarID
-    integer(kind=T_INT) :: iXVarPOS   ! POS = 1 if we have var(x, y, t)
-    integer(kind=T_INT) :: iYVarPOS
+    logical(kind=T_LOGICAL) :: lYVarBeforeXVar = lTRUE
     integer(kind=T_INT) :: iXDimID
     integer(kind=T_INT) :: iYDimID
     integer(kind=T_INT) :: iTimeDimID
