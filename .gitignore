@@ -6,3 +6,9 @@ build/linux_x64/src
 *.mod
 *.csv
 *LOGFILE*.txt
+webpages/styles
+webpages/Templates
+webpages/Library
+webpages/includes
+webpages/images
+
