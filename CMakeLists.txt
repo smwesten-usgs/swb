@@ -168,8 +168,8 @@ elseif(CMAKE_HOST_UNIX)
      set (CMAKE_Fortran_FLAGS_RELEASE "-fast -fPIC")
      set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all -fPIC")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
-#     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" "")
-     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" "")
+     set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" "")
+#     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" "")
 
 #     set(CMAKE_Fortran_LINK_FLAGS "-Bdynamic -pie")
 #     set(CMAKE_LINKER "/usr/bin/gcc")
@@ -191,10 +191,7 @@ elseif(CMAKE_HOST_UNIX)
      find_path(INCLUDE_DIR netcdf.mod NETCDF.mod
        DOC "Include directory (must contain netcdf.mod)"
        HINTS
-#       /usr/include )
-       ${CMAKE_CURRENT_SOURCE_DIR}/include/ubuntu_x64/ifort
-#       PATH_SUFFIXES
-       ${CMAKE_CURRENT_SOURCE_DIR}/include/ubuntu_x64/ifort)
+       /usr/include )
        message("Using include directory: " ${INCLUDE_DIR})
 
      find_path(INCLUDE_DISLIN dislin.mod
@@ -203,57 +200,43 @@ elseif(CMAKE_HOST_UNIX)
        /usr/local/dislin/gf )
        message("Using DISLIN include directory: " ${INCLUDE_DISLIN})
 
-     find_library(NETCDF_FORTRAN_LIB
+     find_library(NETCDF_C_LIB
        NAMES netcdf NETCDF
-       DOC "NetCDF Fortran library"
+       DOC "NetCDF C library"
        HINTS
-#       /usr/lib )
-       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       lib/ubuntu_x64/ifort)
+       /usr/local/lib )
 
-     find_library(OPEN_MOTIF_LIB
-       NAMES Xm
+     find_library(NETCDF_FORTRAN_LIB
+       NAMES netcdff NETCDFF
+       DOC "NetCDF Fortran library"
+       /usr/local/lib )
+
+#     find_library(OPEN_MOTIF_LIB
 #       NAMES Xm
-       DOC "Open Motif library"
-       HINTS
-       /usr/lib)
+#       NAMES Xm
+#       DOC "Open Motif library"
+#       HINTS
+#       /usr/lib)
 #       lib/ubuntu_x64/ifort)
 
 #     set(OPEN_MOTIF_LIB "/usr/lib/libXm.a")
 
      # I have no idea why such effort was required to get DISLIN to link with SWB under Linux/ifort!
-     set(X_LIB "/usr/lib/libXt.a;/usr/lib/libX11.a;/usr/lib/libxcb.a")
-     set(X_LIB ${X_LIB} "/usr/lib/libXdmcp.a;/usr/lib/libXau.a")
-     set(X_LIB ${X_LIB} "/opt/mesa/lib/libGLU.a;/opt/mesa/lib/libOSMesa.a")
-     set(X_LIB ${X_LIB} "/opt/mesa/lib/libEGL.a;/opt/mesa/lib/libglut.a")
-     set(X_LIB ${X_LIB} "/opt/mesa/lib/libGLw.a")
+#     set(X_LIB "/usr/lib/libXt.a;/usr/lib/libX11.a;/usr/lib/libxcb.a")
+#     set(X_LIB ${X_LIB} "/usr/lib/libXdmcp.a;/usr/lib/libXau.a")
+#     set(X_LIB ${X_LIB} "/opt/mesa/lib/libGLU.a;/opt/mesa/lib/libOSMesa.a")
+#     set(X_LIB ${X_LIB} "/opt/mesa/lib/libEGL.a;/opt/mesa/lib/libglut.a")
+#     set(X_LIB ${X_LIB} "/opt/mesa/lib/libGLw.a")
 
      find_library(DISLIN_FORTRAN_LIB
        NAMES dislin
        DOC "DISLIN Fortran library"
        HINTS
-       /usr/lib
-       /usr/local/lib
-       /usr/local/dislin
-#       ${CMAKE_CURRENT_SOURCE_DIR}/lib/ubuntu_x64/ifort
-       PATH_SUFFIXES
-       /usr/lib)
-#       lib/ubuntu_x64/ifort)
+       /usr/local/dislin)
 
-#     find_library(GCC_LIB
-#       NAMES libgcc gcc
-#       DOC "gcc library"
-#       HINTS
-#       /usr/lib
-#       /usr/lib/gcc
-#       /usr/lib/gcc/x86_64-linux-gnu/4.4)
-
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
-#     set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPEN_MOTIF_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${X_LIB} )
 
      message("libs: " "${EXTRA_LIBS}")
 
