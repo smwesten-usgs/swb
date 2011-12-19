@@ -679,7 +679,7 @@ end subroutine netcdf_chk_extent
       pNC%iX_NumGridCells,1/) ), &
       TRIM(__FILE__),__LINE__, pNC, iTime)
 
-  iCount = count(iValues == -999)
+  iCount = count(iValues <= -998)
 
   if(iCount == pGrd%iNumGridCells) then
     rValues = -rBIGVAL
@@ -691,6 +691,7 @@ end subroutine netcdf_chk_extent
     endif
   endif
 
+  ! flip values vertically
   do iRow=1,pDataGrd%iNY    
     do iCol=1,pDataGrd%iNX    
       pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
@@ -715,7 +716,7 @@ end subroutine netcdf_chk_extent
     pNC%iY_NumGridCells,1/) ), &
     TRIM(__FILE__),__LINE__, pNC, iTime)
 
-  iCount = count(iValues == -999)
+  iCount = count(iValues <= -998)
 
   if(iCount == pGrd%iNumGridCells) then
     rValues = -rBIGVAL

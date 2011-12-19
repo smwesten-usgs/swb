@@ -3404,23 +3404,23 @@ integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
 !        trim(sYearText) // "." //trim(sBufSuffix), &
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
   else if ( sMonthName(1:3) == 'day' ) then
-         call grid_WriteArcGrid("output/daily/ALT_GrossPrecip_" // trim(sDayText) // &
-             "." // sBufSuffix, &
-             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
-         call grid_WriteArcGrid("output/daily/ALT_TMin_" // trim(sDayText) // &
-             "." // sBufSuffix, &
-             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMin )
-         call grid_WriteArcGrid("output/daily/ALT_TMax_" // trim(sDayText) // &
-             "." // sBufSuffix, &
-             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMax )
-
-       call grid_WriteArcGrid("output/daily/ALT_recharge" // trim(sDayText) // &
-           "." // sBufSuffix, &
-           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
-       call grid_WriteArcGrid("output/daily/ALT_Snowcover_" // trim(sDayText) // &
-           "." // sBufSuffix, &
-           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowcover )
-
+!         call grid_WriteArcGrid("output/daily/ALT_GrossPrecip_" // trim(sDayText) // &
+!             "." // sBufSuffix, &
+!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
+!         call grid_WriteArcGrid("output/daily/ALT_TMin_" // trim(sDayText) // &
+!             "." // sBufSuffix, &
+!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMin )
+!         call grid_WriteArcGrid("output/daily/ALT_TMax_" // trim(sDayText) // &
+!             "." // sBufSuffix, &
+!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMax )
+!
+!       call grid_WriteArcGrid("output/daily/ALT_recharge" // trim(sDayText) // &
+!           "." // sBufSuffix, &
+!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
+!       call grid_WriteArcGrid("output/daily/ALT_Snowcover_" // trim(sDayText) // &
+!           "." // sBufSuffix, &
+!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowcover )
+!
 !      call grid_WriteArcGrid("output/daily/TempRange_" // trim(sDayText) // &
 !        "." // sBufSuffix, &
 !        xmin,xmax,ymin,ymax,pGrd%Cells%rTAvg &
