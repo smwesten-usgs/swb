@@ -40,71 +40,35 @@ module model
 contains
 
 
-!--------------------------------------------------------------------------
-!!****s* model/model_Main
-! NAME
-!   model_Main - Reads and initializes model grids and executes process
-!                 subroutines.
-!
-! SYNOPSIS
-!   Reads and initializes model grids, reads climate data file, and handles
-!   calls each process subroutine on a daily basis.
-!
-! INPUTS
-!   pGrd - Pointer to the model grid data structure.
-!   pConfig - Pointer to the model configuration data structure.
-!
-! OUTPUTS
-!   NONE
-!
-!!***
+subroutine model_OpenSingleSiteClimateFile(pConfig, pGrd)
 
-subroutine model_Main( pGrd, pConfig, pGraph )
+   integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear, iStat
 
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
-    ! model options, flags, and other settings
 
-  type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
-    ! pointer to data structure that holds parameters for creating
-    ! DISLIN plots
+   ! Connect to the single-site time-series file
+   open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
+     status="OLD", iostat=iStat )
+   write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
+     TRIM(pConfig%sTimeSeriesFilename)
+   flush(LU_LOG)
+   call Assert ( iStat == 0, &
+     "Can't open time-series data file "//dQuote(pConfig%TimeSeriesFilename), &
+     trim(__FILE__), __LINE__)
+   pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
+   call gregorian_date(pConfig%iCurrentJulianDay, &
+     iTempYear, iTempMonth, iTempDay)
+   pConfig%iYear = iTempYear
+   pConfig%iMonth = iTempMonth
+   pConfig%iDay = iTempDay
 
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC
-#endif
+end subroutine model_OpenSingleSiteClimateFile
 
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
-!  integer (kind=T_INT) :: iDay, iYear, tj, ti
-  integer (kind=T_INT) :: tj, ti
-  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=T_INT) :: iPos
-  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
-  integer (kind=T_INT) :: iCol, iRow
-  character(len=3) :: sMonthName
-  logical (kind=T_LOGICAL) :: lMonthEnd
-!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
-  integer (kind=T_INT),save :: iNumGridCells
-!  integer (kind=T_INT) :: iNumDaysInYear
-!  integer (kind=T_INT) :: iEndOfYearJulianDay
 
-  real (kind=T_SGL) :: rmin,ravg,rmax
+subroutine model_Initialize( pGrd, pConfig )
 
-  type (T_CELL),pointer :: cel
-  character (len=256) :: sBuf
-
-  type (T_TIME_SERIES_FILE), pointer :: pTS
-
-  ! allocate memory for the time-series data pointer
-  ALLOCATE (pTS, STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for time-series data structure", &
-    TRIM(__FILE__),__LINE__)
-
-!  call stats_OpenBinaryFiles(pConfig)
-
-  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+    ! [ ARGUMENTS ]
+    type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+    type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -141,11 +105,6 @@ subroutine model_Main( pGrd, pConfig, pGraph )
   call Assert(iStat == 0, &
     "Problem opening CSV file for summary annual statistics output.")
   call stats_WriteAnnualAccumulatorHeaderCSV(LU_CSV_ANNUAL)
-
-  iNumGridCells = pGrd%iNX * pGrd%iNY
-
-  ! Time the run
-  call cpu_time(rStartTime)
 
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
@@ -187,40 +146,100 @@ subroutine model_Main( pGrd, pConfig, pGraph )
 
   endif
 
-  ! create the single, temporary grid to use for temperature and precip
-  ! data input
-  pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_SGL_GRID )
+end subroutine model_Initialize
+
+
+
+
+
+!--------------------------------------------------------------------------
+!!****s* model/model_Main
+! NAME
+!   model_Main - Reads and initializes model grids and executes process
+!                 subroutines.
+!
+! SYNOPSIS
+!   Reads and initializes model grids, reads climate data file, and handles
+!   calls each process subroutine on a daily basis.
+!
+! INPUTS
+!   pGrd - Pointer to the model grid data structure.
+!   pConfig - Pointer to the model configuration data structure.
+!
+! OUTPUTS
+!   NONE
+!
+!!***
+
+subroutine model_Main( pGrd, pConfig, pGraph )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
+    ! pointer to data structure that holds parameters for creating
+    ! DISLIN plots
+
+#ifdef NETCDF_SUPPORT
+  type (T_NETCDF_FILE), pointer :: pNC
+#endif
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
+!  integer (kind=T_INT) :: iDay, iYear, tj, ti
+  integer (kind=T_INT) :: tj, ti
+!  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
+  integer (kind=T_INT) :: iPos
+  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
+  integer (kind=T_INT) :: iCol, iRow
+  character(len=3) :: sMonthName
+  logical (kind=T_LOGICAL) :: lMonthEnd
+!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
+  integer (kind=T_INT),save :: iNumGridCells
+!  integer (kind=T_INT) :: iNumDaysInYear
+!  integer (kind=T_INT) :: iEndOfYearJulianDay
+
+  real (kind=T_SGL) :: rmin,ravg,rmax
+
+  type (T_CELL),pointer :: cel
+  character (len=256) :: sBuf
+
+  type (T_TIME_SERIES_FILE), pointer :: pTS
+
+  ! allocate memory for the time-series data pointer
+  ALLOCATE (pTS, STAT=iStat)
+  call Assert( iStat == 0, &
+    "Could not allocate memory for time-series data structure", &
+    TRIM(__FILE__),__LINE__)
+
+!  call stats_OpenBinaryFiles(pConfig)
+
+  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+
+    ! call subroutine that handles much of the model initialization,
+    ! opens *.csv files, etc.
+    call model_Initialize(pConfig, pGrd)
+
+    ! calculate number of gridcells here.
+    iNumGridCells = pGrd%iNX * pGrd%iNY
+
+    ! time the run; start the clock.
+    call cpu_time(rStartTime)
+
+    ! create the single, temporary grid to use for temperature and precip
+    ! data input
+    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+      pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   end if FIRST_YEAR
-
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
 
   ! close any existing open time-series files...
   close(LU_TS)
 
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__,pConfig%lGriddedData
-#endif
-
-  if(.not. pConfig%lGriddedData) then
-  ! Connect to the single-site time-series file
-    open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
-      status="OLD", iostat=iStat )
-    write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
-      TRIM(pConfig%sTimeSeriesFilename)
-    flush(LU_LOG)
-    call Assert ( iStat == 0, &
-      "Can't open time-series data file" )
-    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
-    call gregorian_date(pConfig%iCurrentJulianDay, &
-      iTempYear, iTempMonth, iTempDay)
-    pConfig%iYear = iTempYear
-    pConfig%iMonth = iTempMonth
-    pConfig%iDay = iTempDay
-  end if
+  if(.not. pConfig%lGriddedData) &
+    call model_OpenSingleSiteClimateFile(pConfig, pGrd)
 
   ! Zero out monthly and annual accumulators
   call stats_InitializeMonthlyAccumulators()

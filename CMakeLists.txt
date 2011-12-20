@@ -13,13 +13,12 @@ enable_language (Fortran)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
-set(PACKAGE_STRING "swb 1.0")
+set(PACKAGE_STRING "swb 1.1")
 set(PACKAGE_TARNAME "swb")
-set(PACKAGE_VERSION "1.0")
+set(PACKAGE_VERSION "1.1")
 
-cmake_minimum_required(VERSION 2.6)
-set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26;c:/Program Files (x86)")
-
+set(CMAKE_SYSTEM_IGNORE_PATH "C:/Python26;C:/Program Files (x86)")
+set(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ";C:/Program Files (x86)/git")
 #
 option (MAKEFILE_VERBOSE
       "Produce verbose makefiles?" OFF)
@@ -114,7 +113,7 @@ if(CMAKE_HOST_WIN32)
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
-     set (MINGW_BASE_DIR "c:/MinGW-32" CACHE FILEPATH "Path to base MinGW install")
+     set (MINGW_BASE_DIR "C:/MinGW_32" CACHE FILEPATH "Path to base MinGW install")
      set (CMAKE_MAKE_PROGRAM ${MINGW_BIN_DIR}/bin/make.exe CACHE FILEPATH "MinGW make executable")
 
      set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/libnetcdf.a
@@ -137,7 +136,7 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GLU32_LIB} )
 
-     SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
+     SET(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
