@@ -41,9 +41,9 @@ contains
 
 
 !--------------------------------------------------------------------------
-!!****s* model/model_Solve
+!!****s* model/model_Main
 ! NAME
-!   model_Solve - Reads and initializes model grids and executes process
+!   model_Main - Reads and initializes model grids and executes process
 !                 subroutines.
 !
 ! SYNOPSIS
@@ -59,7 +59,7 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph )
+subroutine model_Main( pGrd, pConfig, pGraph )
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
@@ -551,7 +551,7 @@ end if
   call model_WriteGrids(pGrd, pConfig, "ANNUAL", pConfig%iDay, &
     pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
 
-  ! model_Solve has been called once... any further calls will not require
+  ! model_Main has been called once... any further calls will not require
   !    re-initialization of data structures and data arrays
   pConfig%lFirstYearOfSimulation = lFALSE
 
@@ -567,7 +567,7 @@ end if
   call Assert( iStat == 0, &
     "Could not deallocate memory for time-series data structure")
 
-end subroutine model_Solve
+end subroutine model_Main
 
 !!***
 
@@ -747,7 +747,7 @@ end function if_GetDynamicLanduseValue
 ! INPUTS
 !   pGrd - Pointer to the model grid data structure.
 !   pConfig - Pointer to the model configuration data structure.
-!   rPrecip - Daily precipitation amount read in by model_Solve.
+!   rPrecip - Daily precipitation amount read in by model_Main.
 !   iDayOfYear - Day of the current year (January 1 = 1).
 !   iMonth - Month corresponding to the current model day (January = 1).
 !

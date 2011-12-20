@@ -16,7 +16,7 @@ module control
 !>         parameters and flags.
 !>
 !> Reads model control file and initializes model configuration
-!>         parameters and flags. Multiple calls to model_Solve are accomodated
+!>         parameters and flags. Multiple calls to model_Main are accomodated
 !>         for multiple-year model runs.
 !>
 !> @param[in]  sControlFile  Name of the control file to use for the current simulation.
@@ -1411,14 +1411,14 @@ subroutine control_setModelOptions(sControlFile)
         call model_ReadTimeSeriesFile(pTSt)
         pConfig%iStartYear = pTSt%iYear
         pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
-        ! current julian day will be incremented in model_Solve
+        ! current julian day will be incremented in model_Main
         pConfig%iCurrentJulianDay = pConfig%iStartJulianDay - 1
         close( unit=LU_TS )
       end if
 
       pConfig%lGriddedData = lFALSE
-      ! actual call to "model_Solve" subroutine
-      call model_Solve( pGrd, pConfig, pGraph)
+      ! actual call to "model_Main" subroutine
+      call model_Main( pGrd, pConfig, pGraph)
 
     else if ( sItem == "SOLVE_NO_TS_DATA" ) then
       write(UNIT=LU_LOG,FMT=*) &
@@ -1451,11 +1451,11 @@ subroutine control_setModelOptions(sControlFile)
       call gregorian_date(pConfig%iCurrentJulianDay, pConfig%iYear, &
          pConfig%iMonth, pConfig%iDay)
         pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
-        write(UNIT=LU_LOG,FMT="(a,i4.4)") "Calling model_Solve." &
+        write(UNIT=LU_LOG,FMT="(a,i4.4)") "Calling model_Main." &
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
-        ! actual call to "model_Solve" subroutine
-        call model_Solve( pGrd, pConfig, pGraph)
+        ! actual call to "model_Main" subroutine
+        call model_Main( pGrd, pConfig, pGraph)
       end do
 
     else if ( trim(sItem) == "CALC_BASIN_STATS" ) then
