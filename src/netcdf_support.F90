@@ -682,6 +682,8 @@ end subroutine netcdf_chk_extent
   iCount = count(iValues <= -998)
 
   if(iCount == pGrd%iNumGridCells) then
+    ! elsewhere in code, SWB will substitute 0.0 if this is precip data, or
+    ! if this is temperature dat, will substitute the previous day's value.
     rValues = -rBIGVAL
   else
     if( pNC%rScaleFactor > 1.) then
