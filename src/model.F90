@@ -2662,6 +2662,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
     call Assert( iStat == 0, "Failed to read number of landuse types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumLandUses,"landuse types within lookup table"
+    pConfig%iNumberOfLanduses = iNumLandUses
   else
     call Assert( lFALSE, &
       "Unknown option in landuse lookup table; was expecting NUM_LANDUSE_TYPES #")
@@ -2680,6 +2681,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumSoilTypes
     call Assert( iStat == 0, "Failed to read number of soil types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumSoilTypes,"soil types within lookup table"
+    pConfig%iNumberOfSoilTypes = iNumSoilTypes
   else
     call Assert( lFALSE, &
       "Unknown option in landuse lookup table; was expecting NUM_SOIL_TYPES #")
@@ -2706,14 +2708,6 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   allocate ( pConfig%MAX_RECHARGE( iNumLandUses,iNumSoilTypes ), stat=iStat )
   call Assert ( iStat == 0, &
     "Could not allocate space for MAX_RECHARGE subtable within landuse data structure" )
-
-#ifdef IRRIGATION_MODULE
-  ! now allocate memory for IRRIGATION subtable within landuse table
-  ! note that this table is NOT populated in this subroutine, but in "readIrrgationLookupTable"
-  allocate ( pConfig%IRRIGATION( iNumLandUses ), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for IRRIGATION data structure" )
-#endif
 
   iRecNum = 1
 
@@ -2791,10 +2785,6 @@ read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowi
 
   end do LU_READ
 
-#ifdef IRRIGATION_MODULE
-  pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
-#endif
-
   ! That's all!
   close ( unit=LU_LOOKUP )
 
@@ -2802,8 +2792,6 @@ read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowi
 end subroutine model_ReadLanduseLookupTable
 
 !--------------------------------------------------------------------------
-
-#ifdef IRRIGATION_MODULE
 
 subroutine model_ReadIrrigationLookupTable( pConfig )
   !! Reads the irrigation data from pConfig%sIrrigationLookupFilename
@@ -2814,6 +2802,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   integer (kind=T_INT) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
   integer (kind=T_INT) :: iLandUseType
   integer (kind=T_INT) :: iNumSoilTypes
+  real (kind=T_SGL) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
 
@@ -2823,10 +2812,16 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
     "Open failed for file: " // pConfig%sIrrigationLookupFilename )
 
+  ! now allocate memory for IRRIGATION subtable
+  allocate ( pConfig%IRRIGATION( pConfig%iNumberOfLanduses ), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
+
   ! read first line of file
   read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
   call Assert( iStat == 0, &
-    "Error reading first line of irrigation lookup table" )
+    "Error reading first line of irrigation lookup table", &
+    trim(__FILE__), __LINE__ )
 
   ! read landuse file to obtain expected number of landuse types
   call chomp(sRecord, sItem, sTAB)
@@ -2838,10 +2833,10 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     call Assert(iNumLandUses == size(pConfig%IRRIGATION), &
       "Number of landuses in IRRIGATION table is unequal to number in LANDUSE lookup table", &
       trim(__FILE__),__LINE__)
-    write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumLandUses,"landuse types within lookup table"
   else
     call Assert( lFALSE, &
-      "Unknown option in irrigation lookup table; was expecting NUM_LANDUSE_TYPES #")
+      "Unknown option in irrigation lookup table; was expecting NUM_LANDUSE_TYPES #", &
+      trim(__FILE__), __LINE__ )
   end if
 
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
@@ -2876,44 +2871,103 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
   call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
   call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
-    "Landuse types in the irrigation lookup table must match those in the landuse lookup table", &
+    "Landuse types in the irrigation lookup table must match those " &
+      //"in the landuse lookup table~and also must be in the same order.", &
       trim(__FILE__), __LINE__)
   pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKc_Max
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_ini
   call Assert( iStat == 0, &
-    "Error reading maximum crop coefficient in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "  maximum crop coefficient ", &
-    pConfig%IRRIGATION(iRecNum)%rKc_Max
+    "Error reading initial basal crop coefficient (Kcb_ini) " &
+      //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+  write(UNIT=LU_LOG,FMT=*)  "  initial basal crop coefficient (Kcb_ini) ", &
+    pConfig%IRRIGATION(iRecNum)%rKcb_ini
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rK0
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_mid
   call Assert( iStat == 0, &
-    "Error reading first phenological stage crop coefficient in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   first phenological stage crop coefficient ", &
-    pConfig%IRRIGATION(iRecNum)%rK0
+    "Error reading mid-growth basal crop coefficient (Kcb_mid) " &
+      //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+  write(UNIT=LU_LOG,FMT=*)  "  mid-growth basal crop coefficient (Kcb_ini) ", &
+    pConfig%IRRIGATION(iRecNum)%rKcb_mid
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rAlpha1
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_end
   call Assert( iStat == 0, &
-    "Error reading shape coefficient (Alpha1) in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   shape coefficient (Alpha1) ", &
-    pConfig%IRRIGATION(iRecNum)%rAlpha1
+    "Error reading end-growth phase basal crop coefficient (Kcb_end) " &
+       //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+  write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
+    pConfig%IRRIGATION(iRecNum)%rKcb_end
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
+  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
   call Assert( iStat == 0, &
-    "Error reading GDD associated with max crop coefficient in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   GDD associated with max crop coefficient ", &
-    pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
+    "Error reading day of year (or GDD) of initial planting from " &
+      //"irrigation lookup table" , trim(__FILE__), __LINE__ )
+  pConfig%IRRIGATION(iRecNum)%iL_plant = int(rTempValue)
+  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
+    pConfig%IRRIGATION(iRecNum)%iL_plant
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Death
+  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
   call Assert( iStat == 0, &
-    "Error reading GDD associated with plant death in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   GDD associated with plant death ", &
-    pConfig%IRRIGATION(iRecNum)%rGDD_Death
+    "Error reading day of year (or GDD) for end of initial plant growth " &
+      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+  pConfig%IRRIGATION(iRecNum)%iL_ini = int(rTempValue)
+  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+    //"initial plant growth phase ", pConfig%IRRIGATION(iRecNum)%iL_ini
+
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+  call Assert( iStat == 0, &
+    "Error reading day of year (or GDD) for end of plant development " &
+      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+  pConfig%IRRIGATION(iRecNum)%iL_dev = int(rTempValue)
+  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+    //"plant development ", pConfig%IRRIGATION(iRecNum)%iL_dev
+
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+  call Assert( iStat == 0, &
+    "Error reading day of year (or GDD) for end of mid-season growth " &
+      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+  pConfig%IRRIGATION(iRecNum)%iL_mid = int(rTempValue)
+  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+    //"mid-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_mid
+
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+  call Assert( iStat == 0, &
+    "Error reading day of year (or GDD) for end of late-season growth " &
+      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+  pConfig%IRRIGATION(iRecNum)%iL_late = int(rTempValue)
+  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+    //"late-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_late
+
+  call chomp(sRecord, sItem, sTAB)
+  if(str_compare(sItem,"GDD") ) then
+    pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lFALSE
+  elseif(str_compare(sItem,"DOY") ) then
+    pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lTRUE
+  else
+    call Assert( lFALSE, &
+    "Error reading units label from irrigation lookup table.~ Valid" &
+      //" entries are 'GDD' or 'DOY'", trim(__FILE__), __LINE__ )
+  write(UNIT=LU_LOG,FMT=*)  "  growth targets given in units of ", &
+    dquote(pConfig%IRRIGATION(iRecNum)%iL_ini)
+
+  do i=1,iNumSoilTypes
+  call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%EVAPORATION_PARAMETERS(iRecNum,i)
+    call Assert( iStat == 0, &
+      "Error reading evaporation parameters for soil group " &
+        //trim(int2char(i))//" and landuse " &
+        //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+        //" in landuse lookup table" , trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  curve number for soil group",i,": ", &
+      pConfig%EVAPORATION_PARAMETERS(iRecNum,i)
+  end do
 
   call chomp(sRecord, sItem, sTAB)
   read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
@@ -2946,6 +3000,15 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
     pConfig%IRRIGATION(iRecNum)%iEndIrrigation
 
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) &
+    pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+  call Assert( iStat == 0, &
+    "Error reading the fraction of irrigation water obtained from groundwater " &
+    //"from the irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obrained from groundwater ", &
+    pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+
   iRecNum = iRecNum + 1
 
   end do LU_READ
@@ -2953,10 +3016,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   ! That's all!
   close ( unit=LU_LOOKUP )
 
-  return
 end subroutine model_ReadIrrigationLookupTable
-
-#endif
 
 !--------------------------------------------------------------------------
 
@@ -3088,10 +3148,8 @@ where (pGrd%Cells%rCFGI > rNEAR_ZERO)
   pGrd%Cells%rSM_PotentialET = rZERO
 endwhere
 
-
 !  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rSM_PotentialET )
 
-  return
 end subroutine model_ProcessET
 
 !--------------------------------------------------------------------------
@@ -3119,7 +3177,6 @@ subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
         iDayOfYear, iDay, iMonth,iYear)
   end select
 
-  return
 end subroutine model_ProcessSM
 
 !--------------------------------------------------------------------------

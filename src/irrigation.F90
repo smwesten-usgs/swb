@@ -14,6 +14,29 @@ module irrigation
 
   contains
 
+!> @brief This subroutine updates the current Kc value for
+!> each entry in the irrigation table
+subroutine irrigation_UpdateCropCoefficients(pGrd, pConfig)
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+                                                   ! model options, flags, and other setting
+
+  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  integer (kind=T_INT) :: i
+
+  do i = 1,size(pConfig%IRRIGATION)
+
+    ! isolate the relevant IRRIGATION record for this landuse
+    pIRRIGATION => pConfig%IRRIGATION(i)
+
+  enddo  ! loop over landuses
+
+
+
+end subroutine irrigation_UpdateCropCoefficients
+
 !> @brief This subroutine estimates the amount of water required
 !> to keep soil moisture values above the maximum allowable depletion (MAD)
 !> for each landuse and soil type. If the mean soil moisture for a given
@@ -23,7 +46,7 @@ module irrigation
 !> differently: potential ET is considered reference ET (i.e. potential ET for grass),
 !> and is modified by means of crop coefficients. This calculation affects irrigated
 !> as well as non-irrigated landuses.
-subroutine update_irrigation_amounts(pGrd, pConfig)
+subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -31,19 +54,29 @@ subroutine update_irrigation_amounts(pGrd, pConfig)
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j
+  integer (kind=T_INT) :: iRow, iCol
   integer (kind=T_INT) :: iNumCells
-  real (kind=T_SGL) :: rPercentDepletion
-  real (kind=T_SGL) :: rIrrigationAmount
-  real (kind=T_SGL) :: rMeanSoilMoisturePct
-  real (kind=T_SGL) :: rMeanSoilMoisture
-  real (kind=T_SGL) :: rMeanSoilWaterCap
-  real (kind=T_SGL) :: rMeanGDD
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
 
   ! zero out Irrigation term
-  pGrd%Cells%rIrrigationAmount = rZERO
-  rIrrigationAMount = rZERO
+  pGrd%Cells%rIrrigationAmntGW = rZERO
+  pGrd%Cells%rIrrigationAmntSW = rZERO
+
+
+  ! iterate over cells; add water if soil storage zone is below the
+  ! maximum allowable depletion
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+      cel => pGrd%Cells(iCol,iRow)
+      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+
+  cel%rSM_PotentialET = cel%rSM_PotentialET &
+    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
+      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
+
+    enddo
+  enddo
+
 
   ! iterate over each landuse
   do i = 1,size(pConfig%IRRIGATION)

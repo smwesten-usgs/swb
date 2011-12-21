@@ -139,6 +139,8 @@ module types
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO    ! Soil moisture in inches of water
+      real (kind=T_SGL) :: rReadilyEvaporableWater
+      real (kind=T_SGL) :: rTotal EvaporableWater
 
       real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
@@ -180,7 +182,8 @@ module types
       real (kind=T_SGL) :: rGDD_TBase = 50.        !
       real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
-      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! term to hold irrigation term, if any
+      real (kind=T_SGL) :: rIrrigationAmntGW = rZERO ! term to hold irrigation term, if any
+      real (kind=T_SGL) :: rIrrigationAmntSW = rZERO ! term to hold irrigation term, if any
 !end_if
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
       integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
@@ -268,22 +271,33 @@ module types
     !> Landuse code corresponding to the codes specified in landuse grid
  	integer (kind=T_INT) :: iLandUseType
 
-    !> Maximum crop coefficient
-    real (kind=T_SGL) :: rKc_Max        = 1.3
+    !> Crop coefficient, basal, initial growth phase (Kcb_ini)
+    real (kind=T_SGL) :: rKcb_ini = 0.15
 
-    !> Crop coefficient for first phenological stage
-    real (kind=T_SGL) :: rK0            = 0.2
+    !> Crop coefficient, basal, mid-growth phase (Kcb_mid)
+    real (kind=T_SGL) :: rKcb_mid = 1.0
 
-    !> GDD corresponding to Kc_Max
-    real (kind=T_SGL) :: rGDD_Kc_Max = 1400
+    !> Crop coefficient, basal, end-growth phase (Kcb_end)
+    real (kind=T_SGL) :: rKcb_end = 0.7
 
-    !> GDD corresponding to plant death (alpha0)
-    real (kind=T_SGL) :: rGDD_Death  = 2000
+    !> Crop coefficient, MAXIMUM allowed value (Kc_max)
+    real (kind=T_SGL) :: rKc_max = 1.3
 
-    !> Spread of error function around GDD_Kc_MAx
-    !> range 0-1; 0 ~= Dirac delta; 1 ~= maximum spread
-    real (kind=T_SGL) :: rAlpha1        = 0.65  ! range 0-1; spread of error function around GDD_Kc_MAx
-                                               ! 0 ~= Dirac delta; 1 ~= maximum spread
+    !> Day of year (or GDD) for initial planting
+    integer (kind=T_INT) :: iL_plant
+
+    !> Day of year (or GDD) for end of initial growth phase
+    integer (kind=T_INT) :: iL_ini
+
+    !> Day of year (or GDD) for end of development phase
+    integer (kind=T_INT) :: iL_dev
+
+    !> Day of year (or GDD) for end of mid-season growth phase
+    integer (kind=T_INT) :: iL_mid
+
+    !> Day of year (or GDD) for end of late season growth phase
+    integer (kind=T_INT) :: iL_late
+
     !> Growing degree-day base temperature (10 degrees C for corn)
     real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
 
@@ -298,6 +312,10 @@ module types
 
     !> Day of year after which no irrigation is assumed to take place
     integer (kind=T_INT) :: iEndIrrigation = 240
+
+    !> Fraction of irrigation water obtained from GW rather than surface water
+    real (kind=T_SGL) :: rFractionIrrigationFromGW = rONE
+
   end type T_IRRIGATION_LOOKUP
 #endif
 
@@ -477,12 +495,7 @@ module types
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
-#ifdef IRRIGATION_MODULE
-      lTRUE, &
-#else
-      lFALSE, &
-#endif
-       'inches','daily estimated irrigation amount', &
+      lFALSE, 'inches','daily estimated irrigation amount', &
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
@@ -654,6 +667,10 @@ module types
   ! The maximum number of fracture recharge entries
   integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
+
+  !> generic configuration
+  integer (kind=T_INT), parameter :: CONFIG_NONE = -999
+
   !> @}
 
   !> @brief Type that contains model configuration data.
@@ -664,25 +681,27 @@ module types
   type T_MODEL_CONFIGURATION
 
       !> Runoff calculation method @ref const_runoffCalc "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoff
+      integer (kind=T_INT) :: iConfigureRunoff = CONFIG_NONE
       !> Runoff routing solution mode @ref const_runoffSoln "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoffMode
+      integer (kind=T_INT) :: iConfigureRunoffMode = CONFIG_NONE
       !> Reference evapotranspiration calculation method
-      integer (kind=T_INT) :: iConfigureET
+      integer (kind=T_INT) :: iConfigureET = CONFIG_NONE
       !> Precipitation input option
-      integer (kind=T_INT) :: iConfigurePrecip
+      integer (kind=T_INT) :: iConfigurePrecip = CONFIG_NONE
       !> Temperature data input option
-      integer (kind=T_INT) :: iConfigureTemperature
+      integer (kind=T_INT) :: iConfigureTemperature = CONFIG_NONE
       !> Landuse data input option
-      integer (kind=T_INT) :: iConfigureLanduse
+      integer (kind=T_INT) :: iConfigureLanduse = CONFIG_NONE
       !> Soil moisture calculation option
-      integer (kind=T_INT) :: iConfigureSM
+      integer (kind=T_INT) :: iConfigureSM = CONFIG_NONE
       !> Snowfall and snowmelt option
-      integer (kind=T_INT) :: iConfigureSnow
+      integer (kind=T_INT) :: iConfigureSnow = CONFIG_NONE
       !> Maximum soil water capacity option
-      integer (kind=T_INT) :: iConfigureSMCapacity
+      integer (kind=T_INT) :: iConfigureSMCapacity = CONFIG_NONE
+      !> Irrigation calculation option
+      integer (kind=T_INT) :: iConfigureIrrigation = CONFIG_NONE
       !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
-      integer (kind=T_INT) :: iConfigureInitialAbstraction
+      integer (kind=T_INT) :: iConfigureInitialAbstraction = CONFIG_NONE
       !> Option to write extra files when using PEST
       logical (kind=T_LOGICAL) :: lWriteExtraPestFiles = lFALSE
 
@@ -713,6 +732,8 @@ module types
       integer (kind=T_INT) :: iEndJulianDay
       integer (kind=T_INT) :: iStartYearforCalculation = -99999
       integer (kind=T_INT) :: iEndYearforCalculation = 99999
+      integer (kind=T_INT) :: iNumberOfLanduses
+      integer (kind=T_INT) :: iNumberOfSoiltypes
       logical (kind=T_LOGICAL) :: lGriddedData = lFALSE
       logical (kind=T_LOGICAL) :: lUseSWBRead = lFALSE
       logical (kind=T_LOGICAL) :: lHaltIfMissingClimateData = lTRUE
@@ -758,10 +779,8 @@ module types
       ! Filename for land use lookup table
       character (len=256) :: sLanduseLookupFilename
 
-#ifdef IRRIGATION_MODULE
       ! Filename for irrigation lookup table
       character (len=256) :: sIrrigationLookupFilename
-#endif
 
       ! Filename for basin mask table
       character (len=256) :: sBasinMaskFilename
@@ -818,6 +837,9 @@ module types
 
       ! define a pointer to the ROOTING DEPTH lookup table
       real (kind=T_SGL), dimension(:,:),pointer :: ROOTING_DEPTH
+
+      ! define a pointer to the EVAPORATION PARAMETERS lookup table
+      real (kind=T_SGL), dimension(:,:),pointer :: EVAPORATION_PARAMETERS
 
       ! define threshold value for CFGI below which ground is considered unfrozen
       real (kind=T_SGL) :: rLL_CFGI = 9999.0
@@ -985,39 +1007,61 @@ module types
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
   !> @}
 
-  !> Configuration information for landuse input {
+  !> @name Constants: Landuse input data format
+  !> Options for specifying the method of input for temperature data
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
+  !> @}
 
-  ! Configuration information for snowfall and snowmelt option
+  !> @name Constants: Landuse input data format
+  !> Configuration for selection of snowfall and snowmelt modules
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
   integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
+  !> @}
 
-  ! Configuration information for soil-moisture capacity calculations
+  !> @name Constants: Landuse input data format
+  !> Configuration information for soil-moisture capacity calculations
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
+  !> @}
 
-  ! Configuration information for soil-moisture calculations
+  !> @name Constants: Landuse input data format
+  !> Configuration information for soil-moisture retention calculations
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
+  !> @}
 
-  ! Configuration information for initial abstraction assumptions
+  !> @name Constants: Landuse input data format
+  !> Configuration information for irrigation calculations
+  !> @{
+  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_FAO56_DUAL = 0
+  !> @}
+
+  !> @name Constants: Landuse input data format
+  !> Configuration information for initial abstraction assumptions
+  !> @{
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  !> @}
 
-  ! Define behavior in the case of missing data
+  ! Define behavior in the case of missing data [UNIMPLEMENTED]
   integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
   integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
 
-  ! Options for output formats
+  !> @name Constants: Landuse input data format
+  !> Options for output formats
+  !> @{
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
-
-
+  !> @}
 
 !**********************************************************************
 !! GENERIC interfaces

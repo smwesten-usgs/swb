@@ -1146,32 +1146,4 @@ function slope_sat_vapor_pressure_curve(rT) result (rSlope)
 
 end function slope_sat_vapor_pressure_curve
 
-!--------------------------------------------------------------------------
-
-function calc_crop_coefficient(rKc_Max, rK0, rGDD_Kc_Max, rGDD_Death, rAlpha1, &
-             rGDD)  result(rKc)
-
-   implicit none
-
-   real (kind=T_SGL) :: rKc_Max                 ! Maximum crop coefficient
-   real (kind=T_SGL) :: rK0                     ! Crop coefficient for first phenological stage
-   real (kind=T_SGL) :: rGDD_Kc_Max          ! GDD corresponding to Kc_Max
-   real (kind=T_SGL) :: rGDD_Death           ! GDD corresponding to plant death (alpha0)
-   real (kind=T_SGL) :: rAlpha1                 ! range 0-1; spread of error function around GDD_Kc_MAx
-                                                ! 0 ~= Dirac delta; 1 ~= maximum spread
-   real (kind=T_SGL) :: rGDD
-   real (kind=T_SGL) :: rKc
-
-   ! [ LOCALS ]
-   real (kind=T_SGL) :: rX_Kc_Max
-   real (kind=T_SGL) :: rX
-
-   rX_Kc_Max = real(rGDD_Kc_Max, kind=T_SGL) / real(rGDD_Death, kind=T_SGL)
-   rX = rGDD / real(rGDD_Death, kind=T_SGL)
-
-   rKc = max(rK0, rKc_Max * erfc( ( (rX - rX_Kc_Max) / rAlpha1)**2 ) )
-
-end function calc_crop_coefficient
-
-
 end module meteorological_functions

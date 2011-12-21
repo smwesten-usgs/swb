@@ -113,7 +113,7 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%sLanduseLookupFilename = ""
   pConfig%iOutputFormat = OUTPUT_ARC
   iDayCtr = 0
-  pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
+  pConfig%iConfigureLanduse = CONFIG_NONE
   pConfig%iConfigureET = CONFIG_ET_NONE
   pConfig%iConfigureRunoff = CONFIG_RUNOFF_CURVE_NUMBER
   pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_DOWNHILL
@@ -851,18 +851,16 @@ subroutine control_setModelOptions(sControlFile)
       call model_ReadLanduseLookupTable( pConfig )
       flush(UNIT=LU_LOG)
 
-#ifdef IRRIGATION_MODULE
-
     else if ( sItem == "IRRIGATION_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading irrigation lookup table"
       call Chomp ( sRecord, pConfig%sIrrigationLookupFilename )
-      if ( len_trim(pConfig%sIrrigationLookupFilename) == 0 ) then
-        call Assert( .false._T_LOGICAL, "No irrigation lookup table specified" )
-      end if
+      call assert(len_trim(pConfig%sIrrigationLookupFilename) > 0, &
+        "No irrigation lookup table specified", trim(__FILE__), __LINE__ )
+      call assert(len_trim(pConfig%sLandUseLookupFilename) > 0, &
+         "The irrigation module cannot be activated before specifying " &
+         //"a land use lookup table", trim(__FILE__), __LINE__ )
       call model_ReadIrrigationLookupTable( pConfig )
       flush(UNIT=LU_LOG)
-
-#endif
 
     else if ( sItem == "BASIN_MASK_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask lookup table"
