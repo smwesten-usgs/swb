@@ -40,10 +40,14 @@ module model
 contains
 
 
-subroutine model_OpenSingleSiteClimateFile(pConfig, pGrd)
+subroutine model_OpenSingleSiteClimateFile(pGrd, pConfig)
 
+   ! [ ARGUMENTS ]
+   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+   ! [ LOCALS ]
    integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear, iStat
-
 
    ! Connect to the single-site time-series file
    open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
@@ -52,7 +56,7 @@ subroutine model_OpenSingleSiteClimateFile(pConfig, pGrd)
      TRIM(pConfig%sTimeSeriesFilename)
    flush(LU_LOG)
    call Assert ( iStat == 0, &
-     "Can't open time-series data file "//dQuote(pConfig%TimeSeriesFilename), &
+     "Can't open time-series data file "//dQuote(pConfig%sTimeSeriesFilename), &
      trim(__FILE__), __LINE__)
    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
    call gregorian_date(pConfig%iCurrentJulianDay, &
@@ -69,6 +73,9 @@ subroutine model_Initialize( pGrd, pConfig )
     ! [ ARGUMENTS ]
     type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
     type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+   ! [ LOCALS ]
+   integer (kind=T_INT) :: iStat
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -190,7 +197,7 @@ subroutine model_Main( pGrd, pConfig, pGraph )
   integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
 !  integer (kind=T_INT) :: iDay, iYear, tj, ti
   integer (kind=T_INT) :: tj, ti
-!  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
+  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
   integer (kind=T_INT) :: iPos
   integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=T_INT) :: iCol, iRow
@@ -220,7 +227,7 @@ subroutine model_Main( pGrd, pConfig, pGraph )
 
     ! call subroutine that handles much of the model initialization,
     ! opens *.csv files, etc.
-    call model_Initialize(pConfig, pGrd)
+    call model_Initialize(pGrd, pConfig)
 
     ! calculate number of gridcells here.
     iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -239,11 +246,12 @@ subroutine model_Main( pGrd, pConfig, pGraph )
   close(LU_TS)
 
   if(.not. pConfig%lGriddedData) &
-    call model_OpenSingleSiteClimateFile(pConfig, pGrd)
+    call model_OpenSingleSiteClimateFile(pGrd, pConfig)
 
   ! Zero out monthly and annual accumulators
   call stats_InitializeMonthlyAccumulators()
   call stats_InitializeAnnualAccumulators()
+  pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
   ! ***************************
   ! ***** BEGIN MAIN LOOP *****
@@ -264,148 +272,32 @@ subroutine model_Main( pGrd, pConfig, pGraph )
   pTS%rSunPct = iNO_DATA_NCDC
   pTS%lEOF = lFALSE
 
+  ! if we are not using gridded climate data, here is where we read in
+  ! the current days' values from the single-site time series file.
   if(.not. pConfig%lGriddedData) then
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
-    call model_ReadTimeSeriesFile(pTS)
-    if(pTS%lEOF) then
 
-#ifdef STRICT_DATE_CHECKING
-      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
-        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
-        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
-        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
-           //TRIM(pConfig%sTimeSeriesFilename)
-        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
-      end if
-#endif
+    call model_ReadTimeSeriesFile(pConfig, pTS)
+    if(pTS%lEOF) then
       close(unit=LU_TS)
       exit MAIN_LOOP
     end if
-
-    ! check to ensure that we have not skipped a day
-    if(.not. (pConfig%iYear == pTS%iYear &
-      .and. pConfig%iMonth == pTS%iMonth &
-      .and. pConfig%iDay == pTS%iDay)) then
-      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
-      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
-      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
-        //TRIM(int2char(pTS%iDay))//"/" &
-        //TRIM(int2char(pTS%iYear))
-      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
-        //TRIM(int2char(pConfig%iDay))//"/" &
-        //TRIM(int2char(pConfig%iYear))
-#ifdef STRICT_DATE_CHECKING
-      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
-#else
-      ! reset date to that of the input time-series data
-      pConfig%iYear = pTS%iYear
-      pConfig%iMonth = pTS%iMonth
-      pConfig%iDay = pTS%iDay
-      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
-#endif
-    end if
-
-    pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
   end if
 
   call LookupMonth(pConfig%iMonth,pConfig%iDay,pConfig%iYear, &
     pConfig%iDayOfYear,sMonthName,lMonthEnd)
 
-  ! initialize landuse-associated variables; must be done each year if
+  ! Initialize landuse-associated variables; must be done each year if
   ! dynamic landuse is being used
-  DYNAMIC_LANDUSE: if( ( pConfig%lFirstDayOfSimulation &
-    .or. ( pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) ) &
-    .and.(pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
-    .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_SURFER) ) then
+  call model_ProcessDynamicLanduse(pGrd, pConfig)
 
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-    iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
-
-    if(.not. pConfig%lFirstDayOfSimulation) then
-
-    ! calculate percent moisture; when landuse changes, it will assume
-    ! the same percent moisture. This implies a discontinuity in
-    ! the mass balance from one year to the next.
-
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-!       do iRow=1,pGrd%iNY
-!         do iCol=1,pGrd%iNX
-!           cel => pGrd%Cells(iCol,iRow)
-!           if(cel%rSoilWaterCap > rZERO) then
-!             cel%rSoilMoisturePct = cel%rSoilMoisture &
-!               / cel%rSoilWaterCap * 100.
-!
-! #ifdef THORNTHWAITE_MATHER_TABLE
-!             ! look up soil moisture in T-M tables
-!             cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-!                 cel%rSM_AccumPotentWatLoss)
-! #else
-!             ! calculate soil moisture w equation SUMMARIZING T-M tables
-!             cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-!                 cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
-! #endif
-!           else
-!             cel%rSoilMoisturePct = rZERO
-!             cel%rSoilMoisture = rZERO
-!           endif
-!
-!         enddo
-!       enddo
-
-    endif
-
-    if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
-      call assert( lFALSE, &
-      "Dynamic landuse option requires that landuse data be provided~" &
-      //"for at least the first year of simulation. No dynamic landuse~" &
-      //"file was found.", trim(__FILE__), __LINE__)
-
-    if(iStat == 0) then
-
-      ! (Re)-initialize the model
-      write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-      flush(unit=LU_LOG)
-      call model_InitializeSM(pGrd, pConfig)
-
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-      flush(unit=LU_LOG)
-      call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-      flush(unit=LU_LOG)
-      call model_InitializeMaxInfil(pGrd, pConfig )
-    endif
-
-  end if DYNAMIC_LANDUSE
-
-
-  if(pConfig%lFirstDayOfSimulation) then
-    ! scan through list of potential output variables; if any
-    ! output is desired for a variable, note the current position
-    ! within the file, move to the position reserved for the first day's
-    ! date, write the date, and return to the position where the data
-    ! for the first day will be written
-    do k=1,iNUM_VARIABLES
-      if(STAT_INFO(k)%iDailyOutput > iNONE &
-        .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-        .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-        inquire(UNIT=STAT_INFO(k)%iLU,POS=iPos)  ! establish location to return to
-        write(UNIT=STAT_INFO(k)%iLU,POS=iSTARTDATE_POS) &
-          pConfig%iMonth,pConfig%iDay, pConfig%iYear
-        write(UNIT=STAT_INFO(k)%iLU,POS=iPos ) ! return to prior location in bin file
-      end if
-      pConfig%lFirstDayOfSimulation = lFALSE
-    end do
+  ! Call this subroutine to have SWB record the present position in the
+  ! binary output file for later use when writing values
+  call stats_SetBinaryFilePosition(pConfig, pGrd)
 
 #ifdef NETCDF_SUPPORT
-    call model_write_NetCDF_attributes(pConfig, pGrd)
+    call model_WriteNetcdfAttributes(pConfig, pGrd)
 #endif
-  end if
 
   if(pConfig%lWriteToScreen) then
     write(UNIT=LU_STD_OUT,FMT=*)
@@ -420,17 +312,8 @@ subroutine model_Main( pGrd, pConfig, pGraph )
     write(UNIT=LU_STD_OUT,FMT=*)
   end if
 
-  ! write timestamp to the unformatted fortran file(s)
-  do k=1,iNUM_VARIABLES
-    if(STAT_INFO(k)%iDailyOutput > iNONE &
-      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-    write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
-      pConfig%iYear, pConfig%iDayOfYear
-!    inquire(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
-!    write(UNIT=STAT_INFO(k)%iLU) iNO_DATA_NCDC  ! dummy value for now
-    end if
-  end do
+  ! Write current timestamp to any open binary files
+  call stats_TimestampBinaryFile(pConfig)
 
   ! Initialize precipitation value for current day
   call model_GetDailyPrecipValue(pGrd, pConfig, pTS%rPrecip, &
@@ -511,23 +394,6 @@ end if
 
   end if
 
-  ! write OFFSET VALUE to the unformatted fortran file(s)
-!  do k=1,iNUM_VARIABLES
-!    if(STAT_INFO(k)%iDailyOutput > iNONE &
-!      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-!      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-!      ! get current file position
-!      inquire(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!      ! rewind to location of today's header, at the location
-!      ! where the offset is to be written
-!      write(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
-!      ! write an offset amount at the end of the current header
-!      write(UNIT=STAT_INFO(k)%iLU) iTempval - STAT_INFO(k)%iPos
-!      ! return to last file position
-!      write(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!    end if
-!  end do
-
   write ( unit=sBuf, fmt='("day",i3.3)' ) pConfig%iDayOfYear
   call model_WriteGrids(pGrd, pConfig, sBuf, pConfig%iDay, pConfig%iMonth, &
     pConfig%iYear, pConfig%iDayOfYear)
@@ -535,13 +401,11 @@ end if
   ! Write the results at each month-end
   if ( lMonthEnd ) then
 
-!      if ( pConfig%lReportDaily ) call stats_CalcMonthlyMeans(pConfig%iMonth, pConfig%iDay)
-!      call stats_WriteMonthlyReport (LU_STD_OUT, pGrd, sMonthName, iMonth)
     call model_WriteGrids(pGrd, pConfig, sMonthName,  pConfig%iDay, &
       pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
 
-  if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
-    pConfig%iMonth, sMonthName, pConfig)
+    if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
+      pConfig%iMonth, sMonthName, pConfig)
 
     write(UNIT=LU_LOG,FMT="(A,i2,A,i4)") &
       "finished monthly calculations for: ", &
@@ -582,6 +446,7 @@ end if
   ! update value of last year
   if( .not. pConfig%lGriddedData) pConfig%iEndYear = pConfig%iYear
 
+  ! destroy time series pointer pTS
   DEALLOCATE(pTS, STAT=iStat)
   call Assert( iStat == 0, &
     "Could not deallocate memory for time-series data structure")
@@ -3547,12 +3412,11 @@ else
   call Assert( .false._T_LOGICAL, "Illegal output format specified" )
 end if
 
-  return
 end subroutine model_WriteGrids
 
 #ifdef NETCDF_SUPPORT
 
-subroutine model_write_NetCDF_attributes(pConfig, pGrd)
+subroutine model_WriteNetcdfAttributes(pConfig, pGrd)
   ! this code block initializes NetCDF output files for any
   ! valid SWB variable, as specified in the OUTPUT_OPTIONS
   ! input block
@@ -3564,33 +3428,95 @@ subroutine model_write_NetCDF_attributes(pConfig, pGrd)
   integer (kind=T_INT) :: k
   type (T_NETCDF_FILE), pointer :: pNC
 
-  do k=1,iNUM_VARIABLES
+  if( pConfig%lFirstDayOfSimulation ) then
 
-  if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
+    do k=1,iNUM_VARIABLES
 
-  pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-  pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-  pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
-  pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
-  pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
-  pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
-  call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
-  write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
-  write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
-  write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
-end if
+      if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
 
-  end do
+        pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
+        pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
+        pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
+        pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
+        pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
+        pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
+        call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
+        write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
+        write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
+        write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
 
-  return
+      endif
 
-end subroutine model_write_NetCDF_attributes
+    end do
 
+  endif
+
+end subroutine model_WriteNetcdfAttributes
 #endif
 
-! read a single line from the time-series file and return a pointer to the values
-subroutine model_ReadTimeSeriesFile(pTS)
+!------------------------------------------------------------------------------
 
+subroutine model_ProcessDynamicLanduse(pGrd, pConfig)
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iStat
+
+  if( ( pConfig%lFirstDayOfSimulation &
+    .or. ( pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) ) &
+    .and.(pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
+    .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_SURFER) ) then
+
+    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+    iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
+
+    if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
+      call assert( lFALSE, &
+      "Dynamic landuse option requires that landuse data be provided~" &
+      //"for at least the first year of simulation. No dynamic landuse~" &
+      //"file was found.", trim(__FILE__), __LINE__)
+
+    if(.not. pConfig%lFirstDayOfSimulation) then
+
+      ! calculate percent moisture; when landuse changes, it will assume
+      ! the same percent moisture. This implies a discontinuity in
+      ! the mass balance from one year to the next.
+      call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+    endif
+
+    ! (Re)-initialize the model
+    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+    flush(unit=LU_LOG)
+    call model_InitializeSM(pGrd, pConfig)
+
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+    flush(unit=LU_LOG)
+    call runoff_InitializeCurveNumber( pGrd ,pConfig)
+
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+    flush(unit=LU_LOG)
+    call model_InitializeMaxInfil(pGrd, pConfig )
+
+  endif
+
+end subroutine model_ProcessDynamicLanduse
+
+
+
+!> @brief This subroutine reads a single line from a single-station
+!> climate data file, parses the values, and returns a pointer to a
+!> time-series data object.
+!> @todo Make logic at end of routine more robust; currently the logic
+!> to test for the presence of a header could mask errors reading in
+!> values from the data file.
+subroutine model_ReadTimeSeriesFile(pConfig, pTS)
+
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
   type (T_TIME_SERIES_FILE), pointer :: pTS
 
   ! [ LOCALS ]
@@ -3599,22 +3525,38 @@ subroutine model_ReadTimeSeriesFile(pTS)
 
   do
 
+    ! read line from the time series file
     read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
-#ifdef DEBUG_PRINT
-    print *, trim(sBuf)
-#endif
+
+    ! check for end-of-file condition
     if ( iStat<0 ) then
       pTS%lEOF = lTRUE
-      exit ! END OF FILE
+      ! if we have enabled STRICT_DATE_CHECKING, terminate the run
+#ifdef STRICT_DATE_CHECKING
+      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
+        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
+        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
+        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
+           //TRIM(pConfig%sTimeSeriesFilename)
+        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
+      end if
+#endif
+      exit ! END OF FILE; exit main do loop
     end if
-    call Assert ( iStat == 0, &
-      "Cannot read record from time-series file", TRIM(__FILE__),__LINE__)
-    if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
+
+    ! check for errors
+    call Assert ( iStat == 0, "Problems reading time series file: " &
+           //TRIM(pConfig%sTimeSeriesFilename), TRIM(__FILE__),__LINE__)
+
+    ! Ignore comment statements
+    if ( sBuf(1:1) == '#' ) cycle
+
+    ! eliminate punctuation
     call CleanUpCsv ( sBuf )
     read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
       pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
       pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
-    if (iStat/=0) then
+    if (iStat /= 0) then  ! this is a sloppy way of getting past the header
       write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
       write(UNIT=LU_LOG,FMT=*)
       cycle
@@ -3626,6 +3568,35 @@ subroutine model_ReadTimeSeriesFile(pTS)
       call Assert(lFALSE, &
         "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
     end if
+
+    ! Check to ensure that we have not skipped a day
+    ! we have to ignore the very first day because when running while using
+    ! a single-site file, the pConfig values are populated with the
+    ! values read from the time series file. Thus, this test will always
+    ! be true on the first day of the simulation when reading from a
+    ! single-site file.
+    if(.not. (pConfig%iYear == pTS%iYear &
+      .and. pConfig%iMonth == pTS%iMonth &
+      .and. pConfig%iDay == pTS%iDay &
+      .and. (.not. pConfig%lFirstDayOfSimulation) ) ) then
+      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
+      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
+      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
+        //TRIM(int2char(pTS%iDay))//"/" &
+        //TRIM(int2char(pTS%iYear))
+      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
+        //TRIM(int2char(pConfig%iDay))//"/" &
+        //TRIM(int2char(pConfig%iYear))
+#ifdef STRICT_DATE_CHECKING
+      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
+#else
+      ! reset date to that of the input time-series data
+      pConfig%iYear = pTS%iYear
+      pConfig%iMonth = pTS%iMonth
+      pConfig%iDay = pTS%iDay
+      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
+#endif
+    endif
 
     exit
 

@@ -136,7 +136,7 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GLU32_LIB} )
 
-     SET(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
+     set(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe

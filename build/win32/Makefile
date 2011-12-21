@@ -138,32 +138,6 @@ swb/fast:
 .PHONY : swb/fast
 
 #=============================================================================
-# Target rules for targets named swblib
-
-# Build rule for target.
-swblib: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 swblib
-.PHONY : swblib
-
-# fast build rule for target.
-swblib/fast:
-	$(MAKE) -f src/CMakeFiles/swblib.dir/build.make src/CMakeFiles/swblib.dir/build
-.PHONY : swblib/fast
-
-#=============================================================================
-# Target rules for targets named swbread
-
-# Build rule for target.
-swbread: cmake_check_build_system
-	$(MAKE) -f CMakeFiles/Makefile2 swbread
-.PHONY : swbread
-
-# fast build rule for target.
-swbread/fast:
-	$(MAKE) -f src/CMakeFiles/swbread.dir/build.make src/CMakeFiles/swbread.dir/build
-.PHONY : swbread/fast
-
-#=============================================================================
 # Target rules for targets named swbstats
 
 # Build rule for target.
@@ -187,8 +161,6 @@ help:
 	@echo "... makelib"
 	@echo "... rebuild_cache"
 	@echo "... swb"
-	@echo "... swblib"
-	@echo "... swbread"
 	@echo "... swbstats"
 .PHONY : help
 

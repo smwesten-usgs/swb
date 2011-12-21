@@ -1636,6 +1636,62 @@ end subroutine stats_write_to_SSF_file
 
 !--------------------------------------------------------------------------
 
+subroutine stats_SetBinaryFilePosition(pConfig, pGrd)
+
+  ![ARGUMENTS]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+  type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: k
+  integer (kind=T_INT) :: iPos
+
+  if(pConfig%lFirstDayOfSimulation) then
+    ! scan through list of potential output variables; if any
+    ! output is desired for a variable, note the current position
+    ! within the file, move to the position reserved for the first day's
+    ! date, write the date, and return to the position where the data
+    ! for the first day will be written
+    do k=1,iNUM_VARIABLES
+      if(STAT_INFO(k)%iDailyOutput > iNONE &
+        .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+        inquire(UNIT=STAT_INFO(k)%iLU,POS=iPos)  ! establish location to return to
+        write(UNIT=STAT_INFO(k)%iLU,POS=iSTARTDATE_POS) &
+          pConfig%iMonth,pConfig%iDay, pConfig%iYear
+        write(UNIT=STAT_INFO(k)%iLU,POS=iPos ) ! return to prior location in bin file
+      end if
+      pConfig%lFirstDayOfSimulation = lFALSE
+    end do
+
+  endif
+
+end subroutine stats_SetBinaryFilePosition
+
+!------------------------------------------------------------------------------
+
+subroutine stats_TimestampBinaryFile(pConfig)
+
+  ![ARGUMENTS]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: k
+
+  ! write timestamp to the unformatted fortran file(s)
+  do k=1,iNUM_VARIABLES
+    if(STAT_INFO(k)%iDailyOutput > iNONE &
+      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+    write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
+      pConfig%iYear, pConfig%iDayOfYear
+    end if
+  end do
+
+end subroutine stats_TimestampBinaryFile
+
+!--------------------------------------------------------------------------
+
 subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
   ![ARGUMENTS]

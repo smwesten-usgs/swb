@@ -1408,7 +1408,7 @@ subroutine control_setModelOptions(sControlFile)
         open ( LU_TS, file=pConfig%sTimeSeriesFilename, status="OLD", iostat=iStat )
         call Assert ( iStat == 0, &
          "Can't open time-series data file" )
-        call model_ReadTimeSeriesFile(pTSt)
+        call model_ReadTimeSeriesFile(pConfig, pTSt)
         pConfig%iStartYear = pTSt%iYear
         pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
         ! current julian day will be incremented in model_Main
