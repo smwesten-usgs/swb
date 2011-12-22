@@ -74,6 +74,7 @@ module types
   real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
   real (kind=T_DBL), parameter :: dpC_PER_F = 5.0_T_DBL / 9.0_T_DBL
   real (kind=T_DBL), parameter :: dpF_PER_C = 9.0_T_DBL / 5.0_T_DBL
+  real (kind=T_SGL), parameter :: rM_PER_FOOT = 0.3048_T_SGL
   real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
   real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
   real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
@@ -139,8 +140,6 @@ module types
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO    ! Soil moisture in inches of water
-      real (kind=T_SGL) :: rReadilyEvaporableWater
-      real (kind=T_SGL) :: rTotal EvaporableWater
 
       real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
@@ -178,13 +177,15 @@ module types
       real (kind=T_SGL) :: rTMax                   ! Maximum daily temperature
       real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
-!if_defined IRRIGATION_MODULE
+
       real (kind=T_SGL) :: rGDD_TBase = 50.        !
       real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
       real (kind=T_SGL) :: rIrrigationAmntGW = rZERO ! term to hold irrigation term, if any
       real (kind=T_SGL) :: rIrrigationAmntSW = rZERO ! term to hold irrigation term, if any
-!end_if
+      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
+                                                                  ! will be performed
+
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
       integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
 !      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
@@ -271,6 +272,18 @@ module types
     !> Landuse code corresponding to the codes specified in landuse grid
  	integer (kind=T_INT) :: iLandUseType
 
+    !> Land use description
+    character (len=256) :: sLandUseDescription
+
+    !> Plant or crop description
+    character (len=256) :: sCropDescription
+
+    !> Mean plant or crop height, feet
+    real (kind=T_SGL) :: rMeanPlantHeight
+
+    !> Crop coefficient, basal, for a given day
+    real (kind=T_SGL) :: rKcb
+
     !> Crop coefficient, basal, initial growth phase (Kcb_ini)
     real (kind=T_SGL) :: rKcb_ini = 0.15
 
@@ -279,6 +292,9 @@ module types
 
     !> Crop coefficient, basal, end-growth phase (Kcb_end)
     real (kind=T_SGL) :: rKcb_end = 0.7
+
+    !> Crop coefficient, MINIMUM allowed value (Kc_min)
+    real (kind=T_SGL) :: rKcb_ini = 0.15
 
     !> Crop coefficient, MAXIMUM allowed value (Kc_max)
     real (kind=T_SGL) :: rKc_max = 1.3
@@ -298,6 +314,9 @@ module types
     !> Day of year (or GDD) for end of late season growth phase
     integer (kind=T_INT) :: iL_late
 
+    !> How should the growth phase identifiers be treated (DOY or GDD)
+    logical (kind=T_LOGICAL) :: lUnitsAreDOY
+
     !> Growing degree-day base temperature (10 degrees C for corn)
     real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
 
@@ -315,6 +334,9 @@ module types
 
     !> Fraction of irrigation water obtained from GW rather than surface water
     real (kind=T_SGL) :: rFractionIrrigationFromGW = rONE
+
+    !> Fraction of exposed and wetted soil (f_ew)
+    real (kind=T_SGL) :: r_f_ew
 
   end type T_IRRIGATION_LOOKUP
 #endif
@@ -733,7 +755,7 @@ module types
       integer (kind=T_INT) :: iStartYearforCalculation = -99999
       integer (kind=T_INT) :: iEndYearforCalculation = 99999
       integer (kind=T_INT) :: iNumberOfLanduses
-      integer (kind=T_INT) :: iNumberOfSoiltypes
+      integer (kind=T_INT) :: iNumberOfSoilTypes
       logical (kind=T_LOGICAL) :: lGriddedData = lFALSE
       logical (kind=T_LOGICAL) :: lUseSWBRead = lFALSE
       logical (kind=T_LOGICAL) :: lHaltIfMissingClimateData = lTRUE
@@ -821,10 +843,8 @@ module types
       ! define a pointer to the landuse lookup table
       type (T_LANDUSE_LOOKUP), dimension(:), pointer :: LU  ! T_LANDUSE_LOOKUP objects
 
-#ifdef IRRIGATION_MODULE
       ! define a pointer to the IRRIGATION lookup table
       type (T_IRRIGATION_LOOKUP), dimension(:),pointer :: IRRIGATION
-#endif
 
       ! define a pointer to the BASIN MASK lookup table
       type (T_BASIN_MASK), dimension(:), pointer :: BMASK  ! T_BASIN_MASK objects
@@ -838,8 +858,11 @@ module types
       ! define a pointer to the ROOTING DEPTH lookup table
       real (kind=T_SGL), dimension(:,:),pointer :: ROOTING_DEPTH
 
-      ! define a pointer to the EVAPORATION PARAMETERS lookup table
-      real (kind=T_SGL), dimension(:,:),pointer :: EVAPORATION_PARAMETERS
+      ! define a pointer to the READILY_EVAPORABLE_WATER lookup table
+      real (kind=T_SGL), dimension(:,:),pointer :: READILY_EVAPORABLE_WATER
+
+      ! define a pointer to the TOTAL_EVAPORABLE_WATER lookup table
+      real (kind=T_SGL), dimension(:,:),pointer :: TOTAL_EVAPORABLE_WATER
 
       ! define threshold value for CFGI below which ground is considered unfrozen
       real (kind=T_SGL) :: rLL_CFGI = 9999.0

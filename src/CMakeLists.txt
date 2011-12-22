@@ -2,6 +2,7 @@
 if(TARGET__SWB_EXECUTABLE)
 
   add_executable(swb
+            et_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
             et_jensen_haise.F90
@@ -32,6 +33,7 @@ endif()
 if(TARGET__SWB_LIBRARY)
 
   add_library(swblib STATIC
+            et_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
             et_jensen_haise.F90

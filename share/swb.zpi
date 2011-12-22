@@ -91,6 +91,7 @@
     <Folder name="Source Files" sorted="Yes">
         <File>..\src\control.F90</File>
         <File>..\src\et_blaney_criddle.F90</File>
+        <File>..\src\et_crop_coefficents.F90</File>
         <File>..\src\et_hargreaves.F90</File>
         <File>..\src\et_jensen_haise.F90</File>
         <File>..\src\et_thornthwaite_mather.F90</File>

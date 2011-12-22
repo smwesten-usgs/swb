@@ -103,7 +103,14 @@ endif()
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
-   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+  # the name of the target operating system
+  SET(CMAKE_SYSTEM_NAME Windows)
+
+    # which compilers to use for C and C++
+    SET(CMAKE_C_COMPILER C:/MinGW64/bin/gcc.exe)
+    SET(CMAKE_CXX_COMPILER C:/MinGW64/bin/g++.exe)
+    SET(CMAKE_Fortran_COMPILER C:/MinGW64/bin/gfortran.exe)
+    SET(CMAKE_RC_COMPILER C:/MinGW64/bin/windres.exe)
 
      message(" <-- setting options for gfortran on MinGW (32-bit) -->")
 

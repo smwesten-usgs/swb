@@ -2842,6 +2842,20 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
     //"before the irrigation lookup table may be read.", trim(__FILE__),__LINE__)
 
+  ! now allocate memory for READILY_EVAPORABLE_WATER subtable
+  allocate ( pConfig%READILY_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
+    pConfig%iNumberOfSoilTypes), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for READILY_EVAPORABLE_WATER  data structure", &
+    trim(__FILE__), __LINE__ )
+
+  ! now allocate memory for TOTAL_EVAPORABLE_WATER subtable
+  allocate ( pConfig%TOTAL_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
+    pConfig%iNumberOfSoilTypes), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for TOTAL_EVAPORABLE_WATER  data structure", &
+    trim(__FILE__), __LINE__ )
+
   iSize = size(pConfig%LU,1)
 
   iRecNum = 1
@@ -2957,16 +2971,31 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   write(UNIT=LU_LOG,FMT=*)  "  growth targets given in units of ", &
     dquote(pConfig%IRRIGATION(iRecNum)%iL_ini)
 
+
   do i=1,iNumSoilTypes
   call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%EVAPORATION_PARAMETERS(iRecNum,i)
+    ! READILY_EVAPORABLE_WATER(# LU, #Soil Types)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iRecNum,i)
     call Assert( iStat == 0, &
-      "Error reading evaporation parameters for soil group " &
+      "Error reading readily evaporable water for soil group " &
         //trim(int2char(i))//" and landuse " &
         //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
         //" in landuse lookup table" , trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  curve number for soil group",i,": ", &
-      pConfig%EVAPORATION_PARAMETERS(iRecNum,i)
+    write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
+      pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+  end do
+
+  do i=1,iNumSoilTypes
+  call chomp(sRecord, sItem, sTAB)
+    ! TOTAL_EVAPORABLE_WATER(# LU, #Soil Types)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+    call Assert( iStat == 0, &
+      "Error reading total evaporable water for soil group " &
+        //trim(int2char(i))//" and landuse " &
+        //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+        //" in landuse lookup table" , trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  total evaporable water for soil group",i,": ", &
+      pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
   end do
 
   call chomp(sRecord, sItem, sTAB)
