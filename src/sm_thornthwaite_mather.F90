@@ -834,7 +834,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                     iYear, cel%rGDD)
               case(iIRRIGATION)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, cel%rIrrigationAMount)
+                    iYear, cel%rIrrigationAmount)
               case(iSTREAM_CAPTURE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rStreamCapture)

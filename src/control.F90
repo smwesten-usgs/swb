@@ -75,8 +75,8 @@ subroutine control_setModelOptions(sControlFile)
   write(sBuf,FMT=*) "SWB_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
-      status='REPLACE')
+  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat, &
+      status = "REPLACE")
   call Assert(iStat == 0, &
       "Problem opening log file file for output.")
 

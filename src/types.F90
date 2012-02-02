@@ -140,6 +140,8 @@ module types
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO    ! Soil moisture in inches of water
+      real (kind=T_SGL) :: rREW
+      real (kind=T_SGL) :: rTEW
 
       real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
@@ -181,8 +183,9 @@ module types
       real (kind=T_SGL) :: rGDD_TBase = 50.        !
       real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
-      real (kind=T_SGL) :: rIrrigationAmntGW = rZERO ! term to hold irrigation term, if any
-      real (kind=T_SGL) :: rIrrigationAmntSW = rZERO ! term to hold irrigation term, if any
+      real (kind=T_SGL) :: rIrrigationAmount       ! total amount of any irrigation
+      real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
+      real (kind=T_SGL) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
       real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
                                                                   ! will be performed
 
@@ -260,8 +263,6 @@ module types
 !    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rY_ROOT_ZONE
   end type T_LANDUSE_LOOKUP
 
-#ifdef IRRIGATION_MODULE
-
   !> @brief Type that contains information needed to calculate irrigation for
   !> each land use.
   !>
@@ -294,7 +295,7 @@ module types
     real (kind=T_SGL) :: rKcb_end = 0.7
 
     !> Crop coefficient, MINIMUM allowed value (Kc_min)
-    real (kind=T_SGL) :: rKcb_ini = 0.15
+    real (kind=T_SGL) :: rKc_min = 0.02
 
     !> Crop coefficient, MAXIMUM allowed value (Kc_max)
     real (kind=T_SGL) :: rKc_max = 1.3
@@ -333,13 +334,12 @@ module types
     integer (kind=T_INT) :: iEndIrrigation = 240
 
     !> Fraction of irrigation water obtained from GW rather than surface water
-    real (kind=T_SGL) :: rFractionIrrigationFromGW = rONE
+    real (kind=T_SGL) :: rFractionOfIrrigationFromGW = rONE
 
     !> Fraction of exposed and wetted soil (f_ew)
     real (kind=T_SGL) :: r_f_ew
 
   end type T_IRRIGATION_LOOKUP
-#endif
 
   !> container for basin mask table data
   type T_BASIN_MASK
@@ -844,7 +844,7 @@ module types
       type (T_LANDUSE_LOOKUP), dimension(:), pointer :: LU  ! T_LANDUSE_LOOKUP objects
 
       ! define a pointer to the IRRIGATION lookup table
-      type (T_IRRIGATION_LOOKUP), dimension(:),pointer :: IRRIGATION
+      type (T_IRRIGATION_LOOKUP), dimension(:), pointer :: IRRIGATION
 
       ! define a pointer to the BASIN MASK lookup table
       type (T_BASIN_MASK), dimension(:), pointer :: BMASK  ! T_BASIN_MASK objects

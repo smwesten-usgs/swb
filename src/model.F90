@@ -696,7 +696,7 @@ end select
     pGrd%Cells%rGrossPrecip = rZERO
   end where
 
-  if(pConfig%lHaltIfMissingClimateData) then
+  if ( pConfig%lHaltIfMissingClimateData ) then
     call Assert(rMin >= rZERO,"Precipitation values less than " &
       //real2char(pConfig%rMinValidPrecip)//" are not allowed. " &
       //"("//trim(int2char(iNegCount))//" cells with values < " &
@@ -2862,183 +2862,183 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
 
   LU_READ: do
 
-  read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
-  if ( iStat < 0 ) exit     ! EOF mark
-  if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
+    read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
+    if ( iStat < 0 ) exit     ! EOF mark
+    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
 
-  if(iRecNum > iSize) then
+    if(iRecNum > iSize) then
+      write(UNIT=LU_LOG,FMT=*) ""
+      write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of irrigation lookup table elements has"
+      write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
+      write(UNIT=LU_LOG,FMT=*) ""
+      write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for IRRIGATION table: ",iSize
+      write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
+      exit
+    end if
+
     write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of irrigation lookup table elements has"
-    write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
+    write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
+    write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
     write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for IRRIGATION table: ",iSize
-    write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
-    exit
-  end if
 
-  write(UNIT=LU_LOG,FMT=*) ""
-  write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-  write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
-  write(UNIT=LU_LOG,FMT=*) ""
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
+    call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
+    call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
+      "Landuse types in the irrigation lookup table must match those " &
+        //"in the landuse lookup table~and also must be in the same order.", &
+        trim(__FILE__), __LINE__)
+    pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
 
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
-  call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
-  call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
-    "Landuse types in the irrigation lookup table must match those " &
-      //"in the landuse lookup table~and also must be in the same order.", &
-      trim(__FILE__), __LINE__)
-  pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_ini
-  call Assert( iStat == 0, &
-    "Error reading initial basal crop coefficient (Kcb_ini) " &
-      //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-  write(UNIT=LU_LOG,FMT=*)  "  initial basal crop coefficient (Kcb_ini) ", &
-    pConfig%IRRIGATION(iRecNum)%rKcb_ini
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_mid
-  call Assert( iStat == 0, &
-    "Error reading mid-growth basal crop coefficient (Kcb_mid) " &
-      //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-  write(UNIT=LU_LOG,FMT=*)  "  mid-growth basal crop coefficient (Kcb_ini) ", &
-    pConfig%IRRIGATION(iRecNum)%rKcb_mid
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_end
-  call Assert( iStat == 0, &
-    "Error reading end-growth phase basal crop coefficient (Kcb_end) " &
-       //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-  write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
-    pConfig%IRRIGATION(iRecNum)%rKcb_end
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-  call Assert( iStat == 0, &
-    "Error reading day of year (or GDD) of initial planting from " &
-      //"irrigation lookup table" , trim(__FILE__), __LINE__ )
-  pConfig%IRRIGATION(iRecNum)%iL_plant = int(rTempValue)
-  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
-    pConfig%IRRIGATION(iRecNum)%iL_plant
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-  call Assert( iStat == 0, &
-    "Error reading day of year (or GDD) for end of initial plant growth " &
-      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-  pConfig%IRRIGATION(iRecNum)%iL_ini = int(rTempValue)
-  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-    //"initial plant growth phase ", pConfig%IRRIGATION(iRecNum)%iL_ini
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-  call Assert( iStat == 0, &
-    "Error reading day of year (or GDD) for end of plant development " &
-      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-  pConfig%IRRIGATION(iRecNum)%iL_dev = int(rTempValue)
-  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-    //"plant development ", pConfig%IRRIGATION(iRecNum)%iL_dev
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-  call Assert( iStat == 0, &
-    "Error reading day of year (or GDD) for end of mid-season growth " &
-      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-  pConfig%IRRIGATION(iRecNum)%iL_mid = int(rTempValue)
-  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-    //"mid-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_mid
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-  call Assert( iStat == 0, &
-    "Error reading day of year (or GDD) for end of late-season growth " &
-      //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-  pConfig%IRRIGATION(iRecNum)%iL_late = int(rTempValue)
-  write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-    //"late-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_late
-
-  call chomp(sRecord, sItem, sTAB)
-  if(str_compare(sItem,"GDD") ) then
-    pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lFALSE
-  elseif(str_compare(sItem,"DOY") ) then
-    pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lTRUE
-  else
-    call Assert( lFALSE, &
-    "Error reading units label from irrigation lookup table.~ Valid" &
-      //" entries are 'GDD' or 'DOY'", trim(__FILE__), __LINE__ )
-  write(UNIT=LU_LOG,FMT=*)  "  growth targets given in units of ", &
-    dquote(pConfig%IRRIGATION(iRecNum)%iL_ini)
-
-
-  do i=1,iNumSoilTypes
-  call chomp(sRecord, sItem, sTAB)
-    ! READILY_EVAPORABLE_WATER(# LU, #Soil Types)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iRecNum,i)
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_ini
     call Assert( iStat == 0, &
-      "Error reading readily evaporable water for soil group " &
-        //trim(int2char(i))//" and landuse " &
-        //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
-        //" in landuse lookup table" , trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
-      pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
-  end do
+      "Error reading initial basal crop coefficient (Kcb_ini) " &
+        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  initial basal crop coefficient (Kcb_ini) ", &
+      pConfig%IRRIGATION(iRecNum)%rKcb_ini
 
-  do i=1,iNumSoilTypes
-  call chomp(sRecord, sItem, sTAB)
-    ! TOTAL_EVAPORABLE_WATER(# LU, #Soil Types)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_mid
     call Assert( iStat == 0, &
-      "Error reading total evaporable water for soil group " &
-        //trim(int2char(i))//" and landuse " &
-        //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
-        //" in landuse lookup table" , trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  total evaporable water for soil group",i,": ", &
-      pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
-  end do
+      "Error reading mid-growth basal crop coefficient (Kcb_mid) " &
+        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  mid-growth basal crop coefficient (Kcb_ini) ", &
+      pConfig%IRRIGATION(iRecNum)%rKcb_mid
 
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
-  call Assert( iStat == 0, &
-    "Error reading GDD base temperature in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
-    pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_end
+    call Assert( iStat == 0, &
+      "Error reading end-growth phase basal crop coefficient (Kcb_end) " &
+         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
+      pConfig%IRRIGATION(iRecNum)%rKcb_end
 
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
-  call Assert( iStat == 0, &
-    "Error reading GDD max temperature in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
-    pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading day of year (or GDD) of initial planting from " &
+        //"irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iRecNum)%iL_plant = int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
+      pConfig%IRRIGATION(iRecNum)%iL_plant
 
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rMAD
-  call Assert( iStat == 0, &
-    "Error reading management allowable deficit (MAD) in irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
-    pConfig%IRRIGATION(iRecNum)%rMAD
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading day of year (or GDD) for end of initial plant growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iRecNum)%iL_ini = int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"initial plant growth phase ", pConfig%IRRIGATION(iRecNum)%iL_ini
 
-  call chomp(sRecord, sItem, sTAB)
-  pConfig%IRRIGATION(iRecNum)%iBeginIrrigation = mmddyyyy2doy(sItem)
-  write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
-    pConfig%IRRIGATION(iRecNum)%iBeginIrrigation
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading day of year (or GDD) for end of plant development " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iRecNum)%iL_dev = int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"plant development ", pConfig%IRRIGATION(iRecNum)%iL_dev
 
-  call chomp(sRecord, sItem, sTAB)
-  pConfig%IRRIGATION(iRecNum)%iEndIrrigation = mmddyyyy2doy(sItem)
-  write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
-    pConfig%IRRIGATION(iRecNum)%iEndIrrigation
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading day of year (or GDD) for end of mid-season growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iRecNum)%iL_mid = int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"mid-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_mid
 
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) &
-    pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
-  call Assert( iStat == 0, &
-    "Error reading the fraction of irrigation water obtained from groundwater " &
-    //"from the irrigation lookup table" )
-  write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obrained from groundwater ", &
-    pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading day of year (or GDD) for end of late-season growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iRecNum)%iL_late = int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"late-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_late
 
-  iRecNum = iRecNum + 1
+    call chomp(sRecord, sItem, sTAB)
+    if(str_compare(sItem,"GDD") ) then
+      pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lFALSE
+    elseif(str_compare(sItem,"DOY") ) then
+      pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lTRUE
+    else
+      call Assert( lFALSE, &
+      "Error reading units label from irrigation lookup table.~ Valid" &
+        //" entries are 'GDD' or 'DOY'", trim(__FILE__), __LINE__ )
+    endif
+    write(UNIT=LU_LOG,FMT=*)  "  growth targets given in units of ", &
+      dquote(sItem)
+
+    do i=1,iNumSoilTypes
+      call chomp(sRecord, sItem, sTAB)
+      ! READILY_EVAPORABLE_WATER(# LU, #Soil Types)
+      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iRecNum,i)
+      call Assert( iStat == 0, &
+        "Error reading readily evaporable water for soil group " &
+          //trim(int2char(i))//" and landuse " &
+          //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+          //" in landuse lookup table" , trim(__FILE__), __LINE__ )
+      write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
+        pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+    end do
+
+    do i=1,iNumSoilTypes
+      call chomp(sRecord, sItem, sTAB)
+      ! TOTAL_EVAPORABLE_WATER(# LU, #Soil Types)
+      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+      call Assert( iStat == 0, &
+        "Error reading total evaporable water for soil group " &
+          //trim(int2char(i))//" and landuse " &
+          //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+          //" in landuse lookup table" , trim(__FILE__), __LINE__ )
+      write(UNIT=LU_LOG,FMT=*)  "  total evaporable water for soil group",i,": ", &
+        pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+    end do
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+    call Assert( iStat == 0, &
+      "Error reading GDD base temperature in irrigation lookup table" )
+    write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
+      pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+    call Assert( iStat == 0, &
+      "Error reading GDD max temperature in irrigation lookup table" )
+    write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
+      pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rMAD
+    call Assert( iStat == 0, &
+      "Error reading management allowable deficit (MAD) in irrigation lookup table" )
+    write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
+      pConfig%IRRIGATION(iRecNum)%rMAD
+
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iRecNum)%iBeginIrrigation = mmddyyyy2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
+      pConfig%IRRIGATION(iRecNum)%iBeginIrrigation
+
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iRecNum)%iEndIrrigation = mmddyyyy2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
+      pConfig%IRRIGATION(iRecNum)%iEndIrrigation
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) &
+      pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+    call Assert( iStat == 0, &
+      "Error reading the fraction of irrigation water obtained from groundwater " &
+      //"from the irrigation lookup table" )
+    write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obtained from groundwater ", &
+      pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+
+    iRecNum = iRecNum + 1
 
   end do LU_READ
 

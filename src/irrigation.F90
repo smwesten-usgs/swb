@@ -107,6 +107,6 @@ module irrigation
 !  enddo  ! loop over landuses
 !
 !
-end subroutine update_irrigation_amounts
+!end subroutine update_irrigation_amounts
 
 end module irrigation
