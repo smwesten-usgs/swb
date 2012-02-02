@@ -15,7 +15,7 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
-subroutine et_kc_InitializeEvaporationParameters(pGrp, pConfig)
+subroutine et_kc_InitializeEvaporationParameters(pGrd, pConfig)
 
    ! [ ARGUMENTS ]
    type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -135,7 +135,7 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
   rDenominator = pIRRIGATION%rKc_max - pIRRIGATION%rKc_min
   rExponent = 1.0 + 0.5 * pIRRIGATION%rMeanPlantHeight * rM_PER_FOOT
 
-  r_fc = (rNumerator / rDenominator) ^ rExponent
+  r_fc = (rNumerator / rDenominator) ** rExponent
 
   r_few = 1.0 - r_fc
 
@@ -173,7 +173,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
   integer (kind=T_INT) :: iRow, iCol
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL),pointer :: cel
-  real (kind=T_SGL) :: rTEW, rREW, rKr, rDeficit, r_few
+  real (kind=T_SGL) :: rTEW, rREW, rKr, rDeficit, r_few, rKe
 
    ! update the crop coefficients
    call et_kc_UpdateCropCoefficients(pGrd, pConfig)
@@ -191,10 +191,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
        rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                    rKr ), r_few * pIRRIGATION%rKc_max )
-       cel%rSM_PotentialET = rSM_PotentialET * (rKE + pIRRIGATION%rKcb)
+       cel%rSM_PotentialET = cel%rSM_PotentialET * (rKE + pIRRIGATION%rKcb)
      enddo
    enddo
 
-subroutine et_kc_ApplyCropCoefficients
+end subroutine et_kc_ApplyCropCoefficients
 
 end module et_crop_coefficients
