@@ -5,11 +5,24 @@
 
 message("Processing top-level CMakelists.txt for project swb")
 
+#------------------------------------------------------------------------------------#
+#                           Build directory check                                    #
+#------------------------------------------------------------------------------------#
+if(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "Cannot be built in the source directory. Use
+  out-of-source build instead.")
+  message(FATAL_ERROR "  cd /some/work/dir/build")
+  message(FATAL_ERROR "  cmake -i /path/to/source")
+endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
+
 #------------------------------------------------------------------------
 # Set basic project settings
 #------------------------------------------------------------------------
-project (swb)
-enable_language (Fortran)
+project (swb Fortran CXX)
+enable_language (Fortran CXX)
+
+SET(CPACK_GENERATOR "TGZ")
+include(CPack)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
@@ -17,9 +30,11 @@ set(PACKAGE_STRING "swb 1.1")
 set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.1")
 
-set(CMAKE_SYSTEM_IGNORE_PATH "C:/Python26;C:/Program Files (x86)")
-set(CMAKE_SYSTEM_IGNORE_PATH ${CMAKE_SYSTEM_IGNORE_PATH} ";C:/Program Files (x86)/git")
-#
+cmake_minimum_required(VERSION 2.6)
+
+#------------------------------------------------------------------------
+# Offer option to create 'verbose' makefiles
+#------------------------------------------------------------------------
 option (MAKEFILE_VERBOSE
       "Produce verbose makefiles?" OFF)
 
@@ -79,13 +94,6 @@ if(OPTION__THORNTHWAITE_MATHER_TABLES)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "THORNTHWAITE_MATHER_TABLE")
 endif()
 
-option (OPTION__IRRIGATION_MODULE
-      "Compile the code with irrigation module support?" OFF)
-if(OPTION__IRRIGATION_MODULE)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "IRRIGATION_MODULE")
-  set(IRRIGATION_MODULE_VARS 3)
-endif()
-
 option (OPTION__STRICT_DATE_CHECKING
       "Compile the code with strict enforcement of dates?" OFF)
 if(OPTION__STRICT_DATE_CHECKING)
@@ -103,34 +111,113 @@ endif()
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
-  # the name of the target operating system
-  SET(CMAKE_SYSTEM_NAME Windows)
+     message(" <-- setting options for gfortran on MinGW -->")
 
-    # which compilers to use for C and C++
-    SET(CMAKE_C_COMPILER C:/MinGW64/bin/gcc.exe)
-    SET(CMAKE_CXX_COMPILER C:/MinGW64/bin/g++.exe)
-    SET(CMAKE_Fortran_COMPILER C:/MinGW64/bin/gfortran.exe)
-    SET(CMAKE_RC_COMPILER C:/MinGW64/bin/windres.exe)
+     set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
+         "Location for installation of the executable")
 
-     message(" <-- setting options for gfortran on MinGW (32-bit) -->")
+     FIND_LIBRARY(GCC_LIB libgcc.a
+       PATHS
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     FIND_LIBRARY(GFORTRAN_LIB libgfortran.a
+       PATHS
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     FIND_LIBRARY(USER32_LIB libuser32.a
+       PATHS
+         C:/MinGW/lib
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     FIND_LIBRARY(GDI32_LIB libgdi32.a
+       PATHS
+         C:/MinGW/lib
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     FIND_LIBRARY(OPENGL32_LIB libopengl32.a
+       PATHS
+         C:/MinGW/lib
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     FIND_LIBRARY(GLU32_LIB libglu32.a
+       PATHS
+         C:/MinGW/lib
+         C:/MinGW/lib/gcc
+         C:/MinGW/lib/gcc/mingw32
+         C:/MinGW32/lib
+         C:/MinGW32/lib/gcc
+         C:/MinGW32/lib/gcc/mingw32
+       PATH_SUFFIXES
+         4.6.2
+         4.6.1
+         4.5.2
+         4.5.1
+     )
+
+     message("  GCC_LIB = " ${GCC_LIB})
+     message("  GFORTRAN_LIB = " ${GFORTRAN_LIB})
 
      set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none")
-     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none")
+
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -gdb -Wall -Wextra -fcheck=all")
+     set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} "-fexceptions -ffree-line-length-none")
+
+     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
 
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
-     set (MINGW_BASE_DIR "C:/MinGW_32" CACHE FILEPATH "Path to base MinGW install")
-     set (CMAKE_MAKE_PROGRAM ${MINGW_BIN_DIR}/bin/make.exe CACHE FILEPATH "MinGW make executable")
-
      set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/libnetcdf.a
        CACHE FILEPATH "Location of NetCDF library")
      set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/disgf.a )
-
-     set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)
-     set(USER32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libuser32.a)
-     set(GDI32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libgdi32.a)
-     set(OPENGL32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libopengl32.a)
 
      set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/gfortran_mingw )
 
@@ -147,7 +234,8 @@ if(CMAKE_HOST_WIN32)
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe )
+           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe
+     )
 
      add_custom_target(makelib
          ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${NETCDF_FORTRAN_LIB}
@@ -161,9 +249,8 @@ if(CMAKE_HOST_WIN32)
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -rc libswb.a *.o
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -q libswb.a *.obj
          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win32/src/libswb.a
-         VERBATIM)
-
-   endif ()
+         VERBATIM
+     )
 
 elseif(CMAKE_HOST_UNIX)
 
