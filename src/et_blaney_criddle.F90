@@ -129,6 +129,8 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
+      if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
+
       rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
 
       rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)

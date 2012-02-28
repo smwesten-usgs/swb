@@ -16,6 +16,7 @@ module model
   use et_hargreaves
   use et_jensen_haise
   use et_blaney_criddle
+  use et_crop_coefficients
   use sm_thornthwaite_mather
   use snow
   use irrigation
@@ -154,10 +155,6 @@ subroutine model_Initialize( pGrd, pConfig )
   endif
 
 end subroutine model_Initialize
-
-
-
-
 
 !--------------------------------------------------------------------------
 !!****s* model/model_Main
@@ -342,13 +339,11 @@ subroutine model_Main( pGrd, pConfig, pGraph )
 end if
 
   call model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
-
-#ifdef IRRIGATION_MODULE
   call model_UpdateGrowingDegreeDay( pGrd , pConfig)
-#endif
 
   ! Handle all the processes in turn
 
+  !! TODO: move this code to its own 'model_ProcessSnow' routine
   if(pConfig%iConfigureSnow == CONFIG_SNOW_ORIGINAL_SWB) then
     call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
   else if(pConfig%iConfigureSnow == CONFIG_SNOW_NEW_SWB) then
@@ -359,15 +354,15 @@ end if
       TRIM(__FILE__),__LINE__)
   end if
 
-#ifdef IRRIGATION_MODULE
-  call update_irrigation_amounts(pGrd, pConfig)
-#endif
+  call irrigation_UpdateAmounts(pGrd, pConfig)
 
   call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
 
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
+
+   call et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
   call model_ProcessSM( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
@@ -936,36 +931,26 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   real (kind=T_SGL) :: rTAvg_C              ! temporary variable holding avg temp in C
   real (kind=T_SGL) :: rSnowDepthCM         ! snow depth in centimeters
 
-  !$OMP DO
-
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
+
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
+
       rTAvg_C = FtoC(cel%rTAvg)
       ! assuming snow depth is 10 times the water content of the snow in inches
       rSnowDepthCM = cel%rSnowCover * 10.0_T_SGL * rCM_PER_INCH
 
-  if(cel%rTAvg > rFREEZING) then
-    cel%rCFGI = max(A*cel%rCFGI - &
-      (rTAvg_C * exp (-0.4_T_SGL * 0.5_T_SGL * rSnowDepthCM)),rZERO)
-  else ! temperature is below freezing
-    cel%rCFGI = max(A*cel%rCFGI - &
-      (rTAvg_C * exp (-0.4_T_SGL * 0.08_T_SGL * rSnowDepthCM)),rZERO)
-  end if
+      if(cel%rTAvg > rFREEZING) then
+        cel%rCFGI = max(A*cel%rCFGI - &
+           (rTAvg_C * exp (-0.4_T_SGL * 0.5_T_SGL * rSnowDepthCM)),rZERO)
+      else ! temperature is below freezing
+        cel%rCFGI = max(A*cel%rCFGI - &
+           (rTAvg_C * exp (-0.4_T_SGL * 0.08_T_SGL * rSnowDepthCM)),rZERO)
+      end if
 
+    end do
   end do
-end do
-
-  !$OMP END DO
-
-!  write(UNIT=LU_LOG,FMT=*)  "=========CFGI CALCULATION==========="
-!  write(UNIT=LU_STD_OUT,FMT="(A)") &
-!      "                                 min          mean           max"
-!  call stats_WriteMinMeanMax(LU_STD_OUT,"CFGI" , pGrd%Cells(:,:)%rCFGI )
-!
-!  write(UNIT=LU_LOG,FMT=*)  "=========CFGI CALCULATION==========="
-
-
 
 end subroutine model_UpdateContinuousFrozenGroundIndex
 
@@ -992,8 +977,6 @@ end subroutine model_UpdateContinuousFrozenGroundIndex
 !
 ! SOURCE
 
-#ifdef IRRIGATION_MODULE
-
 subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
 
   implicit none
@@ -1009,6 +992,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   real (kind=T_SGL) :: rTMax
   real (kind=T_SGL) :: rW
   integer (kind=T_INT) :: iCol,iRow
+  real (kind=T_SGL) :: rGDD_BaseTemp, rGDD_MaxTemp
 
   ! zero out growing degree day at start of calendar year
   if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
@@ -1017,37 +1001,43 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
       cel => pGrd%Cells(iCol,iRow)
 
-  ! cap the maximum value used in GDD calculations on the basis of the value
-  ! provided by user...
-  rTMax = min(cel%rGDD_TMax, cel%rTMax)
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
-  if(rTMax <= cel%rGDD_TBase) then
+      ! cap the maximum value used in GDD calculations on the basis of the value
+      ! provided by user...
 
-  rDD = 0.
+      rGDD_BaseTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_BaseTemp
+      rGDD_MaxTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_MaxTemp
 
-  elseif(cel%rTMin >= cel%rGDD_TBase) then
+      rTMax = min(rGDD_MaxTemp, cel%rTMax)
 
-  rDD = cel%rTAvg - cel%rGDD_TBase
+      if(rTMax <= rGDD_BaseTemp) then
 
-  else
+        rDD = 0.
 
-  rW = (rTMax - cel%rTMin) / 2.
+      elseif(cel%rTMin >= rGDD_BaseTemp) then
 
-  rAt = ( cel%rGDD_TBase - cel%rTAvg) / rW
+        rDD = cel%rTAvg - rGDD_BaseTemp
 
-  if(rAt > 1) rAt = 1.
-  if(rAt < -1) rAt = -1.
+      else
 
-  rA = asin(rAt)
+        rW = (rTMax - cel%rTMin) / 2.
 
-  rDD = (( rW * cos(rA)) - ((cel%rGDD_TBase - cel%rTAvg) &
-    * ((dpPI / 2.) - rA))) / dpPI
+        rAt = ( rGDD_BaseTemp - cel%rTAvg) / rW
 
-  end if
+        if(rAt > 1) rAt = 1.
+        if(rAt < -1) rAt = -1.
 
-  cel%rGDD = cel%rGDD + rDD
+        rA = asin(rAt)
 
-  end do
+        rDD = (( rW * cos(rA)) - ((rGDD_BaseTemp - cel%rTAvg) &
+               * ((dpPI / 2.) - rA))) / dpPI
+
+      end if
+
+      cel%rGDD = cel%rGDD + rDD
+
+    end do
 
   end do
 
@@ -1084,30 +1074,30 @@ subroutine model_InitializeGrowingDegreeDay( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDD                        ! daily departure from TBase
-  type (T_CELL),pointer :: cel                      ! pointer to a particular cell
-  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  real (kind=T_SGL) :: rA, rAt
-  real (kind=T_SGL) :: rTMax
-  real (kind=T_SGL) :: rW
-  integer (kind=T_INT) :: iCol,iRow
+!  real (kind=T_SGL) :: rDD                        ! daily departure from TBase
+!  type (T_CELL),pointer :: cel                      ! pointer to a particular cell
+!  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+!  real (kind=T_SGL) :: rA, rAt
+!  real (kind=T_SGL) :: rTMax
+!  real (kind=T_SGL) :: rW
+!  integer (kind=T_INT) :: iCol,iRow
 
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
-      cel => pGrd%Cells(iCol,iRow)
-      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+!  do iRow=1,pGrd%iNY
+!    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
+!      cel => pGrd%Cells(iCol,iRow)
 
-  ! transfer table values to the grid cell
-  cel%rGDD_TMax = pIRRIGATION%rGDD_MaxTemp
-  cel%rGDD_TBase = pIRRIGATION%rGDD_BaseTemp
+!      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
-  end do
+!      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
 
-  end do
+      ! transfer table values to the grid cell
+!      cel%rGDD_TMax = pIRRIGATION%rGDD_MaxTemp
+!      cel%rGDD_TBase = pIRRIGATION%rGDD_BaseTemp
+
+!    end do
+!  end do
 
 end subroutine model_InitializeGrowingDegreeDay
-
-#endif
 
 !!***
 !--------------------------------------------------------------------------
@@ -1172,105 +1162,104 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   ! calculate number of cells in model grid
   iNumGridCells = pGrd%iNX * pGrd%iNY
 
-!  pGrd%Cells(:,:)%rPrevious_SnowCover = pGrd%Cells(:,:)%rSnowCover
-
   ! Use "potential interception" for each cell to compute net precip
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  ! allow for correction factor to be applied to precip gage input data
-  if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
-    lFREEZING = lTRUE
-    cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
-  else
-    lFREEZING = lFALSE
-    cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
-  end if
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
-  dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
+      ! allow for correction factor to be applied to precip gage input data
+      if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
+        lFREEZING = lTRUE
+        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+      else
+        lFREEZING = lFALSE
+        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+      end if
 
-  dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
-  dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
+      dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
-  dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
-!      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
-!      if ( cel%dpNetPrecip < rZERO ) cel%dpNetPrecip = rZERO
-  if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
-!      dpInterception = cel%rGrossPrecip - cel%dpNetPrecip
-  dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
+      dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
+      dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
-  if(dpInterception < dpZERO) &
-    call Assert(lFALSE, &
-      "Negative value for interception was calculated on day " &
-      //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
-      //"  iCol: "//trim(int2char(iCol)), &
-      trim(__FILE__), __LINE__)
+      dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
+    !      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
+    !      if ( cel%dpNetPrecip < rZERO ) cel%dpNetPrecip = rZERO
+      if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+    !      dpInterception = cel%rGrossPrecip - cel%dpNetPrecip
+      dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
 
-  call stats_UpdateAllAccumulatorsByCell(dpInterception, &
-    iINTERCEPTION,iMonth,iZERO)
+      if(dpInterception < dpZERO) &
+        call Assert(lFALSE, &
+          "Negative value for interception was calculated on day " &
+          //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
+          //"  iCol: "//trim(int2char(iCol)), &
+          trim(__FILE__), __LINE__)
 
-  if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
-      call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
-        real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
-        pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
-  end if
+      call stats_UpdateAllAccumulatorsByCell(dpInterception, &
+        iINTERCEPTION,iMonth,iZERO)
 
-!      cel%rAnnualInterception = cel%rAnnualInterception + cel%dpInterception
-!      rMonthlyInterception = rMonthlyInterception + cel%dpInterception
+      cel%rInterception = dpInterception
 
-  ! NET PRECIP = GROSS PRECIP - INTERCEPTION
-  dpNetRainfall = dpNetPrecip
+      if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
+        .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
+          call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
+            real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
+      end if
 
-  ! Is it snowing?
-  if (lFREEZING ) then
+      ! Assume that all precipitation is rain, for now
+      dpNetRainfall = dpNetPrecip
+
+      ! Is it snowing?
+      if (lFREEZING ) then
 !        cel%rSnowCover = cel%rSnowCover + cel%dpNetPrecip
-  dpSnowCover = dpSnowCover + dpNetPrecip
-!         rMonthlySnowFall = rMonthlySnowFall + sum(pGrd%Cells(:,:)%dpNetPrecip)
-  cel%rSnowFall_SWE = dpNetPrecip
-  dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
-end if
+        dpSnowCover = dpSnowCover + dpNetPrecip
+        cel%rSnowFall_SWE = dpNetPrecip
+        dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
+      end if
 
-  ! Is there any melting?
-  if(cel%rTAvg>rFREEZING) then
-    dpPotentialMelt = rMELT_INDEX * ( cel%rTMax-rFREEZING )*dpC_PER_F / rMM_PER_INCH
+      ! Is there any melting?
+      if ( cel%rTAvg > rFREEZING ) then
+        dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
+                            * dpC_PER_F / rMM_PER_INCH
 
-  if(dpSnowCover > dpPotentialMelt) then
-    cel%rSnowMelt = dpPotentialMelt
-    dpSnowCover = dpSnowCover - dpPotentialMelt
-  else
-    cel%rSnowMelt = dpSnowCover
-    dpSnowCover = dpZERO
-  end if
+        if(dpSnowCover > dpPotentialMelt) then
+          cel%rSnowMelt = dpPotentialMelt
+          dpSnowCover = dpSnowCover - dpPotentialMelt
+        else
+          cel%rSnowMelt = dpSnowCover
+          dpSnowCover = dpZERO
+        end if
 
-  end if
+      end if
 
-  dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
+      dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(dpChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(dpChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    dpNetRainfall,iNET_PRECIP,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        dpNetRainfall,iNET_PRECIP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    dpSnowCover,iSNOWCOVER,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        dpSnowCover,iSNOWCOVER,iMonth,iZERO)
 
-  ! copy temporary double-precision values back to single-precision
-  cel%rSnowCover = real(dpSnowCover, kind=T_SGL)
-  cel%rNetPrecip = real(dpNetRainfall, kind=T_SGL)
+      ! copy temporary double-precision values back to single-precision
+      cel%rSnowCover = real(dpSnowCover, kind=T_SGL)
+      cel%rNetPrecip = real(dpNetRainfall, kind=T_SGL)
 
+    end do
 
   end do
-end do
 
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
   ! as the final argument triggers the routine to update monthly and annual stats
@@ -1342,157 +1331,150 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
 
   do iRow=1,pGrd%iNY
 
-  rLatitude = row_latitude(pConfig%rNorthernLatitude, &
-    pConfig%rSouthernLatitude, pGrd%iNY, iRow)
-  rOmega_s = sunset_angle(rLatitude, rDelta)
-  rN = daylight_hours(rOmega_s)
+    rLatitude = row_latitude(pConfig%rNorthernLatitude, &
+      pConfig%rSouthernLatitude, pGrd%iNY, iRow)
+    rOmega_s = sunset_angle(rLatitude, rDelta)
+    rN = daylight_hours(rOmega_s)
 
-  ! NOTE that the following equation returns extraterrestrial radiation in
-  ! MJ / m**2 / day.
-  rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
-  rRso = clear_sky_solar_radiation_Rso(rRa)
-  rZenithAngle = zenith_angle(rLatitude, rDelta)
+    ! NOTE that the following equation returns extraterrestrial radiation in
+    ! MJ / m**2 / day.
+    rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
+    rRso = clear_sky_solar_radiation_Rso(rRa)
+    rZenithAngle = zenith_angle(rLatitude, rDelta)
 
-  !$OMP DO
+    ! determine the fraction of precip that falls as snow
+    do iCol=1,pGrd%iNX
 
-  ! determine the fraction of precip that falls as snow
-  do iCol=1,pGrd%iNX
+      cel => pGrd%Cells(iCol,iRow)
 
-  cel => pGrd%Cells(iCol,iRow)
+      ! initialize accumulators for this cell
+      cel%rSnowMelt = rZERO
+      cel%rSnowFall_SWE = rZERO
+      cel%rSnowFall = rZERO
 
-  ! initialize accumulators for this cell
-  cel%rSnowMelt = rZERO
-  cel%rSnowFall_SWE = rZERO
-  cel%rSnowFall = rZERO
+      if(cel%rTMin > pConfig%rTMaxAllSnow &
+        .or. cel%rTMax > pConfig%rTMaxAllRain) then
 
-  if(cel%rTMin > pConfig%rTMaxAllSnow &
-    .or. cel%rTMax > pConfig%rTMaxAllRain) then
+        rFracRain = rONE
+        cel%iDaysSinceLastSnow = cel%iDaysSinceLastSnow + 1
 
-  rFracRain = rONE
-  cel%iDaysSinceLastSnow = cel%iDaysSinceLastSnow + 1
+      else if(cel%rTMax < pConfig%rTMaxAllSnow) then
 
-  else if(cel%rTMax < pConfig%rTMaxAllSnow) then
+        rFracRain = rZERO
+        cel%iDaysSinceLastSnow = 0
 
-  rFracRain = rZERO
-  cel%iDaysSinceLastSnow = 0
+      else
 
-  else
+        ! this is straight from MMS/PRMS
+        rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
+                     / (cel%rTMax - cel%rTMin))
+        cel%iDaysSinceLastSnow = 0
 
-  ! this is straight from MMS/PRMS
-  rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
-    / (cel%rTMax - cel%rTMin))
-  cel%iDaysSinceLastSnow = 0
+      end if
 
-  end if
+      cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
+         + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
 
-  cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
-    + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+      rPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
-  rPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
+      rPreviousSnowCover = cel%rSnowCover
 
-  rPreviousSnowCover = cel%rSnowCover
+      cel%rNetPrecip = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
+      rInterception = MAX(cel%rGrossPrecip - cel%rNetPrecip,rZERO)
+      cel%rInterception = rInterception
 
-  cel%rNetPrecip = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
-  rInterception = MAX(cel%rGrossPrecip - cel%rNetPrecip,rZERO)
+      call stats_UpdateAllAccumulatorsByCell(REAL(rInterception,kind=T_DBL), &
+        iINTERCEPTION,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rInterception,kind=T_DBL), &
-    iINTERCEPTION,iMonth,iZERO)
+      if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
+        .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
 
-  if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
       call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
-        REAL(rInterception,kind=T_SGL), pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
-        iNumGridCells, iINTERCEPTION)
-  end if
+          REAL(rInterception,kind=T_SGL), pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
+          iNumGridCells, iINTERCEPTION)
 
-!      cel%rAnnualInterception = cel%rAnnualInterception + cel%rInterception
-!      rMonthlyInterception = rMonthlyInterception + cel%rInterception
+      end if
 
-  cel%rSnowFall_SWE = cel%rNetPrecip * (rONE - rFracRain)
-  cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
-  cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
-  cel%rNetPrecip = cel%rNetPrecip - cel%rSnowFall_SWE
+      cel%rSnowFall_SWE = cel%rNetPrecip * (rONE - rFracRain)
+      cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
+      cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
+      cel%rNetPrecip = cel%rNetPrecip - cel%rSnowFall_SWE
 
-  if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
-    ! unless there is snowcover present
+      if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
+      ! unless there is snowcover present
 
-  rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
+        rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
 
-  cel%rSnowAlbedo = snow_albedo(rAlbedoInit, cel%iDaysSinceLastSnow, &
-    rZenithAngle)
+        cel%rSnowAlbedo = snow_albedo(rAlbedoInit, cel%iDaysSinceLastSnow, &
+          rZenithAngle)
 
-  if(lENERGY_BALANCE) then
+        if(lENERGY_BALANCE) then
 
-  call snow_energy_balance(cel%rTMin, cel%rTMax, &
-    cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
-    cel%rNetPrecip, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
+          call snow_energy_balance(cel%rTMin, cel%rTMax, &
+          cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
+          cel%rNetPrecip, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
 
-  else
+        else
 
-  ! amount average temperature exceeds freezing point
-  rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
-  rTd = max(rTempDifference,rZERO)
+          ! amount average temperature exceeds freezing point
+          rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
+          rTd = max(rTempDifference,rZERO)
+          rRns = net_shortwave_radiation_Rns(rRs, cel%rSnowAlbedo)
+          rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
+          rRn = rRns - rRnl
+          rTempComp = rA_sub_r * rTd / rCM_PER_INCH
+          rRadComp = max(rM_sub_Q * rRn * 11.57  / rCM_PER_INCH,rZERO)
+          rPotentialMelt = rTempComp + rRadComp
 
-  rRns = net_shortwave_radiation_Rns(rRs, cel%rSnowAlbedo)
-
-  rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
-
-  rRn = rRns - rRnl
-
-  rTempComp = rA_sub_r * rTd / rCM_PER_INCH
-
-  rRadComp = max(rM_sub_Q * rRn * 11.57  / rCM_PER_INCH,rZERO)
-
-  rPotentialMelt = rTempComp + rRadComp
 #ifdef DEBUG_PRINT
-  if(iCol > 3 .and. iCol < 5 .and. iRow > 20 .and. iRow < 22) then
-    write(*,FMT="('Snow albedo:',t32,F14.3)") cel%rSnowAlbedo
-    write(*,FMT="('Extraterrestrial radiation (Ra):',t32,F14.3)") rRa
-    write(*,FMT="('Incoming shortwave (Rs):',t32,F14.3)") rRs
-    write(*,FMT="('Clear sky shortwave (Rso):',t32,F14.3)") rRso
-    write(*,FMT="('Zenith angle :',t32,F14.3)") rZenithAngle
-    write(*,FMT="('Net shortwave (Rns):',t32,F14.3)") rRns
-    write(*,FMT="('Net longwave (Rnl):',t32,F14.3)") rRnl
-    write(*,FMT="('Net shortwave + longwave (Rn):',t32,F14.3)") rRn
-    write(*,FMT="('Amount temp > 0 (rTd):',t32,F14.3)") rTd
-    write(*,FMT="('Average temp  (rTAvg):',t32,F14.3)") cel%rTAvg
-    write(*,FMT="('Temp Difference:',t32,F14.3)") rTempDifference
-    write(*,FMT="('Snowcover (SWE, inches):',t32,F14.3)") cel%rSnowCover
-    write(*,FMT="('Potential snowmelt (temp):',t32,F14.3)") rTempComp
-    write(*,FMT="('Potential snowmelt (rad):',t32,F14.3)") rRadComp
-    write(*,FMT="('Potential snowmelt:',t32,F14.3)") rPotentialMelt
-    write(*,FMT="('----------------------------------------------------')")
-  end if
+
+    if(iCol > 3 .and. iCol < 5 .and. iRow > 20 .and. iRow < 22) then
+      write(*,FMT="('Snow albedo:',t32,F14.3)") cel%rSnowAlbedo
+      write(*,FMT="('Extraterrestrial radiation (Ra):',t32,F14.3)") rRa
+      write(*,FMT="('Incoming shortwave (Rs):',t32,F14.3)") rRs
+      write(*,FMT="('Clear sky shortwave (Rso):',t32,F14.3)") rRso
+      write(*,FMT="('Zenith angle :',t32,F14.3)") rZenithAngle
+      write(*,FMT="('Net shortwave (Rns):',t32,F14.3)") rRns
+      write(*,FMT="('Net longwave (Rnl):',t32,F14.3)") rRnl
+      write(*,FMT="('Net shortwave + longwave (Rn):',t32,F14.3)") rRn
+      write(*,FMT="('Amount temp > 0 (rTd):',t32,F14.3)") rTd
+      write(*,FMT="('Average temp  (rTAvg):',t32,F14.3)") cel%rTAvg
+      write(*,FMT="('Temp Difference:',t32,F14.3)") rTempDifference
+      write(*,FMT="('Snowcover (SWE, inches):',t32,F14.3)") cel%rSnowCover
+      write(*,FMT="('Potential snowmelt (temp):',t32,F14.3)") rTempComp
+      write(*,FMT="('Potential snowmelt (rad):',t32,F14.3)") rRadComp
+      write(*,FMT="('Potential snowmelt:',t32,F14.3)") rPotentialMelt
+      write(*,FMT="('----------------------------------------------------')")
+    end if
+
 #endif
 
-  if(cel%rSnowCover > rPotentialMelt) then
-    cel%rSnowMelt = rPotentialMelt
-    cel%rSnowCover = cel%rSnowCover - rPotentialMelt
-  else
-    cel%rSnowMelt = cel%rSnowCover
-    cel%rSnowCover = rZERO
-  end if
-end if
-end if
+          if(cel%rSnowCover > rPotentialMelt) then
+            cel%rSnowMelt = rPotentialMelt
+            cel%rSnowCover = cel%rSnowCover - rPotentialMelt
+          else
+            cel%rSnowMelt = cel%rSnowCover
+            cel%rSnowCover = rZERO
+          end if
+        end if
+      end if
 
-  rChgInSnowCover = cel%rSnowCover - rPreviousSnowCover
+      rChgInSnowCover = cel%rSnowCover - rPreviousSnowCover
 
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rNetPrecip,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowCover,kind=T_DBL),iSNOWCOVER,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rNetPrecip,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
+      call stats_UpdateAllAccumulatorsByCell( &
+        REAL(cel%rSnowCover,kind=T_DBL),iSNOWCOVER,iMonth,iZERO)
 
 
-  end do
-
-  !$OMP END DO
+    end do
 
   end do
 
@@ -1504,8 +1486,6 @@ end if
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
-
-  return
 
 end subroutine model_ProcessRainPRMS
 
@@ -1588,7 +1568,6 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetPrecip &
     + pGrd%Cells(:,:)%rSnowMelt + pGrd%Cells(:,:)%rInflow
 
-  return
 end subroutine model_ProcessRunoff
 
 !!***
@@ -1648,8 +1627,10 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   ! set iteration counter
   iNumIterationsNochange = 0
 
+#ifdef DEBUG_PRINT
   pTempGrid=>grid_Create( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
     pGrd%rX1, pGrd%rY1, T_INT_GRID )
+#endif
 
   allocate(iOrderCol(pGrd%iNY*pGrd%iNX), iOrderRow(pGrd%iNY*pGrd%iNX), stat=iStat)
   call Assert( iStat == 0, &
@@ -1698,10 +1679,11 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     end if
   end do
 
-  ! If there are none, we can mark this cell
+  ! If there are no flow inputs to the current cell, we can mark it
+  ! and it to the downhill-sorted list.
   ! If we have circular flow (a points to b, b points to a),
   ! we can mark the current cell; both a and b will be set to
-  ! closed depressions in subsequent processing
+  ! closed depressions in subsequent processing.
   if ( iUpstreamCount == 0  &
     .or. (iUpstreamCount == 1 .and. lCircular)) then
     iNChange = iNChange+1
@@ -1717,7 +1699,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     ! likely to be a depression
     iNChange = iNChange+1
     cel%lDownhillMarked = lTRUE
-    cel%iFlowDir = 0
+    cel%iFlowDir = iDIR_DEPRESSION
     iOrderCount = iOrderCount+1
     iOrderCol(iOrderCount) = iCol
     iOrderRow(iOrderCount) = iRow
@@ -1736,8 +1718,8 @@ end do  ! loop over columns
 
   ! loop over possible (legal) values of ther flow direction grid
   do k=0,128
-    iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
-      .and.pGrd%Cells%iFlowDir==k)
+    iCount=COUNT( .not. pGrd%Cells%lDownHillMarked &
+      .and. pGrd%Cells%iFlowDir==k )
     if(iCount>0) then
       iCumlCount = iCumlCount + iCount
       write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
@@ -1749,23 +1731,19 @@ end do  ! loop over columns
   write(LU_LOG,FMT="(3x,i8,' Total cells with nonzero flow " &
     //"direction values')") iCumlCount
 
+#ifdef DEBUG_PRINT
+  ! the purpose of this code is to output progress of the
+  ! flow direction initialization
   where( pGrd%Cells%lDownHillMarked )
     pTempGrid%iData = iROUTE_CELL_MARKED
   elsewhere
     pTempGrid%iData = pGrd%Cells%iFlowDir
   end where
 
-!#ifdef GRAPHICS_SUPPORT
-!        call genericgraph(pTempGrid)
-!#endif
-
-#ifdef DEBUG_PRINT
-
   call grid_WriteArcGrid("iteration"//TRIM(int2char(iPasses))// &
     "problem_gridcells.asc", &
     pTempGrid%rX0,pTempGrid%rX1,pTempGrid%rY0,pTempGrid%rY1, &
     REAL(pTempGrid%iData,kind=T_SGL))
-
 #endif
 
   else
@@ -1918,9 +1896,13 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     cel%rStreamCapture = cel%rOutFlow
     cel%rOutFlow = rZERO
   else if &
+
 #else
+
   if &
+
 #endif
+
   (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
   .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
   ! Don't route any further; the water has joined a generic
@@ -1995,15 +1977,13 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  ! Compute the runoff for each cell
-  rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
-  ! Now, remove any runoff from the model grid
-!      call stats_UpdateAllAccumulatorsByCell(REAL(rR,kind=T_DBL), &
-!         iRUNOFF_OUTSIDE,iMonth,iZERO)
+      ! Compute the runoff for each cell
+      rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-  cel%rFlowOutOfGrid = rR
-!       cel%rOutFlow = rR
+      ! Now, remove any runoff from the model grid
+      cel%rFlowOutOfGrid = rR
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2026,14 +2006,12 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
   end if
 #endif
 
-  ! we've removed the water from the grid; it shouldn't be included in
-  ! "outflow" water
-  cel%rOutFlow = rZERO
+      ! we've removed the water from the grid; it shouldn't be included in
+      ! "outflow" water
+      cel%rOutFlow = rZERO
 
+    end do
   end do
-end do
-
-  return
 
 end subroutine model_Runoff_NoRouting
 
@@ -2284,7 +2262,7 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
 
   ! no point in doing these calculations unless we're really going to
   ! route water
-  if(pConfig%iConfigureRunoffMode==CONFIG_RUNOFF_NO_ROUTING) return
+  if (pConfig%iConfigureRunoffMode==CONFIG_RUNOFF_NO_ROUTING) return
 
 
   do iRow=1,pGrd%iNY
@@ -2399,7 +2377,8 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
 
   ! does the current value of either target point outside of the grid?
   if ( iTgt_Row == 0 .or. iTgt_Row > pGrd%iNY .or. &
-    iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX ) then
+    iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX .or. &
+    pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
       iTgt_Row = iROUTE_LEFT_GRID
       iTgt_Col = iROUTE_LEFT_GRID
   end if
@@ -2799,9 +2778,11 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
+  integer (kind=T_INT) :: iStat, iNumLandUses, i, j, iType, iRecNum, iSize
   integer (kind=T_INT) :: iLandUseType
+  integer (kind=T_INT) :: iLandUseIndex
   integer (kind=T_INT) :: iNumSoilTypes
+  logical (kind=T_LOGICAL) :: lFound
   real (kind=T_SGL) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
@@ -2817,30 +2798,11 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   call Assert ( iStat == 0, &
     "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
 
-  ! read first line of file
-  read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
-  call Assert( iStat == 0, &
-    "Error reading first line of irrigation lookup table", &
-    trim(__FILE__), __LINE__ )
-
-  ! read landuse file to obtain expected number of landuse types
-  call chomp(sRecord, sItem, sTAB)
-  call Uppercase( sItem )
-  if ( sItem == "NUM_LANDUSE_TYPES" ) then
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
-    call Assert( iStat == 0, "Failed to read number of landuse types" )
-    call Assert(iNumLandUses == size(pConfig%IRRIGATION), &
-      "Number of landuses in IRRIGATION table is unequal to number in LANDUSE lookup table", &
-      trim(__FILE__),__LINE__)
-  else
-    call Assert( lFALSE, &
-      "Unknown option in irrigation lookup table; was expecting NUM_LANDUSE_TYPES #", &
-      trim(__FILE__), __LINE__ )
-  end if
-
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
     //"before the irrigation lookup table may be read.", trim(__FILE__),__LINE__)
+
+  ! Copy the landuse codes over to the new IRRIGATION table
+  pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
 
   ! now allocate memory for READILY_EVAPORABLE_WATER subtable
   allocate ( pConfig%READILY_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
@@ -2857,6 +2819,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     trim(__FILE__), __LINE__ )
 
   iSize = size(pConfig%LU,1)
+  iNumSoilTypes = size(pConfig%CN,2)
 
   iRecNum = 1
 
@@ -2866,104 +2829,107 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     if ( iStat < 0 ) exit     ! EOF mark
     if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
 
-    if(iRecNum > iSize) then
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of irrigation lookup table elements has"
-      write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for IRRIGATION table: ",iSize
-      write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
-      exit
-    end if
-
     write(UNIT=LU_LOG,FMT=*) ""
     write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-    write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
+    write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum
     write(UNIT=LU_LOG,FMT=*) ""
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
     call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
-    call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
-      "Landuse types in the irrigation lookup table must match those " &
-        //"in the landuse lookup table~and also must be in the same order.", &
-        trim(__FILE__), __LINE__)
-    pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
+
+    ! scan the landuse codes already supplied in the landuse lookup table and
+    ! find a match
+    lFound = lFALSE
+    do j=1,pConfig%iNumberOfLanduses
+      if(iLandUseType == pConfig%LU(j)%iLandUseType) then
+        iLandUseIndex = j
+        lFound = lTRUE
+        exit
+      endif
+    enddo
+
+    call assert(lFound, "Unknown landuse code found while reading from the " &
+      //"crop coefficient and irrigation parameters table.~Landuse specified "&
+      //"in the irrigation table but not found in the landuse table: " &
+      //trim(int2char(iLandUseType)),trim(__FILE__), __LINE__)
+
+    pConfig%IRRIGATION(iLandUseIndex)%iLandUseType = iLandUseType
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_ini
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini
     call Assert( iStat == 0, &
       "Error reading initial basal crop coefficient (Kcb_ini) " &
         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
     write(UNIT=LU_LOG,FMT=*)  "  initial basal crop coefficient (Kcb_ini) ", &
-      pConfig%IRRIGATION(iRecNum)%rKcb_ini
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_mid
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_mid
     call Assert( iStat == 0, &
       "Error reading mid-growth basal crop coefficient (Kcb_mid) " &
         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
     write(UNIT=LU_LOG,FMT=*)  "  mid-growth basal crop coefficient (Kcb_ini) ", &
-      pConfig%IRRIGATION(iRecNum)%rKcb_mid
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb_mid
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKcb_end
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
     call Assert( iStat == 0, &
       "Error reading end-growth phase basal crop coefficient (Kcb_end) " &
          //"from irrigation lookup table", trim(__FILE__), __LINE__ )
     write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
-      pConfig%IRRIGATION(iRecNum)%rKcb_end
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
       "Error reading day of year (or GDD) of initial planting from " &
         //"irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iRecNum)%iL_plant = int(rTempValue)
+    pConfig%IRRIGATION(iLandUseIndex)%iL_plant = int(rTempValue)
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
-      pConfig%IRRIGATION(iRecNum)%iL_plant
+      pConfig%IRRIGATION(iLandUseIndex)%iL_plant
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
       "Error reading day of year (or GDD) for end of initial plant growth " &
         //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iRecNum)%iL_ini = int(rTempValue)
+    pConfig%IRRIGATION(iLandUseIndex)%iL_ini = int(rTempValue)
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"initial plant growth phase ", pConfig%IRRIGATION(iRecNum)%iL_ini
+      //"initial plant growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_ini
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
       "Error reading day of year (or GDD) for end of plant development " &
         //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iRecNum)%iL_dev = int(rTempValue)
+    pConfig%IRRIGATION(iLandUseIndex)%iL_dev = int(rTempValue)
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"plant development ", pConfig%IRRIGATION(iRecNum)%iL_dev
+      //"plant development ", pConfig%IRRIGATION(iLandUseIndex)%iL_dev
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
       "Error reading day of year (or GDD) for end of mid-season growth " &
         //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iRecNum)%iL_mid = int(rTempValue)
+    pConfig%IRRIGATION(iLandUseIndex)%iL_mid = int(rTempValue)
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"mid-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_mid
+      //"mid-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_mid
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
       "Error reading day of year (or GDD) for end of late-season growth " &
         //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iRecNum)%iL_late = int(rTempValue)
+    pConfig%IRRIGATION(iLandUseIndex)%iL_late = int(rTempValue)
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"late-season growth phase ", pConfig%IRRIGATION(iRecNum)%iL_late
+      //"late-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_late
 
     call chomp(sRecord, sItem, sTAB)
     if(str_compare(sItem,"GDD") ) then
-      pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lFALSE
+      pConfig%IRRIGATION(iLandUseIndex)%lUnitsAreDOY = lFALSE
     elseif(str_compare(sItem,"DOY") ) then
-      pConfig%IRRIGATION(iRecNum)%lUnitsAreDOY = lTRUE
+      pConfig%IRRIGATION(iLandUseIndex)%lUnitsAreDOY = lTRUE
     else
       call Assert( lFALSE, &
       "Error reading units label from irrigation lookup table.~ Valid" &
@@ -2975,68 +2941,68 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     do i=1,iNumSoilTypes
       call chomp(sRecord, sItem, sTAB)
       ! READILY_EVAPORABLE_WATER(# LU, #Soil Types)
-      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iRecNum,i)
+      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iLandUseIndex,i)
       call Assert( iStat == 0, &
         "Error reading readily evaporable water for soil group " &
           //trim(int2char(i))//" and landuse " &
-          //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+          //trim(int2char(pConfig%IRRIGATION(iLandUseIndex)%iLandUseType) ) &
           //" in landuse lookup table" , trim(__FILE__), __LINE__ )
       write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
-        pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+        pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
     end do
 
     do i=1,iNumSoilTypes
       call chomp(sRecord, sItem, sTAB)
       ! TOTAL_EVAPORABLE_WATER(# LU, #Soil Types)
-      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
       call Assert( iStat == 0, &
         "Error reading total evaporable water for soil group " &
           //trim(int2char(i))//" and landuse " &
-          //trim(int2char(pConfig%IRRIGATION(iRecNum)%iLandUseType) ) &
+          //trim(int2char(pConfig%IRRIGATION(iLandUseIndex)%iLandUseType) ) &
           //" in landuse lookup table" , trim(__FILE__), __LINE__ )
       write(UNIT=LU_LOG,FMT=*)  "  total evaporable water for soil group",i,": ", &
-        pConfig%TOTAL_EVAPORABLE_WATER(iRecNum,i)
+        pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
     end do
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rGDD_BaseTemp
     call Assert( iStat == 0, &
       "Error reading GDD base temperature in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
-      pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+      pConfig%IRRIGATION(iLandUseIndex)%rGDD_BaseTemp
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rGDD_MaxTemp
     call Assert( iStat == 0, &
       "Error reading GDD max temperature in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
-      pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+      pConfig%IRRIGATION(iLandUseIndex)%rGDD_MaxTemp
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rMAD
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rMAD
     call Assert( iStat == 0, &
       "Error reading management allowable deficit (MAD) in irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
-      pConfig%IRRIGATION(iRecNum)%rMAD
+      pConfig%IRRIGATION(iLandUseIndex)%rMAD
 
     call chomp(sRecord, sItem, sTAB)
-    pConfig%IRRIGATION(iRecNum)%iBeginIrrigation = mmddyyyy2doy(sItem)
+    pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation = mmddyyyy2doy(sItem)
     write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
-      pConfig%IRRIGATION(iRecNum)%iBeginIrrigation
+      pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation
 
     call chomp(sRecord, sItem, sTAB)
-    pConfig%IRRIGATION(iRecNum)%iEndIrrigation = mmddyyyy2doy(sItem)
+    pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation = mmddyyyy2doy(sItem)
     write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
-      pConfig%IRRIGATION(iRecNum)%iEndIrrigation
+      pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) &
-      pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+      pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
     call Assert( iStat == 0, &
       "Error reading the fraction of irrigation water obtained from groundwater " &
       //"from the irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obtained from groundwater ", &
-      pConfig%IRRIGATION(iRecNum)%rFractionOfIrrigationFromGW
+      pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
 
     iRecNum = iRecNum + 1
 
@@ -3132,9 +3098,8 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel                      ! pointer to a particular cell
   integer (kind=T_INT) :: iCol, iRow
-#ifdef IRRIGATION_MODULE
+
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-#endif
 
   select case ( pConfig%iConfigureET )
     case ( CONFIG_ET_NONE )
@@ -3154,22 +3119,21 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
       call et_hargreaves_ComputeET ( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   end select
 
-#ifdef IRRIGATION_MODULE
-
   ! modify potential ET by the crop coefficient
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-      cel => pGrd%Cells(iCol,iRow)
-      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+!  do iRow=1,pGrd%iNY
+!    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+!      cel => pGrd%Cells(iCol,iRow)
+!      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
 
-  cel%rSM_PotentialET = cel%rSM_PotentialET &
-    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
-      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
+!! $$$ NEEDS WORK !!!!
 
-  enddo
-enddo
 
-#endif
+!  cel%rSM_PotentialET = cel%rSM_PotentialET &
+!    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
+!      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
+
+!  enddo
+!enddo
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
@@ -3199,11 +3163,11 @@ subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
   integer (kind=T_INT),intent(in) :: iYear
 
   select case ( pConfig%iConfigureSM )
-    case ( CONFIG_SM_NONE )
-      call Assert( .false._T_LOGICAL, "No soil moisture calculation method was specified" )
     case ( CONFIG_SM_THORNTHWAITE_MATHER )
       call sm_thornthwaite_mather_UpdateSM (pGrd, pConfig, &
         iDayOfYear, iDay, iMonth,iYear)
+    case default
+      call Assert( lFALSE, "No soil moisture calculation method was specified" )
   end select
 
 end subroutine model_ProcessSM
@@ -3234,6 +3198,9 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
         lMatch = lFALSE
         cel => pGrd%Cells(iCol,iRow)
+
+        if ( cel%iActive == iINACTIVE_CELL ) cycle
+
         ! loop over all LAND USE types...
         do k=1,size(pConfig%LU,1)
           pLU => pConfig%LU(k)
@@ -3286,6 +3253,9 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
 
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
+
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
+
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
         if ( pLU%iLandUseType == cel%iLandUse ) then

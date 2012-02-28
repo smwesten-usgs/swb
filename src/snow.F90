@@ -54,8 +54,6 @@ function snow_depth_Hedstrom(rTAvg, pConfig)   result(rSnowDepth)
 
   rSnowDepth = rRhoW / rRhoS
 
-  return
-
 end function snow_depth_Hedstrom
 
 !!***
@@ -179,8 +177,6 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
 
   rSnowTemperature = CtoF(rSnowTemp_degC)
 
-  return
-
 end subroutine snow_energy_balance
 
 !--------------------------------------------------------------------------
@@ -228,10 +224,6 @@ function snow_albedo(rAlbedoInit, iNumDaysLastSnow, rZenithAngle)  result(rAlbed
   rAlbedo = rAlbedoInit - (0.083_T_SGL + 0.23_T_SGL * sqrt(rSnowGrainSize)) &
                             * sqrt(cos(rZenithAngle))
 
-  return
-
 end function snow_albedo
-
-
 
 end module snow

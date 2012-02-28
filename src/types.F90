@@ -80,6 +80,8 @@ module types
   real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
   real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
   real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
+  integer (kind=T_SHORT), parameter :: iACTIVE_CELL = 1
+  integer (kind=T_SHORT), parameter :: iINACTIVE_CELL = 0
   integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
   integer (kind=T_INT), parameter :: iROUTE_CELL_MARKED = -1
   integer (kind=T_INT), parameter :: iROUTE_DEPRESSION = -999
@@ -96,6 +98,21 @@ module types
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
   character (len=1), parameter :: sFORWARDSLASH = achar(47)
+  !> @}
+
+  !> @name Constants (flow direction): General conversion factors and flags
+  !> Some useful and common conversion factors, defined here
+  !> to ensure consistency throughout the code
+  !> @{
+  integer (kind=T_SHORT),parameter :: iDIR_DEPRESSION=0
+  integer (kind=T_SHORT),parameter :: iDIR_RIGHT=1
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN_RIGHT=2
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN=4
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN_LEFT=8
+  integer (kind=T_SHORT),parameter :: iDIR_LEFT=16
+  integer (kind=T_SHORT),parameter :: iDIR_UP_LEFT=32
+  integer (kind=T_SHORT),parameter :: iDIR_UP=64
+  integer (kind=T_SHORT),parameter :: iDIR_UP_RIGHT=128
   !> @}
 
   !> @name Globals: Variables for run-length encoding operation
@@ -132,16 +149,15 @@ module types
 !> a grid of T_CELL types. Each variable added to this data type
 !> consumes Ny * Nx * size(T_SGL) bytes.
   type T_CELL
-      integer (kind=T_SHORT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
-      integer (kind=T_SHORT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
-      integer (kind=T_SHORT) :: iLandUseIndex       ! Index (row num) of land use table
-      integer (kind=T_SHORT) :: iLandUse = iZERO    ! Land use from land-use grid
-      real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
+      integer (kind=T_SHORT) :: iACTIVE = iACTIVE_CELL  ! is this cell active?
+      integer (kind=T_SHORT) :: iFlowDir = iZERO        ! Flow direction from flow-dir grid
+      integer (kind=T_SHORT) :: iSoilGroup = iZERO      ! Soil type from soil-type grid
+      integer (kind=T_SHORT) :: iLandUseIndex           ! Index (row num) of land use table
+      integer (kind=T_SHORT) :: iLandUse = iZERO        ! Land use from land-use grid
+      real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
-      real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
-      real (kind=T_SGL) :: rSoilMoisture = rZERO    ! Soil moisture in inches of water
-      real (kind=T_SGL) :: rREW
-      real (kind=T_SGL) :: rTEW
+      real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
+      real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
 
       real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
@@ -160,14 +176,14 @@ module types
       integer (kind=T_INT) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
 
       real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
-      real (kind=T_SGL) :: rAdjCN                  ! Curve number from landuse/soil group
+      real (kind=T_SGL) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
       real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
       real (kind=T_SGL) :: rInFlow                 ! flow in from uphill
       real (kind=T_SGL) :: rOutFlow                ! flow out downhill
       real (kind=T_SGL) :: rFlowOutOfGrid          ! flow that leaves the grid
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
-!      real (kind=T_SGL) :: rInterception           ! Interception term
+      real (kind=T_SGL) :: rInterception           ! Interception term
       real (kind=T_SGL) :: rNetPrecip              ! Net precipitation - precip minus interception
       real (kind=T_SGL) :: rSnowFall_SWE           ! precipitation that falls as snow (in SWE)
       real (kind=T_SGL) :: rSnowFall               ! snowfall in inches as SNOW
@@ -180,8 +196,6 @@ module types
       real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
 
-      real (kind=T_SGL) :: rGDD_TBase = 50.        !
-      real (kind=T_SGL) :: rGDD_TMax = 150.        !
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
       real (kind=T_SGL) :: rIrrigationAmount       ! total amount of any irrigation
       real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
@@ -247,20 +261,23 @@ module types
   !> Container for land-use related data. Includes curve number
   !> and rooting-depth generalizations.
   type T_LANDUSE_LOOKUP
+
     !> Land use type; values are expected to correspond to those provided
     !> by the user in the input landuse grid.
 	integer (kind=T_INT) :: iLandUseType
+
     !> Land use description
     character (len=256) :: sLandUseDescription
+
     !> Assumed percent imperviousness (not used in any calculations)
 	character (len=256) :: sAssumedPercentImperviousness
+
     !> Interception value (inches per day) during growing season
 	real (kind=T_SGL) :: rIntercept_GrowingSeason
+
     !> Interception value (inches per day) outside of growing season
 	real (kind=T_SGL) :: rIntercept_NonGrowingSeason
-!	logical (kind=T_LOGICAL) :: lCONSTANT_ROOT_ZONE_DEPTH
-!    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rX_ROOT_ZONE
-!    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rY_ROOT_ZONE
+
   end type T_LANDUSE_LOOKUP
 
   !> @brief Type that contains information needed to calculate irrigation for
@@ -517,7 +534,7 @@ module types
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
-      lFALSE, 'inches','daily estimated irrigation amount', &
+      lTRUE, 'inches','daily estimated irrigation amount', &
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
@@ -625,11 +642,7 @@ module types
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
-#ifdef IRRIGATION_MODULE
       lTRUE, &
-#else
-      lFALSE, &
-#endif
       'degree-day','growing degree day', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) ]
 

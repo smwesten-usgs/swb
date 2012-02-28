@@ -87,6 +87,8 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
+
       if ( cel%rSoilWaterCap > rNEAR_ZERO ) then
 
 	    !! Constrain rSoilWaterCap to limits of Thornthwaite-Mather tables
@@ -181,7 +183,6 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
   real (kind=T_SGL) :: rSM_ActualET
   real (kind=T_SGL) :: rMin, rMean, rMax, rSum
   integer (kind=T_INT) :: iRowCount
-  integer (kind=T_INT) :: iRowCounter
 
   type ( T_CELL ),pointer :: cel
   character (len=256) :: sBuf
@@ -194,23 +195,19 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
   ! return value will be the number of days *SINCE* that origin term
   iTime = julian_day( iYear, iMonth, iDay, pConfig%iStartJulianDay)
 
-  iRowCounter = 0
-
   ! array is traversed in column-major order (i.e. processed a column
   ! at a time, which should be more efficient in terms of Fortran
   ! memory management)
   row_idx: do iRow=1,pGrd%iNY
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
-      iRowCounter = iRowCounter + 1
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
       ! calculate net infiltration
       rNetInfil = MAX(rZERO, &
                     cel%rNetPrecip &
                   + cel%rSnowMelt &
-#ifdef IRRIGATION_MODULE
                   + cel%rIrrigationAmount &
-#endif
                   + cel%rInFlow &
                   - cel%rOutFlow &
 #ifdef STREAM_INTERACTIONS
@@ -222,9 +219,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
       rNetInflow = MAX(rZERO, &
                     cel%rNetPrecip &
                   + cel%rSnowMelt &
-#ifdef IRRIGATION_MODULE
                   + cel%rIrrigationAmount &
-#endif
 !#ifdef STREAM_INTERACTIONS
 !                  - cel%rStreamCapture &   ! "Net Inflow" is really just
 !#endif                                     ! a diagnostic internal variable
@@ -291,9 +286,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
             "   AWC: ", cel%rSoilWaterCap
           write(UNIT=LU_LOG,FMT=*) "cel%rNetPrecip: ",cel%rNetPrecip
           write(UNIT=LU_LOG,FMT=*) "cel%rSnowMelt: ",cel%rSnowMelt
-#ifdef IRRIGATION_MODULE
           write(UNIT=LU_LOG,FMT=*) "cel%rIrrigationAmount: ",cel%rIrrigationAmount
-#endif
           write(UNIT=LU_LOG,FMT=*) "cel%rInFlow: ",cel%rInFlow
           write(UNIT=LU_LOG,FMT=*) "cel%rOutFlow: ",cel%rOutFlow
           write(UNIT=LU_LOG,FMT=*) "cel%rFlowOutOfGrid: ",cel%rFlowOutOfGrid
@@ -930,13 +923,10 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
 #endif
 
-#ifdef IRRIGATION_MODULE
-
       call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=T_DBL), &
            iGDD,iMonth,iZERO)
       call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=T_DBL), &
            iIRRIGATION,iMonth,iZERO)
-#endif
 
       if(iYear>= pConfig%iStartYearforCalculation .and. &
            iYear<= pConfig%iEndYearforCalculation) then
@@ -949,9 +939,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
       cel%rMSB = cel%rNetPrecip &
                  + cel%rSnowMelt &
                  + cel%rInFlow &
-#ifdef IRRIGATION_MODULE
                  + cel%rIrrigationAmount &
-#endif
                  - cel%rOutFlow &
 #ifdef STREAM_INTERACTIONS
                  - cel%rStreamCapture &
@@ -987,10 +975,8 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                      cel%rNetPrecip
                  write(UNIT=LU_LOG,FMT="('  (+) cel%rSnowMelt: ',t32,F14.4)") &
                      cel%rSnowMelt
-#ifdef IRRIGATION_MODULE
                  write(UNIT=LU_LOG,FMT="('  (+) cel%rIrrigationAmount: ',t32,F14.4)") &
                      cel%rIrrigationAmount
-#endif
                  write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") &
                      cel%rInFlow
                  write(UNIT=LU_LOG,FMT="('  (-) cel%rOutFlow: ',t32,F14.4)") &
@@ -1073,14 +1059,11 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
 #endif
 
-#ifdef IRRIGATION_MODULE
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iGDD, &
       iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, &
       iMonth,iNumGridCells)
-#endif
 
-  return
 end subroutine sm_thornthwaite_mather_UpdateSM
 
 !----------------------------------------------------------------------

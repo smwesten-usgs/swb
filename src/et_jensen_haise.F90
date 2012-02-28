@@ -109,6 +109,8 @@ subroutine et_jh_ComputeET( pGrd, iDayOfYear, rRH, &
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
 
+      if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
+
       if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
         pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
       else

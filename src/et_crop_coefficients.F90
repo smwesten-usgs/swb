@@ -28,18 +28,61 @@ subroutine et_kc_InitializeEvaporationParameters(pGrd, pConfig)
 
    ! iterate over cells; initialize evaporation parameters
    ! maximum allowable depletion
-   do iRow=1,pGrd%iNY
-     do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-       cel => pGrd%Cells(iCol, iRow)
-       pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
-       cel%rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-       cel%rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-     enddo
-   enddo
+!   do iRow=1,pGrd%iNY
+!     do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+!       cel => pGrd%Cells(iCol, iRow)
+!       if ( cel%iActive == iINACTIVE_CELL ) cycle
+!       pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+!       cel%rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
+!       cel%rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
+!     enddo
+!   enddo
 
 end subroutine et_kc_InitializeEvaporationParameters
 
 !------------------------------------------------------------------------------
+
+ !> @brief This subroutine updates the current Kcb for a SINGLE irrigation
+ !> table entry
+ subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
+
+  ! [ ARGUMENTS ]
+  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  integer (kind=T_INT) :: iThreshold
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, j
+
+  real (kind=T_SGL) :: frac
+
+  ! now calculate Kcb for the given landuse
+  if(iThreshold > pIRRIGATION%iL_late) then
+    pIRRIGATION%rKcb = 0.
+
+  elseif ( iThreshold > pIRRIGATION%iL_mid ) then
+    frac = real(iThreshold - pIRRIGATION%iL_mid ) &
+      / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid )
+    pIRRIGATION%rKcb =  pIRRIGATION%rKcb_mid * frac &
+                         + pIRRIGATION%rKcb_end * (1. - frac)
+
+  elseif ( iThreshold > pIRRIGATION%iL_dev ) then
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_mid
+
+  elseif ( iThreshold > pIRRIGATION%iL_ini ) then
+    frac = real(iThreshold - pIRRIGATION%iL_ini) &
+        / real( pIRRIGATION%iL_dev - pIRRIGATION%iL_ini )
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini * frac &
+                           + pIRRIGATION%rKcb_mid * (1. - frac)
+
+  elseif ( iThreshold > pIRRIGATION%iL_plant ) then
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini
+  else
+    pIRRIGATION%rKcb = 0.
+  endif
+
+end subroutine et_kc_UpdateCropCoefficient
+
+!----------------------------------------------------------------------
 
 !> @brief This subroutine updates the current Kcb value for
 !> each entry in the irrigation table
@@ -183,6 +226,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
    do iRow=1,pGrd%iNY
      do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
        cel => pGrd%Cells(iCol, iRow)
+       if ( cel%iActive == iINACTIVE_CELL ) cycle
        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
@@ -191,6 +235,11 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
        rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                    rKr ), r_few * pIRRIGATION%rKc_max )
+       if(pIRRIGATION%lUnitsAreDOY) then
+         call et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
+       else
+         call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=T_INT))
+       endif
        cel%rSM_PotentialET = cel%rSM_PotentialET * (rKE + pIRRIGATION%rKcb)
      enddo
    enddo
