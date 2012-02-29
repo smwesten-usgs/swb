@@ -339,6 +339,7 @@ subroutine model_Main( pGrd, pConfig, pGraph )
 end if
 
   call model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
+
   call model_UpdateGrowingDegreeDay( pGrd , pConfig)
 
   ! Handle all the processes in turn
@@ -361,8 +362,6 @@ end if
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
-
-   call et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
   call model_ProcessSM( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
@@ -1006,6 +1005,10 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
       ! cap the maximum value used in GDD calculations on the basis of the value
       ! provided by user...
 
+      call assert(cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses, &
+        "Array index out of bounds. Variable is iLandUseIndex with a value of " &
+        //trim(int2char(cel%iLandUseIndex)), trim(__FILE__),__LINE__)
+
       rGDD_BaseTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_BaseTemp
       rGDD_MaxTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_MaxTemp
 
@@ -1178,7 +1181,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
       end if
 
-      dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
+      dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
 
       dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
       dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
@@ -1375,7 +1378,7 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
       cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
          + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
 
-      rPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
+      rPotentialInterception = rf_model_GetInterception( pConfig, cel )
 
       rPreviousSnowCover = cel%rSnowCover
 
@@ -2246,18 +2249,9 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
 
+  ! [ LOCALS ]
   integer (kind=T_INT) :: iRow,iCol
   integer (kind=T_INT) :: iTgt_Row,iTgt_Col
-  ! [ PARAMETERS ]
-  integer (kind=T_SHORT),parameter :: DIR_DEPRESSION=0
-  integer (kind=T_SHORT),parameter :: DIR_RIGHT=1
-  integer (kind=T_SHORT),parameter :: DIR_DOWN_RIGHT=2
-  integer (kind=T_SHORT),parameter :: DIR_DOWN=4
-  integer (kind=T_SHORT),parameter :: DIR_DOWN_LEFT=8
-  integer (kind=T_SHORT),parameter :: DIR_LEFT=16
-  integer (kind=T_SHORT),parameter :: DIR_UP_LEFT=32
-  integer (kind=T_SHORT),parameter :: DIR_UP=64
-  integer (kind=T_SHORT),parameter :: DIR_UP_RIGHT=128
   character (len=256) :: sBuf
 
   ! no point in doing these calculations unless we're really going to
@@ -2268,127 +2262,134 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
-  select case (pGrd%Cells(iCol,iRow)%iFlowDir)
-    case ( DIR_DEPRESSION )
-      iTgt_Col = iROUTE_DEPRESSION               ! added Jan 2009 SMW
-      iTgt_Row = iROUTE_DEPRESSION               ! added Jan 2009 SMW
-      continue
-    case ( DIR_RIGHT )
-      iTgt_Row = iRow
-      iTgt_Col = iCol+1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_LEFT ) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_DOWN_RIGHT )
-      iTgt_Row = iRow+1
-      iTgt_Col = iCol+1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP_LEFT ) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_DOWN )
-      iTgt_Row = iRow+1
-      iTgt_Col = iCol
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP ) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_DOWN_LEFT )
-      iTgt_Row = iRow+1
-      iTgt_Col = iCol-1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP_RIGHT ) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_LEFT )
-      iTgt_Row = iRow
-      iTgt_Col = iCol-1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_RIGHT) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_UP_LEFT )
-      iTgt_Row = iRow-1
-      iTgt_Col = iCol-1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN_RIGHT) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_UP )
-      iTgt_Row = iRow-1
-      iTgt_Col = iCol
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case ( DIR_UP_RIGHT )
-      iTgt_Row = iRow-1
-      iTgt_Col = iCol+1
-      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN_LEFT) then
-        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
-        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-      end if
-      end if
-    case default  !! flow direction indeterminate
-    !!
-    !!  NOTE: This may not be the correct way to deal with indeterminate
-    !!        flow directions!!
-    !!
-      write ( unit=sBuf, fmt='("Flow direction grid element (",i3,",",i3,' &
-        // '") contains undefined flow direction with integer value: ",i4)' ) &
-          iCol,iRow,pGrd%Cells(iCol,iRow)%iFlowDir
-      write(UNIT=LU_LOG,FMT=*)  sBuf
-      pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
-      iTgt_Col = iROUTE_DEPRESSION
-      iTgt_Row = iROUTE_DEPRESSION
-  end select
+    select case (pGrd%Cells(iCol,iRow)%iFlowDir)
+      case ( iDIR_DEPRESSION )
+        iTgt_Col = iROUTE_DEPRESSION               ! added Jan 2009 SMW
+        iTgt_Row = iROUTE_DEPRESSION               ! added Jan 2009 SMW
+        continue
+      case ( iDIR_RIGHT )
+        iTgt_Row = iRow
+        iTgt_Col = iCol+1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_LEFT ) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_DOWN_RIGHT )
+        iTgt_Row = iRow+1
+        iTgt_Col = iCol+1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP_LEFT ) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_DOWN )
+        iTgt_Row = iRow+1
+        iTgt_Col = iCol
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP ) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_DOWN_LEFT )
+        iTgt_Row = iRow+1
+        iTgt_Col = iCol-1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP_RIGHT ) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_LEFT )
+        iTgt_Row = iRow
+        iTgt_Col = iCol-1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_RIGHT) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_UP_LEFT )
+        iTgt_Row = iRow-1
+        iTgt_Col = iCol-1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN_RIGHT) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_UP )
+        iTgt_Row = iRow-1
+        iTgt_Col = iCol
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case ( iDIR_UP_RIGHT )
+        iTgt_Row = iRow-1
+        iTgt_Col = iCol+1
+        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN_LEFT) then
+            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
+            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+          end if
+        end if
+      case default  !! flow direction indeterminate
+      !!
+      !!  NOTE: This may not be the correct way to deal with indeterminate
+      !!        flow directions!!
+      !!
+        write ( unit=sBuf, fmt='("Flow direction grid element (row:",i3,", col:",i3,' &
+          // '") contains undefined flow direction with integer value: ",i4)' ) &
+          iRow,iCol,pGrd%Cells(iCol,iRow)%iFlowDir
+        write(UNIT=LU_LOG,FMT=*)  sBuf
+        pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
+        iTgt_Col = iROUTE_DEPRESSION
+        iTgt_Row = iROUTE_DEPRESSION
+    end select
 
-  ! does the current value of either target point outside of the grid?
-  if ( iTgt_Row == 0 .or. iTgt_Row > pGrd%iNY .or. &
-    iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX .or. &
-    pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
+    ! does the current value of either target point outside of the grid?
+    if ( iTgt_Row == 0 .or. iTgt_Row > pGrd%iNY .or. &
+      iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX ) then
+        iTgt_Row = iROUTE_LEFT_GRID
+        iTgt_Col = iROUTE_LEFT_GRID
+    endif
+
+    ! is target cell inactive?
+    if ( iTgt_Row > 0 .and. iTgt_Row <= pGrd%iNY  &
+        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX  &
+        .and. pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
       iTgt_Row = iROUTE_LEFT_GRID
       iTgt_Col = iROUTE_LEFT_GRID
-  end if
+    endif
 
-  ! now assign the value of the targets to the iTgt element of the
-  ! grid data structure
-  pGrd%Cells(iCol,iRow)%iTgt_Row = iTgt_Row
-  pGrd%Cells(iCol,iRow)%iTgt_Col = iTgt_Col
-end do
-end do
+    ! now assign the value of the targets to the iTgt element of the
+    ! grid data structure
+    pGrd%Cells(iCol,iRow)%iTgt_Row = iTgt_Row
+    pGrd%Cells(iCol,iRow)%iTgt_Col = iTgt_Col
+  enddo
+enddo
 
 #ifdef DEBUG_PRINT
 
@@ -2403,12 +2404,11 @@ end do
         write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ' , &
           pGrd%Cells(pGrd%Cells(iCol,iRow)%iTgt_Row,pGrd%Cells(iCol,iRow)%iTgt_Col)%iFlowDir
       end if
-    end do
-end do
+    enddo
+  enddo
 
 #endif
 
-  return
 end subroutine model_InitializeFlowDirection
 
 !!***
@@ -2854,6 +2854,10 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
       //"in the irrigation table but not found in the landuse table: " &
       //trim(int2char(iLandUseType)),trim(__FILE__), __LINE__)
 
+    call assert(iLandUseIndex >= 1 .and. iLandUseIndex <= pConfig%iNumberOfLanduses, &
+      "Array index out of bounds. Variable is iLandUseIndex with a value of " &
+      //trim(int2char(iLandUseIndex)), trim(__FILE__),__LINE__)
+
     pConfig%IRRIGATION(iLandUseIndex)%iLandUseType = iLandUseType
 
     call chomp(sRecord, sItem, sTAB)
@@ -2948,7 +2952,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
           //trim(int2char(pConfig%IRRIGATION(iLandUseIndex)%iLandUseType) ) &
           //" in landuse lookup table" , trim(__FILE__), __LINE__ )
       write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
-        pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
+        pConfig%READILY_EVAPORABLE_WATER(iLandUseIndex,i)
     end do
 
     do i=1,iNumSoilTypes
@@ -3015,38 +3019,34 @@ end subroutine model_ReadIrrigationLookupTable
 
 !--------------------------------------------------------------------------
 
-function rf_model_GetInterception( pConfig, iType, iDayOfYear ) result(rIntRate)
+function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
   !! Looks up the interception value for land-use type iType.
+
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=T_SHORT), intent(in) :: iType
-  integer (kind=T_INT), intent(in) :: iDayOfYear
+  type (T_CELL),pointer :: cel
+
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rIntRate
+
   ! [ LOCALS ]
   integer ( kind=T_INT ) :: i
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU
 
+  pLU => pConfig%LU(cel%iLandUseIndex)
+
   ! Default is zero
   rIntRate = rZERO
-  ! Search the default values
-  do i = 1,size(pConfig%LU,1)
-    pLU => pConfig%LU(i)
-    if ( pLU%iLandUseType == iType ) then
-      if ( lf_model_GrowingSeason(pConfig, iDayOfYear) ) then
-        rIntRate = pLU%rIntercept_GrowingSeason
-      else
-        rIntRate = pLU%rIntercept_NonGrowingSeason
-      end if
-      exit
-    end if
-  end do
+  if ( lf_model_GrowingSeason(pConfig, pConfig%iDayOfYear) ) then
+    rIntRate = pLU%rIntercept_GrowingSeason
+  else
+    rIntRate = pLU%rIntercept_NonGrowingSeason
+  end if
 
   call Assert(LOGICAL(rIntRate >= rZERO,kind=T_LOGICAL), &
     "Negative value was determined for interception. Check your lookup tables.")
 
-  return
 end function rf_model_GetInterception
 
 !--------------------------------------------------------------------------
@@ -3166,6 +3166,8 @@ subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
     case ( CONFIG_SM_THORNTHWAITE_MATHER )
       call sm_thornthwaite_mather_UpdateSM (pGrd, pConfig, &
         iDayOfYear, iDay, iMonth,iYear)
+    case ( CONFIG_SM_TWO-STAGE_CROP_COEFFICIENT )
+      call et_kc_ApplyCropCoefficients(pGrd, pConfig)
     case default
       call Assert( lFALSE, "No soil moisture calculation method was specified" )
   end select

@@ -152,8 +152,8 @@ module types
       integer (kind=T_SHORT) :: iACTIVE = iACTIVE_CELL  ! is this cell active?
       integer (kind=T_SHORT) :: iFlowDir = iZERO        ! Flow direction from flow-dir grid
       integer (kind=T_SHORT) :: iSoilGroup = iZERO      ! Soil type from soil-type grid
-      integer (kind=T_SHORT) :: iLandUseIndex           ! Index (row num) of land use table
-      integer (kind=T_SHORT) :: iLandUse = iZERO        ! Land use from land-use grid
+      integer (kind=T_INT) :: iLandUseIndex           ! Index (row num) of land use table
+      integer (kind=T_INT) :: iLandUse = iZERO        ! Land use from land-use grid
       real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
@@ -243,7 +243,6 @@ module types
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
-
   !> define parameter values for working with type T_GENERAL_GRID
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
@@ -254,7 +253,6 @@ module types
   type T_GRID_COLLECTION
     type (T_GENERAL_GRID), dimension(:), pointer :: Grids
   end type T_GRID_COLLECTION
-
 
   !> @brief Container for land-use related data
   !>

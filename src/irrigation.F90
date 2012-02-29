@@ -29,9 +29,6 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
   type ( T_CELL ),pointer :: cel
   real (kind=T_SGL) :: rPercentDepletion
 
-  if(pConfig%iDayOfYear >= pIRRIGATION%iBeginIrrigation &
-    .and. pConfig%iDayOfYear <= pIRRIGATION%iEndIrrigation ) then
-
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
     pGrd%Cells%rIrrigationFromSW = rZERO
@@ -41,12 +38,18 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
     do iRow=1,pGrd%iNY
       do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
         cel => pGrd%Cells(iCol,iRow)
+
+        ! now we run the gauntlet of tests to ensure that we really need
+        ! to perform all of the irrigation calculations
         if ( cel%iActive == iINACTIVE_CELL ) cycle
 
         pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+        if(pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation &
+          .or. pConfig%iDayOfYear > pIRRIGATION%iEndIrrigation ) cycle
 
         if( pIRRIGATION%rMAD > 99.9 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
 
+        ! cell is active and irrigation enabled and in season
         rPercentDepletion = 100_T_SGL - cel%rSoilMoisturePct
 
         if(rPercentDepletion > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
@@ -57,9 +60,6 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
       enddo  ! loop over columns
     enddo  ! loop over rows
-
-  endif  ! code block execution if we are within bounds of irrigation season
-
 
 end subroutine irrigation_UpdateAmounts
 
