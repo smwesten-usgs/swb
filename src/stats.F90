@@ -703,9 +703,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
-#ifdef IRRIGATION_MODULE
                   + rDaily(iSUM,iIRRIGATION) &
-#endif
                   - rDaily(iSUM,iOUTFLOW) &
                   - rDaily(iSUM,iRUNOFF_OUTSIDE) &
                   - rDaily(iSUM,iREJECTED_RECHARGE) &
@@ -734,9 +732,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iSNOWCOVER)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*dpVolConvert, &
                          rDaily(iSUM,iSNOWMELT)*dpVolConvert, &
-#ifdef IRRIGATION_MODULE
                          rDaily(iSUM, iIRRIGATION)*dpVolConvert, &
-#endif
                          rDaily(iSUM,iSOIL_MOISTURE)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SOIL_MOIST)*dpVolConvert, &
                          rDaily(iSUM,iRUNOFF_OUTSIDE)*dpVolConvert, &

@@ -877,7 +877,7 @@ subroutine control_setModelOptions(sControlFile)
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
       if ( trim(sOption) == "CONSTANT" ) then
-        pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_FM_TABLE
+        pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_CONSTANT
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
         call Assert( iStat == 0, "Cannot read real data value" )
         pGrd%Cells%rSoilWaterCap = rValue
@@ -1353,11 +1353,13 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Configuring soil-moisture options"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
-      if ( trim(sOption) == "T-M" ) then
+      if ( trim(sOption) == "T-M" .or. trim(sOption) == "THORNTHWAITE-MATHER") then
         pConfig%iConfigureSM = CONFIG_SM_THORNTHWAITE_MATHER
         call sm_thornthwaite_mather_Configure( sRecord )
+      elseif ( trim(sOption) == "FAO56") then
+          pConfig%iConfigureSM = CONFIG_SM_FAO56_CROP_COEFFICIENT
       else
-        call Assert( .false._T_LOGICAL, "Illegal soil-moisture option specified" )
+        call Assert( lFALSE, "Illegal soil-moisture option specified" )
       end if
       flush(UNIT=LU_LOG)
 

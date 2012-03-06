@@ -15,33 +15,6 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
-subroutine et_kc_InitializeEvaporationParameters(pGrd, pConfig)
-
-   ! [ ARGUMENTS ]
-   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-                                                   ! model options, flags, and other setting
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: iRow, iCol
-  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  type (T_CELL),pointer :: cel
-
-   ! iterate over cells; initialize evaporation parameters
-   ! maximum allowable depletion
-!   do iRow=1,pGrd%iNY
-!     do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-!       cel => pGrd%Cells(iCol, iRow)
-!       if ( cel%iActive == iINACTIVE_CELL ) cycle
-!       pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
-!       cel%rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-!       cel%rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-!     enddo
-!   enddo
-
-end subroutine et_kc_InitializeEvaporationParameters
-
-!------------------------------------------------------------------------------
-
  !> @brief This subroutine updates the current Kcb for a SINGLE irrigation
  !> table entry
  subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
@@ -205,6 +178,27 @@ end function et_kc_CalcSurfaceEvaporationCoefficient
 
 !------------------------------------------------------------------------------
 
+!> @brief This function estimates Ks, water stress coefficient
+!> @note Implemented as equation 84, FAO-56, Allen and others
+function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
+                                           rDeficit, &
+                                           cel)        result(rKs)
+
+  ! [ ARGUMENTS ]
+  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=T_SGL) :: rDeficit
+  type (T_CELL), pointer :: cel
+
+  ! [ RESULT ]
+  real (kind=T_SGL) :: rKs
+
+  rKs = ( cel%rSoilWaterCap - rDeficit ) &
+        / ( (1.0 - pIRRIGATION%rDepletionFraction) * cel%rSoilWaterCap )
+
+end function et_kc_CalcWaterStressCoefficient
+
+!------------------------------------------------------------------------------
+
 subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
   ! [ ARGUMENTS ]
@@ -216,10 +210,16 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
   integer (kind=T_INT) :: iRow, iCol
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL),pointer :: cel
-  real (kind=T_SGL) :: rTEW, rREW, rKr, rDeficit, r_few, rKe
+  real (kind=T_SGL) :: rTEW      ! Total evaporable water
+  real (kind=T_SGL) :: rREW      ! Readily evaporable water
+  real (kind=T_SGL) :: rKr       ! Evaporation reduction coefficient
+  real (kind=T_SGL) :: rDeficit  ! Soil moisture deficit
+  real (kind=T_SGL) :: r_few     ! Fraction exposed and wetted soil
+  real (kind=T_SGL) :: rKe       ! Surface evaporation coefficient
+  real (kind=T_SGL) :: rKs       ! Water stress coefficient
 
    ! update the crop coefficients
-   call et_kc_UpdateCropCoefficients(pGrd, pConfig)
+!   call et_kc_UpdateCropCoefficients(pGrd, pConfig)
 
    ! iterate over cells; update evaporation coefficients,
    ! calculate Kc, and apply to ET0
@@ -227,20 +227,31 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
      do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
        cel => pGrd%Cells(iCol, iRow)
        if ( cel%iActive == iINACTIVE_CELL ) cycle
+       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
+       if(cel%rSoilWaterCap <= rNear_ZERO &
+            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
+
        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-       rDeficit = cel%rSoilWaterCap - cel%rSoilMoisture
+       ! for purposes of calculating evaporation, we will include water sitting on
+       ! leaves as available for evaporation along with soil moisture in the
+       ! top few inches of soil
+       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture + cel%rInterception)
        rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
        r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
        rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                    rKr ), r_few * pIRRIGATION%rKc_max )
+       rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
        if(pIRRIGATION%lUnitsAreDOY) then
          call et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
        else
          call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=T_INT))
        endif
-       cel%rSM_PotentialET = cel%rSM_PotentialET * (rKE + pIRRIGATION%rKcb)
+       cel%rCrop_ET = cel%rReferenceET0 * (rKe + pIRRIGATION%rKcb * rKs)
+       if(rand() < 0.05 ) &
+         write(*,fmt="(i8,1x,12f12.3,1x)") cel%iLandUse, rREW, rTEW, rDeficit, rKr, r_few, &
+            cel%rReferenceET0, rKe, rKs, pIRRIGATION%rKcb, cel%rCrop_ET
      enddo
    enddo
 

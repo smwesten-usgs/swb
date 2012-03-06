@@ -18,6 +18,7 @@ module model
   use et_blaney_criddle
   use et_crop_coefficients
   use sm_thornthwaite_mather
+  use water_balance
   use snow
   use irrigation
 
@@ -148,9 +149,9 @@ subroutine model_Initialize( pGrd, pConfig )
     flush(unit=LU_LOG)
     call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_CreateLanduseIndex"
     flush(unit=LU_LOG)
-    call model_InitializeMaxInfil(pGrd, pConfig )
+    call model_CreateLanduseIndex(pGrd, pConfig )
 
   endif
 
@@ -363,7 +364,10 @@ end if
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
 
-  call model_ProcessSM( pGrd, pConfig, pConfig%iDayOfYear, &
+  if(pConfig%iConfigureSM == CONFIG_SM_FAO56_CROP_COEFFICIENT ) &
+    call et_kc_ApplyCropCoefficients(pGrd, pConfig)
+
+  call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
 
   ! if desired, output daily mass balance file and daily model grids
@@ -1144,7 +1148,8 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   ! [ LOCALS ]
   real (kind=T_DBL) :: dpPotentialMelt,dpPotentialInterception,dpInterception
   real (kind=T_DBL) :: dpPreviousSnowCover,dpChgInSnowCover, dpSnowCover
-  real (kind=T_DBL) :: dpNetPrecip, dpNetRainfall
+  real (kind=T_DBL) :: dpNetPrecip    ! all forms of precip, after interception
+  real (kind=T_DBL) :: dpNetRainfall  ! precip as RAINFALL, after interception
   integer (kind=T_INT) :: iRow,iCol
   type (T_CELL),pointer :: cel
   integer (kind=T_INT) :: iNumGridCells
@@ -1181,18 +1186,26 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
       end if
 
+      ! this simply retrieves the table value for the given landuse
       dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
 
+      ! save the current snowcover value, create local copy as well
       dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
       dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
-      dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
-    !      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
-    !      if ( cel%dpNetPrecip < rZERO ) cel%dpNetPrecip = rZERO
-      if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
-    !      dpInterception = cel%rGrossPrecip - cel%dpNetPrecip
+      ! calculate NET PRECIPITATION; assign value of zero if all of the
+      ! GROSS PRECIP is captured by the INTERCEPTION process
+      dpNetPrecip = MAX( dpZERO, &
+                           real(cel%rGrossPrecip, kind=T_DBL) &
+                           - dpPotentialInterception )
+
+      ! now backcalculate the actual INTERCEPTION value
       dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
 
+      ! negative interception can only be generated if the user has supplied
+      ! *negative* values for GROSS PRECIPITATION; this has happened,
+      ! mostly due to goofy interpolation schemes that generate pockets
+      ! of negative precip values
       if(dpInterception < dpZERO) &
         call Assert(lFALSE, &
           "Negative value for interception was calculated on day " &
@@ -1203,7 +1216,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
       call stats_UpdateAllAccumulatorsByCell(dpInterception, &
         iINTERCEPTION,iMonth,iZERO)
 
-      cel%rInterception = dpInterception
+      cel%rInterception = cel%rInterception
 
       if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
         .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
@@ -1213,12 +1226,14 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
             pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
       end if
 
+      ! NOW we're through with INTERCEPTION calculations
+      ! Next, we partition between snow and rain
+
       ! Assume that all precipitation is rain, for now
       dpNetRainfall = dpNetPrecip
 
       ! Is it snowing?
       if (lFREEZING ) then
-!        cel%rSnowCover = cel%rSnowCover + cel%dpNetPrecip
         dpSnowCover = dpSnowCover + dpNetPrecip
         cel%rSnowFall_SWE = dpNetPrecip
         dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
@@ -1232,7 +1247,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         if(dpSnowCover > dpPotentialMelt) then
           cel%rSnowMelt = dpPotentialMelt
           dpSnowCover = dpSnowCover - dpPotentialMelt
-        else
+        else   ! not enough snowcover to satisfy the amount that *could* melt
           cel%rSnowMelt = dpSnowCover
           dpSnowCover = dpZERO
         end if
@@ -2811,12 +2826,18 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     "Could not allocate space for READILY_EVAPORABLE_WATER  data structure", &
     trim(__FILE__), __LINE__ )
 
+   ! assign a reasonable default value
+   pConfig%READILY_EVAPORABLE_WATER = 0.3
+
   ! now allocate memory for TOTAL_EVAPORABLE_WATER subtable
   allocate ( pConfig%TOTAL_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
     pConfig%iNumberOfSoilTypes), stat=iStat )
   call Assert ( iStat == 0, &
     "Could not allocate space for TOTAL_EVAPORABLE_WATER  data structure", &
     trim(__FILE__), __LINE__ )
+
+  ! assign another reasonable default value
+  pConfig%TOTAL_EVAPORABLE_WATER = 0.6
 
   iSize = size(pConfig%LU,1)
   iNumSoilTypes = size(pConfig%CN,2)
@@ -3128,7 +3149,7 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 !! $$$ NEEDS WORK !!!!
 
 
-!  cel%rSM_PotentialET = cel%rSM_PotentialET &
+!  cel%rReferenceET0 = cel%rReferenceET0 &
 !    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
 !      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
 
@@ -3138,41 +3159,12 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
 where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-  pGrd%Cells%rSM_PotentialET = rZERO
+  pGrd%Cells%rReferenceET0 = rZERO
 endwhere
 
-!  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rSM_PotentialET )
+!  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rReferenceET0 )
 
 end subroutine model_ProcessET
-
-!--------------------------------------------------------------------------
-
-subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
-  !! Depending on the SM model in use, computes the change in soil moisture
-  !! and also the recharge (if any) for each cell in the grid, given the
-  !! precipitation rPrecip and the snow melt rSnowMelt
-  !!
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  integer (kind=T_INT),intent(in) :: iDayOfYear
-  integer (kind=T_INT),intent(in) :: iDay
-  integer (kind=T_INT),intent(in) :: iMonth
-  integer (kind=T_INT),intent(in) :: iYear
-
-  select case ( pConfig%iConfigureSM )
-    case ( CONFIG_SM_THORNTHWAITE_MATHER )
-      call sm_thornthwaite_mather_UpdateSM (pGrd, pConfig, &
-        iDayOfYear, iDay, iMonth,iYear)
-    case ( CONFIG_SM_TWO-STAGE_CROP_COEFFICIENT )
-      call et_kc_ApplyCropCoefficients(pGrd, pConfig)
-    case default
-      call Assert( lFALSE, "No soil moisture calculation method was specified" )
-  end select
-
-end subroutine model_ProcessSM
 
 !--------------------------------------------------------------------------
 
@@ -3237,8 +3229,8 @@ end subroutine model_InitializeSM
 
 !--------------------------------------------------------------------------
 
-subroutine model_InitializeMaxInfil(pGrd, pConfig )
-  !!
+subroutine model_CreateLanduseIndex(pGrd, pConfig )
+
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -3249,27 +3241,26 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
   logical ( kind=T_LOGICAL ) :: lMatch
 
-  ! Update the MAXIMUM RECHARGE RATE based on land-cover and soil type
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
 
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
+!      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
         if ( pLU%iLandUseType == cel%iLandUse ) then
           ! save index of matching landuse for ease of processing land use properties later
           cel%iLandUseIndex = k
-          ! need to ensure that the soil type doesn't exceed
-          ! the max number of soil types or we get a core dump
-          call Assert(INT(cel%iSoilGroup, kind=T_INT) &
-            <= size(pConfig%MAX_RECHARGE,2), &
-            "Value in soil type grid exceeds the maximum " &
-            // "number of soil types in the land use lookup table.")
-          cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
+ !         ! need to ensure that the soil type doesn't exceed
+ !         ! the max number of soil types or we get a core dump
+          call Assert(cel%iSoilGroup <= size(pConfig%MAX_RECHARGE,2), &
+             "Value in soil type grid exceeds the maximum " &
+             // "number of soil types in the land use lookup table.", &
+             trim(__FILE__),__LINE__)
+ !         cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
           lMatch=lTRUE
           exit
         end if
@@ -3277,12 +3268,13 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
       if(.not. lMATCH) then
         write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
         call Assert(lFALSE,&
-          "Failed to match landuse grid with landuse table during maximum infiltration initialization")
+          "Failed to match landuse grid with landuse table during creation of landuse indices", &
+          trim(__FILE__),__LINE__)
       endif
     end do
   end do
 
-end subroutine model_InitializeMaxInfil
+end subroutine model_CreateLanduseIndex
 
 !--------------------------------------------------------------------------
 
@@ -3370,7 +3362,7 @@ integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
 
 !        call grid_WriteArcGrid("output\\daily\\pot_et" // trim(sDayText) // &
 !          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_PotentialET )
+!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rReferenceET0 )
 !        call grid_WriteArcGrid("output\\act_et." // sMonthName(4:6), &
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
 !        call grid_WriteArcGrid("output\\net_infil." // sMonthName(4:6), &
@@ -3435,7 +3427,7 @@ else if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
 
 !        call grid_WriteSurferGrid("output\\daily\\pot_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_PotentialET )
+!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rReferenceET0 )
 !        call grid_WriteSurferGrid("output\\act_et." // sMonthName(4:6), &
 !          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
 !        call grid_WriteSurferGrid("output\\net_infil." // sMonthName(4:6), &
@@ -3556,9 +3548,9 @@ subroutine model_ProcessDynamicLanduse(pGrd, pConfig)
     flush(unit=LU_LOG)
     call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_CreateLanduseIndex"
     flush(unit=LU_LOG)
-    call model_InitializeMaxInfil(pGrd, pConfig )
+    call model_CreateLanduseIndex(pGrd, pConfig )
 
   endif
 

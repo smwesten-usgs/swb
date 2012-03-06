@@ -119,7 +119,7 @@ subroutine et_turc_ComputeET( pGrd, iDayOfYear, rRH, rSunPct )
         end if
       end if
 
-      pGrd%Cells(iCol,iRow)%rSM_PotentialET = rPotET
+      pGrd%Cells(iCol,iRow)%rReferenceET0 = rPotET
 
     end do
 

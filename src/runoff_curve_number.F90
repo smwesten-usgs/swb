@@ -227,23 +227,22 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   ! [ LOCALS ]
   real (kind=T_SGL) :: rP
   real (kind=T_SGL) :: rCN_05
+  real (kind=T_SGL) :: rSMax
 
   rP = cel%rNetPrecip &
        + cel%rSnowMelt &
-#ifdef IRRIGATION_MODULE
        + cel%rIrrigationAmount &
-#endif
        + cel%rInFlow
 
   call runoff_UpdateCurveNumber(pConfig,cel,iJulDay)
 
-  cel%rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
+  rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
 
   if(pConfig%iConfigureInitialAbstraction == &
                                       CONFIG_SM_INIT_ABSTRACTION_TR55) then
 
-    if ( rP > rPOINT2*cel%rSMax ) then
-      rOutFlow = ( rP - rPOINT2*cel%rSMax )**2  / (rP + rPOINT8*cel%rSMax)
+    if ( rP > rPOINT2*rSMax ) then
+      rOutFlow = ( rP - rPOINT2*rSMax )**2  / (rP + rPOINT8*rSMax)
     else
       rOutFlow = rZERO
     end if
@@ -257,11 +256,11 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
 
 
 	! Equation 8, Hawkins and others, 2002
-    cel%rSMax = 1.33_T_SGL * ( cel%rSMax ) ** 1.15_T_SGL
+    rSMax = 1.33_T_SGL * ( rSMax ) ** 1.15_T_SGL
 
     ! now consider runoff if Ia ~ 0.05S
-    if ( rP > 0.05_T_SGL*cel%rSMax ) then
-      rOutFlow = ( rP - 0.05_T_SGL * cel%rSMax )**2  / (rP + 0.95_T_SGL*cel%rSMax)
+    if ( rP > 0.05_T_SGL * rSMax ) then
+      rOutFlow = ( rP - 0.05_T_SGL * rSMax )**2  / (rP + 0.95_T_SGL*rSMax)
     else
       rOutFlow = rZERO
     end if

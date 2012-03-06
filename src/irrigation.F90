@@ -27,11 +27,12 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
   integer (kind=T_INT) :: iNumCells
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type ( T_CELL ),pointer :: cel
-  real (kind=T_SGL) :: rPercentDepletion
+  real (kind=T_SGL) :: rDepletionFraction
 
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
     pGrd%Cells%rIrrigationFromSW = rZERO
+    pGrd%Cells%rIrrigationAmount = rZERO
 
     ! iterate over cells; add water if soil storage zone is below the
     ! maximum allowable depletion
@@ -47,13 +48,16 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
         if(pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation &
           .or. pConfig%iDayOfYear > pIRRIGATION%iEndIrrigation ) cycle
 
-        if( pIRRIGATION%rMAD > 99.9 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
+        if( pIRRIGATION%rMAD > 0.99 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
 
         ! cell is active and irrigation enabled and in season
-        rPercentDepletion = 100_T_SGL - cel%rSoilMoisturePct
+        rDepletionFraction = 1_T_SGL - (cel%rSoilMoisturePct * 0.01)
 
-        if(rPercentDepletion > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
+        if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
           cel%rIrrigationAmount = (cel%rSoilWaterCap - cel%rSoilMoisture)
+          cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW &
+                                  * cel%rIrrigationAmount &
+                                  * pIRRIGATION%rIrrigationEfficiency_GW
         else
           cel%rIrrigationAmount = rZERO
         endif

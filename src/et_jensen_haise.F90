@@ -112,10 +112,10 @@ subroutine et_jh_ComputeET( pGrd, iDayOfYear, rRH, &
       if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
 
       if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = rZERO
       else
         rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = UNIT_CONV * ( 0.025_T_SGL * rT + 0.078_T_SGL ) * rSn
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = UNIT_CONV * ( 0.025_T_SGL * rT + 0.078_T_SGL ) * rSn
       end if
 
     end do

@@ -136,10 +136,10 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
       rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)
 
       if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = rZERO
       else
       !write(UNIT=LU_LOG,FMT=*)'TEST',iDayOfYear,rPratio,rAbc,rBbc
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = (rAbc + rF * rBbc) / rMM_PER_INCH
       end if
 
     end do

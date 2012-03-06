@@ -91,7 +91,7 @@
     <Folder name="Source Files" sorted="Yes">
         <File>..\src\control.F90</File>
         <File>..\src\et_blaney_criddle.F90</File>
-        <File>..\src\et_crop_coefficients.F90</File>
+        <File>..\src\et_FAO56_crop_coefficients.F90</File>
         <File>..\src\et_hargreaves.F90</File>
         <File>..\src\et_jensen_haise.F90</File>
         <File>..\src\et_thornthwaite_mather.F90</File>
@@ -103,6 +103,7 @@
         <File>..\src\meteorological_functions.F90</File>
         <File>..\src\model.F90</File>
         <File>..\src\netcdf_support.F90</File>
+        <File>..\src\output.F90</File>
         <File>..\src\RLE.F90</File>
         <File>..\src\runoff_curve_number.F90</File>
         <File>..\src\sm_thornthwaite_mather.F90</File>
@@ -111,5 +112,6 @@
         <File>..\src\swb_python_interface.F90</File>
         <File>..\src\swbstats.F90</File>
         <File>..\src\types.F90</File>
+        <File>..\src\water_balance.F90</File>
     </Folder>
 </Project>

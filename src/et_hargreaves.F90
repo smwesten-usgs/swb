@@ -117,7 +117,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
       if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
 
-      pGrd%Cells(iCol,iRow)%rSM_PotentialET = ET0_hargreaves( &
+      pGrd%Cells(iCol,iRow)%rReferenceET0 = ET0_hargreaves( &
                                            pConfig, &
                                            equivalent_evaporation(rRa), &
                                            pGrd%Cells(iCol,iRow)%rTMin, &
@@ -129,7 +129,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 !  write(UNIT=LU_LOG,FMT=*) "=========HARGREAVES POTET CALCULATION==========="
 !  write(UNIT=LU_STD_OUT,FMT="(A)") &
 !       "                                 min          mean           max"
-!  call stats_WriteMinMeanMax(LU_STD_OUT,"POTET" , pGrd%Cells(:,:)%rSM_PotentialET )
+!  call stats_WriteMinMeanMax(LU_STD_OUT,"POTET" , pGrd%Cells(:,:)%rReferenceET0 )
 !
 !  write(UNIT=LU_LOG,FMT=*) "=========HARGREAVES POTET CALCULATION==========="
 
@@ -192,7 +192,6 @@ end function ET0_hargreaves
 !!***
 
 end module et_hargreaves
-
 
 
 

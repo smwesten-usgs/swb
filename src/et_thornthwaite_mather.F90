@@ -184,7 +184,7 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
         rPotET = rLCF * polynomial( pGrd%Cells(iCol,iRow)%rTAvg, rHighTPoly ) / 30.0_T_SGL
       end if
 
-      pGrd%Cells(iCol,iRow)%rSM_PotentialET = rPotET
+      pGrd%Cells(iCol,iRow)%rReferenceET0 = rPotET
 
     end do
 
@@ -193,7 +193,7 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
 !  write(UNIT=LU_LOG,FMT=*) "=========POTET CALCULATION==========="
 !  write(UNIT=LU_STD_OUT,FMT="(A)") &
 !      "                                 min          mean           max"
-!  call stats_WriteMinMeanMax(LU_STD_OUT,"Potet ET (in)" , pGrd%Cells(:,:)%rSM_PotentialET )
+!  call stats_WriteMinMeanMax(LU_STD_OUT,"Potet ET (in)" , pGrd%Cells(:,:)%rReferenceET0 )
 !
 !  write(UNIT=LU_LOG,FMT=*) "=========POTET CALCULATION==========="
 

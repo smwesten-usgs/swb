@@ -80,6 +80,7 @@ module types
   real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
   real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
   real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
+  real (kind=T_SGL), parameter :: rMINIMUM_SOIL_MOISTURE = 0.51_T_SGL
   integer (kind=T_SHORT), parameter :: iACTIVE_CELL = 1
   integer (kind=T_SHORT), parameter :: iINACTIVE_CELL = 0
   integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
@@ -162,9 +163,10 @@ module types
       real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
 
-      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
+!      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
-      real (kind=T_SGL) :: rSM_PotentialET          ! Potential ET
+      real (kind=T_SGL) :: rReferenceET0          ! Potential ET (Will chg to REFERENCE_ET)
+      real (kind=T_SGL) :: rCrop_ET
 !      real (kind=T_SGL) :: rSM_ActualET            ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
@@ -177,7 +179,7 @@ module types
 
       real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
       real (kind=T_SGL) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
-      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
+!      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
       real (kind=T_SGL) :: rInFlow                 ! flow in from uphill
       real (kind=T_SGL) :: rOutFlow                ! flow out downhill
       real (kind=T_SGL) :: rFlowOutOfGrid          ! flow that leaves the grid
@@ -200,7 +202,7 @@ module types
       real (kind=T_SGL) :: rIrrigationAmount       ! total amount of any irrigation
       real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
       real (kind=T_SGL) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
-      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
+!      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
                                                                   ! will be performed
 
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
@@ -316,22 +318,22 @@ module types
     real (kind=T_SGL) :: rKc_max = 1.3
 
     !> Day of year (or GDD) for initial planting
-    integer (kind=T_INT) :: iL_plant
+    integer (kind=T_INT) :: iL_plant = 50
 
     !> Day of year (or GDD) for end of initial growth phase
-    integer (kind=T_INT) :: iL_ini
+    integer (kind=T_INT) :: iL_ini = 300
 
     !> Day of year (or GDD) for end of development phase
-    integer (kind=T_INT) :: iL_dev
+    integer (kind=T_INT) :: iL_dev = 650
 
     !> Day of year (or GDD) for end of mid-season growth phase
-    integer (kind=T_INT) :: iL_mid
+    integer (kind=T_INT) :: iL_mid = 1300
 
     !> Day of year (or GDD) for end of late season growth phase
-    integer (kind=T_INT) :: iL_late
+    integer (kind=T_INT) :: iL_late = 1800
 
     !> How should the growth phase identifiers be treated (DOY or GDD)
-    logical (kind=T_LOGICAL) :: lUnitsAreDOY
+    logical (kind=T_LOGICAL) :: lUnitsAreDOY = lFALSE
 
     !> Growing degree-day base temperature (10 degrees C for corn)
     real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
@@ -339,8 +341,12 @@ module types
     !> Growing degree-day maximum temperature (cutoff; 30 degrees C for corn)
     real (kind=T_SGL) :: rGDD_MaxTemp   = 130.
 
-    ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (in percent)
-    real (kind=T_SGL) :: rMAD           = 100.
+    ! Depletion fraction: fraction of soil moisture depletion beyond which
+    ! significant plant stress results
+    real (kind=T_SGL) :: rDepletionFraction = 0.4
+
+    ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (as fraction)
+    real (kind=T_SGL) :: rMAD           = 1.
 
     !> Day of year before which no irrigation is assumed to take place
     integer (kind=T_INT) :: iBeginIrrigation = 120
@@ -350,6 +356,12 @@ module types
 
     !> Fraction of irrigation water obtained from GW rather than surface water
     real (kind=T_SGL) :: rFractionOfIrrigationFromGW = rONE
+
+    !> Irrigation efficiency, surface-water sources
+    real (kind=T_SGL) :: rIrrigationEfficiency_SW = 1.0 / 0.8
+
+    !> Irrigation efficiency, groundwater sources
+    real (kind=T_SGL) :: rIrrigationEfficiency_GW = 1.0 / 0.8
 
     !> Fraction of exposed and wetted soil (f_ew)
     real (kind=T_SGL) :: r_f_ew
@@ -433,12 +445,12 @@ module types
 
   !> Container for calendar lookup information
   type T_MONTH
-      ! Container for calendar lookup information
+    ! Container for calendar lookup information
     character (len=3) :: sName          ! Abbreviated name
-	 character (len=9) :: sFullName      ! Full month name
+	character (len=9) :: sFullName      ! Full month name
     integer (kind=T_INT) :: iStart      ! Starting (Julian) date
     integer (kind=T_INT) :: iEnd        ! Ending (Julian) date
-	 integer (kind=T_INT) :: iMonth      ! Month number (1-12)
+	integer (kind=T_INT) :: iMonth      ! Month number (1-12)
     integer (kind=T_INT) :: iNumDays    ! Max number of days in month
   end type T_MONTH
 
@@ -1071,6 +1083,7 @@ module types
   !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
+  integer (kind=T_INT),parameter :: CONFIG_SM_FAO56_CROP_COEFFICIENT = 2
   !> @}
 
   !> @name Constants: Landuse input data format

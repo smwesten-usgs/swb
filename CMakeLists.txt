@@ -111,6 +111,8 @@ endif()
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
+  if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+
      message(" <-- setting options for gfortran on MinGW -->")
 
      set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
@@ -251,6 +253,36 @@ if(CMAKE_HOST_WIN32)
          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win32/src/libswb.a
          VERBATIM
      )
+
+  elseif(Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
+
+  message(" <-- setting options for Intel Fortran on Windows -->")
+
+  set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
+      "Location for installation of the executable")
+
+#  set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none")
+
+#  set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -gdb -Wall -Wextra -fcheck=all")
+#  set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} "-fexceptions -ffree-line-length-none")
+
+#  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
+
+  set_property(CACHE CMAKE_BUILD_TYPE
+          PROPERTY STRINGS "Release" "Debug")
+
+  set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/netcdf.lib
+    CACHE FILEPATH "Location of NetCDF library")
+  set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disifc.lib )
+
+  set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/ifort )
+
+  set(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
+
+  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+  )
+
+  endif()
 
 elseif(CMAKE_HOST_UNIX)
 
