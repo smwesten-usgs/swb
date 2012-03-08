@@ -1178,7 +1178,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
       if ( cel%iActive == iINACTIVE_CELL ) cycle
 
       ! allow for correction factor to be applied to precip gage input data
-      if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
+      if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_T_SGL <= rFREEZING ) then
         lFREEZING = lTRUE
         cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
       else
@@ -1273,7 +1273,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       ! copy temporary double-precision values back to single-precision
       cel%rSnowCover = real(dpSnowCover, kind=T_SGL)
-      cel%rNetPrecip = real(dpNetRainfall, kind=T_SGL)
+      cel%rNetRainfall = real(dpNetRainfall, kind=T_SGL)
 
     end do
 
@@ -1397,8 +1397,8 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
 
       rPreviousSnowCover = cel%rSnowCover
 
-      cel%rNetPrecip = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
-      rInterception = MAX(cel%rGrossPrecip - cel%rNetPrecip,rZERO)
+      cel%rNetRainfall = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
+      rInterception = MAX(cel%rGrossPrecip - cel%rNetRainfall,rZERO)
       cel%rInterception = rInterception
 
       call stats_UpdateAllAccumulatorsByCell(REAL(rInterception,kind=T_DBL), &
@@ -1414,10 +1414,10 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
 
       end if
 
-      cel%rSnowFall_SWE = cel%rNetPrecip * (rONE - rFracRain)
+      cel%rSnowFall_SWE = cel%rNetRainfall * (rONE - rFracRain)
       cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
       cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
-      cel%rNetPrecip = cel%rNetPrecip - cel%rSnowFall_SWE
+      cel%rNetRainfall = cel%rNetRainfall - cel%rSnowFall_SWE
 
       if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
       ! unless there is snowcover present
@@ -1431,7 +1431,7 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
 
           call snow_energy_balance(cel%rTMin, cel%rTMax, &
           cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
-          cel%rNetPrecip, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
+          cel%rNetRainfall, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
 
         else
 
@@ -1483,7 +1483,7 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
       call stats_UpdateAllAccumulatorsByCell( &
         REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
       call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rNetPrecip,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
+        REAL(cel%rNetRainfall,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
       call stats_UpdateAllAccumulatorsByCell( &
         REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
       call stats_UpdateAllAccumulatorsByCell( &
@@ -1583,7 +1583,7 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   if ( iDayCtr > iMOVING_AVG_TERMS ) iDayCtr = 1
 
   ! Update the inflow buffer (used to determine antecedent runoff conditions)
-  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetPrecip &
+  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetRainfall &
     + pGrd%Cells(:,:)%rSnowMelt + pGrd%Cells(:,:)%rInflow
 
 end subroutine model_ProcessRunoff
@@ -2990,6 +2990,13 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     end do
 
     call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rDepletionFraction
+    call Assert( iStat == 0, &
+      "Error reading plant stress depletion fraction in irrigation lookup table" )
+    write(UNIT=LU_LOG,FMT=*)  "   plant stress depletion fraction: ", &
+      pConfig%IRRIGATION(iLandUseIndex)%rDepletionFraction
+
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rGDD_BaseTemp
     call Assert( iStat == 0, &
       "Error reading GDD base temperature in irrigation lookup table" )
@@ -3028,6 +3035,30 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
       //"from the irrigation lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obtained from groundwater ", &
       pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading the fraction of irrigation water obtained from groundwater " &
+      //"from the irrigation lookup table" )
+    call assert(rTempValue > 0., &
+      "Fractional irrigation efficiency for groundwater sources must be greater than 0.", &
+      trim(__FILE__),__LINE__)
+    write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for groundwater sources ", &
+      rTempValue
+    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW = 1.0 / rTempValue
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading the fraction of irrigation water obtained from surface water " &
+      //"from the irrigation lookup table" )
+    call assert(rTempValue > 0., &
+      "Fractional irrigation efficiency for surface-water sources must be greater than 0.", &
+      trim(__FILE__),__LINE__)
+    write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for surface-water sources ", &
+      rTempValue
+    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW = 1.0 / rTempValue
 
     iRecNum = iRecNum + 1
 
@@ -3161,6 +3192,8 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 where (pGrd%Cells%rCFGI > rNEAR_ZERO)
   pGrd%Cells%rReferenceET0 = rZERO
 endwhere
+
+pGrd%Cells%rAdjustedPotentialET = pGrd%Cells%rReferenceET0
 
 !  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rReferenceET0 )
 

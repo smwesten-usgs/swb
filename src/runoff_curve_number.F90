@@ -229,7 +229,7 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   real (kind=T_SGL) :: rCN_05
   real (kind=T_SGL) :: rSMax
 
-  rP = cel%rNetPrecip &
+  rP = cel%rNetRainfall &
        + cel%rSnowMelt &
        + cel%rIrrigationAmount &
        + cel%rInFlow

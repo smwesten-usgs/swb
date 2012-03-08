@@ -211,7 +211,7 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
           //". Use a smaller value for RLE_MULTIPLIER", &
                 trim(__FILE__),__LINE__)
 
-	if(iPrevious /= iCurr) then  ! set rValue equal to out the value of iPrevious
+	if(iPrevious /= iCurr) then  ! set rValue equal to the value of iPrevious
 	  iByteCount = iByteCount + 1
 
 	  lRun = lFALSE
@@ -276,7 +276,7 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	else
 
-	  call Assert(lFALSE,"Uncaught condition in IF-THEN block: module RLE.f95", &
+	  call Assert(lFALSE,"Uncaught condition in IF-THEN block", &
 	    TRIM(__FILE__), __LINE__)
 
 	end if

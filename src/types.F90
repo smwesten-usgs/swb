@@ -165,8 +165,11 @@ module types
 
 !      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
-      real (kind=T_SGL) :: rReferenceET0          ! Potential ET (Will chg to REFERENCE_ET)
-      real (kind=T_SGL) :: rCrop_ET
+      real (kind=T_SGL) :: rReferenceET0 = rZERO    ! Reference ET0, presumably alfalfa
+      real (kind=T_SGL) :: rCropETc = rZERO         ! unadjusted crop ET
+      real (kind=T_SGL) :: rCropETc_adj = rZERO     ! ADJUSTED crop ET
+      real (kind=T_SGL) :: rBareSoilEvap = rZERO
+      real (kind=T_SGL) :: rAdjustedPotentialET = rZERO
 !      real (kind=T_SGL) :: rSM_ActualET            ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
@@ -186,7 +189,7 @@ module types
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
       real (kind=T_SGL) :: rInterception           ! Interception term
-      real (kind=T_SGL) :: rNetPrecip              ! Net precipitation - precip minus interception
+      real (kind=T_SGL) :: rNetRainfall              ! Net precipitation - precip minus interception
       real (kind=T_SGL) :: rSnowFall_SWE           ! precipitation that falls as snow (in SWE)
       real (kind=T_SGL) :: rSnowFall               ! snowfall in inches as SNOW
       real (kind=T_SGL) :: rSnowCover              ! snowcover expressed as inches of water
@@ -199,7 +202,7 @@ module types
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
 
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
-      real (kind=T_SGL) :: rIrrigationAmount       ! total amount of any irrigation
+      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! total amount of any irrigation
       real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
       real (kind=T_SGL) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
 !      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
@@ -297,7 +300,7 @@ module types
     character (len=256) :: sCropDescription
 
     !> Mean plant or crop height, feet
-    real (kind=T_SGL) :: rMeanPlantHeight
+    real (kind=T_SGL) :: rMeanPlantHeight = 1.5
 
     !> Crop coefficient, basal, for a given day
     real (kind=T_SGL) :: rKcb
@@ -343,7 +346,7 @@ module types
 
     ! Depletion fraction: fraction of soil moisture depletion beyond which
     ! significant plant stress results
-    real (kind=T_SGL) :: rDepletionFraction = 0.4
+    real (kind=T_SGL) :: rDepletionFraction = 0.2
 
     ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (as fraction)
     real (kind=T_SGL) :: rMAD           = 1.
@@ -362,9 +365,6 @@ module types
 
     !> Irrigation efficiency, groundwater sources
     real (kind=T_SGL) :: rIrrigationEfficiency_GW = 1.0 / 0.8
-
-    !> Fraction of exposed and wetted soil (f_ew)
-    real (kind=T_SGL) :: r_f_ew
 
   end type T_IRRIGATION_LOOKUP
 
@@ -518,7 +518,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 29
+  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 34
 
   ! constants defining T_STATS output types
   integer(kind=T_INT), parameter :: iNONE = 0
@@ -627,8 +627,20 @@ module types
       'inches','precip and inflow minus outflow', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('POT_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','potential evapotranspiration', &
+    T_STATS ('REFERENCE_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','reference evapotranspiration (ET0)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('CROP_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','crop evapotranspiration (ETc)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('CROP_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','ADJUSTED crop evapotranspiration (ETc_adj)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','evaporation from bare soil', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE, &
@@ -654,7 +666,18 @@ module types
     T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
       lTRUE, &
       'degree-day','growing degree day', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) ]
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, &
+      lTRUE, &
+      'inches','amount of water required from groundwater for irrigation', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, &
+      lTRUE, &
+      'inches','amount of water required from surface water for irrigation', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) &
+    ]
 
   !> @anchor const_stat
   !> @name Constants: Statistics that SWB knows how to calculate and store
@@ -700,13 +723,18 @@ module types
   integer (kind=T_INT), parameter :: iNET_PRECIP = 20
   integer (kind=T_INT), parameter :: iNET_INFLOW = 21
   integer (kind=T_INT), parameter :: iNET_INFIL = 22
-  integer (kind=T_INT), parameter :: iPOT_ET = 23
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 24
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 25
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 26
-  integer (kind=T_INT), parameter :: iSM_APWL = 27
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 28
-  integer (kind=T_INT), parameter :: iGDD = 29
+  integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
+  integer (kind=T_INT), parameter :: iCROP_ET = 24
+  integer (kind=T_INT), parameter :: iCROP_ET_ADJ = 25
+  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 26
+  integer (kind=T_INT), parameter :: iP_MINUS_PET = 27
+  integer (kind=T_INT), parameter :: iSM_DEFICIT = 28
+  integer (kind=T_INT), parameter :: iSM_SURPLUS = 29
+  integer (kind=T_INT), parameter :: iSM_APWL = 30
+  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 31
+  integer (kind=T_INT), parameter :: iGDD = 32
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 33
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 34
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries

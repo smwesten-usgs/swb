@@ -58,8 +58,13 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
           cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW &
                                   * cel%rIrrigationAmount &
                                   * pIRRIGATION%rIrrigationEfficiency_GW
+          cel%rIrrigationFromSW = (1.0 - pIRRIGATION%rFractionOfIrrigationFromGW ) &
+                                  * cel%rIrrigationAmount &
+                                  * pIRRIGATION%rIrrigationEfficiency_SW
         else
           cel%rIrrigationAmount = rZERO
+          cel%rIrrigationFromGW = rZERO
+          cel%rIrrigationFromSW = rZERO
         endif
 
       enddo  ! loop over columns
