@@ -665,9 +665,7 @@ subroutine stats_OpenMSBReport()
       // 'TOTAL Surface Storage (snow),' &
       // 'Change in Surface Storage (snow),' &
       // 'Snowmelt,' &
-#ifdef IRRIGATION_MODULE
       // 'Irrigation,' &
-#endif
       // 'TOTAL Soil Moisture Storage,' &
       // 'Change in Soil Moisture Storage, Surface Flow Out of Grid,' &
       // 'Rejected Recharge,' &

@@ -1168,9 +1168,10 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rSnowFall_SWE = rZERO
 
   ! calculate number of cells in model grid
-  iNumGridCells = pGrd%iNX * pGrd%iNY
+  iNumGridCells = pGrd%iNumGridCells
 
   ! Use "potential interception" for each cell to compute net precip
+
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
@@ -1213,18 +1214,8 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           //"  iCol: "//trim(int2char(iCol)), &
           trim(__FILE__), __LINE__)
 
-      call stats_UpdateAllAccumulatorsByCell(dpInterception, &
-        iINTERCEPTION,iMonth,iZERO)
-
       cel%rInterception = cel%rInterception
-
-      if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
-        .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
-        .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
-          call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
-            real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
-      end if
+!      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
 
       ! NOW we're through with INTERCEPTION calculations
       ! Next, we partition between snow and rain
@@ -1282,7 +1273,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
   ! as the final argument triggers the routine to update monthly and annual stats
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_PRECIP,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
@@ -1293,6 +1283,8 @@ end subroutine model_ProcessRain
 !----------------------------------------------------------------------
 
 subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInYear)
+
+  !> @TODO: rework to incorporate interception storage
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -1400,27 +1392,15 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
       cel%rNetRainfall = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
       rInterception = MAX(cel%rGrossPrecip - cel%rNetRainfall,rZERO)
       cel%rInterception = rInterception
-
-      call stats_UpdateAllAccumulatorsByCell(REAL(rInterception,kind=T_DBL), &
-        iINTERCEPTION,iMonth,iZERO)
-
-      if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
-        .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
-        .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
-
-      call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
-          REAL(rInterception,kind=T_SGL), pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
-          iNumGridCells, iINTERCEPTION)
-
-      end if
+      cel%rInterceptionStorage = cel%rInterceptionStorage + rInterception
 
       cel%rSnowFall_SWE = cel%rNetRainfall * (rONE - rFracRain)
       cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
       cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
       cel%rNetRainfall = cel%rNetRainfall - cel%rSnowFall_SWE
 
-      if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
-      ! unless there is snowcover present
+      if(cel%rSnowCover > rNEAR_ZERO .or. cel%rInterceptionStorage > rNEAR_ZERO) then
+      ! no point in calculating all this unless there is snowcover present
 
         rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
 

@@ -3,9 +3,9 @@
 !/**                                                            **/
 !/** Module file for DISLIN Fortran 90.                         **/
 !/**                                                            **/
-!/** Date     :  29.05.2009                                     **/
-!/** Routines :  694                                            **/
-!/** Version  :  9.5 A / explicit-shape                         **/
+!/** Date     :  15.11.2011                                     **/
+!/** Routines :  733                                            **/
+!/** Version  :  10.2 / explicit-shape                          **/
 !/****************************************************************/
 
 module dislin
@@ -212,6 +212,11 @@ module dislin
  
     subroutine box3d()
     end subroutine box3d
+
+    subroutine bufmod(cmod,ckey)
+      implicit none
+      character (len = *), intent (in) :: cmod,ckey
+    end subroutine bufmod
  
     subroutine center()
     end subroutine center
@@ -430,6 +435,15 @@ module dislin
       real, dimension (nlray), intent (in) :: zlev
       real, dimension (n,m), intent (in) :: zmat
     end subroutine conshd
+
+    subroutine conshd3d(xray,n,yray,m,zmat,zlev,nlray)
+      implicit none
+      integer, intent (in) :: n,m,nlray
+      real, dimension (n), intent (in) :: xray
+      real, dimension (m), intent (in) :: yray
+      real, dimension (nlray), intent (in) :: zlev
+      real, dimension (n,m), intent (in) :: zmat
+    end subroutine conshd3d
  
     subroutine contri(xray,yray,zray,n,i1ray,i2ray,i3ray,ntri,zlev)
       implicit none
@@ -457,6 +471,19 @@ module dislin
       real, dimension (ixdim,iydim), intent (in) :: zmat
     end subroutine crvmat
 
+    subroutine crvqdr(xray,yray,zray,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: xray,yray,zray
+    end subroutine crvqdr
+
+    subroutine crvt3d(x,y,z,r,ic,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y,z,r
+      integer, dimension (n), intent (in) :: ic
+    end subroutine crvt3d
+
     subroutine crvtri(xray,yray,zray,n,i1ray,i2ray,i3ray,ntri)
       implicit none
       integer, intent (in) :: n,ntri
@@ -469,6 +496,12 @@ module dislin
       integer, intent (in) :: n
       real, dimension (n), intent (in) :: x,y,z
     end subroutine curv3d
+
+    subroutine curv4d(x,y,z,w,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y,z,w
+    end subroutine curv4d
 
     subroutine csrkey(ik)
       implicit none
@@ -580,6 +613,11 @@ module dislin
       integer, intent (out) :: iret
     end subroutine dbfini
  
+    subroutine dbfmod(copt)
+      implicit none
+      character (len = *), intent (in) :: copt
+    end subroutine dbfmod
+
     subroutine delglb()
       implicit none
     end subroutine delglb
@@ -592,6 +630,11 @@ module dislin
  
     subroutine disalf()
     end subroutine disalf
+
+    subroutine disenv(cstr)
+      implicit none
+      character (len = *), intent (in) :: cstr
+    end subroutine disenv
  
     subroutine disfin()
     end subroutine disfin
@@ -622,6 +665,11 @@ module dislin
       character (len=*), intent (in) :: cstr
       integer, intent (in out) :: ival
     end subroutine dwgbut
+
+    subroutine dwgerr(ival)
+      implicit none
+      integer, intent (in out) :: ival
+    end subroutine dwgerr
  
     subroutine dwgfil(clab,cstr,cmask)
       implicit none
@@ -688,6 +736,12 @@ module dislin
       character (len = *), intent (in) :: copt
     end subroutine expzlb
  
+    subroutine fbars(x,y1,y2,y3,y4,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y1,y2,y3,y4
+    end subroutine fbars
+
     subroutine fcha(x,ndez,nl,cstr)
       implicit none
       real, intent (in) :: x
@@ -995,7 +1049,7 @@ module dislin
       implicit none
       integer, intent (out) :: ix,iy,nw,nh
     end subroutine getwin
- 
+
     subroutine getxid (ival, copt)
       implicit none
       integer, intent (out) :: ival
@@ -1126,6 +1180,12 @@ module dislin
       real, intent (out) :: xval
     end subroutine gwgscl
 
+    subroutine gwgsiz (id,nw,nh)
+      implicit none
+      integer, intent (in) :: id
+      integer, intent (out) :: nw,nh
+    end subroutine gwgsiz
+
     subroutine gwgtbf(id,i,j,xv)
       implicit none
       integer, intent (in) :: id,i,j
@@ -1219,6 +1279,11 @@ module dislin
     subroutine hwfont()
     end subroutine hwfont
  
+    subroutine hwmode(copt,ckey)
+      implicit none
+      character (len = *), intent (in) :: copt,ckey
+    end subroutine hwmode
+
     subroutine hworig(nx,ny)
       implicit none
       integer, intent (in) :: nx,ny
@@ -1264,6 +1329,11 @@ module dislin
       implicit none
       integer, intent (in) :: nw,nh
     end subroutine imgsiz
+
+    subroutine imgtpr(n)
+      implicit none
+      integer, intent (in) :: n
+    end subroutine imgtpr
 
     subroutine inccrv(i)
       implicit none
@@ -1444,6 +1514,11 @@ module dislin
       character (len = *), intent (in) :: cstr
     end subroutine legtit
  
+    subroutine legtyp(copt)
+      implicit none
+      character (len = *), intent (in) :: copt
+    end subroutine legtyp
+
     subroutine legval(x,copt)
       implicit none
       real, intent (in) :: x 
@@ -1453,6 +1528,20 @@ module dislin
     subroutine lfttit()
     end subroutine lfttit
  
+    subroutine licmod(cmod,ckey)
+      implicit none
+      character (len = *), intent (in) :: cmod,ckey
+    end subroutine licmod
+
+    subroutine licpts(xmat,ymat,nx,ny,itmat,iwmat,wmat)
+      implicit none
+      integer, intent (in) :: nx,ny
+      real, dimension (nx,ny), intent (in) :: xmat,ymat
+      integer, dimension (nx,ny), intent (in) :: itmat
+      integer, dimension (nx,ny), intent (out) :: iwmat
+      real, dimension (nx,ny), intent (out) :: wmat
+    end subroutine licpts
+
     subroutine lincyc(i,ilin)
       implicit none
       integer, intent (in) :: i,ilin
@@ -1544,6 +1633,12 @@ module dislin
       implicit none
       character (len = *), intent (in) :: cfl, copt
     end subroutine mapfil
+
+    subroutine mapimg(cfl,x1,x2,x3,x4,x5,x6)
+      implicit none
+      character (len = *), intent (in) :: cfl
+      real, intent (in) :: x1,x2,x3,x4,x5,x6
+    end subroutine mapimg
 
     subroutine maplab(copt,ckey)
       implicit none
@@ -1658,6 +1753,11 @@ module dislin
       integer, intent (in) :: nx,ny,nsize
       character (len = *), intent (in) :: copt
     end subroutine mpslogo
+
+    subroutine mrkclr(i)
+      implicit none
+      integer, intent (in) :: i
+    end subroutine mrkclr
 
     subroutine msgbox(cstr)
       implicit none
@@ -1931,6 +2031,20 @@ module dislin
       integer, intent (in) :: iclr
     end subroutine piebor
 
+    subroutine piecbk (callbk)
+      implicit none
+ 
+      interface
+         subroutine callbk(iseg,xdat,xper,nrad,noff,a,nvx,nvy,idrw,iann)
+           implicit none
+           integer, intent (in) :: iseg
+           real, intent (in) :: xdat,xper
+           integer, intent (in out) :: nrad,noff,nvx,nvy,idrw,iann
+           real, intent (in out) :: a
+         end subroutine callbk
+      end interface
+    end subroutine piecbk
+
     subroutine pieclr(ic1,ic2,n)
       implicit none
       integer, intent (in) :: n
@@ -1952,6 +2066,11 @@ module dislin
       character(len = *), intent (in) :: cdat,cstr
     end subroutine pielab
 
+    subroutine pierot(xrot)
+      implicit none
+      real, intent (in) :: xrot
+    end subroutine pierot
+
     subroutine pieopt(x1,x2)
       implicit none
       real, intent (in) :: x1,x2
@@ -1962,6 +2081,12 @@ module dislin
       character (len = *), intent (in) :: ctyp
     end subroutine pietyp
  
+    subroutine pieval(x,copt)
+      implicit none
+      real, intent (in) :: x 
+      character (len = *), intent (in) :: copt
+    end subroutine pieval
+
     subroutine pievec(ivec,copt)
       implicit none
       integer, intent (in) :: ivec
@@ -2072,6 +2197,13 @@ module dislin
       real, dimension (n,m), intent (in) :: x
     end subroutine qplcon
 
+    subroutine qplcrv(x,y,n,copt)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: x,y
+      character (len = *), intent (in) :: copt
+    end subroutine qplcrv
+
     subroutine qplot(x,y,n)
       implicit none
       integer, intent (in) :: n
@@ -2089,6 +2221,12 @@ module dislin
       integer, intent (in) :: n
       real, dimension (n), intent (in) :: x,y
     end subroutine qplsca
+
+    subroutine qplscl(a,e,or,step,copt)
+      implicit none
+      real, intent (in) :: a,e,or,step
+      character (len = *), intent (in) :: copt
+    end subroutine qplscl
 
     subroutine qplsur(x,n,m)
       implicit none
@@ -2626,7 +2764,76 @@ module dislin
       implicit none
       integer, intent (in) :: k,n
     end subroutine splmod
+
+    subroutine stmmod(cmod,ckey)
+      implicit none
+      character (len = *), intent (in) :: cmod,ckey
+    end subroutine stmmod
+
+    subroutine stmopt(n,copt)
+      implicit none
+      integer, intent (in) :: n 
+      character (len = *), intent (in) :: copt
+    end subroutine stmopt
+
+    subroutine stmpts(xmat,ymat,nx,ny,xp,yp,x0,y0,xray,yray,nmax,nray)
+      implicit none
+      integer, intent (in) :: nx,ny,nmax
+      integer, intent (out) :: nray
+      real, dimension (nx,ny), intent (in) :: xmat,ymat
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+      real, intent (in) :: x0,y0
+      real, dimension (nmax),  intent (out) :: xray,yray
+    end subroutine stmpts
+
+    subroutine stmpts3d(xv,yv,zv,nx,ny,nz,xp,yp,zp,x0,y0,z0,  &
+                        xray,yray,zray,nmax,nray)
+      implicit none
+      integer, intent (in) :: nx,ny,nz,nmax
+      integer, intent (out) :: nray
+      real, dimension (nx,ny,nz), intent (in) :: xv,yv,zv
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+      real, dimension (nz), intent (in) :: zp
+      real, intent (in) :: x0,y0,z0
+      real, dimension (nmax),  intent (out) :: xray,yray,zray
+    end subroutine stmpts3d
+
+    subroutine stmtri(xvray,yvray,xpray,ypray,n, &
+                      i1ray,i2ray,i3ray,ntri,xs,ys,nray)
+      implicit none
+      integer, intent (in) :: n,ntri,nray
+      real, dimension (n), intent (in) :: xvray,yvray,xpray,ypray
+      integer, dimension (ntri), intent (in) :: i1ray,i2ray,i3ray
+      real, dimension (nray),  intent (in) :: xs,ys
+    end subroutine stmtri
+
+    subroutine stmval(x,copt)
+      implicit none
+      real, intent (in) :: x 
+      character (len = *), intent (in) :: copt
+    end subroutine stmval
  
+    subroutine stream(xmat,ymat,nx,ny,xp,yp,xs,ys,n)
+      implicit none
+      integer, intent (in) :: nx,ny,n
+      real, dimension (nx,ny), intent (in) :: xmat,ymat
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+      real, dimension (n),  intent (in) :: xs,ys
+    end subroutine stream
+
+    subroutine stream3d(xv,yv,zv,nx,ny,nz,xp,yp,zp,xs,ys,zs,n)
+      implicit none
+      integer, intent (in) :: nx,ny,nz,n
+      real, dimension (nx,ny,nz), intent (in) :: xv,yv,zv
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+      real, dimension (nz), intent (in) :: zp
+      real, dimension (n),  intent (in) :: xs,ys,zs
+    end subroutine stream3d
+
     subroutine strt3d(x,y,z)
       implicit none
       real, intent (in) :: x,y,z
@@ -2839,6 +3046,12 @@ module dislin
       implicit none
       integer, intent (in) :: id,iv
     end subroutine swgint
+
+    subroutine swgiop (ival,copt)
+      implicit none
+      integer, intent (in) :: ival
+      character (len=*), intent (in) :: copt
+    end subroutine swgiop
  
     subroutine swgjus (ctype,cwidg)
       implicit none
@@ -3114,6 +3327,11 @@ module dislin
       implicit none
       real, intent (in) :: x
     end subroutine tprval
+
+    subroutine tr3axs(x,y,z,a)
+      implicit none
+      real, intent (in) :: x,y,z,a
+    end subroutine tr3axs
  
     subroutine tr3res()
     end subroutine tr3res
@@ -3205,6 +3423,13 @@ module dislin
       integer, intent (out) :: ntri 
     end subroutine triang
 
+    subroutine triflc(xray,yray,iray,n)
+      implicit none
+      integer, intent (in) :: n
+      real, dimension (n), intent (in) :: xray,yray
+      integer, dimension (n), intent (in) :: iray
+    end subroutine triflc
+
     subroutine trifll(x,y)
       implicit none
       real, dimension (3), intent (in) :: x,y
@@ -3242,6 +3467,12 @@ module dislin
       character (len = *), intent (in) :: copt
     end subroutine txtjus
  
+    subroutine txture(itmat,nx,ny)
+      implicit none
+      integer, intent (in) :: nx,ny
+      integer, dimension (nx,ny), intent (out) :: itmat
+    end subroutine txture
+
     subroutine unit(i)
       implicit none
       integer, intent (in) :: i
@@ -3297,6 +3528,23 @@ module dislin
       integer, intent (in) :: n,ivec
       real, dimension (n), intent (in) :: xv,yv,xp,yp
     end subroutine vecfld
+
+    subroutine vecmat(xmat,ymat,nx,ny,xp,yp,ivec)
+      implicit none
+      integer, intent (in) :: nx,ny,ivec
+      real, dimension (nx,ny), intent (in) :: xmat,ymat
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+    end subroutine vecmat
+
+    subroutine vecmat3d(xv,yv,zv,nx,ny,nz,xp,yp,zp,ivec)
+      implicit none
+      integer, intent (in) :: nx,ny,nz,ivec
+      real, dimension (nx,ny,nz), intent (in) :: xv,yv,zv
+      real, dimension (nx), intent (in) :: xp
+      real, dimension (ny), intent (in) :: yp
+      real, dimension (nz), intent (in) :: zp
+    end subroutine vecmat3d
 
     subroutine vecopt(x,copt)
       implicit none
@@ -3499,6 +3747,12 @@ module dislin
       real, intent (in)     :: x1,x2,xval
       integer, intent (out) :: id
     end subroutine wgscl
+
+    subroutine wgsep(ip,id)
+      implicit none
+      integer, intent (in)  :: ip
+      integer, intent (out) :: id
+    end subroutine wgsep
  
     subroutine wgstxt(ip,nsize,nmax,id)
       implicit none
@@ -3533,6 +3787,18 @@ module dislin
       implicit none
       character (len = *), intent (in) :: copt
     end subroutine winapp
+
+    subroutine wincbk (callbk,copt)
+      implicit none
+      character (len = *), intent (in) :: copt
+ 
+      interface
+         subroutine callbk(id,nx,ny,nw,nh)
+           implicit none
+           integer, intent (in) :: id,nx,ny,nw,nh
+         end subroutine callbk
+      end interface
+    end subroutine wincbk
 
     subroutine windbr(xk,nx,ny,nw,a)
       implicit none
@@ -3795,14 +4061,19 @@ module dislin
       integer, intent (out) :: iret
     end subroutine zbfini
  
-    subroutine zbfres()
-    end subroutine zbfres
-
     subroutine zbflin(x1,y1,z1,x2,y2,z2)
       implicit none
       real, intent (in) :: x1,y1,z1,x2,y2,z2
     end subroutine zbflin
  
+    subroutine zbfmod(copt)
+      implicit none
+      character (len = *), intent (in) :: copt
+    end subroutine zbfmod
+
+    subroutine zbfres()
+    end subroutine zbfres
+
     subroutine zbftri(x,y,z,ic)
       implicit none
       real, dimension (3), intent (in) :: x,y,z

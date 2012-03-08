@@ -66,22 +66,22 @@ if(TARGET__SWB_LIBRARY)
 
 endif()
 
-if(TARGET__SWBREAD)
-
-  add_executable(swbread
-            graph.F90
-            grid.F90
-            RLE.F90
-            stats.F90
-            swbread.F90
-            types.F90)
-
-  set_target_properties(swbread
-            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
-
-  target_link_libraries(swbread ${EXTRA_LIBS})
-
-endif()
+#if(TARGET__SWBREAD)
+#
+#  add_executable(swbread
+#            graph.F90
+#            grid.F90
+#            RLE.F90
+#            stats.F90
+#            swbread.F90
+#            types.F90)
+#
+#  set_target_properties(swbread
+#            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
+#
+#  target_link_libraries(swbread ${EXTRA_LIBS})
+#
+#endif()
 
 if(TARGET__SWBSTATS)
 

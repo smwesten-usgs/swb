@@ -243,10 +243,9 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
             cel%rSnowmelt, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSnowmelt)
         case(iINTERCEPTION)
-!
-!           ==> STAT_INFO(iINTERCEPTION) is updated at the time
-!               interception is calculated in subroutine model_ProcessRain
-!
+          call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
+            cel%rInterception, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iINTERCEPTION)
         case(iNET_PRECIP)
           call RLE_writeByte(STAT_INFO(iNET_PRECIP)%iLU, &
             cel%rNetRainfall, pConfig%iRLE_MULT, &
@@ -575,6 +574,9 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(rNetInfil,kind=T_DBL),&
      iNET_INFIL,iMonth,iZERO)
 
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInterception, kind=T_DBL), &
+     iINTERCEPTION,iMonth,iZERO)
+
   call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureDeficit,kind=T_DBL), &
      iSM_DEFICIT,iMonth,iZERO)
 
@@ -671,6 +673,7 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iRUNOFF_OUTSIDE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iREJECTED_RECHARGE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iSOIL_MOISTURE,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iINTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iP_MINUS_PET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iREFERENCE_ET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET,iMonth,iNumGridCells)

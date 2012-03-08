@@ -18,8 +18,8 @@ endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
 #------------------------------------------------------------------------
 # Set basic project settings
 #------------------------------------------------------------------------
-project (swb Fortran CXX)
-enable_language (Fortran CXX)
+project (swb Fortran)
+enable_language (Fortran)
 
 SET(CPACK_GENERATOR "TGZ")
 include(CPack)
@@ -57,10 +57,10 @@ option (TARGET__SWB_EXECUTABLE
       "Compile the main SWB executable?" ON)
 
 option (TARGET__SWB_LIBRARY
-      "Compile SWB as a library?" ON)
+      "Compile SWB as a library?" OFF)
 
 option (TARGET__SWBREAD
-      "Compile the swbread application?" ON)
+      "Compile the swbread application?" OFF)
 
 option (TARGET__SWBSTATS
       "Compile the swbstats application?" ON)
@@ -83,7 +83,7 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" ON)
+      "Compile the code with NETCDF support?" OFF)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
 endif()
@@ -254,33 +254,52 @@ if(CMAKE_HOST_WIN32)
          VERBATIM
      )
 
-  elseif(Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
+  else()
 
-  message(" <-- setting options for Intel Fortran on Windows -->")
-
-  set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
+    message(" <-- setting options for Intel Fortran on Windows -->")
+		
+    set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
       "Location for installation of the executable")
 
-#  set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none")
+		set_target_properties(${SWB} PROPERTIES PLATFORM_TOOLSET "Intel C++ Compiler XE 12.1")
 
-#  set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -gdb -Wall -Wextra -fcheck=all")
-#  set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} "-fexceptions -ffree-line-length-none")
+		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG")
+		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:libc.lib")				
+				
+		set_property(CACHE CMAKE_BUILD_TYPE
+				PROPERTY STRINGS "Release" "Debug")
 
-#  SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
+     FIND_LIBRARY(USER32_LIB user32.lib
+       PATHS
+         C:/Program Files (x86)/Microsoft Visual Studio 10.0/Intel Fortran/Microsoft Files/VC/PlatformSDK/Lib
+     )
 
-  set_property(CACHE CMAKE_BUILD_TYPE
-          PROPERTY STRINGS "Release" "Debug")
+     FIND_LIBRARY(GDI32_LIB gdi32.lib
+       PATHS
+         C:/Program Files (x86)/Microsoft Visual Studio 10.0/Intel Fortran/Microsoft Files/VC/PlatformSDK/Lib
+     )
 
-  set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/netcdf.lib
-    CACHE FILEPATH "Location of NetCDF library")
-  set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disifc.lib )
+		set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/netcdf.lib
+		CACHE FILEPATH "Location of NetCDF library")
+		set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disif.lib )
+    set(DISLIN_FORTRAN_LIB2 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disifc.lib )		
+    set(DISLIN_FORTRAN_LIB3 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disdll.lib )				
 
-  set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/ifort )
+	#  set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
+	  set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB})
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB2})		
+		set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB3})		
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
 
-  set(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
 
-  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
-  )
+	  set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/ifort )
+
+		set(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
+
+		add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+		)
 
   endif()
 

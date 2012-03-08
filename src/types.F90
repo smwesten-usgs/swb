@@ -153,15 +153,15 @@ module types
       integer (kind=T_SHORT) :: iACTIVE = iACTIVE_CELL  ! is this cell active?
       integer (kind=T_SHORT) :: iFlowDir = iZERO        ! Flow direction from flow-dir grid
       integer (kind=T_SHORT) :: iSoilGroup = iZERO      ! Soil type from soil-type grid
-      integer (kind=T_INT) :: iLandUseIndex           ! Index (row num) of land use table
+      integer (kind=T_INT) :: iLandUseIndex = iZERO     ! Index (row num) of land use table
       integer (kind=T_INT) :: iLandUse = iZERO        ! Land use from land-use grid
       real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
 
-      real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
-      real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
+      real (kind=T_SGL) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
+      real (kind=T_SGL) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
 
 !      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
@@ -183,22 +183,23 @@ module types
       real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
       real (kind=T_SGL) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
 !      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
-      real (kind=T_SGL) :: rInFlow                 ! flow in from uphill
-      real (kind=T_SGL) :: rOutFlow                ! flow out downhill
-      real (kind=T_SGL) :: rFlowOutOfGrid          ! flow that leaves the grid
+      real (kind=T_SGL) :: rInFlow = rZERO         ! flow in from uphill
+      real (kind=T_SGL) :: rOutFlow = rZERO        ! flow out downhill
+      real (kind=T_SGL) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
-      real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
-      real (kind=T_SGL) :: rInterception           ! Interception term
-      real (kind=T_SGL) :: rNetRainfall              ! Net precipitation - precip minus interception
-      real (kind=T_SGL) :: rSnowFall_SWE           ! precipitation that falls as snow (in SWE)
-      real (kind=T_SGL) :: rSnowFall               ! snowfall in inches as SNOW
-      real (kind=T_SGL) :: rSnowCover              ! snowcover expressed as inches of water
+      real (kind=T_SGL) :: rGrossPrecip = rZERO    ! Precip - no interception applied
+      real (kind=T_SGL) :: rInterception = rZERO   ! Interception term
+      real (kind=T_SGL) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
+      real (kind=T_SGL) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception
+      real (kind=T_SGL) :: rSnowFall_SWE = rZERO   ! precipitation that falls as snow (in SWE)
+      real (kind=T_SGL) :: rSnowFall = rZERO       ! snowfall in inches as SNOW
+      real (kind=T_SGL) :: rSnowCover = rZERO      ! snowcover expressed as inches of water
       real (kind=T_SGL) :: rSnowTemperature = 23. ! snow temperature
 !      real (kind=T_SGL) :: rPrevious_SnowCover     ! Previous day's snow cover
-      real (kind=T_SGL) :: rSnowMelt               ! snowmelt in inches of water
-      real (kind=T_SGL) :: rTMin                   ! Minimum daily temperature
-      real (kind=T_SGL) :: rTMax                   ! Maximum daily temperature
-      real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
+      real (kind=T_SGL) :: rSnowMelt = rZERO       ! snowmelt in inches of water
+      real (kind=T_SGL) :: rTMin = rZERO           ! Minimum daily temperature
+      real (kind=T_SGL) :: rTMax = rZERO           ! Maximum daily temperature
+      real (kind=T_SGL) :: rTAvg = rZERO           ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
 
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
@@ -209,16 +210,16 @@ module types
                                                                   ! will be performed
 
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
-      integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
+      integer (kind=T_INT) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
 !      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
       real (kind=T_SGL),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
-      real (kind=T_SGL) :: rDailyRecharge          ! Daily recharge
+      real (kind=T_SGL) :: rDailyRecharge = rZERO  ! Daily recharge
       real (kind=T_SGL) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
       real (kind=T_SGL) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
-      real (kind=T_SGL) :: rMSB                    ! cellular mass balance
+      real (kind=T_SGL) :: rMSB = rZERO            ! cellular mass balance
       integer(kind=T_SHORT) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
 
-      logical (kind=T_LOGICAL) :: lDownhillMarked   ! Has been marked for downhill solution
+      logical (kind=T_LOGICAL) :: lDownhillMarked = lFALSE  ! Has been marked for downhill solution
   end type T_CELL
 
   ! Generic grid data type identifier constants

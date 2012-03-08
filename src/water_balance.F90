@@ -57,7 +57,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   real (kind=T_SGL) :: rChangeInStorage
   real (kind=T_SGL) :: rNetInfil
   real (kind=T_SGL) :: rNetInflow
-  real (kind=T_SGL) :: rDailyRecharge
+  real (kind=T_SGL) :: rAppliedPotentialET   ! this will be adjusted within loop to
+  real (kind=T_SGL) :: rDailyRecharge           ! account for evap of interception
   real (kind=T_SGL) :: rStreamCapture
   real (kind=T_SGL) :: rDailyRejectedRecharge
   real (kind=T_SGL) :: rMAXIMUM_RECHARGE
@@ -124,11 +125,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       !!      same day as it fell
       !!
 
+    rPrecipMinusPotentET = rNetInfil - cel%rAdjustedPotentialET
+
 	  MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
             .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then
-
-         rPrecipMinusPotentET = rNetInfil - cel%rAdjustedPotentialET
-
          ! Soil Water Capacity <= 0; OPEN WATER CELLS
 
           if(rPrecipMinusPotentET <= rZERO) then
@@ -157,6 +157,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
           rDailyRecharge = rZERO
           cel%rDailyRecharge = rZERO
           cel%rSoilMoisture = rZERO
+!          cel%rInterceptionStorage = rZERO
           rMoistureDeficit = rZERO
           rMoistureSurplus = rZERO
           cel%rSM_AccumPotentWatLoss = rZERO
@@ -164,8 +165,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
           rDailyRejectedRecharge = rZERO
 
         else ! MAIN: Execute remainder of block ONLY if non-WATER cell
-
-          rPrecipMinusPotentET = rNetInfil + cel%rInterception - cel%rAdjustedPotentialET
 
           ! Zero out current estimate for daily recharge, rejected recharge
           rDailyRecharge = rZERO
@@ -209,7 +208,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                   L1c: if(ABS(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
 		                 > ABS(rPrecipMinusPotentET)) then
 
-                     cel%rSoilMoisture = MAX(rMINIMUM_SOIL_MOISTURE, &
+                     cel%rSoilMoisture = MAX(rZERO, &
 		                                  (rPrevious_Soil_Moisture &
                                           + rPrecipMinusPotentET ))
 
@@ -224,7 +223,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 else  ! L1b: we are calculating soil moisture without T-M
                            ! soil-moisture retention tables (i.e. FAO56)
 
-                  cel%rSoilMoisture = MAX(rMINIMUM_SOIL_MOISTURE, &
+                  cel%rSoilMoisture = MAX(rZERO, &
                                         cel%rSoilMoisture &
                                       + rPrecipMinusPotentET )
 
@@ -243,12 +242,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             rMoistureSurplus = MAX (rZERO, &
 		                         (cel%rSoilMoisture &
                                 + rPrecipMinusPotentET &
-                                - cel%rInterception &
                                 - cel%rSoilWaterCap))
 
             cel%rSoilMoisture = MIN(cel%rSoilWaterCap, &
 	                              (cel%rSoilMoisture &
-								  - cel%rInterception &
 		                          + rPrecipMinusPotentET))
 
             !! back-calculate new equivalent accumulated potential water loss term
@@ -288,13 +285,12 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
               !! cap actual ET at the estimate for potential ET
               rSM_ActualET = MIN(rNetInfil &
-                                  + ABS(rChangeInStorage) &
-                                  + cel%rInterception, &
-                                 cel%rReferenceET0)
+                                  + ABS(rChangeInStorage), &
+                                 cel%rAdjustedPotentialET)
 
     		else  ! code block L2: Precip - Potential ET > 0
 
-              rSM_ActualET = cel%rReferenceET0
+              rSM_ActualET = cel%rAdjustedPotentialET
 
            end if L2
 
@@ -357,10 +353,13 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       ! *** CALL TO OUTPUT/ARCHIVE ROUTINES.... ****
       !  for each grid cell we must make a call to RLE_writeByte if
       !  we expect to have graphical or gridded output at a later stage
+
+#ifdef NETCDF_SUPPORT
       call output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
         rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
         rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
         rChangeInStorage,rDailyRecharge)
+#endif
 
       call output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
         rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
