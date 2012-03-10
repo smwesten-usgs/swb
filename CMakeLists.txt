@@ -263,8 +263,8 @@ if(CMAKE_HOST_WIN32)
 
 		set_target_properties(${SWB} PROPERTIES PLATFORM_TOOLSET "Intel C++ Compiler XE 12.1")
 
-		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG")
-		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG")
+		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG /fast")
+		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG /fast")
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:libc.lib")				
 				
 		set_property(CACHE CMAKE_BUILD_TYPE

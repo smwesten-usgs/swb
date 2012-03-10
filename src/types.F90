@@ -316,10 +316,7 @@ module types
     real (kind=T_SGL) :: rKcb_end = 0.7
 
     !> Crop coefficient, MINIMUM allowed value (Kc_min)
-    real (kind=T_SGL) :: rKc_min = 0.02
-
-    !> Crop coefficient, MAXIMUM allowed value (Kc_max)
-    real (kind=T_SGL) :: rKc_max = 1.3
+    real (kind=T_SGL) :: rKcb_min = 0.02
 
     !> Day of year (or GDD) for initial planting
     integer (kind=T_INT) :: iL_plant = 50
@@ -636,11 +633,11 @@ module types
       'inches','crop evapotranspiration (ETc)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('CROP_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('CROP_ET_ADJ',0,2,0,lFALSE, lFALSE, lFALSE, &
       'inches','ADJUSTED crop evapotranspiration (ETc_adj)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
+    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lFALSE, &
       'inches','evaporation from bare soil', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
@@ -1118,7 +1115,8 @@ module types
   !> @name Constants: Landuse input data format
   !> Configuration information for irrigation calculations
   !> @{
-  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_FAO56_DUAL = 0
+  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_NONE = 0
+  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_FAO56_DUAL = 1
   !> @}
 
   !> @name Constants: Landuse input data format

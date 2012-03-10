@@ -338,9 +338,8 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
 
   rTempArray = rDaily
 
-  rMassBalance = SUM(rTempArray(iSUM,:) &
-                    * real(STAT_INFO(:)%iMassBalanceConst, kind=T_DBL) ) &
-                    * dpVolConvert
+  rMassBalance = SUM((rTempArray(iSUM,:) * dpVolConvert ) &
+                    * real(STAT_INFO(:)%iMassBalanceConst, kind=T_DBL) )
 
   rTempArray(iSUM,:) = rTempArray(iSUM,:) * dpVolConvert
 

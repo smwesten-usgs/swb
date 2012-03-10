@@ -1358,6 +1358,7 @@ subroutine control_setModelOptions(sControlFile)
         call sm_thornthwaite_mather_Configure( sRecord )
       elseif ( trim(sOption) == "FAO56") then
           pConfig%iConfigureSM = CONFIG_SM_FAO56_CROP_COEFFICIENT
+          STAT_INFO(iBARE_SOIL_EVAP)%lActive = lTRUE
       else
         call Assert( lFALSE, "Illegal soil-moisture option specified" )
       end if

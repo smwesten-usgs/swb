@@ -30,7 +30,7 @@ module et_crop_coefficients
 
   ! now calculate Kcb for the given landuse
   if(iThreshold > pIRRIGATION%iL_late) then
-    pIRRIGATION%rKcb = pIRRIGATION%rKc_min
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
 
   elseif ( iThreshold > pIRRIGATION%iL_mid ) then
     frac = real(iThreshold - pIRRIGATION%iL_mid ) &
@@ -50,7 +50,7 @@ module et_crop_coefficients
   elseif ( iThreshold > pIRRIGATION%iL_plant ) then
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini
   else
-    pIRRIGATION%rKcb = pIRRIGATION%rKc_min
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
   endif
 
 end subroutine et_kc_UpdateCropCoefficient
@@ -77,7 +77,7 @@ subroutine et_kc_UpdateCropCoefficients(pGrd, pConfig)
 
     ! now calculate Kcb for the given landuse
     if(pConfig%iDayOfYear > pIRRIGATION%iL_late) then
-      pIRRIGATION%rKcb = pIRRIGATION%rKc_min
+      pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
 
     elseif ( pConfig%iDayOfYear > pIRRIGATION%iL_mid ) then
       f = real(pConfig%iDayOfYear - pIRRIGATION%iL_mid ) &
@@ -98,7 +98,7 @@ subroutine et_kc_UpdateCropCoefficients(pGrd, pConfig)
       pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini
 
     else
-      pIRRIGATION%rKcb = pIRRIGATION%rKc_min
+      pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
     endif
 
   enddo  ! loop over landuses
@@ -147,11 +147,15 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
   real (kind=T_SGL) :: rDenominator
   real (kind=T_SGL) :: rExponent
 
-  rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKc_min
-  rDenominator = pIRRIGATION%rKc_max - pIRRIGATION%rKc_min
+  rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKcb_min
+  rDenominator = pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_min
   rExponent = 1.0 + 0.5 * pIRRIGATION%rMeanPlantHeight * rM_PER_FOOT
 
-  r_fc = (rNumerator / rDenominator) ** rExponent
+  if(rDenominator > rNEAR_ZERO) then
+    r_fc = (rNumerator / rDenominator) ** rExponent
+  else
+    r_fc = 1.0
+  endif
 
   r_few = 1.0 - r_fc
 
@@ -172,7 +176,7 @@ function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
   ! [ RESULT ]
   real (kind=T_SGL) :: rKe
 
-  rKe = rKr * ( pIRRIGATION%rKc_max - pIRRIGATION%rKcb )
+  rKe = rKr * ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb )
 
 end function et_kc_CalcSurfaceEvaporationCoefficient
 
@@ -229,10 +233,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        cel => pGrd%Cells(iCol, iRow)
        cel%rBareSoilEvap = rZERO
        cel%rCropETc = rZERO
-       if ( cel%iActive == iINACTIVE_CELL ) cycle
-       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
-       if(cel%rSoilWaterCap <= rNear_ZERO &
-            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
+!       if ( cel%iActive == iINACTIVE_CELL ) cycle
+!       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
+!       if(cel%rSoilWaterCap <= rNear_ZERO &
+!            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
 
        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
@@ -247,17 +251,27 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=T_INT))
        endif
 
-       rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
-       r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
-       rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
-                   rKr ), r_few * pIRRIGATION%rKc_max )
-       rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+       if(pConfig%iConfigureSM == CONFIG_SM_FAO56_CROP_COEFFICIENT) then
+         rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
+         r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
+         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
+                   rKr ), r_few * pIRRIGATION%rKcb_mid )
+         rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
-       cel%rBareSoilEvap = cel%rReferenceET0 * rKe
-       cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs) &
-          + cel%rBareSoilEvap
-       cel%rAdjustedPotentialET = cel%rReferenceET0 * pIRRIGATION%rKcb &
-          + cel%rBareSoilEvap
+         cel%rBareSoilEvap = cel%rReferenceET0 * rKe
+         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs) &
+            + cel%rBareSoilEvap
+         ! this is the general term being used in the water balance
+         cel%rAdjustedPotentialET = cel%rCropETc
+       else
+         ! if we are not using the full FAO56 soil water balance approach,
+         ! we should just adjust the potential ET by the crop coefficient.
+         ! The Thornthwaite-Mather soil moisture retention tables already
+         ! account for the fact that water becomes more difficult to extract
+         ! as the APWL increases...
+         cel%rAdjustedPotentialET = cel%rReferenceET0 * pIRRIGATION%rKcb
+         cel%rCropETc = cel%rAdjustedPotentialET
+       endif
      enddo
    enddo
 

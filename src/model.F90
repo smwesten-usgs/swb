@@ -364,7 +364,7 @@ end if
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
 
-  if(pConfig%iConfigureSM == CONFIG_SM_FAO56_CROP_COEFFICIENT ) &
+  if(pConfig%iConfigureIrrigation == CONFIG_IRRIGATION_FAO56_DUAL ) &
     call et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
   call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
@@ -1196,11 +1196,10 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       ! calculate NET PRECIPITATION; assign value of zero if all of the
       ! GROSS PRECIP is captured by the INTERCEPTION process
-      dpNetPrecip = MAX( dpZERO, &
-                           real(cel%rGrossPrecip, kind=T_DBL) &
-                           - dpPotentialInterception )
+      dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
 
-      ! now backcalculate the actual INTERCEPTION value
+      if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+
       dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
 
       ! negative interception can only be generated if the user has supplied
@@ -1214,7 +1213,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           //"  iCol: "//trim(int2char(iCol)), &
           trim(__FILE__), __LINE__)
 
-      cel%rInterception = cel%rInterception
+      cel%rInterception = real(dpInterception, kind=T_DBL)
 !      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
 
       ! NOW we're through with INTERCEPTION calculations
@@ -2799,6 +2798,11 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   ! Copy the landuse codes over to the new IRRIGATION table
   pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
 
+  ! set the configuration option; if we're reading in the irrigation table,
+  ! it is assumed that the crop coefficients should be applied and
+  ! irrigation amounts calculated
+  pConfig%iConfigureIrrigation = CONFIG_IRRIGATION_FAO56_DUAL
+
   ! now allocate memory for READILY_EVAPORABLE_WATER subtable
   allocate ( pConfig%READILY_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
     pConfig%iNumberOfSoilTypes), stat=iStat )
@@ -2859,7 +2863,23 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
       "Array index out of bounds. Variable is iLandUseIndex with a value of " &
       //trim(int2char(iLandUseIndex)), trim(__FILE__),__LINE__)
 
+    ! store index value for future reference; allows us to easily match up
+    ! records in the landuse lookup table even if the irrigation table
+    ! is supplied in a different order
     pConfig%IRRIGATION(iLandUseIndex)%iLandUseType = iLandUseType
+
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription = trim(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "  landuse description ", &
+      pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rMeanPlantHeight
+    call Assert( iStat == 0, &
+      "Error reading mean plant height " &
+        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  mean plant height (feet) ", &
+      pConfig%IRRIGATION(iLandUseIndex)%rMeanPlantHeight
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini
@@ -2885,6 +2905,17 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
       pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
 
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
+    call Assert( iStat == 0, &
+      "Error reading minimum allowable crop coefficient (Kcb_min) " &
+         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
+    write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_min) ", &
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
+
+    ! we're reading an item and throwing it away...this contains the
+    ! planting date in days and months, which is useful for the user
+    call chomp(sRecord, sItem, sTAB)
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
     call Assert( iStat == 0, &
