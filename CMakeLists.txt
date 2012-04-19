@@ -18,8 +18,12 @@ endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
 #------------------------------------------------------------------------
 # Set basic project settings
 #------------------------------------------------------------------------
-project (swb Fortran)
-enable_language (Fortran)
+#
+# NOTE: must enable CXX as a language in order to use the GNU compiler
+#       toolchain
+#
+project (swb Fortran CXX)
+enable_language (Fortran CXX)
 
 SET(CPACK_GENERATOR "TGZ")
 include(CPack)
@@ -41,8 +45,10 @@ option (MAKEFILE_VERBOSE
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING
-       "Compile in DEBUG or RELEASE mode" )
+#set( CMAKE_BUILD_TYPE "Release" CACHE STRING
+#       "Compile in DEBUG or RELEASE mode" )
+set( CMAKE_BUILD_TYPE "Release" )
+
 
 #------------------------------------------------------------------------
 # What Fortran compiler are we using?
@@ -207,10 +213,10 @@ if(CMAKE_HOST_WIN32)
      message("  GCC_LIB = " ${GCC_LIB})
      message("  GFORTRAN_LIB = " ${GFORTRAN_LIB})
 
-     set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none")
+     set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -fwhole-file -ffree-line-length-none")
 
      set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -gdb -Wall -Wextra -fcheck=all")
-     set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} "-fexceptions -ffree-line-length-none")
+     set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} " -fexceptions -ffree-line-length-none")
 
      SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
 
@@ -257,18 +263,24 @@ if(CMAKE_HOST_WIN32)
   else()
 
     message(" <-- setting options for Intel Fortran on Windows -->")
-		
+
     set(CMAKE_INSTALL_PREFIX "d:/DOS" CACHE STRING
       "Location for installation of the executable")
 
 		set_target_properties(${SWB} PROPERTIES PLATFORM_TOOLSET "Intel C++ Compiler XE 12.1")
 
-		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG /fast")
-		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG /fast")
-    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:libc.lib")				
-				
+#		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG /Qprec")
+#		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG /Qprec")
+
+		set (CMAKE_Fortran_FLAGS_RELEASE "/O2 /libs:static /MG /fltconsistency")
+		set (CMAKE_Fortran_FLAGS_DEBUG "/O2 /libs:static /MG /fltconsistency")
+
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /NODEFAULTLIB:libc.lib")
+
 		set_property(CACHE CMAKE_BUILD_TYPE
 				PROPERTY STRINGS "Release" "Debug")
+
+    SET(CMAKE_CXX_COMPILER C:/Program Files (x86)/Intel/Composer XE 2011 SP1/bin/ia32/icl.exe)
 
      FIND_LIBRARY(USER32_LIB user32.lib
        PATHS
@@ -283,13 +295,13 @@ if(CMAKE_HOST_WIN32)
 		set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/netcdf.lib
 		CACHE FILEPATH "Location of NetCDF library")
 		set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disif.lib )
-    set(DISLIN_FORTRAN_LIB2 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disifc.lib )		
-    set(DISLIN_FORTRAN_LIB3 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disdll.lib )				
+    set(DISLIN_FORTRAN_LIB2 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disifc.lib )
+    set(DISLIN_FORTRAN_LIB3 ${PROJECT_SOURCE_DIR}/lib/win32/ifort/disdll.lib )
 
 	#  set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
 	  set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB})
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB2})		
-		set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB3})		
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB2})
+		set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB3})
     set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
     set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
 

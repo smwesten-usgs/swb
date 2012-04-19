@@ -26,17 +26,17 @@ module et_crop_coefficients
   ! [ LOCALS ]
   integer (kind=T_INT) :: i, j
 
-  real (kind=T_SGL) :: frac
+  real (kind=T_DBL) :: frac
 
   ! now calculate Kcb for the given landuse
   if(iThreshold > pIRRIGATION%iL_late) then
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
 
   elseif ( iThreshold > pIRRIGATION%iL_mid ) then
-    frac = real(iThreshold - pIRRIGATION%iL_mid ) &
-      / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid )
+    frac = real(iThreshold - pIRRIGATION%iL_mid, kind=T_DBL ) &
+      / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=T_DBL )
     pIRRIGATION%rKcb =  pIRRIGATION%rKcb_mid * frac &
-                         + pIRRIGATION%rKcb_end * (1. - frac)
+                         + pIRRIGATION%rKcb_end * (1_T_DBL - frac)
 
   elseif ( iThreshold > pIRRIGATION%iL_dev ) then
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_mid
@@ -241,10 +241,8 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
-       ! for purposes of calculating evaporation, we will include water sitting on
-       ! leaves as available for evaporation along with soil moisture in the
-       ! top few inches of soil
-       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture + cel%rInterception)
+
+       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
        if(pIRRIGATION%lUnitsAreDOY) then
          call et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
        else
