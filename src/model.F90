@@ -2372,10 +2372,11 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
 
     ! is target cell inactive?
     if ( iTgt_Row > 0 .and. iTgt_Row <= pGrd%iNY  &
-        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX  &
-        .and. pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
-      iTgt_Row = iROUTE_LEFT_GRID
-      iTgt_Col = iROUTE_LEFT_GRID
+        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX ) then
+      if( pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
+        iTgt_Row = iROUTE_LEFT_GRID
+        iTgt_Col = iROUTE_LEFT_GRID
+      endif
     endif
 
     ! now assign the value of the targets to the iTgt element of the
@@ -2389,15 +2390,22 @@ enddo
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
-      if(pGrd%Cells(iCol,iRow)%iTgt_Col==iCol .and. pGrd%Cells(iCol,iRow)%iTgt_Row==iRow) then
-        write(unit=LU_LOG,FMT=*) 'ALERT** target is the same as the originating cell'
-        write(unit=LU_LOG,FMT=*) '  ORIG   (iRow, iCol) : ',iRow, iCol
-        write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ',pGrd%Cells(iCol,iRow)%iFlowDir
-        write(unit=LU_LOG,FMT=*) '  TARGET (iRow, iCol) : ',pGrd%Cells(iCol,iRow)%iTgt_Row, &
-          pGrd%Cells(iCol,iRow)%iTgt_Col
-        write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ' , &
-          pGrd%Cells(pGrd%Cells(iCol,iRow)%iTgt_Row,pGrd%Cells(iCol,iRow)%iTgt_Col)%iFlowDir
-      end if
+      ! we only want to perform this test if the target cell row and column
+      ! are within legal values, else we segfault!
+      if ( iTgt_Row > 0 .and. iTgt_Row <= pGrd%iNY  &
+        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX ) then
+
+        if(pGrd%Cells(iCol,iRow)%iTgt_Col==iCol .and. pGrd%Cells(iCol,iRow)%iTgt_Row==iRow) then
+          write(unit=LU_LOG,FMT=*) 'ALERT** target is the same as the originating cell'
+          write(unit=LU_LOG,FMT=*) '  ORIG   (iRow, iCol) : ',iRow, iCol
+          write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ',pGrd%Cells(iCol,iRow)%iFlowDir
+          write(unit=LU_LOG,FMT=*) '  TARGET (iRow, iCol) : ',pGrd%Cells(iCol,iRow)%iTgt_Row, &
+            pGrd%Cells(iCol,iRow)%iTgt_Col
+          write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ' , &
+            pGrd%Cells(pGrd%Cells(iCol,iRow)%iTgt_Row,pGrd%Cells(iCol,iRow)%iTgt_Col)%iFlowDir
+        end if
+
+      endif
     enddo
   enddo
 
@@ -2665,6 +2673,13 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   call Assert ( iStat == 0, &
     "Could not allocate space for landuse data structure" )
 
+  ! now allocate memory for IRRIGATION subtable
+  ! even if irrigation is not actively being used, this must be in place so that
+  ! the default growing-degree day baseline temps are available elsewhere in the code
+  allocate ( pConfig%IRRIGATION( pConfig%iNumberOfLanduses ), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
+
   iSize = size(pConfig%LU,1)
 
   ! now allocate memory for SOILS subtable within landuse table
@@ -2758,6 +2773,9 @@ read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowi
 
   end do LU_READ
 
+  ! Copy the landuse codes over to the new IRRIGATION table
+  pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
+
   ! That's all!
   close ( unit=LU_LOOKUP )
 
@@ -2781,26 +2799,21 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
 
-  ! open landuse file
+  ! open IRRIGATION file
   open ( LU_LOOKUP, file=pConfig%sIrrigationLookupFilename, &
     status="OLD", iostat=iStat )
   call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
     "Open failed for file: " // pConfig%sIrrigationLookupFilename )
 
-  ! now allocate memory for IRRIGATION subtable
-  allocate ( pConfig%IRRIGATION( pConfig%iNumberOfLanduses ), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
-
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
     //"before the irrigation lookup table may be read.", trim(__FILE__),__LINE__)
-
-  ! Copy the landuse codes over to the new IRRIGATION table
-  pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
 
   ! set the configuration option; if we're reading in the irrigation table,
   ! it is assumed that the crop coefficients should be applied and
   ! irrigation amounts calculated
+
+
+  !!!!! WHY IS THIS HARD-WIRED >??????
   pConfig%iConfigureIrrigation = CONFIG_IRRIGATION_FAO56_DUAL
 
   ! now allocate memory for READILY_EVAPORABLE_WATER subtable
@@ -3669,27 +3682,31 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
     ! values read from the time series file. Thus, this test will always
     ! be true on the first day of the simulation when reading from a
     ! single-site file.
-    if(.not. (pConfig%iYear == pTS%iYear &
-      .and. pConfig%iMonth == pTS%iMonth &
-      .and. pConfig%iDay == pTS%iDay &
-      .and. (.not. pConfig%lFirstDayOfSimulation) ) ) then
-      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
-      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
-      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
-        //TRIM(int2char(pTS%iDay))//"/" &
-        //TRIM(int2char(pTS%iYear))
-      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
-        //TRIM(int2char(pConfig%iDay))//"/" &
-        //TRIM(int2char(pConfig%iYear))
+
+    if (.not. pConfig%lFirstDayOfSimulation) then
+
+      if(.not. ( (pConfig%iYear == pTS%iYear) &
+         .and.   (pConfig%iMonth == pTS%iMonth) &
+         .and.   (pConfig%iDay == pTS%iDay) ) ) then
+        write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
+        write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
+        write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
+          //TRIM(int2char(pTS%iDay))//"/" &
+          //TRIM(int2char(pTS%iYear))
+        write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
+          //TRIM(int2char(pConfig%iDay))//"/" &
+          //TRIM(int2char(pConfig%iYear))
 #ifdef STRICT_DATE_CHECKING
-      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
+        call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
 #else
-      ! reset date to that of the input time-series data
-      pConfig%iYear = pTS%iYear
-      pConfig%iMonth = pTS%iMonth
-      pConfig%iDay = pTS%iDay
-      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
+        ! reset date to that of the input time-series data
+        pConfig%iYear = pTS%iYear
+        pConfig%iMonth = pTS%iMonth
+        pConfig%iDay = pTS%iDay
+        pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
 #endif
+      endif
+
     endif
 
     exit

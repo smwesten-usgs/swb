@@ -28,6 +28,7 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type ( T_CELL ),pointer :: cel
   real (kind=T_SGL) :: rDepletionFraction
+  real (kind=T_DBL) :: rDepletionAmount
 
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
@@ -54,13 +55,18 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
         rDepletionFraction = 1_T_SGL - (cel%rSoilMoisturePct * 0.01)
 
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
-          cel%rIrrigationAmount = (cel%rSoilWaterCap - cel%rSoilMoisture)
-          cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW &
-                                  * cel%rIrrigationAmount &
-                                  * pIRRIGATION%rIrrigationEfficiency_GW
-          cel%rIrrigationFromSW = (1.0 - pIRRIGATION%rFractionOfIrrigationFromGW ) &
-                                  * cel%rIrrigationAmount &
-                                  * pIRRIGATION%rIrrigationEfficiency_SW
+          rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+          cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW, &
+                                      kind=T_DBL ) &
+                                  * rDepletionAmount &
+                                  * REAL(pIRRIGATION%rIrrigationEfficiency_GW, &
+                                  kind=T_DBL )
+          cel%rIrrigationFromSW = real(1.0 - pIRRIGATION%rFractionOfIrrigationFromGW, &
+                                      kind=T_DBL ) &
+                                  * rDepletionAmount &
+                                  * real(pIRRIGATION%rIrrigationEfficiency_SW, &
+                                      kind=T_DBL )
+          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
         else
           cel%rIrrigationAmount = rZERO
           cel%rIrrigationFromGW = rZERO

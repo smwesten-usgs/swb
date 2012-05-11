@@ -664,7 +664,8 @@ subroutine stats_OpenMSBReport()
       // 'TOTAL Surface Storage (snow),' &
       // 'Change in Surface Storage (snow),' &
       // 'Snowmelt,' &
-      // 'Irrigation,' &
+      // 'Irrigation from Surface Water,' &
+      // 'Irrigation from Groundwater,' &
       // 'TOTAL Soil Moisture Storage,' &
       // 'Change in Soil Moisture Storage, Surface Flow Out of Grid,' &
       // 'Rejected Recharge,' &
@@ -700,7 +701,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
-                  + rDaily(iSUM,iIRRIGATION) &
+                  + rDaily(iSUM,iIRRIGATION_FROM_SW) &
+                  + rDaily(iSUM,iIRRIGATION_FROM_GW) &
                   - rDaily(iSUM,iOUTFLOW) &
                   - rDaily(iSUM,iRUNOFF_OUTSIDE) &
                   - rDaily(iSUM,iREJECTED_RECHARGE) &
@@ -712,7 +714,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   - rDaily(iSUM,iRECHARGE)
 
       write( unit=LU_MSB_REPORT, &
-           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",22(F14.2,","),F14.2)' ) &
+           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",23(F14.2,","),F14.2)' ) &
                          iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
                          SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
                          SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
@@ -729,7 +731,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iSNOWCOVER)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*dpVolConvert, &
                          rDaily(iSUM,iSNOWMELT)*dpVolConvert, &
-                         rDaily(iSUM, iIRRIGATION)*dpVolConvert, &
+                         rDaily(iSUM, iIRRIGATION_FROM_SW)*dpVolConvert, &
+                         rDaily(iSUM, iIRRIGATION_FROM_GW)*dpVolConvert, &
                          rDaily(iSUM,iSOIL_MOISTURE)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SOIL_MOIST)*dpVolConvert, &
                          rDaily(iSUM,iRUNOFF_OUTSIDE)*dpVolConvert, &

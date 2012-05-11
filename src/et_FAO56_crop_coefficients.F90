@@ -257,10 +257,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
-         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs) &
-            + cel%rBareSoilEvap
+         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs) ! &
+!            + cel%rBareSoilEvap
          ! this is the general term being used in the water balance
-         cel%rAdjustedPotentialET = cel%rCropETc
+         cel%rAdjustedPotentialET = cel%rCropETc + cel%rBareSoilEvap
        else
          ! if we are not using the full FAO56 soil water balance approach,
          ! we should just adjust the potential ET by the crop coefficient.

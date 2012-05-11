@@ -303,7 +303,7 @@ module types
     !> Mean plant or crop height, feet
     real (kind=T_SGL) :: rMeanPlantHeight = 1.5
 
-    !> Crop coefficient, basal, for a given day
+    !> Crop coefficient, basal, for a given day (calculated in code)
     real (kind=T_SGL) :: rKcb
 
     !> Crop coefficient, basal, initial growth phase (Kcb_ini)

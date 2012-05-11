@@ -107,7 +107,7 @@ if(OPTION__STRICT_DATE_CHECKING)
 endif()
 
 option (OPTION__DEBUG_PRINT
-      "Compile the code with extra debug print options enabled?" OFF )
+      "Compile the code with extra debug print options enabled?" ON )
 if(OPTION__DEBUG_PRINT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
 endif()
@@ -242,7 +242,7 @@ if(CMAKE_HOST_WIN32)
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe
+#           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe
      )
 
      add_custom_target(makelib
@@ -310,7 +310,7 @@ if(CMAKE_HOST_WIN32)
 
 		set(CMAKE_INSTALL_PREFIX "D:/dos" CACHE PATHFILE "Installation directory")
 
-		add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+		add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/*.exe ${CMAKE_INSTALL_PREFIX}
 		)
 
   endif()

@@ -85,6 +85,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
+
       cel => pGrd%Cells(iCol,iRow)
 
       if ( cel%iActive == iINACTIVE_CELL ) cycle
@@ -118,7 +119,10 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
        ! calculate APWL from T-M table
        cel%rSM_AccumPotentWatLoss = &
-         grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
+         grid_SearchColumn(pGrd=gWLT, &
+                           rXval=cel%rSoilWaterCap, &
+                           rZval=cel%rSoilMoisture, &
+                           rNoData=-rONE)
 
 #else
 
