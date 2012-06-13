@@ -996,6 +996,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   real (kind=T_SGL) :: rW
   integer (kind=T_INT) :: iCol,iRow
   real (kind=T_SGL) :: rGDD_BaseTemp, rGDD_MaxTemp
+  logical (kind=T_LOGICAL) :: lAssertTest
 
   ! zero out growing degree day at start of calendar year
   if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
@@ -1009,7 +1010,11 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
       ! cap the maximum value used in GDD calculations on the basis of the value
       ! provided by user...
 
-      call assert(cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses, &
+
+      lAssertTest = cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses
+
+      if(.not. lAssertTest) &
+        call assert(lAssertTest, &
         "Array index out of bounds. Variable is iLandUseIndex with a value of " &
         //trim(int2char(cel%iLandUseIndex)), trim(__FILE__),__LINE__)
 
@@ -1847,6 +1852,7 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   real (kind=T_SGL) :: rP,rR,rDelta
   type (T_CELL),pointer :: cel
   type (T_CELL),pointer :: target_cel
+  logical (kind=T_LOGICAL) :: lAssertTest
 
 
   ! Reset the upstream flows (note that iOrderCount, iOrderCol, and iOrderRow are globals)
@@ -1875,15 +1881,21 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
   ! MUST screen target values to ensure we don't start attempting
   ! manipulation of memory that is out of bounds!!
-  call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=T_LOGICAL), &
-    "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
-    //"  Col = "//int2char(iOrderCol(ic)), &
-    trim(__FILE__),__LINE__)
-  call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=T_LOGICAL), &
-    "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
-    //"  Col = "//int2char(iOrderCol(ic)), &
-    trim(__FILE__),__LINE__)
+  lAssertTest = iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY
+  if (.not. lAssertTest) &
+    call Assert(lAssertTest, &
+      "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
+      //"  Col = "//int2char(iOrderCol(ic)), &
+      trim(__FILE__),__LINE__)
 
+  lAssertTest = iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX
+  if (.not. lAssertTest) &
+    call Assert(lAssertTest, &
+      "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
+      //"  Col = "//int2char(iOrderCol(ic)), &
+      trim(__FILE__),__LINE__)
+
+  ! we're past the sanity checks; OK to set pointer location
   target_cel => pGrd%Cells(iTgt_Col,iTgt_Row)
 
 #ifdef STREAM_INTERACTIONS
@@ -2150,14 +2162,20 @@ function rf_model_CellRunoff(pConfig, cel, iDayOfYear) result(rOutFlow)
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rOutFlow
   ! [ LOCALS ]
+  logical (kind=T_LOGICAL) :: lAssertTest
 
   if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_CURVE_NUMBER) then
     rOutFlow = runoff_CellRunoff_CurveNumber(pConfig, cel, iDayOfYear)
-    call Assert(rOutFlow >= rZERO,"CN outflow is negative", &
+    lAssertTest = rOutFlow >= rZERO
+    if(.not. lAssertTest) &
+      call Assert(lFALSE,"CN outflow is negative", &
       TRIM(__FILE__),__LINE__)
+
   else if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_GREEN_AMPT) then
     rOutFlow = rf_model_CellRunoff_GreenAmpt(pConfig, cel, iDayOfYear)
-    call Assert(rOutFlow >= rZERO,"Green-Ampt outflow is negative", &
+    lAssertTest = rOutFlow >= rZERO
+    if(.not. lAssertTest) &
+      call assert(lFALSE, "Green-Ampt outflow is negative", &
       TRIM(__FILE__),__LINE__)
   end if
 

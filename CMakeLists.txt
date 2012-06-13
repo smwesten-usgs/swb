@@ -45,10 +45,12 @@ option (MAKEFILE_VERBOSE
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
+#************************************************************************
+#***  SET BUILD TYPE HERE ***********************************************
+#************************************************************************
 #set( CMAKE_BUILD_TYPE "Release" CACHE STRING
 #       "Compile in DEBUG or RELEASE mode" )
-set( CMAKE_BUILD_TYPE "Release" )
-
+set( CMAKE_BUILD_TYPE "Profile" )
 
 #------------------------------------------------------------------------
 # What Fortran compiler are we using?
@@ -107,7 +109,7 @@ if(OPTION__STRICT_DATE_CHECKING)
 endif()
 
 option (OPTION__DEBUG_PRINT
-      "Compile the code with extra debug print options enabled?" ON )
+      "Compile the code with extra debug print options enabled?" OFF )
 if(OPTION__DEBUG_PRINT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
 endif()
@@ -214,9 +216,9 @@ if(CMAKE_HOST_WIN32)
      message("  GFORTRAN_LIB = " ${GFORTRAN_LIB})
 
      set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -fwhole-file -ffree-line-length-none")
-
      set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -gdb -Wall -Wextra -fcheck=all")
      set (CMAKE_Fortran_FLAGS_DEBUG ${CMAKE_Fortran_FLAGS_DEBUG} " -fexceptions -ffree-line-length-none")
+     set (CMAKE_Fortran_FLAGS_PROFILE "-O2 -fwhole-file -ffree-line-length-none -pg")
 
      SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
 
@@ -428,17 +430,20 @@ message("--------------------------------------------------------------------")
 message("   Summary of CMAKE environment variables")
 message("--------------------------------------------------------------------")
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-message("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
+message( " ")
 message("CMAKE_AR: " ${CMAKE_AR})
 message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
+message("CMAKE Fortran flags (Profile):      " ${CMAKE_Fortran_FLAGS_PROFILE})
 message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
-MESSAGE("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
+message( " ")
+MESSAGE("Install to directory: " ${CMAKE_INSTALL_PREFIX})
 message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
 message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
 message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
+message("CMAKE_LINK_FLAGS: " ${CMAKE_LINK_FLAGS})
 message( " ")
 message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
 message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})

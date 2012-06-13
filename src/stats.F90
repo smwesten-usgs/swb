@@ -521,7 +521,7 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
     rAnnual(iSUM,iVarNum) = rAnnual(iSUM,iVarNum) + rDaily(iSUM,iVarNum)
 
     call Assert &
-     (LOGICAL(INT(rDaily(iLENGTH,iVarNum),kind=T_INT)==iNumGridCells,kind=T_LOGICAL), &
+     (INT(rDaily(iLENGTH,iVarNum),kind=T_INT) == iNumGridCells, &
       "stats.f95: call to UpdateAllAccumulators failed; number of calls" &
       // " must be equal to the number of grid cells.")
 
