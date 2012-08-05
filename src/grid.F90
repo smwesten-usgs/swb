@@ -904,7 +904,7 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
   logical (kind=T_LOGICAL) :: lConform
   ! LOCALS
   real (kind=T_SGL) :: rTol
-  real (kind=T_SGL), parameter :: rDEFAULT_TOLERANCE = 1.0e-2_T_SGL
+  real (kind=T_SGL), parameter :: rDEFAULT_TOLERANCE = 0.5_T_SGL
 
   if ( present ( rTolerance ) ) then
       rTol = rTolerance * ( pGrd1%rX1 - pGrd1%rX0 )
@@ -912,18 +912,46 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
       rTol = rDEFAULT_TOLERANCE * ( pGrd1%rX1 - pGrd1%rX0 )
   end if
 
-  if ( pGrd1%iNX /= pGrd2%iNX .or. &
-       pGrd1%iNY /= pGrd2%iNY .or. &
-       abs ( pGrd1%rX0 - pGrd2%rX0 ) > rTol .or. &
-       abs ( pGrd1%rY0 - pGrd2%rY0 ) > rTol .or. &
-       abs ( pGrd1%rX1 - pGrd2%rX1 ) > rTol .or. &
-       abs ( pGrd1%rY1 - pGrd2%rY1 ) > rTol ) then
-      lConform = lFALSE
-  else
-      lConform = lTRUE
-  end if
+  lConform = lTRUE
 
-  return
+  if ( pGrd1%iNX /= pGrd2%iNX ) then
+    lConform = lFALSE
+    write(LU_LOG,fmt="(a)") "Unequal number of columns between grids"
+  endif
+
+  if ( pGrd1%iNY /= pGrd2%iNY ) then
+    lConform = lFALSE
+    write(LU_LOG,fmt="(a)") "Unequal number of rows between grids"
+  endif
+
+  if( abs ( pGrd1%rX0 - pGrd2%rX0 ) > rTol ) then
+     write(LU_LOG,fmt="(a)") "Lower left-hand side X coordinates don't match:"
+     write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+       pGrd1%rX0, pGrd2%rX0
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rY0 - pGrd2%rY0 ) > rTol ) then
+    write(LU_LOG,fmt="(a)") "Lower left-hand side Y coordinates don't match:"
+    write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+      pGrd1%rY0, pGrd2%rY0
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rX1 - pGrd2%rX1 ) > rTol ) then
+     write(LU_LOG,fmt="(a)") "Upper right-hand side X coordinates don't match:"
+     write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+       pGrd1%rX1, pGrd2%rX1
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rY1 - pGrd2%rY1 ) > rTol ) then
+    write(LU_LOG,fmt="(a)") "Upper right-hand side X coordinates don't match:"
+    write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+      pGrd1%rY1, pGrd2%rY1
+    lConform = lFALSE
+  endif
+
 end function grid_Conform
 !!***
 !--------------------------------------------------------------------------
