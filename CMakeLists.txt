@@ -50,7 +50,8 @@ option (MAKEFILE_VERBOSE
 #************************************************************************
 #set( CMAKE_BUILD_TYPE "Release" CACHE STRING
 #       "Compile in DEBUG or RELEASE mode" )
-set( CMAKE_BUILD_TYPE "Profile" )
+#set( CMAKE_BUILD_TYPE "Profile" )
+set( CMAKE_BUILD_TYPE "Release" )
 
 #------------------------------------------------------------------------
 # What Fortran compiler are we using?
@@ -91,7 +92,7 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" OFF)
+      "Compile the code with NETCDF support?" ON)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
 endif()

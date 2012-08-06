@@ -204,7 +204,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT="('    grid cell size: ',f8.1)") rGridCellSize
       ! Now, build the grid
       pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_CELL_GRID)
-      call assert(pGrd%rGridCellSize == rGridCellSize, "Grid cell size entered in the " &
+      call assert(abs(pGrd%rGridCellSize - rGridCellSize) < 0.5, "Grid cell size entered in the " &
         //"control file ("//trim(real2char(rGridCellSize))//")~does not" &
         //" match calculated grid cell size ("//trim(real2char(pGrd%rGridCellSize)) &
         //"). ~Check the control file.", &

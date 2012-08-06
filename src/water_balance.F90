@@ -387,7 +387,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       end if
 
       cel%rMSB = cel%rNetRainfall &
-                 + cel%rInterception &
                  + cel%rSnowMelt &
                  + cel%rInFlow &
                  + cel%rIrrigationAmount &

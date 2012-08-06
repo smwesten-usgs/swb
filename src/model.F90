@@ -1209,7 +1209,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       ! negative interception can only be generated if the user has supplied
       ! *negative* values for GROSS PRECIPITATION; this has happened,
-      ! mostly due to goofy interpolation schemes that generate pockets
+      ! mostly due to interpolation schemes that generate pockets
       ! of negative precip values
       if(dpInterception < dpZERO) &
         call Assert(lFALSE, &

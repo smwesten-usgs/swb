@@ -1,6 +1,6 @@
 rm(list=ls())
 
-setwd("D:/SMWData/Source_Code/SWB_TEST_CASES/ELM_Jen")
+setwd("D:/SMWData/Source_Code/SWB_TEST_CASES/Coshocton/swb")
 
 cex.main=1.0
 

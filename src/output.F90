@@ -390,6 +390,10 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
   real (kind=T_SGL), intent(in) :: rChangeInStorage
   real (kind=T_SGL), intent(in) :: rDailyRecharge
 
+  !@TODO
+  ! figure out why *.SSF files are not written to if they reference the
+  ! first column (colnum=1)
+
   ! [ LOCALS ]
   integer (kind=T_INT) :: iIndex
   integer (kind=T_INT) :: iVariableNumber
