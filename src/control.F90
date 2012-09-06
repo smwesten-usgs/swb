@@ -1421,7 +1421,7 @@ subroutine control_setModelOptions(sControlFile)
       ! actual call to "model_Main" subroutine
       call model_Main( pGrd, pConfig, pGraph)
 
-    else if ( sItem == "SOLVE_NO_TS_DATA" ) then
+    else if ( sItem == "SOLVE_NO_TS_DATA" .or. sItem == "SOLVE_NO_TS_FILE" ) then
       write(UNIT=LU_LOG,FMT=*) &
         "Solving the model - no single-station time series data will be read"
       flush(UNIT=LU_LOG)
