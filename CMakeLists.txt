@@ -13,9 +13,9 @@ enable_language (Fortran)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
-set(PACKAGE_STRING "swb 1.0")
+set(PACKAGE_STRING "swb 1.0.1")
 set(PACKAGE_TARNAME "swb")
-set(PACKAGE_VERSION "1.0")
+set(PACKAGE_VERSION "1.0.1")
 
 cmake_minimum_required(VERSION 2.6)
 set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26;c:/Program Files (x86)")
@@ -27,6 +27,10 @@ option (MAKEFILE_VERBOSE
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
+
+set_property(CACHE CMAKE_BUILD_TYPE
+        PROPERTY STRINGS "Release" "Debug")
+
 set( CMAKE_BUILD_TYPE "Release" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
@@ -114,7 +118,7 @@ if(CMAKE_HOST_WIN32)
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
-     set (MINGW_BASE_DIR "c:/MinGW-32" CACHE FILEPATH "Path to base MinGW install")
+     set (MINGW_BASE_DIR "c:/MinGW32" CACHE FILEPATH "Path to base MinGW install")
      set (CMAKE_MAKE_PROGRAM ${MINGW_BIN_DIR}/bin/make.exe CACHE FILEPATH "MinGW make executable")
 
      set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/libnetcdf.a
@@ -122,9 +126,9 @@ if(CMAKE_HOST_WIN32)
      set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/disgf.a )
 
      set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)
-     set(USER32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libuser32.a)
-     set(GDI32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libgdi32.a)
-     set(OPENGL32_LIB ${MINGW_BASE_DIR}/i686-pc-mingw32/lib/libopengl32.a)
+     set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
+     set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
+     set(OPENGL32_LIB ${MINGW_BASE_DIR}/lib/libopengl32.a)
 
      set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/gfortran_mingw )
 

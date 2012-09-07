@@ -56,6 +56,26 @@ edit_cache:
 edit_cache/fast: edit_cache
 .PHONY : edit_cache/fast
 
+# Special rule for the target package
+package: preinstall
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool..."
+	"C:\Program Files (x86)\CMake 2.8\bin\cpack.exe" --config ./CPackConfig.cmake
+.PHONY : package
+
+# Special rule for the target package
+package/fast: package
+.PHONY : package/fast
+
+# Special rule for the target package_source
+package_source:
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
+	"C:\Program Files (x86)\CMake 2.8\bin\cpack.exe" --config ./CPackSourceConfig.cmake D:/SMWData/Source_Code/swb/build/win32/CPackSourceConfig.cmake
+.PHONY : package_source
+
+# Special rule for the target package_source
+package_source/fast: package_source
+.PHONY : package_source/fast
+
 # Special rule for the target rebuild_cache
 rebuild_cache:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Running CMake to regenerate build system..."
@@ -137,6 +157,32 @@ swb/fast:
 .PHONY : swb/fast
 
 #=============================================================================
+# Target rules for targets named swblib
+
+# Build rule for target.
+swblib: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 swblib
+.PHONY : swblib
+
+# fast build rule for target.
+swblib/fast:
+	$(MAKE) -f src\CMakeFiles\swblib.dir\build.make src/CMakeFiles/swblib.dir/build
+.PHONY : swblib/fast
+
+#=============================================================================
+# Target rules for targets named swbread
+
+# Build rule for target.
+swbread: cmake_check_build_system
+	$(MAKE) -f CMakeFiles\Makefile2 swbread
+.PHONY : swbread
+
+# fast build rule for target.
+swbread/fast:
+	$(MAKE) -f src\CMakeFiles\swbread.dir\build.make src/CMakeFiles/swbread.dir/build
+.PHONY : swbread/fast
+
+#=============================================================================
 # Target rules for targets named swbstats
 
 # Build rule for target.
@@ -151,16 +197,20 @@ swbstats/fast:
 
 # Help Target
 help:
-	@$(CMAKE_COMMAND) -E echo "The following are some of the valid targets for this Makefile:"
-	@$(CMAKE_COMMAND) -E echo "... all (the default if no target is provided)"
-	@$(CMAKE_COMMAND) -E echo "... clean"
-	@$(CMAKE_COMMAND) -E echo "... depend"
-	@$(CMAKE_COMMAND) -E echo "... copy"
-	@$(CMAKE_COMMAND) -E echo "... edit_cache"
-	@$(CMAKE_COMMAND) -E echo "... makelib"
-	@$(CMAKE_COMMAND) -E echo "... rebuild_cache"
-	@$(CMAKE_COMMAND) -E echo "... swb"
-	@$(CMAKE_COMMAND) -E echo "... swbstats"
+	@echo The following are some of the valid targets for this Makefile:
+	@echo ... all (the default if no target is provided)
+	@echo ... clean
+	@echo ... depend
+	@echo ... copy
+	@echo ... edit_cache
+	@echo ... makelib
+	@echo ... package
+	@echo ... package_source
+	@echo ... rebuild_cache
+	@echo ... swb
+	@echo ... swblib
+	@echo ... swbread
+	@echo ... swbstats
 .PHONY : help
 
 
