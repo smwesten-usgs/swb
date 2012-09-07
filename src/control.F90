@@ -1434,12 +1434,12 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
 
       call Chomp ( sRecord, sArgument )
-      call Assert (LOGICAL(len_trim(sArgument)>0,kind=T_LOGICAL), &
+      call Assert ( len_trim(sArgument) > 0, &
          "Must specify the year to end simulation" )
       read(sArgument,FMT=*,iostat=iStat) pConfig%iEndYear
       call Assert( iStat == 0, &
          "Cannot read integer data value for ending year of simulation" )
-      call Assert( LOGICAL(pConfig%iStartYear<=pConfig%iEndYear,kind=T_LOGICAL), &
+      call Assert( pConfig%iStartYear <= pConfig%iEndYear, &
          "Ending year must be equal to or greater than the beginning year" )
       pConfig%iEndJulianDay = julian_day ( pConfig%iEndYear, 12, 31)
       pConfig%iCurrentJulianDay = pConfig%iStartJulianDay
