@@ -1241,6 +1241,18 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "GRID_TEST" ) then
+      write(UNIT=LU_LOG,FMT=*) "Testing the value obtained when reading a real valued grid"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      write(UNIT=LU_LOG,FMT=*) "Testing the ability to read from grid: "//dquote(sArgument)
+      input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+      if(.not. grid_Conform( pGrd, input_grd ) ) &
+        write(UNIT=LU_LOG,FMT=*) "INPUT GRID DOES NOT ALIGN WITH PROJECT COORDINATES..."
+      call stats_WriteMinMeanMax( LU_LOG, dquote(sArgument), input_grd%rData)
+      flush(UNIT=LU_LOG)
+
     else if ( sItem == "INITIAL_SNOW_COVER" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading initial snow cover"
       call Chomp ( sRecord, sOption )
