@@ -2504,7 +2504,7 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
     !!  NOTE: This may not be the correct way to deal with indeterminate
     !!        flow directions!!
     !!
-      write ( unit=sBuf, fmt='("Flow direction grid element (",i3,",",i3,' &
+      write ( unit=sBuf, fmt='("Flow direction grid element (",i5,",",i5,' &
         // '") contains undefined flow direction with integer value: ",i4)' ) &
           iCol,iRow,pGrd%Cells(iCol,iRow)%iFlowDir
       write(UNIT=LU_LOG,FMT=*)  sBuf

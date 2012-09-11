@@ -3,7 +3,9 @@ build/linux_x64/src
 *CMake*
 *cmake*
 *.o
+*.obj
 *.mod
+*.ini
 *.csv
 *LOGFILE*.txt
 webpages/styles
@@ -11,4 +13,3 @@ webpages/Templates
 webpages/Library
 webpages/includes
 webpages/images
-
