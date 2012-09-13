@@ -124,6 +124,7 @@ if(CMAKE_HOST_WIN32)
        set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
         CACHE FILEPATH "Location of NetCDF library")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
+       set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
        set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
        set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGW_BASE_DIR}/lib/libopengl32.a)

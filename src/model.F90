@@ -3373,7 +3373,7 @@ integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
   ymax = pGrd%rY1
 
   if ( pConfig%iOutputFormat == OUTPUT_ARC ) then
-    if(MAXVAL(pGrd%Cells%rMSB)>0.1) then
+    if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < 0.1) then
       call grid_WriteArcGrid("MASS_BALANCE" // &
         trim(sDayText) // "." //trim(sBufSuffix), &
         xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
