@@ -18,7 +18,6 @@ set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.0.1")
 
 cmake_minimum_required(VERSION 2.6)
-set(CMAKE_SYSTEM_IGNORE_PATH "c:/Python26;c:/Program Files (x86)")
 
 #
 option (MAKEFILE_VERBOSE
@@ -34,6 +33,12 @@ set_property(CACHE CMAKE_BUILD_TYPE
 set( CMAKE_BUILD_TYPE "Release" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
+set_property(CACHE PLATFORM_TYPE
+        PROPERTY STRINGS "x86" "x64")
+
+set( PLATFORM_TYPE "x64" CACHE STRING
+       "Compile for 32-bit or 64-bit" )
+
 #------------------------------------------------------------------------
 # What Fortran compiler are we using?
 #------------------------------------------------------------------------
@@ -48,9 +53,6 @@ option (TARGET__SWB_EXECUTABLE
 
 option (TARGET__SWB_LIBRARY
       "Compile SWB as a library?" ON)
-
-option (TARGET__SWBREAD
-      "Compile the swbread application?" ON)
 
 option (TARGET__SWBSTATS
       "Compile the swbstats application?" ON)
@@ -110,42 +112,55 @@ if(CMAKE_HOST_WIN32)
 
    if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
 
-     message(" <-- setting options for gfortran on MinGW (32-bit) -->")
+     message(" <-- setting options for gfortran on MinGW (32-bit/64-bit) -->")
 
-     set (CMAKE_Fortran_FLAGS_RELEASE "-Ofast -fwhole-file -ffree-line-length-none -static-libgcc -static-libgfortran")
      set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran")
 
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
-     set (MINGW_BASE_DIR "c:/MinGW32" CACHE FILEPATH "Path to base MinGW install")
-     set (CMAKE_MAKE_PROGRAM ${MINGW_BIN_DIR}/bin/make.exe CACHE FILEPATH "MinGW make executable")
-
-     set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/libnetcdf.a
-       CACHE FILEPATH "Location of NetCDF library")
-     set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win32/gfortran_mingw/disgf.a )
+     if( PLATFORM_TYPE MATCHES "x86" )
+       set (MINGW_BASE_DIR "c:/MinGW32" CACHE FILEPATH "Path to base MinGW install")
+       set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
+        CACHE FILEPATH "Location of NetCDF library")
+       set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
+       set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
+       set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
+       set(OPENGL32_LIB ${MINGW_BASE_DIR}/lib/libopengl32.a)
+       set(GCC_LIB ${MINGW_BASE_DIR}/lib/libgcc.a)
+       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -ffree-line-length-none -static-libgcc -static-libgfortran")
+     else()
+       set (MINGW_BASE_DIR "c:/MinGW64" CACHE FILEPATH "Path to base MinGW install")
+       set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdff.a
+         CACHE FILEPATH "Location of NetCDF Fortran library")
+       set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdf.a
+         CACHE FILEPATH "Location of NetCDF C library")
+       set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
+       set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
+       set(USER32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libuser32.a)
+       set(GDI32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libgdi32.a)
+       set(OPENGL32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libopengl32.a)
+       set(GCC_LIB ${MINGW_BASE_DIR}/lib/gcc/x86_64-w64-mingw32/4.7.1/libgcc.a)
+       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -floop-parallelize-all -ffree-line-length-none -static-libgcc -static-libgfortran")
+     endif()
 
      set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)
-     set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
-     set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
-     set(OPENGL32_LIB ${MINGW_BASE_DIR}/lib/libopengl32.a)
-
-     set(INCLUDE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win32/gfortran_mingw )
-
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${GLU32_LIB} )
+
+     include_directories( ${MODULE_DIR} )
 
      SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbread.exe ${CMAKE_INSTALL_PREFIX}/swbread.exe )
+     )
 
      add_custom_target(makelib
          ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${NETCDF_FORTRAN_LIB}
@@ -161,7 +176,49 @@ if(CMAKE_HOST_WIN32)
          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win32/src/libswb.a
          VERBATIM)
 
-   endif ()
+    elseif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
+      #------------------------------------------------------------------------
+      # Set compilation and link preferences for Intel Fortran on Windows, 64-bit
+      #------------------------------------------------------------------------
+      set (CMAKE_Fortran_FLAGS_RELEASE "/fast /fpp")
+      set (CMAKE_Fortran_FLAGS_DEBUG "/traceback /fpp")
+
+      set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" ".a")
+
+      find_library(NETCDF_FORTRAN_LIB
+         NAMES netcdff90 NETCDFF libnetcdff90.lib
+         DOC "NetCDF Fortran library"
+         HINTS
+           ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
+         )
+
+     find_library(NETCDF_C_LIB
+        NAMES netcdf NETCDF netcdf.lib
+        DOC "NetCDF C library"
+        HINTS
+          ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
+        )
+
+     find_library(DISLIN_FORTRAN_LIB
+       NAMES disifl
+       DOC "DISLIN Fortran library"
+       HINTS
+         ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
+       )
+
+    find_path(MODULE_DIR netcdf.mod dislin.mod
+       DOC "Find the path to the fortran module files"
+       HINTS
+         ${PROJECT_SOURCE_DIR}/include/win_x64/ifort
+       )
+
+    set( Fortran_MODULE_DIRECTORY ${MODULE_DIR} )
+    include_directories( ${MODULE_DIR} )
+
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
+    set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
+
+  endif()
 
 elseif(CMAKE_HOST_UNIX)
 
@@ -192,7 +249,7 @@ elseif(CMAKE_HOST_UNIX)
        /bin)
        message("CMAKE_SH: " ${CMAKE_SH})
 
-     find_path(INCLUDE_DIR netcdf.mod NETCDF.mod
+     find_path(MODULE_DIR netcdf.mod NETCDF.mod
        DOC "Include directory (must contain netcdf.mod)"
        HINTS
        /usr/include )
@@ -242,7 +299,8 @@ elseif(CMAKE_HOST_UNIX)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
 
-     message("libs: " "${EXTRA_LIBS}")
+     include_directories( ${MODULE_DIR} )
+      message("libs: " "${EXTRA_LIBS}")
 
      SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
@@ -267,8 +325,7 @@ endif()
 #endif()
 
 include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
-set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_LIBS} ${DISLIN_LIBS})
-#link_libraries( ${EXTRA_LIBS} )
+link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
@@ -282,6 +339,7 @@ message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
 message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
 MESSAGE("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
 message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
+message("Using Module include directory: " ${MODULE_DIR})
 message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
 message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
