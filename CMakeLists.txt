@@ -81,7 +81,7 @@ if(OPTION__NETCDF_SUPPORT)
 endif()
 
 option (OPTION__THORNTHWAITE_MATHER_TABLES
-      "Use T-M tables (if not use T-M equations)?" ON)
+      "Use T-M tables (if not use T-M equations)?" OFF)
 if(OPTION__THORNTHWAITE_MATHER_TABLES)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "THORNTHWAITE_MATHER_TABLE")
 endif()
@@ -142,7 +142,7 @@ if(CMAKE_HOST_WIN32)
        set(GDI32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libopengl32.a)
        set(GCC_LIB ${MINGW_BASE_DIR}/lib/gcc/x86_64-w64-mingw32/4.7.1/libgcc.a)
-       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -floop-parallelize-all -ffree-line-length-none -static-libgcc -static-libgfortran")
+       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran")
      endif()
 
      set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)

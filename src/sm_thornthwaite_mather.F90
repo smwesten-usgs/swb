@@ -89,7 +89,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
       if ( cel%rSoilWaterCap > rNEAR_ZERO ) then
 
-	    !! Constrain rSoilWaterCap to limits of Thornthwaite-Mather tables
+      !! Constrain rSoilWaterCap to limits of Thornthwaite-Mather tables
 
         if ( cel%rSoilWaterCap < 0.5_T_SGL ) then
           write(UNIT=LU_LOG,FMT="(a,f10.3,a,i4,',',i4,a)") &
@@ -105,9 +105,9 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
           cel%rSoilWaterCap = 17.49_T_SGL
         end if
 
-		 !! convert input soil moisture (as percent of soil water capacity)
-		 !! TO soil moisture in inches
-		 cel%rSoilMoisture = (cel%rSoilMoisturePct/rHUNDRED) * cel%rSoilWaterCap
+     !! convert input soil moisture (as percent of soil water capacity)
+     !! TO soil moisture in inches
+     cel%rSoilMoisture = (cel%rSoilMoisturePct/rHUNDRED) * cel%rSoilWaterCap
 
       !! back-calculate initial accumulated potential water loss term
       !! given initial soil moisture
@@ -122,11 +122,11 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
        ! calculate APWL from equation
        cel%rSM_AccumPotentWatLoss = &
-         sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,cel%rSoilMoisture)
+         sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=T_DBL) )
 
 #endif
 
-	  end if
+    end if
     end do
   end do
 
@@ -167,21 +167,23 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
   integer (kind=T_INT) :: iCol,iRow,k,l,iTgt_Col,iTgt_Row
   integer (kind=T_INT) :: iNumGridCells
   integer (kind=T_INT) :: iTime
-  real (kind=T_SGL) :: rPrevious_Soil_Moisture
-  real (kind=T_SGL) :: rPrecipMinusPotentET
-  real (kind=T_SGL) :: rMSB_DailyMassBalance
-  real (kind=T_SGL) :: rMoistureDeficit
-  real (kind=T_SGL) :: rMoistureSurplus
-  real (kind=T_SGL) :: rChangeInStorage
-  real (kind=T_SGL) :: rNetInfil
-  real (kind=T_SGL) :: rNetInflow
-  real (kind=T_SGL) :: rDailyRecharge
-  real (kind=T_SGL) :: rStreamCapture
-  real (kind=T_SGL) :: rDailyRejectedRecharge
-  real (kind=T_SGL) :: rSM_ActualET
-  real (kind=T_SGL) :: rMin, rMean, rMax, rSum
+  real (kind=T_DBL) :: dpPrevious_Soil_Moisture
+  real (kind=T_DBL) :: dpPrecipMinusPotentET
+  real (kind=T_DBL) :: dpMSB_DailyMassBalance
+  real (kind=T_DBL) :: dpMoisture
+  real (kind=T_DBL) :: dpMoistureDeficit
+  real (kind=T_DBL) :: dpMoistureSurplus
+  real (kind=T_DBL) :: dpChangeInStorage
+  real (kind=T_DBL) :: dpNetInfil
+  real (kind=T_DBL) :: dpNetInflow
+  real (kind=T_DBL) :: dpDailyRecharge
+  real (kind=T_DBL) :: dpStreamCapture
+  real (kind=T_DBL) :: dpDailyRejectedRecharge
+  real (kind=T_DBL) :: dpSM_ActualET
+  real (kind=T_DBL) :: dpMin, rMean, rMax, rSum
   integer (kind=T_INT) :: iRowCount
   integer (kind=T_INT) :: iRowCounter
+  integer (kind=T_INT) :: iLandUse, iSoilGroup
 
   type ( T_CELL ),pointer :: cel
   character (len=256) :: sBuf
@@ -205,87 +207,86 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
       iRowCounter = iRowCounter + 1
 
       ! calculate net infiltration
-      rNetInfil = MAX(rZERO, &
-                    cel%rNetPrecip &
-                  + cel%rSnowMelt &
+      dpNetInfil = MAX(dpZERO, &
+                    real(cel%rNetPrecip, kind=T_DBL) &
+                  + real(cel%rSnowMelt, kind=T_DBL) &
 #ifdef IRRIGATION_MODULE
-                  + cel%rIrrigationAmount &
+                  + real(cel%rIrrigationAmount, kind=T_DBL) &
 #endif
-                  + cel%rInFlow &
-                  - cel%rOutFlow &
+                  + real(cel%rInFlow, kind=T_DBL) &
+                  - real(cel%rOutFlow, kind=T_DBL) &
 #ifdef STREAM_INTERACTIONS
-                  - cel%rStreamCapture &
+                  - real(cel%rStreamCapture, kind=T_DBL) &
 #endif
-                  - cel%rFlowOutOfGrid)
+                  - real(cel%rFlowOutOfGrid, kind=T_DBL))
 
       ! calculate net inflow to cell
-      rNetInflow = MAX(rZERO, &
-                    cel%rNetPrecip &
-                  + cel%rSnowMelt &
+      dpNetInflow = MAX(dpZERO, &
+                    real(cel%rNetPrecip, kind=T_DBL) &
+                    + real(cel%rSnowMelt, kind=T_DBL) &
 #ifdef IRRIGATION_MODULE
-                  + cel%rIrrigationAmount &
+                    + real(cel%rIrrigationAmount, kind=T_DBL) &
 #endif
 !#ifdef STREAM_INTERACTIONS
-!                  - cel%rStreamCapture &   ! "Net Inflow" is really just
-!#endif                                     ! a diagnostic internal variable
-                  + cel%rInFlow )           ! Supposed to be the sum of all
-                                            ! water sources to a grid cell
-                                            ! *BEFORE* any routing has occurred
+!                   - cel%rStreamCapture &             ! "Net Inflow" is really just
+!#endif                                                ! a diagnostic internal variable
+                    + real(cel%rInFlow, kind=T_DBL) )  ! Supposed to be the sum of all
+                                                       ! water sources to a grid cell
+                                                       ! *BEFORE* any routing has occurred
 
       !! calculate difference between potential ET and precipitation
       !! ("precipitation" here includes surface runoff and snowmelt)
       !! A negative value indicates the amount by which precip
       !! fails to satisfy potential water needs of a vegetation-covered area
-      rPrecipMinusPotentET = rNetInfil &
-                                  - cel%rSM_PotentialET
+      dpPrecipMinusPotentET = dpNetInfil &
+                                  - real(cel%rSM_PotentialET, kind=T_DBL)
 
-	  MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
+MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
 !#ifdef STREAM_INTERACTIONS
-            ! treat "stream" cells as open water
-            ! (SMW: do we want to do this? We're assuming that the
-            ! grid resolution is such that streams are represented at
-            ! a reasonable scale... in other words, if we have a
-            ! *large* grid cell size (~ 1 mile on a side),
-            ! it would not be reasonable to treat the underlying grid
-            ! cell as open water.
-!            .or. cel%iStreamIndex /= 0 &
+        ! treat "stream" cells as open water
+        ! (SMW: do we want to do this? We're assuming that the
+        ! grid resolution is such that streams are represented at
+        ! a reasonable scale... in other words, if we have a
+        ! *large* grid cell size (~ 1 mile on a side),
+        ! it would not be reasonable to treat the underlying grid
+        ! cell as open water.
+!        .or. cel%iStreamIndex /= 0 &
 
 !#endif
-            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then
+        .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then
 
-         ! Soil Water Capacity <= 0; OPEN WATER CELLS
+        ! Soil Water Capacity <= 0; OPEN WATER CELLS
+				if(dpPrecipMinusPotentET <= dpZERO) then
+             ! Precip - Potential ET <= 0
 
-          if(rPrecipMinusPotentET <= rZERO) then
-                            ! Precip - Potential ET <= 0
+          ! all water that comes in as "infiltration" evaporates
+          dpSM_ActualET = dpNetInfil
 
-            ! all water that comes in as "infiltration" evaporates
-            rSM_ActualET = rNetInfil
+          ! any outflow that has not already been routed elsewhere
+          ! is rerouted to flow out of grid
+          cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rOutflow
 
-            ! any outflow that has not already been routed elsewhere
-            ! is rerouted to flow out of grid
-            cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rOutflow
+        else  ! code block L3a: Precip - Potential ET > 0
 
-          else  ! code block L3a: Precip - Potential ET > 0
-
-            ! all water that comes in evaporates
-            ! or leaves the grid via surface water features
-            rSM_ActualET = cel%rSM_PotentialET
-            cel%rFlowOutOfGrid = cel%rFlowOutOfGrid &
-                              + rNetInfil - rSM_ActualET &
-                              + cel%rOutflow
-         end if
+          ! all water that comes in evaporates
+          ! or leaves the grid via surface water features
+          dpSM_ActualET = real(cel%rSM_PotentialET, kind=T_DBL)
+          cel%rFlowOutOfGrid = real(cel%rFlowOutOfGrid, kind=T_DBL) &
+                            + dpNetInfil - dpSM_ActualET &
+                            + real(cel%rOutflow, kind=T_DBL)
+        end if
 
         cel%rOutflow = rZERO
-        rDailyRecharge = rZERO
-        cel%rDailyRecharge = rZERO
+        dpDailyRecharge = dpZERO
+        cel%rDailyRecharge = dpZERO
         cel%rSoilMoisture = rZERO
-        rMoistureDeficit = rZERO
-        rMoistureSurplus = rZERO
+        dpMoistureDeficit = dpZERO
+        dpMoistureSurplus = dpZERO
         cel%rSM_AccumPotentWatLoss = rZERO
-        rChangeInStorage = rZERO
-        rDailyRejectedRecharge = rZERO
+        dpChangeInStorage = dpZERO
+        dpDailyRejectedRecharge = dpZERO
 
-        if(rSM_ActualET < rZERO) then
+        if(dpSM_ActualET < dpZERO) then
           write(UNIT=LU_LOG,FMT=*)"Negative ActET at grid cell (",iCol,",",iRow,"); Landuse: ", &
             cel%iLandUse, "   Soil Type: ", cel%iSoilGroup, &
             "   AWC: ", cel%rSoilWaterCap
@@ -297,8 +298,8 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
           write(UNIT=LU_LOG,FMT=*) "cel%rInFlow: ",cel%rInFlow
           write(UNIT=LU_LOG,FMT=*) "cel%rOutFlow: ",cel%rOutFlow
           write(UNIT=LU_LOG,FMT=*) "cel%rFlowOutOfGrid: ",cel%rFlowOutOfGrid
-          write(UNIT=LU_LOG,FMT=*) "==> NET INFIL: ",rNetInfil
-          write(UNIT=LU_LOG,FMT=*) "    ActET: ",rSM_ActualET
+          write(UNIT=LU_LOG,FMT=*) "==> NET INFIL: ",dpNetInfil
+          write(UNIT=LU_LOG,FMT=*) "    ActET: ",dpSM_ActualET
           write(UNIT=LU_LOG,FMT=*) "    PotET: ",cel%rSM_PotentialET
 
         end if
@@ -306,124 +307,132 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
       else ! MAIN: Execute remainder of block ONLY if non-WATER cell
 
         ! Zero out current estimate for daily recharge, rejected recharge
-        rDailyRecharge = rZERO
+        dpDailyRecharge = dpZERO
         cel%rDailyRecharge = rZERO
-        rDailyRejectedRecharge = rZERO
+        dpDailyRejectedRecharge = dpZERO
 
-        rPrevious_Soil_Moisture = cel%rSoilMoisture
+        dpPrevious_Soil_Moisture = real(cel%rSoilMoisture, kind=T_DBL)
+
         ! the following code block (L1) calculates current soil moisture values
         ! and updates the daily soil moisture deficit or surplus terms...
         ! any moisture deficit adds to the accumulated potential water loss term
 
-        L1: if(rPrecipMinusPotentET <= rZERO) then  ! Precip - Potential ET <= 0
+    L1: if(dpPrecipMinusPotentET <= dpZERO) then  ! Precip - Potential ET <= 0
 
           ! **precipitation FAILS to meet ET demands....**
-	      ! add precip minus potential ET term to accumulated
+          ! add precip minus potential ET term to accumulated
           ! potential water loss
 
           cel%rSM_AccumPotentWatLoss = MAX(APWL_Cap, &
-                                     (cel%rSM_AccumPotentWatLoss &
-                                     + rPrecipMinusPotentET))
+                                 (cel%rSM_AccumPotentWatLoss &
+                                 + real(dpPrecipMinusPotentET, kind=T_SGL) ))
 
-          rMoistureDeficit = rPrecipMinusPotentET
-          rMoistureSurplus = rZERO
+          dpMoistureDeficit = dpPrecipMinusPotentET
+          dpMoistureSurplus = dpZERO
 
-          ! determine soil moisture given updated accumulated potential water loss
-          L1a: if ( cel%rSoilWaterCap > rNEAR_ZERO) then
-
+          !determine soil moisture given updated accumulated potential water loss
+     L1a: if ( cel%rSoilWaterCap > rNEAR_ZERO) then
 #ifdef TM_TABLE
-
             ! look up soil moisture in T-M tables
-		      cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-                cel%rSM_AccumPotentWatLoss)
 
+            dpMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
+            cel%rSM_AccumPotentWatLoss)
+
+						cel%rSoilMoisture = dpMoisture
 #else
-
             ! calculate soil moisture w equation SUMMARIZING T-M tables
-   	      cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-		          cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
-
+						dpMoisture = sm_thornthwaite_mather_soil_storage( &
+            cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
+            cel%rSoilMoisture = dpMoisture
 #endif
+            !! calculate change in soil moisture storage
+            dpChangeInStorage = dpMoisture &
+                              - dpPrevious_Soil_Moisture
 
-               L1b: if(ABS(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
-		               > ABS(rPrecipMinusPotentET)) then
+!       L1b: if(ABS(real(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
 
-                 cel%rSoilMoisture = MAX(rZERO, &
-		                                (rPrevious_Soil_Moisture &
-                                        + rPrecipMinusPotentET))
+			   !!! P minus PE must be negative for us to even be in this part of the loop!!!
+       L1b: if (ABS(dpChangeInStorage) > ABS(dpPrecipMinusPotentET) ) then
 
-  	    		 ! regardless of what Thornthwaite-Mather tables tell us,
-		    	 ! we are capping the total soil loss at the value of
-             ! precip minus potential ET...   under some conditions
-			    ! it seems that the T-M tables dry out the soil at a
-			    ! rate that *exceeds* precip minus PET
 
-               end if L1b
+              dpMoisture = MAX(dpZERO, &
+                            (dpPrevious_Soil_Moisture &
+                              + dpPrecipMinusPotentET))
+
+							cel%rSoilMoisture = dpMoisture
+
+              ! regardless of what Thornthwaite-Mather tables tell us,
+              ! we are capping the total soil loss at the value of
+              ! precip minus potential ET...   under some conditions
+              ! it seems that the T-M tables dry out the soil at a
+              ! rate that *exceeds* precip minus PET
+
+              !! REcalculate change in soil moisture storage
+              dpChangeInStorage = dpMoisture - dpPrevious_Soil_Moisture
+
+            end if L1b
 
           end if L1a
 
-        else	! code block L1: Precip - Potential ET > 0
+        else  ! code block L1: Precip - Potential ET > 0
 
-		    !! **precipitation EXCEEDS ET demands, recharging soil column**
-	       !! Precip - Potential ET > 0: add infiltrated water
-		    !! directly to the soil moisture term
+          !! **precipitation EXCEEDS ET demands, recharging soil column**
+          !! Precip - Potential ET > 0: add infiltrated water
+          !! directly to the soil moisture term
 
-          rMoistureDeficit = rZERO
+          dpMoistureDeficit = rZERO
 
-		    rMoistureSurplus = MAX (rZERO, &
-		                                (cel%rSoilMoisture &
-			                    							+ rPrecipMinusPotentET &
-                                        - cel%rSoilWaterCap))
+          dpMoisture = real(cel%rSoilMoisture, kind=T_DBL)
 
-          cel%rSoilMoisture = MIN(cel%rSoilWaterCap, &
-		                         (cel%rSoilMoisture + &
-		                          rPrecipMinusPotentET))
+          dpMoistureSurplus = MAX (dpZERO, dpMoisture &
+                                    + dpPrecipMinusPotentET &
+                                    - real(cel%rSoilWaterCap, kind=T_DBL) )
+
+          dpMoisture = MIN(real(cel%rSoilWaterCap, kind=T_DBL), &
+                             dpMoisture + dpPrecipMinusPotentET)
+          cel%rSoilMoisture = dpMoisture
 
           !! back-calculate new equivalent accumulated potential water loss term
-		    !! given current soil moisture
+          !! given current soil moisture
 
-          L1c: if(cel%rSoilWaterCap>rNEAR_ZERO) then
+     L1c: if(cel%rSoilWaterCap>rNEAR_ZERO) then
 
 #ifdef TM_TABLE
-
-             ! look up APWL in T-M tables
-             cel%rSM_AccumPotentWatLoss = &
-                grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
-
+            ! look up APWL in T-M tables
+            cel%rSM_AccumPotentWatLoss = &
+            grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
 #else
-             ! detemine APWL from an equation
-             cel%rSM_AccumPotentWatLoss = &
-               sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,cel%rSoilMoisture)
-
+            ! detemine APWL from an equation
+            cel%rSM_AccumPotentWatLoss = &
+            sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,dpMoisture)
 #endif
-
           end if L1c
 
-	    end if L1
+        end if L1
 
-  	    !! calculate change in soil moisture storage
-        rChangeInStorage = cel%rSoilMoisture &
-	                       - rPrevious_Soil_Moisture
+        !! calculate change in soil moisture storage
+        dpChangeInStorage = dpMoisture &
+                              - dpPrevious_Soil_Moisture
 
         !! the following code block (L2) updates estimate of ACTUAL ET
 
-        L2: if(rPrecipMinusPotentET <= rZERO) then  ! Precip - Potential ET <= 0
+    L2: if(dpPrecipMinusPotentET <= dpZERO) then  ! Precip - Potential ET <= 0
 
           !! cap actual ET at the estimate for potential ET
-          rSM_ActualET = MIN((rNetInfil + ABS(rChangeInStorage)), &
-                                 cel%rSM_PotentialET)
+          dpSM_ActualET = MIN((dpNetInfil + ABS(dpChangeInStorage)), &
+                             real(cel%rSM_PotentialET, kind=T_DBL) )
 
-		else  ! code block L2: Precip - Potential ET > 0
+        else  ! code block L2: Precip - Potential ET > 0
 
-          rSM_ActualET = cel%rSM_PotentialET
+          dpSM_ActualET = cel%rSM_PotentialET
 
         end if L2
 
         ! ** CALCULATE RECHARGE
         ! based on SOIL MOISTURE SURPLUS
 
-        rDailyRecharge = rMoistureSurplus
-        cel%rDailyRecharge = rMoistureSurplus
+        dpDailyRecharge = dpMoistureSurplus
+        cel%rDailyRecharge = real(dpMoistureSurplus, kind=T_SGL)
 
 !          if(rDailyRecharge > cel%rMaxRecharge) then
 !            rDailyRejectedRecharge = rDailyRecharge - cel%rMaxRecharge
@@ -435,48 +444,49 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
       ! if calculated recharge exceeds the estimated Kv, cap at that value
       ! and characterize the rest as "rejected recharge"
-      if(rDailyRecharge > cel%rMaxRecharge) then
-!       if(rDailyRecharge > 1.0E+28) then
-        rDailyRejectedRecharge = rDailyRecharge - cel%rMaxRecharge
+      if(real(dpDailyRecharge, kind=T_SGL) > cel%rMaxRecharge) then
+        dpDailyRejectedRecharge = dpDailyRecharge - real(cel%rMaxRecharge, kind=T_DBL)
         cel%rDailyRecharge = cel%rMaxRecharge
-        rDailyRecharge = cel%rMaxRecharge
+        dpDailyRecharge = real(cel%rMaxRecharge, kind=T_DBL)
 
-       ! Now, figure out what to do with any rejected recharge
+        ! Now, figure out what to do with any rejected recharge
         if ( cel%iTgt_Col == iROUTE_LEFT_GRID .or. &
             cel%iTgt_Row == iROUTE_LEFT_GRID) then
-          cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDailyRejectedRecharge
-          rDailyRejectedRecharge = rZERO
+          cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + real(dpDailyRejectedRecharge, kind=T_SGL)
+          dpDailyRejectedRecharge = dpZERO
+
         elseif ( cel%iTgt_Col == iROUTE_DEPRESSION .or. &
             cel%iTgt_Row == iROUTE_DEPRESSION) then
           ! Don't route any further; the water pools here.
           ! nothing to do; leave rDailyRejectedRecharge value alone
+
         elseif ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNX &
            .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNY) then
-
           ! CAUTION!! We must *not* access illegal values for target cells
+
           if(pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%iLandUse == pConfig%iOPEN_WATER_LU &
-            .or. pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%rSoilWaterCap<rNEAR_ZERO) then
+            .or. pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%rSoilWaterCap < rNEAR_ZERO) then
           ! Don't route any further; the water enters a surface water feature.
           ! nothing to do; leave rDailyRejectedRecharge value alone
+
           elseif(pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
-          ! add cell rejected recharge to target cell inflow
+            ! add cell rejected recharge to target cell inflow
             pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow = &
                pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow + &
-               rDailyRejectedRecharge * cel%rRouteFraction
+               real(dpDailyRejectedRecharge, kind=T_SGL) * cel%rRouteFraction
             cel%rOutflow = &
                cel%rOutflow + &
-               rDailyRejectedRecharge * cel%rRouteFraction
-            rDailyRejectedRecharge = &
-                rDailyRejectedRecharge * (rONE - cel%rRouteFraction)
+               real(dpDailyRejectedRecharge, kind=T_SGL) * cel%rRouteFraction
+            dpDailyRejectedRecharge = &
+                dpDailyRejectedRecharge * (dpONE - real(cel%rRouteFraction, kind=T_DBL) )
           end if
         end if
       end if
 
       !
+      ! *** NEXT CODE CHUNK MAKES CALL TO NETCDF OUTPUT ROUTINE.... ****
       !
-      ! *** CALL TO RUN_LENGTH ENCODING ROUTINE.... ****
-      !
-      !  for each grid cell we must make a call to RLE_writeByte if
+      !  for each grid cell we must make a call to netcdf_write_variable if
       !  we expect to have graphical or gridded output at a later stage
       !                                                                      !
 
@@ -535,28 +545,28 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                 cel%rFlowOutofGrid, pGrd, iRow, iCol, iTime)
             case(iREJECTED_RECHARGE)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rDailyRejectedRecharge, pGrd, iRow, iCol, iTime)
+                real(dpDailyRejectedRecharge, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iNET_INFLOW)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rNetInflow, pGrd, iRow, iCol, iTime)
+                real(dpNetInflow, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iNET_INFIL)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rNetInfil, pGrd, iRow, iCol, iTime)
+                real(dpNetInfil, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iPOT_ET)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rSM_PotentialET, pGrd, iRow, iCol, iTime)
             case(iACT_ET)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rSM_ActualET, pGrd, iRow, iCol, iTime)
+                real(dpSM_ActualET, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iP_MINUS_PET)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rPrecipMinusPotentET, pGrd, iRow, iCol, iTime)
+                real(dpPrecipMinusPotentET, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iSM_DEFICIT)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rMoistureDeficit, pGrd, iRow, iCol, iTime)
+                real(dpMoistureDeficit, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iSM_SURPLUS)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rMoistureSurplus, pGrd, iRow, iCol, iTime)
+                real(dpMoistureSurplus, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iSM_APWL)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rSM_AccumPotentWatLoss, pGrd, iRow, iCol, iTime)
@@ -565,10 +575,10 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                 cel%rSoilMoisture, pGrd, iRow, iCol, iTime)
             case(iCHG_IN_SOIL_MOIST)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rChangeInStorage, pGrd, iRow, iCol, iTime)
+                real(dpChangeInStorage, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iRECHARGE)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                rDailyRecharge, pGrd, iRow, iCol, iTime)
+                real(dpDailyRecharge, kind=T_SGL), pGrd, iRow, iCol, iTime)
             case(iGDD)
               call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
                 cel%rGDD, pGrd, iRow, iCol, iTime)
@@ -655,15 +665,15 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iRUNOFF_OUTSIDE)
             case(iREJECTED_RECHARGE)
               call RLE_writeByte(STAT_INFO(iREJECTED_RECHARGE)%iLU, &
-                rDailyRejectedRecharge, pConfig%iRLE_MULT, &
+                real(dpDailyRejectedRecharge, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iREJECTED_RECHARGE)
             case(iNET_INFLOW)
               call RLE_writeByte(STAT_INFO(iNET_INFLOW)%iLU, &
-                rNetInflow, pConfig%iRLE_MULT, &
+                real(dpNetInflow, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iNET_INFLOW)
             case(iNET_INFIL)
               call RLE_writeByte(STAT_INFO(iNET_INFIL)%iLU, &
-                rNetInfil, pConfig%iRLE_MULT, &
+                real(dpNetInfil, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iNET_INFIL)
             case(iPOT_ET)
               call RLE_writeByte(STAT_INFO(iPOT_ET)%iLU, &
@@ -671,19 +681,19 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iPOT_ET)
             case(iACT_ET)
               call RLE_writeByte(STAT_INFO(iACT_ET)%iLU, &
-                rSM_ActualET, pConfig%iRLE_MULT, &
+                real(dpSM_ActualET, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iACT_ET)
             case(iP_MINUS_PET)
               call RLE_writeByte(STAT_INFO(iP_MINUS_PET)%iLU, &
-                rPrecipMinusPotentET, pConfig%iRLE_MULT, &
+                real(dpPrecipMinusPotentET, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iP_MINUS_PET)
             case(iSM_DEFICIT)
               call RLE_writeByte(STAT_INFO(iSM_DEFICIT)%iLU, &
-                rMoistureDeficit, pConfig%iRLE_MULT, &
+                real(dpMoistureDeficit, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iSM_DEFICIT)
             case(iSM_SURPLUS)
               call RLE_writeByte(STAT_INFO(iSM_SURPLUS)%iLU, &
-                rMoistureSurplus, pConfig%iRLE_MULT, &
+                real(dpMoistureSurplus, kind=T_SGL), pConfig%iRLE_MULT, &
                  pConfig%rRLE_OFFSET, iNumGridCells, iSM_SURPLUS)
             case(iSM_APWL)
               call RLE_writeByte(STAT_INFO(iSM_APWL)%iLU, &
@@ -695,11 +705,11 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iSOIL_MOISTURE)
             case(iCHG_IN_SOIL_MOIST)
               call RLE_writeByte(STAT_INFO(iCHG_IN_SOIL_MOIST)%iLU, &
-                  rChangeInStorage, pConfig%iRLE_MULT, &
+                  real(dpChangeInStorage, kind=T_SGL), pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iCHG_IN_SOIL_MOIST)
             case(iRECHARGE)
               call RLE_writeByte(STAT_INFO(iRECHARGE)%iLU, &
-                  rDailyRecharge, pConfig%iRLE_MULT, &
+                  real(dpDailyRecharge, kind=T_SGL), pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iRECHARGE)
             case(iGDD)
               call RLE_writeByte(STAT_INFO(iGDD)%iLU, &
@@ -725,7 +735,7 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
 
             case(iSTREAM_CAPTURE)
               call RLE_writeByte(STAT_INFO(iSTREAM_CAPTURE)%iLU, &
-                  REAL(cel%rStreamCapture,kind=T_SGL), pConfig%iRLE_MULT, &
+                  cel%rStreamCapture, pConfig%iRLE_MULT, &
                    pConfig%rRLE_OFFSET, iNumGridCells, iSTREAM_CAPTURE)
 
             case default
@@ -795,28 +805,28 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                     iYear, cel%rFlowOutOfGrid)
               case(iREJECTED_RECHARGE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rDailyRejectedRecharge)
+                    iYear, real(dpDailyRejectedRecharge, kind=T_SGL) )
               case(iNET_INFLOW)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rNetInflow)
+                    iYear, real(dpNetInflow, kind=T_SGL) )
                   case(iNET_INFIL)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rNetInfil)
+                    iYear, real(dpNetInfil, kind=T_SGL) )
               case(iPOT_ET)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rSM_PotentialET)
               case(iACT_ET)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rSM_ActualET)
+                    iYear, real(dpSM_ActualET, kind=T_SGL) )
               case(iP_MINUS_PET)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rPrecipMinusPotentET)
+                    iYear, real(dpPrecipMinusPotentET, kind=T_SGL) )
               case(iSM_DEFICIT)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rMoistureDeficit)
+                    iYear, real(dpMoistureDeficit, kind=T_SGL) )
               case(iSM_SURPLUS)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rMoistureSurplus)
+                    iYear, real(dpMoistureSurplus, kind=T_SGL) )
               case(iSM_APWL)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rSM_AccumPotentWatLoss)
@@ -825,10 +835,10 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
                     iYear, cel%rSoilMoisture)
               case(iCHG_IN_SOIL_MOIST)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rChangeInStorage)
+                    iYear, real(dpChangeInStorage, kind=T_SGL) )
               case(iRECHARGE)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
-                    iYear, rDailyRecharge)
+                    iYear, real(dpDailyRecharge, kind=T_SGL) )
               case(iGDD)
                 call stats_write_to_SSF_file(pConfig, l, iMonth, iDay, &
                     iYear, cel%rGDD)
@@ -848,183 +858,196 @@ subroutine sm_thornthwaite_mather_UpdateSM ( pGrd, pConfig, &
         end do
       end if
 
-
 !      end do   ! end loop over STAT_INFO variables
 
       ! UPDATE MONTHLY and ANNUAL ACCUMULATORS
 
- 	  if(cel%rSoilWaterCap > rNear_ZERO) then
-
+     if(cel%rSoilWaterCap > rNear_ZERO) then
         ! update soil moisture as a percentage of soil water capacity
         cel%rSoilMoisturePct = cel%rSoilMoisture / cel%rSoilWaterCap * rHUNDRED
-
       else
         cel%rSoilMoisturePct = rZERO
-	  end if
+    end if
 
       ! the following code block sends the appropriate cell value to the
       ! associated accumulator variables rDaily, rMonthly, and rAnnual,
       ! which are defined in the stats.f95 module
-      call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRejectedRecharge,kind=T_DBL), &
-        iREJECTED_RECHARGE,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(dpDailyRejectedRecharge,kind=T_DBL), &
+      iREJECTED_RECHARGE,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCFGI,kind=T_DBL), &
-        iCFGI,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCFGI,kind=T_DBL), &
+      iCFGI,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMin,kind=T_DBL), &
-        iMIN_TEMP,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMin,kind=T_DBL), &
+      iMIN_TEMP,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMax,kind=T_DBL), &
-        iMAX_TEMP,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMax,kind=T_DBL), &
+      iMAX_TEMP,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTAvg,kind=T_DBL), &
-        iAVG_TEMP,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTAvg,kind=T_DBL), &
+      iAVG_TEMP,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRecharge,kind=T_DBL), &
-        iRECHARGE,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpDailyRecharge, &
+      iRECHARGE,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSoilMoisture,kind=T_DBL), &
-        iSOIL_MOISTURE,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSoilMoisture,kind=T_DBL), &
+      iSOIL_MOISTURE,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_AccumPotentWatLoss,kind=T_DBL), &
-        iSM_APWL,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_AccumPotentWatLoss,kind=T_DBL), &
+      iSM_APWL,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rNetInfil,kind=T_DBL),&
-         iNET_INFIL,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpNetInfil,&
+       iNET_INFIL,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureDeficit,kind=T_DBL), &
-         iSM_DEFICIT,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpMoistureDeficit, &
+      iSM_DEFICIT,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureSurplus,kind=T_DBL), &
-         iSM_SURPLUS,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpMoistureSurplus, &
+      iSM_SURPLUS,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rChangeInStorage,kind=T_DBL), &
-         iCHG_IN_SOIL_MOIST,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpChangeInStorage, &
+      iCHG_IN_SOIL_MOIST,iMonth,iZERO)
 
+    call stats_UpdateAllAccumulatorsByCell(dpNetInflow,&
+      iNET_INFLOW,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rNetInflow,kind=T_DBL),&
-           iNET_INFLOW,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rFlowOutOfGrid,kind=T_DBL), &
+      iRUNOFF_OUTSIDE,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rFlowOutOfGrid,kind=T_DBL), &
-          iRUNOFF_OUTSIDE,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpPrecipMinusPotentET, &
+      iP_MINUS_PET,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rPrecipMinusPotentET,kind=T_DBL), &
-          iP_MINUS_PET,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_PotentialET,kind=T_DBL), &
+      iPOT_ET,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_PotentialET,kind=T_DBL), &
-           iPOT_ET,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpSM_ActualET, &
+      iACT_ET,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(rSM_ActualET,kind=T_DBL), &
-           iACT_ET,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInFlow,kind=T_DBL), &
+      iINFLOW,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInFlow,kind=T_DBL), &
-           iINFLOW,iMonth,iZERO)
-
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rOutFlow,kind=T_DBL), &
-           iOUTFLOW,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rOutFlow,kind=T_DBL), &
+      iOUTFLOW,iMonth,iZERO)
 
 #ifdef STREAM_INTERACTIONS
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rStreamCapture,kind=T_DBL), &
-           iSTREAM_CAPTURE,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rStreamCapture,kind=T_DBL), &
+      iSTREAM_CAPTURE,iMonth,iZERO)
 
 #endif
 
 #ifdef IRRIGATION_MODULE
 
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=T_DBL), &
-           iGDD,iMonth,iZERO)
-      call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=T_DBL), &
-           iIRRIGATION,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=T_DBL), &
+      iGDD,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=T_DBL), &
+      iIRRIGATION,iMonth,iZERO)
 #endif
 
-      if(iYear>= pConfig%iStartYearforCalculation .and. &
-           iYear<= pConfig%iEndYearforCalculation) then
+    if ( iYear >= pConfig%iStartYearforCalculation .and. &
+      iYear <= pConfig%iEndYearforCalculation ) then
 
-        cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
-        cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
+      cel%rSUM_Recharge = cel%rSUM_Recharge + dpDailyRecharge
+      cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + dpDailyRejectedRecharge
 
-      end if
+    end if
 
-      cel%rMSB = cel%rNetPrecip &
-                 + cel%rSnowMelt &
-                 + cel%rInFlow &
+    cel%rMSB = real(cel%rNetPrecip, kind=T_DBL) &
+               + real(cel%rSnowMelt, kind=T_DBL) &
+               + real(cel%rInFlow, kind=T_DBL) &
 #ifdef IRRIGATION_MODULE
-                 + cel%rIrrigationAmount &
+               + real(cel%rIrrigationAmount, kind=T_DBL) &
 #endif
-                 - cel%rOutFlow &
+               - real(cel%rOutFlow, kind=T_DBL) &
 #ifdef STREAM_INTERACTIONS
-                 - cel%rStreamCapture &
+               - real(cel%rStreamCapture, kind=T_DBL) &
 #endif
-                 - cel%rFlowOutOfGrid &
-                 - rChangeInStorage &
-                 - rSM_ActualET &
-                 - rDailyRecharge &
-                 - rDailyRejectedRecharge
+               - real(cel%rFlowOutOfGrid, kind=T_DBL) &
+               - dpChangeInStorage &
+               - dpSM_ActualET &
+               - dpDailyRecharge &
+               - dpDailyRejectedRecharge
 
-      if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
-        write(UNIT=LU_LOG,FMT=*) "** MASS BALANCE ERROR **"
+    if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
+      write(UNIT=LU_LOG,FMT=*) "** MASS BALANCE ERROR **"
 
-        write(UNIT=LU_LOG,FMT="(/,'  date: ',i2.2,'/',i2.2,'/',i4.4)") &
-          iMonth, iDay, iYear
-        write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :',i5,i5)") iRow,iCol
-        write(unit=LU_LOG,FMT="('  landuse    :',i4)") cel%iLandUse
-        write(unit=LU_LOG,FMT="('  soil group :',i4)") cel%iSoilGroup
-        if ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNY &
-           .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNX) then
-          write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :         ',i5,i5)") &
-            cel%iTgt_Row, cel%iTgt_Col
-          write(unit=LU_LOG,FMT="('  target land use :  ',i4)") &
-            pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iLandUse
-          write(unit=LU_LOG,FMT="('  target soil group :',i4)") &
-            pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iSoilGroup
-        endif
+      write(UNIT=LU_LOG,FMT="(/,'  date: ',i2.2,'/',i2.2,'/',i4.4)") &
+        iMonth, iDay, iYear
+      write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :',i5,i5)") iRow,iCol
+      write(unit=LU_LOG,FMT="('  landuse    :',i4)") cel%iLandUse
+      write(unit=LU_LOG,FMT="('  soil group :',i4)") cel%iSoilGroup
+      if ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNY &
+         .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNX) then
+        write(unit=LU_LOG,FMT="('  flow direction :  ',i4)")  cel%iFlowDir
+        write(unit=LU_LOG,FMT="('   => target cell (iRow,iCol) :         ',i5,i5)") &
+          cel%iTgt_Row, cel%iTgt_Col
+        write(unit=LU_LOG,FMT="('  => target land use :  ',i4)") &
+          pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iLandUse
+        write(unit=LU_LOG,FMT="('  => target soil group :',i4)") &
+          pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iSoilGroup
+        iLandUse = pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iLandUse
+        iSoilGroup = pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iSoilGroup
+      else
+        write(unit=LU_LOG,FMT="('  *** UNDEFINED FLOW DIRECTION ***')")
+        iLandUse = -999
+        iSoilGroup = -999
+      endif
 
-                 write(UNIT=LU_LOG,FMT="(/,'  MASS BALANCE: ',t32,F14.4)") &
-                     cel%rMSB
+      write(UNIT=LU_LOG,FMT="(/,'  MASS BALANCE: ',t32,F14.4)") &
+        cel%rMSB
 
-                 write(UNIT=LU_LOG,FMT="(/,'  (+) cel%rNetPrecip: ',t32,F14.4)") &
-                     cel%rNetPrecip
-                 write(UNIT=LU_LOG,FMT="('  (+) cel%rSnowMelt: ',t32,F14.4)") &
-                     cel%rSnowMelt
+      write(UNIT=LU_LOG,FMT="(/,'  (+) cel%rNetPrecip: ',t32,F14.4)") cel%rNetPrecip
+      write(UNIT=LU_LOG,FMT="('  (+) cel%rSnowMelt: ',t32,F14.4)") cel%rSnowMelt
 #ifdef IRRIGATION_MODULE
-                 write(UNIT=LU_LOG,FMT="('  (+) cel%rIrrigationAmount: ',t32,F14.4)") &
-                     cel%rIrrigationAmount
+      write(UNIT=LU_LOG,FMT="('  (+) cel%rIrrigationAmount: ',t32,F14.4)") &
+        cel%rIrrigationAmount
 #endif
-                 write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") &
-                     cel%rInFlow
-                 write(UNIT=LU_LOG,FMT="('  (-) cel%rOutFlow: ',t32,F14.4)") &
-                     cel%rOutFlow
-                 write(UNIT=LU_LOG,FMT="('  (-) cel%rFlowOutOfGrid: ',t32,F14.4)") &
-                     cel%rFlowOutOfGrid
-                 write(UNIT=LU_LOG,FMT="('  (-) rChangeInStorage: ',t32,F14.4)") &
-                     rChangeInStorage
-                 write(UNIT=LU_LOG,FMT="('  (-) rSM_ActualET: ',t32,F14.4)") &
-                     rSM_ActualET
-                 write(UNIT=LU_LOG,FMT="('  (-) rDailyRecharge: ',t32,F14.4)") &
-                     rDailyRecharge
-                 write(UNIT=LU_LOG,FMT="('  (-) rDailyRejectedRecharge: ',t32,F14.4)") &
-                     rDailyRejectedRecharge
+      write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") cel%rInFlow
+      write(UNIT=LU_LOG,FMT="('  (-) cel%rOutFlow: ',t32,F14.4)") cel%rOutFlow
+      write(UNIT=LU_LOG,FMT="('  (-) cel%rFlowOutOfGrid: ',t32,F14.4)") &
+        cel%rFlowOutOfGrid
+      write(UNIT=LU_LOG,FMT="('  (-) rChangeInStorage: ',t32,F14.4)") &
+        dpChangeInStorage
+      write(UNIT=LU_LOG,FMT="('  (-) rSM_ActualET: ',t32,F14.4)") &
+        dpSM_ActualET
+      write(UNIT=LU_LOG,FMT="('  (-) rDailyRecharge: ',t32,F14.4)") &
+        dpDailyRecharge
+      write(UNIT=LU_LOG,FMT="('  (-) rDailyRejectedRecharge: ',t32,F14.4)") &
+        dpDailyRejectedRecharge
 #ifdef STREAM_INTERACTIONS
-                 write(UNIT=LU_LOG,FMT="('  (-) rStreamCapture: ',t32,F14.4)") &
-                     cel%rStreamCapture
+      write(UNIT=LU_LOG,FMT="('  (-) rStreamCapture: ',t32,F14.4)") &
+        cel%rStreamCapture
 #endif
-                 write(UNIT=LU_LOG,FMT=*)
-                 write(UNIT=LU_LOG,FMT="('  rNetInfil: ',t32,F14.4)") &
-                     rNetInfil
-                 write(UNIT=LU_LOG,FMT="('  rNetInflow: ',t32,F14.4)") &
-                     rNetInflow
-                 write(UNIT=LU_LOG,FMT="('  rPrecipMinusPotentET: ',t32,F14.4)") &
-                     rPrecipMinusPotentET
-                 write(UNIT=LU_LOG,FMT="('  rMoistureSurplus: ',t32,F14.4)") &
-                     rMoistureSurplus
-                 write(UNIT=LU_LOG,FMT="('  rMoistureDeficit: ',t32,F14.4)") &
-                     rMoistureDeficit
-                 write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
-                     cel%rSoilMoisture
+      write(UNIT=LU_LOG,FMT=*)
+      write(UNIT=LU_LOG,FMT="('  rNetInfil: ',t32,F14.4)") dpNetInfil
+      write(UNIT=LU_LOG,FMT="('  rNetInflow: ',t32,F14.4)") dpNetInflow
+      write(UNIT=LU_LOG,FMT="('  rPrecipMinusPotentET: ',t32,F14.4)") &
+        dpPrecipMinusPotentET
+      write(UNIT=LU_LOG,FMT="('  rMoistureSurplus: ',t32,F14.4)") &
+        dpMoistureSurplus
+      write(UNIT=LU_LOG,FMT="('  rMoistureDeficit: ',t32,F14.4)") &
+        dpMoistureDeficit
+      write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
+        cel%rSoilMoisture
 
-                 write(UNIT=LU_LOG,FMT=*) "-----------------------------------------------"
-                 write(UNIT=LU_LOG,FMT=*)
+      write(UNIT=LU_LOG,FMT=*) "-----------------------------------------------"
+      write(UNIT=LU_LOG,FMT=*)
+
+
+      write(UNIT=LU_LOG,FMT="('MSB error summary,',i2.2,'/',i2.2,'/',i4.4,',',9(i5,','),20(f14.4,',') )") &
+        iMonth, iDay, iYear,iRow,iCol, cel%iLandUse, cel%iSoilGroup, &
+        cel%iFlowDir,  cel%iTgt_Row, cel%iTgt_Col, iLandUse, iSoilGroup, &
+        cel%rMSB, cel%rNetPrecip, cel%rSnowMelt, &
+#ifdef IRRIGATION_MODULE
+        cel%rIrrigationAmount, &
+#endif
+        cel%rInFlow, cel%rOutFlow, cel%rFlowOutOfGrid, dpChangeInStorage, &
+        dpSM_ActualET, dpDailyRecharge, dpDailyRejectedRecharge, &
+#ifdef STREAM_INTERACTIONS
+        cel%rStreamCapture, &
+#endif
+        dpNetInfil, dpNetInflow, dpPrecipMinusPotentET, dpMoistureSurplus, &
+        dpMoistureDeficit, cel%rSoilMoisture
 
       endif
 
@@ -1085,45 +1108,48 @@ end subroutine sm_thornthwaite_mather_UpdateSM
 
 !----------------------------------------------------------------------
 
-function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(rValue)
+function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(dpValue)
 
   real (kind=T_SGL), intent(in) :: rSWC     ! max soil-water capacity (inches)
   real (kind=T_SGL), intent(in) :: rAPWL    ! accum pot. water loss (inches)
 
-  real (kind=T_SGL) :: rValue
+  real (kind=T_DBL) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
   ! sm.df$x = APWL
   ! 10^(log10(sm.df$y) - (s.opt[[1]]*sm.df$y^e.opt[[1]]) * sm.df$x)
 
-  rValue = rZERO
+  dpValue = dpZERO
 
   if(rSWC > rZERO ) &
 
-    rValue = 10** ( log10(REAL(rSWC,kind=T_DBL)) - &
-              ( ABS(REAL(rAPWL,kind=T_DBL)) * rTM_slope_term * rSWC ** rTM_exp_term ) )
+    dpValue = 10_T_DBL**( log10(REAL(rSWC,kind=T_DBL)) - &
+              ( ABS(REAL(rAPWL,kind=T_DBL)) * rTM_slope_term &
+              * real(rSWC, kind=T_DBL)**rTM_exp_term ) )
 
 
 end function sm_thornthwaite_mather_soil_storage
 
-function sm_thornthwaite_mather_APWL(rSWC, rSoilStorage)  result(rValue)
+!------------------------------------------------------------------------------
+
+function sm_thornthwaite_mather_APWL(rSWC, dpSoilStorage)  result(dpValue)
 
   real (kind=T_SGL), intent(in) :: rSWC          ! max soil-water capacity (inches)
-  real (kind=T_SGL), intent(in) :: rSoilStorage  ! curr soil storage (inches)
+  real (kind=T_DBL), intent(in) :: dpSoilStorage  ! curr soil storage (inches)
 
-  real (kind=T_SGL) :: rValue
+  real (kind=T_DBL) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
   ! sm.df$x = APWL
   ! (log10(sm.df$y) - log10(sm.df$pred)) / (s.opt[[1]] * sm.df$y^e.opt[[1]])
 
-rValue = rZERO
+  dpValue = dpZERO
 
-  if(rSWC > rZERO .and. rSoilStorage > rZERO) &
+  if(rSWC > rZERO .and. dpSoilStorage > dpZERO) &
 
-    rValue = -( log10(REAL(rSWC,kind=T_DBL)) - log10(REAL(rSoilStorage,kind=T_DBL))) / &
+    dpValue = -( log10(REAL(rSWC,kind=T_DBL)) - log10(dpSoilStorage)) / &
           ( rTM_slope_term * REAL(rSWC,kind=T_DBL)**rTM_exp_term )
 
 end function sm_thornthwaite_mather_APWL
