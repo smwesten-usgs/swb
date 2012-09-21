@@ -144,7 +144,7 @@ if(CMAKE_HOST_WIN32)
        set(GDI32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libopengl32.a)
        set(GCC_LIB ${MINGW_BASE_DIR}/lib/gcc/x86_64-w64-mingw32/4.7.1/libgcc.a)
-       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran")
+       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran")
      endif()
 
      set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)

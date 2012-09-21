@@ -253,11 +253,11 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
 !        .or. cel%iStreamIndex /= 0 &
 
 !#endif
+        ! Soil Water Capacity <= 0; OPEN WATER CELLS
         .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then
 
-        ! Soil Water Capacity <= 0; OPEN WATER CELLS
+        ! is Precip - Potential ET <= 0?
 				if(dpPrecipMinusPotentET <= dpZERO) then
-             ! Precip - Potential ET <= 0
 
           ! all water that comes in as "infiltration" evaporates
           dpSM_ActualET = dpNetInfil
@@ -286,6 +286,10 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
         dpChangeInStorage = dpZERO
         dpDailyRejectedRecharge = dpZERO
 
+
+        ! this check is here because in the past users gave swb negative
+        ! precipitation values, which then rippled through the calculation and
+        ! caused negative ActualET, doing wonders for the mass balance!
         if(dpSM_ActualET < dpZERO) then
           write(UNIT=LU_LOG,FMT=*)"Negative ActET at grid cell (",iCol,",",iRow,"); Landuse: ", &
             cel%iLandUse, "   Soil Type: ", cel%iSoilGroup, &
@@ -311,38 +315,37 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
         cel%rDailyRecharge = rZERO
         dpDailyRejectedRecharge = dpZERO
 
+        ! store previous soil moisture value
         dpPrevious_Soil_Moisture = real(cel%rSoilMoisture, kind=T_DBL)
 
         ! the following code block (L1) calculates current soil moisture values
         ! and updates the daily soil moisture deficit or surplus terms...
         ! any moisture deficit adds to the accumulated potential water loss term
 
-    L1: if(dpPrecipMinusPotentET <= dpZERO) then  ! Precip - Potential ET <= 0
+        ! is (Precip - Potential ET) <= 0 ?
+    L1: if(dpPrecipMinusPotentET <= dpZERO) then
 
-          ! **precipitation FAILS to meet ET demands....**
+          ! if so, **precipitation FAILS to meet ET demands....**
           ! add precip minus potential ET term to accumulated
-          ! potential water loss
+          ! potential water loss; cap value to prevent unlimited
+          ! growth of the APWL term
 
           cel%rSM_AccumPotentWatLoss = MAX(APWL_Cap, &
                                  (cel%rSM_AccumPotentWatLoss &
                                  + real(dpPrecipMinusPotentET, kind=T_SGL) ))
 
-          dpMoistureDeficit = dpPrecipMinusPotentET
-          dpMoistureSurplus = dpZERO
-
-          !determine soil moisture given updated accumulated potential water loss
+          ! now determine soil moisture given updated accumulated potential water loss
      L1a: if ( cel%rSoilWaterCap > rNEAR_ZERO) then
 #ifdef TM_TABLE
             ! look up soil moisture in T-M tables
-
             dpMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-            cel%rSM_AccumPotentWatLoss)
+                             cel%rSM_AccumPotentWatLoss)
 
 						cel%rSoilMoisture = dpMoisture
 #else
             ! calculate soil moisture w equation SUMMARIZING T-M tables
 						dpMoisture = sm_thornthwaite_mather_soil_storage( &
-            cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
+                             cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
             cel%rSoilMoisture = dpMoisture
 #endif
             !! calculate change in soil moisture storage
@@ -353,7 +356,6 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
 
 			   !!! P minus PE must be negative for us to even be in this part of the loop!!!
        L1b: if (ABS(dpChangeInStorage) > ABS(dpPrecipMinusPotentET) ) then
-
 
               dpMoisture = MAX(dpZERO, &
                             (dpPrevious_Soil_Moisture &
@@ -368,7 +370,7 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
               ! rate that *exceeds* precip minus PET
 
               !! REcalculate change in soil moisture storage
-              dpChangeInStorage = dpMoisture - dpPrevious_Soil_Moisture
+              dpChangeInStorage = dpPrecipMinusPotentET
 
             end if L1b
 
@@ -380,22 +382,31 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
           !! Precip - Potential ET > 0: add infiltrated water
           !! directly to the soil moisture term
 
+          ! by definition, if (P-PE) > 0, soil moisture deficit is
+          ! wiped out (zero)
           dpMoistureDeficit = rZERO
 
           dpMoisture = real(cel%rSoilMoisture, kind=T_DBL)
 
+          ! does present soil moisture + (P-PE) exceed SoilWaterCap?
+          ! if so, the excess amount is surplus water
           dpMoistureSurplus = MAX (dpZERO, dpMoisture &
                                     + dpPrecipMinusPotentET &
                                     - real(cel%rSoilWaterCap, kind=T_DBL) )
 
+          ! update soil moisture; max out at SoilWaterCap value
           dpMoisture = MIN(real(cel%rSoilWaterCap, kind=T_DBL), &
                              dpMoisture + dpPrecipMinusPotentET)
           cel%rSoilMoisture = dpMoisture
 
+          !! calculate change in soil moisture storage
+          dpChangeInStorage = dpMoisture &
+                                - dpPrevious_Soil_Moisture
+
           !! back-calculate new equivalent accumulated potential water loss term
           !! given current soil moisture
 
-     L1c: if(cel%rSoilWaterCap>rNEAR_ZERO) then
+     L1c: if(cel%rSoilWaterCap > rNEAR_ZERO) then
 
 #ifdef TM_TABLE
             ! look up APWL in T-M tables
@@ -410,21 +421,25 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
 
         end if L1
 
-        !! calculate change in soil moisture storage
-        dpChangeInStorage = dpMoisture &
-                              - dpPrevious_Soil_Moisture
-
-        !! the following code block (L2) updates estimate of ACTUAL ET
-
+        !! code block (L2) updates estimate of ACTUAL ET
     L2: if(dpPrecipMinusPotentET <= dpZERO) then  ! Precip - Potential ET <= 0
 
-          !! cap actual ET at the estimate for potential ET
-          dpSM_ActualET = MIN((dpNetInfil + ABS(dpChangeInStorage)), &
+          ! calculate value for actual ET;
+          ! cap actual ET at the estimate for potential ET
+          dpSM_ActualET = MIN( dpNetInfil + ABS(dpChangeInStorage) , &
                              real(cel%rSM_PotentialET, kind=T_DBL) )
+
+          ! moisture deficit is the amount of *unmet* ET
+          dpMoistureDeficit = real(cel%rSM_PotentialET, kind=T_DBL) &
+                                 - dpSM_ActualET
+          dpMoistureSurplus = dpZERO
 
         else  ! code block L2: Precip - Potential ET > 0
 
           dpSM_ActualET = cel%rSM_PotentialET
+          ! moisture deficit is the amount of *unmet* ET
+          dpMoistureDeficit = dpZERO
+          ! dpMoistureSurplus has already been calculated in code block L1 above
 
         end if L2
 
@@ -1034,7 +1049,7 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
       write(UNIT=LU_LOG,FMT=*)
 
 
-      write(UNIT=LU_LOG,FMT="('MSB error summary,',i2.2,'/',i2.2,'/',i4.4,',',9(i5,','),20(f14.4,',') )") &
+      write(UNIT=LU_LOG,FMT="('MSB error summary,',i2.2,'/',i2.2,'/',i4.4,',',9(i5,','),25(f14.4,',') )") &
         iMonth, iDay, iYear,iRow,iCol, cel%iLandUse, cel%iSoilGroup, &
         cel%iFlowDir,  cel%iTgt_Row, cel%iTgt_Col, iLandUse, iSoilGroup, &
         cel%rMSB, cel%rNetPrecip, cel%rSnowMelt, &
@@ -1047,7 +1062,7 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
         cel%rStreamCapture, &
 #endif
         dpNetInfil, dpNetInflow, dpPrecipMinusPotentET, dpMoistureSurplus, &
-        dpMoistureDeficit, cel%rSoilMoisture
+        dpMoistureDeficit, cel%rSoilMoisture, cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss
 
       endif
 
