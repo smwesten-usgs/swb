@@ -17,7 +17,7 @@ set(PACKAGE_STRING "swb 1.0.1")
 set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.0.1")
 
-cmake_minimum_required(VERSION 2.6)
+cmake_minimum_required(VERSION 2.8)
 
 #
 option (MAKEFILE_VERBOSE
@@ -39,10 +39,12 @@ set_property(CACHE PLATFORM_TYPE
 set( PLATFORM_TYPE "x64" CACHE STRING
        "Compile for 32-bit or 64-bit" )
 
-#------------------------------------------------------------------------
-# What Fortran compiler are we using?
-#------------------------------------------------------------------------
-get_filename_component (Fortran_COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
+
+set_property(CACHE Fortran_COMPILER_NAME
+        PROPERTY STRINGS "gfortran" "ifort")
+
+set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
+       "Which Fortran compiler is used?" )
 
 #------------------------------------------------------------------------
 # Enable or disable compilation TARGETS from the GUI
@@ -174,7 +176,7 @@ if(CMAKE_HOST_WIN32)
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv libswblib.a
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -rc libswb.a *.o
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -q libswb.a *.obj
-         COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win32/src/libswb.a
+         COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win/src/libswb.a
          VERBATIM)
 
     elseif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
@@ -191,35 +193,81 @@ if(CMAKE_HOST_WIN32)
          DOC "NetCDF Fortran library"
          HINTS
            ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
-         )
+      )
 
-     find_library(NETCDF_C_LIB
+      find_library(NETCDF_C_LIB
         NAMES netcdf NETCDF netcdf.lib
         DOC "NetCDF C library"
         HINTS
           ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
-        )
+      )
 
-     find_library(DISLIN_FORTRAN_LIB
+      find_library(DISLIN_FORTRAN_LIB
        NAMES disifl
        DOC "DISLIN Fortran library"
        HINTS
          ${PROJECT_SOURCE_DIR}/lib/win_x64/ifort
-       )
+      )
 
-    find_path(MODULE_DIR netcdf.mod dislin.mod
+      find_path(MODULE_DIR netcdf.mod dislin.mod
        DOC "Find the path to the fortran module files"
        HINTS
          ${PROJECT_SOURCE_DIR}/include/win_x64/ifort
-       )
+      )
 
-    set( Fortran_MODULE_DIRECTORY ${MODULE_DIR} )
-    include_directories( ${MODULE_DIR} )
+      set( Fortran_MODULE_DIRECTORY ${MODULE_DIR} )
+      include_directories( ${MODULE_DIR} )
 
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
-    set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
+      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
+      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
 
-  endif()
+    endif()
+
+elseif(CMAKE_HOST_APPLE)
+
+   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+
+     message(" <-- setting options for gfortran on OSX -->")
+
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran")
+
+     set_property(CACHE CMAKE_BUILD_TYPE
+             PROPERTY STRINGS "Release" "Debug")
+     set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/osx/gfortran/libnetcdf.a
+       CACHE FILEPATH "Location of NetCDF Fortran library")
+       set(DISLIN_FORTRAN_LIB /usr/local/dislin/libdislin.10.dylib )
+       set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/osx/gfortran )
+       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -ffree-line-length-none -static-libgcc -static-libgfortran")
+
+     set(MODULE_DIR ${PROJECT_SOURCE_DIR}/include/osx/gfortran)
+     set(GFORTRAN_LIB /usr/local/lib/libgfortran.a)
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
+
+     include_directories( ${MODULE_DIR} )
+
+     SET(CMAKE_INSTALL_PREFIX "/Users/smwesten" CACHE PATHFILE "Installation directory")
+
+     add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
+     )
+
+     add_custom_target(makelib
+         ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${NETCDF_FORTRAN_LIB}
+         COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${DISLIN_FORTRAN_LIB}
+         COMMAND ${CMAKE_COMMAND} -E copy  ${PROJECT_SOURCE_DIR}/build/win32/src/libswblib.a ${PROJECT_SOURCE_DIR}/build/temp/libswblib.a
+         COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv libswblib.a
+         COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -rc libswb.a *.o
+         COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -q libswb.a *.obj
+         COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/APPLE/gfortran/src/libswb.a
+         VERBATIM)
+
+   endif()
 
 elseif(CMAKE_HOST_UNIX)
 
@@ -348,6 +396,7 @@ message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
 message( " ")
 message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
+message("CMAKE_HOST_APPLE: " ${CMAKE_HOST_APPLE})
 message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
 message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("--------------------------------------------------------------------")
