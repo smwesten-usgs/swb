@@ -8,9 +8,11 @@ In particular, this module file caused much grief: CMakeMinGWFindMake.cmake
 
 The following statement apparently was the problem:
 
->FIND_PROGRAM(CMAKE_MAKE_PROGRAM make.exe PATHS
->  "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MinGW;InstallLocation]/bin" 
->  c:/MinGW/bin /MinGW/bin)
+~~~
+FIND_PROGRAM(CMAKE_MAKE_PROGRAM make.exe PATHS
+  "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\MinGW;InstallLocation]/bin" 
+  c:/MinGW/bin /MinGW/bin)
+~~~
 
 Despite the fact that I very carefully cleansed my cmd.exe environment of all extraneous environment variables
 and explicitly set the key environment variables in my call to cmake, the CMake module file was helpfully pulling executables from 
@@ -20,7 +22,6 @@ There may be a more "correct" solution, but mine was to simply delete the refere
 arguments (e.g. c:\MinGW64\bin).
 
 ~~~
-
 :: nuke all existing environment variables
 
 for /f "delims==" %%a in ('set') do set %%a=
@@ -79,5 +80,4 @@ cmake .. -G "MinGW Makefiles" -DPLATFORM_TYPE="x64" -DCMAKE_BUILD_TYPE="Release"
  -DCMAKE_MAKE_PROGRAM="c:/MinGW64/bin/make.exe" -DCMAKE_RANLIB:FILEPATH="c:/MinGW64/bin/ranlib.exe" 
  -DCMAKE_C_COMPILER:FILEPATH="c:/MinGW64/bin/gcc.exe" -DCMAKE_Fortran_COMPILER:FILEPATH="c:/MinGW64/bin/gfortran.exe" 
  -DCMAKE_Fortran_FLAGS="-O2"  
- 
-~~~ 
+ ~~~ 
