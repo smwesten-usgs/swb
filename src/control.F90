@@ -8,7 +8,7 @@ module control
   use types
   use model
   use swb_grid
-  use swb_stats
+  use stats
 
   contains
 

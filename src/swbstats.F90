@@ -633,7 +633,7 @@ program swbstats
 
 use types
 use graph
-use swb_stats
+use stats
 use swb_grid
 use RLE
 use swbstats_support

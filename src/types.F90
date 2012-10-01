@@ -16,6 +16,9 @@ module types
 
   implicit none
 
+  !> @defgroup types types
+  !> @{
+
   character(len=16), public, parameter :: &
       SWB_VERSION = "1.0.1"
 
@@ -601,7 +604,7 @@ module types
   !> @anchor const_stat
   !> @name Constants: Statistics that SWB knows how to calculate and store
   !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
-  !> that are global variables within module swb_stats
+  !> that are global variables within module stats
   !> @{
   integer (kind=T_INT), parameter :: iNUM_STATS = 5
   integer (kind=T_INT), parameter :: iMIN = 1
@@ -615,7 +618,7 @@ module types
 
   !> @name Constants: Variables that SWB can output or summarize
   !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
-  !> that are global variables within module swb_stats
+  !> that are global variables within module stats
   !> @note These constants are arranged in the desired order of output
   !> for daily and annual reporting: sources first, then the sinks,
   !> and then all other informational items
@@ -908,6 +911,16 @@ module types
 
   !> Type that holds parameters used to create graphics with the DISLIN
   !> library.
+  !>
+  !> HEADING
+  !> ------------------
+  !>
+  !>  1. List
+  !>  2. List, pt 2
+  !>  3. List, pt 3
+  !>
+  !>
+  !>
   type T_GRAPH_CONFIGURATION
 
     character(len=256) :: cSETFIL = "DEFAULT_FILENAME"
@@ -1076,6 +1089,8 @@ end function squote
 
 !------------------------------------------------------------------------------
 
+!> @brief Function 'dquote' returns a character string with double quotes
+!> prepended and appended to the string that is passed.
 function dquote(sString)                                   result(sQuotedString)
 
   character (len=*), intent(in) :: sString
@@ -2381,7 +2396,7 @@ end function day_of_year
 !       http://aa.usno.navy.mil/faq/docs/JD_Formula.html
 
 
-!> @brief Convert from a Julian day number to a Gregorian date.
+!> Convert from a Julian day number to a Gregorian date.
 !>
 !> Converts from a Julian day number to a Gregorian date.
 !> Valid for any Gregorian calendar date producing a Julian day number
@@ -2438,5 +2453,7 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
   return
 
 end subroutine gregorian_date
+
+  !> @}
 
 end module types

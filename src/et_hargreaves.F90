@@ -26,7 +26,7 @@ module et_hargreaves
 !!***
 
   use types
-  use swb_stats
+  use stats
   use meteorological_functions
 
   implicit none
@@ -192,7 +192,6 @@ end function ET0_hargreaves
 !!***
 
 end module et_hargreaves
-
 
 
 

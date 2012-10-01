@@ -2,7 +2,7 @@ program swbread
 
 use types
 use graph
-use swb_stats
+use stats
 use swb_grid
 use RLE
 implicit none

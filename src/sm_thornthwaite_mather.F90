@@ -21,7 +21,7 @@ module sm_thornthwaite_mather
 
   use types
   use swb_grid
-  use swb_stats
+  use stats
   use RLE
 
 #ifdef NETCDF_SUPPORT

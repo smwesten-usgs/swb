@@ -1,5 +1,5 @@
 !> @file
-!> @brief Contains a single module, @ref swb_stats, which calculates
+!> @brief Contains a single module, @ref stats, which calculates
 !> daily, monthly, and annual statistics for an SWB model run.
 
 !> @brief Calculates daily, monthly, and annual statistics
@@ -12,7 +12,7 @@
 !> - Write to a PEST *.ssf file
 !> - Calculate statistics for a subset of the model domain (i.e. catchment, county)
 !> - Write daily, annual, and mass balance reports
-module swb_stats
+module stats
 
   use types
   use swb_grid
@@ -21,6 +21,9 @@ module swb_stats
 
   implicit none
   save
+
+  !> @defgroup stats stats
+  !> @{
 
   ! dpVolConvert combines the conversion factor between inches and meters, and
   ! multiplies by the area of a grid cell (assumed to be meters)
@@ -1792,4 +1795,6 @@ end subroutine stats_CloseBinaryFiles
 !--------------------------------------------------------------------------
 
 
-end module swb_stats
+!> @}
+
+end module stats
