@@ -936,6 +936,7 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
   iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
   where(pDataGrd%rData > pConfig%rMinValidTemp)
+  !! note: this logic assumes that missing values are supplied as "-9999" or the like
     pGrd%Cells%rTMax = pDataGrd%rData
   endwhere
 

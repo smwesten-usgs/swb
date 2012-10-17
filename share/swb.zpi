@@ -107,7 +107,6 @@
         <File>..\src\sm_thornthwaite_mather.F90</File>
         <File>..\src\snow.F90</File>
         <File>..\src\stats.F90</File>
-        <File>..\src\swb_python_interface.F90</File>
         <File>..\src\swbstats.F90</File>
         <File>..\src\types.F90</File>
     </Folder>
