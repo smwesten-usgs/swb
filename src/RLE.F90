@@ -1,8 +1,6 @@
 !> @file
 !> @brief  Contains a single module, @ref RLE, which
 !>  provides data compression (run-length encoding) for internal data structures.
-
-!> @brief  Provides data compression (run-length encoding) for internal data structures.
 module RLE
 
 use types

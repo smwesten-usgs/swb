@@ -14,10 +14,14 @@ module types
   use ifport
 #endif
 
+  use iso_c_binding
   implicit none
 
-  character(len=16), public, parameter :: &
-      SWB_VERSION = "1.1"
+  !> @defgroup types types
+  !> @{
+
+  character(len=45), public, parameter :: &
+      SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
 
   !> Define the sizes of base types used in the model
   integer, public, parameter :: T_LOGICAL = 4
@@ -65,6 +69,7 @@ module types
   real (kind=T_SGL), parameter :: rNEAR_ZERO = 1E-9_T_SGL
   real (kind=T_SGL), parameter :: rPOINT2 = 0.2_T_SGL
   real (kind=T_SGL), parameter :: rHALF = 0.5_T_SGL
+  real (kind=T_SGL), parameter :: dpHALF = 0.5_T_DBL
   real (kind=T_SGL), parameter :: rPOINT8 = 0.8_T_SGL
   real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
   real (kind=T_DBL), parameter :: dpONE = 1.0_T_DBL
@@ -77,7 +82,8 @@ module types
   real (kind=T_SGL), parameter :: rM_PER_FOOT = 0.3048_T_SGL
   real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
   real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
-  real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
+  real (kind=T_DBL), parameter :: dpPI = 3.141592653589793_T_DBL
+  real (kind=T_DBL), parameter :: dpPI_OVER_180 = dpPI / 180_T_DBL
   real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
   real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
   real (kind=T_SGL), parameter :: rMINIMUM_SOIL_MOISTURE = 0.51_T_SGL
@@ -99,6 +105,7 @@ module types
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
   character (len=1), parameter :: sFORWARDSLASH = achar(47)
+  character (len=1), parameter :: sRETURN = achar(13)
   !> @}
 
   !> @name Constants (flow direction): General conversion factors and flags
@@ -126,11 +133,6 @@ module types
   !> @}
 
 
-  integer (kind=T_INT), parameter :: iNC_INPUT = 1
-  integer (kind=T_INT), parameter :: iNC_OUTPUT = 2
-  integer (kind=T_INT), parameter :: iNC_OBSERVATION = 3
-
-
   !> @name Constants: Definitions for ANSI.sys-like text colors
   !> @{
   character (len=7), parameter :: sRED = char(27)//'[1;31m'
@@ -150,12 +152,11 @@ module types
 !> a grid of T_CELL types. Each variable added to this data type
 !> consumes Ny * Nx * size(T_SGL) bytes.
   type T_CELL
-      integer (kind=T_SHORT) :: iACTIVE = iACTIVE_CELL  ! is this cell active?
-      integer (kind=T_SHORT) :: iFlowDir = iZERO        ! Flow direction from flow-dir grid
-      integer (kind=T_SHORT) :: iSoilGroup = iZERO      ! Soil type from soil-type grid
-      integer (kind=T_INT) :: iLandUseIndex = iZERO     ! Index (row num) of land use table
-      integer (kind=T_INT) :: iLandUse = iZERO        ! Land use from land-use grid
-      real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
+      integer (kind=T_INT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
+      integer (kind=T_INT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
+      integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
+      integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
+      real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
@@ -223,9 +224,29 @@ module types
   end type T_CELL
 
   ! Generic grid data type identifier constants
-  integer (kind=T_INT), public, parameter :: T_INT_GRID = 0       ! Integer data
-  integer (kind=T_INT), public, parameter :: T_SGL_GRID = 1       ! Real data
-  integer (kind=T_INT), public, parameter :: T_CELL_GRID = 2       ! SWB cell data
+  integer (kind=T_INT), parameter :: CONSTANT_GRID = 0
+  integer (kind=T_INT), parameter :: STATIC_GRID = 1
+  integer (kind=T_INT), parameter :: STATIC_NETCDF_GRID = 2
+  integer (kind=T_INT), parameter :: DYNAMIC_GRID = 3
+  integer (kind=T_INT), parameter :: DYNAMIC_NETCDF_GRID = 4
+
+  integer (kind=T_INT), parameter :: DATATYPE_INT = 0
+  integer (kind=T_INT), parameter :: DATATYPE_REAL = 1
+  integer (kind=T_INT), parameter :: DATATYPE_CELL_GRID = 2
+  integer (kind=T_INT), parameter :: DATATYPE_SHORT = 3
+  integer (kind=T_INT), parameter :: DATATYPE_DOUBLE = 4
+
+  integer (kind=T_INT), parameter :: FILETYPE_ARC_ASCII = 0
+  integer (kind=T_INT), parameter :: FILETYPE_SURFER = 1
+  integer (kind=T_INT), parameter :: FILETYPE_NETCDF = 2
+  integer (kind=T_INT), parameter :: FILETYPE_NONE = 3
+
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_INT = 0
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_REAL = 1
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_CELL_GRID = 2
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_ALL = 3
+
+
 
 !> @brief Type that contains the data for a grid.
 !>
@@ -239,19 +260,33 @@ module types
       integer (kind=T_INT) :: iNX                   ! Number of cells in the x-direction
       integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
       integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
-      integer (kind=T_INT) :: iDataType             ! Type of the grid
-      real (kind=T_SGL) :: rGridCellSize            ! size of one side of a grid cell
+      integer (kind=T_INT) :: iDataType             ! Data type contained in the grid (integer, real, SWB cell)
+      character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
+      character (len=256)  :: sFilename             ! original file name that the data was read from
+      real (kind=T_DBL)    :: rGridCellSize         ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
-      real (kind=T_DBL) :: rX0, rX1              ! World-coordinate range in X
-      real (kind=T_DBL) :: rY0, rY1              ! World-coordinate range in Y
+      real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
+      real (kind=T_DBL)    :: rY0, rY1              ! World-coordinate range in Y
       integer (kind=T_INT), dimension(:,:), pointer :: iData ! Integer data
+      integer (kind=T_INT) :: iNoDataValue = -9999
       real (kind=T_SGL), dimension(:,:), pointer :: rData    ! Real data
+      real (kind=T_SGL) :: rNoDataValue
+      real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
+      real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
   !> define parameter values for working with type T_GENERAL_GRID
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
+
+  type T_GRID_BOUNDS
+    real (kind=c_double) :: rXll, rYll
+    real (kind=c_double) :: rXul, rYul
+    real (kind=c_double) :: rXlr, rYlr
+    real (kind=c_double) :: rXur, rYur
+    character (len=256) :: sPROJ4_string
+  end type T_GRID_BOUNDS
 
 !> @brief Type that contains pointers to one or more grid data structures.
 !>
@@ -394,52 +429,6 @@ module types
     integer (kind=T_INT) :: iVarNum  ! T_STATS variable number
   end type T_SSF_FILES
 
-!if_defined NETCDF_SUPPORT
-  type T_NETCDF_FILE
-    integer(kind=T_INT) :: iNCID
-    character(len=64)  :: sFilename
-    character(len=24)  :: sVarName = ""
-    character(len=24) :: sUnits
-    integer(kind=T_INT) :: iProjID
-!    integer(kind=T_INT) :: iCRSID
-    integer(kind=T_INT) :: iVarID
-    integer(kind=T_INT) :: iVarType
-!    integer(kind=T_INT) :: iLatVarID
-!    integer(kind=T_INT) :: iLonVarID
-    integer(kind=T_INT) :: iXVarID
-    integer(kind=T_INT) :: iYVarID
-    logical(kind=T_LOGICAL) :: lYVarBeforeXVar = lTRUE
-    integer(kind=T_INT) :: iXDimID
-    integer(kind=T_INT) :: iYDimID
-    integer(kind=T_INT) :: iTimeDimID
-    integer(kind=T_INT) :: iTimeVarID
-    integer(kind=T_INT) :: iOriginMonth
-    integer(kind=T_INT) :: iOriginDay
-    integer(kind=T_INT) :: iOriginYear
-    integer(kind=T_INT) :: iOriginJulianDay
-    integer(kind=T_INT) :: iStartJulianDay
-    integer(kind=T_INT) :: iEndJulianDay
-    real(kind=T_DBL) :: rX_LowerLeft
-    real(kind=T_DBL) :: rY_LowerLeft
-    real(kind=T_DBL) :: rX_UpperRight
-    real(kind=T_DBL) :: rY_UpperRight
-    real(kind=T_SGL) :: rGridCellSize
-    integer(kind=T_INT) :: iX_NumGridCells
-    integer(kind=T_INT) :: iY_NumGridCells
-    logical(kind=T_LOGICAL) :: lInterpolate = lFALSE
-    real (kind=T_DBL) :: rScaleFactor = 1_T_DBL
-    real (kind=T_DBL) :: rAddOffset = 0_T_DBL
-    character(len=24) :: sProjectionName = "wtm"
-    character(len=12) :: sProjectionUnits = "meters"
-    real (kind=T_DBL) :: rFalseEasting = 520000_T_DBL      ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rFalseNorthing = -4480000_T_DBL   ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rLongOrigin = -90_T_DBL     ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rLatOrigin = 0_T_DBL        ! defaults for WTM 83/91
-    integer (kind=T_INT) :: iZoneNumber = 0
-    character(len=48) :: sEllipsoidName = "GRS 1980"
-    integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
-  end type T_NETCDF_FILE
-!end_if
 
   !> Container for calendar lookup information
   type T_MONTH
@@ -680,7 +669,7 @@ module types
   !> @anchor const_stat
   !> @name Constants: Statistics that SWB knows how to calculate and store
   !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
-  !> that are global variables within module swb_stats
+  !> that are global variables within module stats
   !> @{
   integer (kind=T_INT), parameter :: iNUM_STATS = 5
   integer (kind=T_INT), parameter :: iMIN = 1
@@ -694,7 +683,7 @@ module types
 
   !> @name Constants: Variables that SWB can output or summarize
   !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
-  !> that are global variables within module swb_stats
+  !> that are global variables within module stats
   !> @note These constants are arranged in the desired order of output
   !> for daily and annual reporting: sources first, then the sinks,
   !> and then all other informational items
@@ -813,14 +802,14 @@ module types
       logical (kind=T_LOGICAL) :: lDownhillRoutingTableExists = lFALSE
 
       ! Prefix of input ARC or SURFER gridded precip time-series files
-      character (len=256) :: sPrecipFilePrefix
+      character (len=256) :: sPrecipFilePrefix = repeat(" ", 256)
 
       ! Prefix of input ARC or SURFER gridded temperature time-series files
-      character (len=256) :: sTMAXFilePrefix
-      character (len=256) :: sTMINFilePrefix
+      character (len=256) :: sTMAXFilePrefix = repeat(" ", 256)
+      character (len=256) :: sTMINFilePrefix = repeat(" ", 256)
 
       ! Prefix of the input ARC of SURFER gridded DYNAMIC LANDUSE files
-      character (len=256) :: sDynamicLanduseFilePrefix
+      character (len=256) :: sDynamicLanduseFilePrefix = repeat(" ", 256)
 
       ! ET parameters
       real (kind=T_SGL) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
@@ -845,23 +834,57 @@ module types
       real (kind=T_SGL) :: rSNWD_denom = 2.6
 
       ! Filename for standard (single-station) time-series file
-      character (len=256) :: sTimeSeriesFilename
+      character (len=256) :: sTimeSeriesFilename = repeat(" ", 256)
 
       ! Filename for land use lookup table
-      character (len=256) :: sLanduseLookupFilename
+      character (len=256) :: sLanduseLookupFilename = repeat(" ", 256)
 
       ! Filename for irrigation lookup table
-      character (len=256) :: sIrrigationLookupFilename
+      character (len=256) :: sIrrigationLookupFilename = repeat(" ", 256)
+
+      ! PROJ4 string for BASE Grid
+      character (len=256) :: sBASE_PROJ4 = repeat(" ", 256)
+
+      !> project grid definitions
+      real (kind=T_DBL) :: rX0, rY0          ! Lower-left corner (world coords)
+      real (kind=T_DBL) :: rX1, rY1          ! Upper-right corner (world coords)
+      integer (kind=T_INT) :: iNumGridCells  !
+      real (kind=T_SGL) :: rGridCellSize     !
+      integer (kind=T_INT) :: iNX            !
+      integer (kind=T_INT) :: iNY            !
+
+      ! PROJ4 string for Landuse Grid
+      character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for Soil Group Grid
+      character (len=256) :: sSoilGroup_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for Soil Available Water Capacity  Grid
+      character (len=256) :: sSoilAWC_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for Flow Direction Grid
+      character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for PRECIPITATION Grid
+      character (len=256) :: sPrecipitationGrid_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for AIR TEMPERATURE Grid
+      character (len=256) :: sTemperatureGrid_PROJ4 = repeat(" ", 256)
 
       ! Filename for basin mask table
-      character (len=256) :: sBasinMaskFilename
+      character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
 
       ! Target prefixes for output files
-      character (len=256) :: sOutputFilePrefix = ""
-      character (len=256) :: sFutureFilePrefix = ""
+      character (len=256) :: sOutputFilePath = "output"
+      character (len=256) :: sFutureFilePath = "future"
+      character (len=256) :: sImageFilePath = "images"
 
-      ! Target suffixes for output files
-      character (len=256) :: sOutputFileSuffix
+      ! Target prefixes for output files
+      character (len=256) :: sOutputFilePrefix = "swb_"
+      character (len=256) :: sFutureFilePrefix = "swb_future_"
+
+      ! Target suffix for output files
+      character (len=256) :: sOutputFileSuffix = "asc"
 
       ! Precipitation amounts describing antecedent runoff conditions
       real (kind=T_SGL) :: rDRY_DORMANT = 0.50_T_SGL   ! shift to Type I
@@ -938,19 +961,6 @@ module types
        ! want to write our SSF files for
        type (T_SSF_FILES), dimension(:), pointer :: SSF_FILES
 
-#ifdef NETCDF_SUPPORT
-      ! define a pointer to structure holding NETCDF file information
-      type (T_NETCDF_FILE), dimension(:,:), pointer :: NETCDF_FILE  ! NETCDF objects
-      character(len=48) :: sProjectionName = "wtm"
-      real (kind=T_DBL) :: rFalseEasting = 520000_T_DBL      ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rFalseNorthing = -4480000_T_DBL   ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rLongOrigin = -90_T_DBL     ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rLatOrigin = 0_T_DBL        ! defaults for WTM 83/91
-      integer (kind=T_INT) :: iZoneNumber = 0
-      character(len=48) :: sEllipsoidName = "GRS 1980"
-      integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
-#endif
-
 #ifdef STREAM_INTERACTIONS
  	  !! Added by Vic Kelson, February 2008
      !!
@@ -1002,6 +1012,16 @@ module types
 
   !> Type that holds parameters used to create graphics with the DISLIN
   !> library.
+  !>
+  !> HEADING
+  !> ------------------
+  !>
+  !>  1. List
+  !>  2. List, pt 2
+  !>  3. List, pt 3
+  !>
+  !>
+  !>
   type T_GRAPH_CONFIGURATION
 
     character(len=256) :: cSETFIL = "DEFAULT_FILENAME"
@@ -1137,6 +1157,13 @@ module types
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
   !> @}
 
+  ! Options for ASCII grid output
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DEBUG = 3
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
+
 !**********************************************************************
 !! GENERIC interfaces
 !**********************************************************************
@@ -1151,10 +1178,17 @@ module types
     module procedure assert_module_details_sub
   end interface assert
 
+  interface asCharacter
+    module procedure int2char
+    module procedure c_size_t2char
+    module procedure real2char
+    module procedure dbl2char
+  end interface asCharacter
+
   interface chomp
     module procedure chomp_delim_sub
     module procedure chomp_default_sub
-  end interface
+  end interface chomp
 
 contains
 
@@ -1194,6 +1228,8 @@ end function squote
 
 !------------------------------------------------------------------------------
 
+!> @brief Function 'dquote' returns a character string with double quotes
+!> prepended and appended to the string that is passed.
 function dquote(sString)                                   result(sQuotedString)
 
   character (len=*), intent(in) :: sString
@@ -1234,34 +1270,18 @@ subroutine assert_simple_sub(lCondition,sErrorMessage)
   ! ARGUMENTS
   logical (kind=T_LOGICAL), intent(in) :: lCondition
   character (len=*), intent(in) :: sErrorMessage
-  character (len=len(sErrorMessage)) :: sRecord
-  character (len=256) :: sItem
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT) :: i
   integer (kind=T_INT), dimension(2) :: iLU
-  logical (kind=T_LOGICAL) :: lFileOpen
 
   iLU = [ LU_STD_OUT, LU_LOG ]
 
   if ( .not. lCondition ) then
 
-  ! echo error condition to the log file ONLY if it is open!
-  inquire (unit=LU_LOG, opened=lFileOpen)
-  if(lFileOpen) then
-      iEnd = 2
-    else
-      iEnd = 1
-    endif
-
     do i=1,2
-      sRecord = sErrorMessage
       write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
-      do
-        call chomp(sRecord, sItem, "~")
-        if(len_trim(sItem) == 0) exit
-        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
-      enddo
+      call writeMultiLine(trim(sErrorMessage), iLU(i))
     enddo
 
     stop
@@ -1279,13 +1299,10 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
   character (len=*), intent(in) :: sErrorMessage
   character (len=*) :: sFilename
   integer (kind=T_INT) :: iLineNum
-  character (len=len(sErrorMessage)) :: sRecord
-  character (len=256) :: sItem
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT) :: i
   integer (kind=T_INT), dimension(2) :: iLU
-  logical (kind=T_LOGICAL) :: lFileOpen
   character (len=12) :: sLineNum
 
   iLU = [ LU_STD_OUT, LU_LOG ]
@@ -1294,23 +1311,9 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
 
     write(sLineNum,fmt="(i12)") iLineNum
 
-    ! echo error condition to the log file ONLY if it is open!
-    inquire (unit=LU_LOG, opened=lFileOpen)
-    if(lFileOpen) then
-      iEnd = 2
-    else
-      iEnd = 1
-    endif
-
     do i=1,2
-      sRecord = sErrorMessage
       write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
-      do
-        call chomp(sRecord, sItem, "~")
-        if(len_trim(sItem) == 0) exit
-        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
-      enddo
-
+      call writeMultiLine(trim(sErrorMessage), iLU(i))
       write(UNIT=iLU(i),FMT="(/,'   fortran module:',t27, a)") trim(sFilename)
       write(UNIT=iLU(i),FMT="('   module line number:',t27,a)") trim(adjustl(sLineNum))
     enddo
@@ -1324,25 +1327,13 @@ end subroutine assert_module_details_sub
 !-------------------------------------------------------------------------------
 
 !> @brief echo to screen AND write to logfile
-  subroutine echolog(sMessage, sFormat)
+  subroutine echolog(sMessage)
 
     character(len=*), intent(in)             :: sMessage
-    character(len=*), intent(in), optional   :: sFormat
 
-    ! [ LOCALS ]
-    character (len=256) :: sFormatString = ""
-    logical (kind=T_LOGICAL) :: lOpened
-
-    if(present(sFormat)) then
-      sFormatString = '('//trim(sFormat)//')'
-    else
-      sFormatString = '(3x,a)'
-    endif
-
-    write(unit=LU_STD_OUT, fmt=trim(sFormatString)) sMessage
-
-    inquire(unit=LU_LOG, opened = lOpened)
-    if(lOpened)  write(unit=LU_LOG, fmt=trim(sFormatString)) sMessage
+    call writeMultiLine(sMessage, LU_STD_OUT )
+    call writeMultiLine(sMessage, LU_LOG )
+    flush(LU_LOG)
 
   end subroutine echolog
 
@@ -2328,8 +2319,6 @@ function julian_day ( iYear, iMonth, iDay, iOrigin ) result(iJD)
         /12_T_INT - 3_T_INT *((i + 4900_T_INT + (j - 14_T_INT) &
         /12_T_INT)/100_T_INT)/4_T_INT ) - iOffset
 
-  return
-
 end function julian_day
 
 !--------------------------------------------------------------------------
@@ -2385,11 +2374,48 @@ end function solstice
 
 !--------------------------------------------------------------------------
 
+!> @brief Write multiple lines of output to Fortran logical unit
+!> @details Writes one or more lines of an input text string to a Fortran
+!> logical unit number. To output multiple lines, insert a tilde (~) at
+!> each point in the text string where a carriage return is desired.
+!> @param[in] sMessageText Character string that contains the message to be written.
+!> @param[in] iLU Integer value of the Fortran logical unit number to write to.
+subroutine writeMultiLine(sMessageText, iLU)
+
+  ! [ ARGUMENTS ]
+  character (len=*) :: sMessageText
+  integer (kind=T_INT) :: iLU
+
+  ! [ LOCALS ]
+  character (len=len(sMessageText) ) :: sRecord
+  character (len=256) :: sItem
+  logical (kind=T_LOGICAL) :: lFileOpen
+
+  inquire (unit=iLU, opened=lFileOpen)
+
+  sRecord = trim(sMessageText)
+
+  if (lFileOpen) then
+
+    do
+
+      ! break up string with '~' as delimiter
+      call chomp(sRecord, sItem, "~")
+      if(len_trim(sItem) == 0) exit
+      write(UNIT=iLU,FMT="(a)") trim(sItem)
+    enddo
+
+  endif
+
+end subroutine writeMultiLine
+
+!--------------------------------------------------------------------------
+
 !> Convert an integer value into a formatted character string
 function int2char(iValue)  result(sBuf)
 
   integer (kind=T_INT) :: iValue
-  character(len=256) :: sBuf
+  character (len=256) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
   sBuf = ADJUSTL(sBuf)
@@ -2400,42 +2426,58 @@ end function int2char
 
 !--------------------------------------------------------------------------
 
+!> Convert an integer value into a formatted character string
+function c_size_t2char(iValue)  result(sBuf)
+
+  integer (kind=c_size_t) :: iValue
+  character (len=256) :: sBuf
+
+  write(UNIT=sBuf,FMT="(i14)") iValue
+  sBuf = ADJUSTL(sBuf)
+
+end function c_size_t2char
+
+!--------------------------------------------------------------------------
+
 !> Convert a real value into a formatted character string
-function real2char(rValue, iDec, iWidth)  result(sBuf)
+function real2char(rValue, sFmt)  result(sBuf)
 
   real (kind=T_SGL) :: rValue
-  integer (kind=T_INT), optional :: iDec
-  integer (kind=T_INT), optional :: iWidth
+  character (len=*), optional :: sFmt
 
   ![ LOCALS ]
-  character(len=256) :: sBuf, sFmt
-  integer (kind=T_INT) :: iD, iW
+  character(len=64) :: sBuf, sFormat
 
-
-
-  if(present(iDec)) then
-    iD = iDec
+  if (present(sFmt) ) then
+    sFormat = "("//sFmt//")"
   else
-    iD = 4
+    sFormat = "(F16.4)"
   endif
 
-  if(present(iWidth)) then
-    iW = iWidth
-  else
-   iW = 16
-  endif
-
-  if(abs(rValue) < rNEAR_ZERO) then
-    sBuf = "0."
-  else
-    sFmt = "(G"//TRIM(int2char(iW))//"."//TRIM(int2char(iD))//")"
-    write(UNIT=sBuf,FMT=TRIM(sFmt)) rValue
-    sBuf = ADJUSTL(sBuf)
-  endif
-
-  return
+  write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue
+  sBuf = ADJUSTL(sBuf)
 
 end function real2char
+
+!> Convert a double precision real value into a formatted character string
+function dbl2char(rValue, sFmt)  result(sBuf)
+
+  real (kind=T_DBL) :: rValue
+  character (len=*), optional :: sFmt
+
+  ![ LOCALS ]
+  character(len=64) :: sBuf, sFormat
+
+  if (present(sFmt) ) then
+    sFormat = "("//sFmt//")"
+  else
+    sFormat = "(F16.4)"
+  endif
+
+  write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue
+  sBuf = ADJUSTL(sBuf)
+
+end function dbl2char
 
 !> @brief Return the number of days in the given year.
 !>
@@ -2471,9 +2513,19 @@ function day_of_year(iJD) result(iDOY)
 
   iDOY = iJD - iFirstDay + 1
 
-  return
-
 end function day_of_year
+
+!--------------------------------------------------------------------------
+
+function isLeap(iYear)   result(lResult)
+
+  integer (kind=T_INT), intent(in)     :: iYear
+  logical (kind=T_LOGICAL) :: lResult
+
+  lResult = ( mod(iYear, 4) == 0 .and. mod(iYear, 100) /= 0 ) .or. &
+                 ( mod(iYear, 400) == 0 .and. iYear /= 0 )
+
+end function isLeap
 
 !--------------------------------------------------------------------------
 ! NAME
@@ -2499,7 +2551,7 @@ end function day_of_year
 !       http://aa.usno.navy.mil/faq/docs/JD_Formula.html
 
 
-!> @brief Convert from a Julian day number to a Gregorian date.
+!> Convert from a Julian day number to a Gregorian date.
 !>
 !> Converts from a Julian day number to a Gregorian date.
 !> Valid for any Gregorian calendar date producing a Julian day number
@@ -2553,8 +2605,107 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
   iMonth = iJ
   iDay = iK
 
-  return
-
 end subroutine gregorian_date
+
+  !> @}
+
+function asCSV(sText)  result(sResult)
+
+  character (len=*) :: sText
+  character (len=256) :: sResult
+
+   character (len=256 ) :: sRecord
+  character (len=256) :: sItem
+
+
+  sRecord = trim(adjustl(sText))
+
+  sResult = ""
+  sItem = ""
+
+  do
+
+    call chomp(sRecord, sItem)
+    sResult = trim(sResult)//" "//trim(sItem)
+
+    if(len_trim(sRecord) == 0 ) exit
+
+    sResult = trim(sResult)//", "
+
+  enddo
+
+  sResult = adjustl(sResult)
+
+end function asCSV
+
+function char_ptr_to_fortran_string( cpCharacterPtr )  result(sText)
+
+  use iso_c_binding
+  implicit none
+
+  type(c_ptr) :: cpCharacterPtr
+  character(len=256) :: sText
+  character (kind=c_char), pointer, dimension(:) :: fptr
+  integer (kind=c_int) :: iCount
+
+    sText = repeat(" ", 256)
+
+    call c_f_pointer(cpCharacterPtr, fptr, [256])
+    iCount = 0
+    do
+      iCount = iCount + 1
+      if(index(string=fptr(iCount), substring=c_null_char) /= 0) exit
+      sText(iCount:iCount) = fptr(iCount)
+
+    enddo
+
+end function char_ptr_to_fortran_string
+
+function c_to_fortran_string( cCharacterString )  result(sText)
+
+  use iso_c_binding
+  implicit none
+
+  character (len=*) :: cCharacterString
+  character(len=256) :: sText
+  integer (kind=T_INT) :: iIndex
+
+  sText = repeat(" ", 256)
+
+  iIndex = index(string=cCharacterString, substring=c_null_char)
+
+  if(iIndex == 0) then
+
+    sText = trim(adjustl(cCharacterString))
+
+  else
+
+    sText = cCharacterString(1:iIndex-1)
+
+  endif
+
+end function c_to_fortran_string
+
+function fortran_to_c_string( sText )  result(cCharacterString)
+
+  use iso_c_binding
+  implicit none
+
+  character (len=*) :: sText
+  character(len=:), allocatable :: cCharacterString
+  integer (kind=T_INT) :: iIndex
+
+  iIndex = index(string=sText, substring=c_null_char)
+
+  if (iIndex == 0) then
+    allocate( character (len=len(sText)+1 ):: cCharacterString )
+    cCharacterString = sText//c_null_char
+  else
+    allocate( character (len=iIndex) :: cCharacterString )
+    cCharacterString  = sText(1:iIndex)
+  endif
+
+end function fortran_to_c_string
+
 
 end module types

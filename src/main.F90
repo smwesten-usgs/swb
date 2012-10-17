@@ -79,6 +79,7 @@ program main
   character (len=256) :: sControlFile
   integer (kind=T_INT) :: iNumArgs
   character (len=512) :: sCompilerFlags
+  character (len=256) :: sCompilerVersion
 
   ! warning - calling a Fortran 2003 extension function here
   iNumArgs = COMMAND_ARGUMENT_COUNT()
@@ -89,8 +90,9 @@ program main
       "Soil Water Balance Code version "//trim(SWB_VERSION)//" -- compiled on: "// &
       TRIM(__DATE__) //" "// TRIM(__TIME__)
 #ifdef __GFORTRAN__
-    write(UNIT=*,FMT="(a,/)") "Compiled with: GNU gfortran version "//TRIM(__VERSION__)
     sCompilerFlags = COMPILER_OPTIONS()
+    sCompilerVersion = COMPILER_VERSION()
+    write(UNIT=*,FMT="(a,/)") "Compiled with: gfortran ("//TRIM(sCompilerVersion)//")"
     write(UNIT=*,FMT="(a)") "Compiler flags:"
     write(UNIT=*,FMT="(a)") "-------------------------------"
     write(UNIT=*,FMT="(a,/)") TRIM(sCompilerFlags)

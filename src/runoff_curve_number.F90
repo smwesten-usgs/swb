@@ -54,7 +54,7 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
 
         !create pointer to a specific land use type
         pLU => pConfig%LU(k)
-		call Assert(LOGICAL(associated(pLU),kind=T_LOGICAL), &
+		    call assert(associated(pLU), &
 		   "pointer association failed - runoff_curve_number")
 
         if ( pLU%iLandUseType == cel%iLandUse ) then
@@ -69,11 +69,11 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
           end do
 
           if(.not. lMatch) then
-  		    write(UNIT=LU_LOG,FMT=*) iRow,iCol,k, "LU:",pLU%iLandUseType, &
-  		      "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
-			call assert(lFALSE, "Failed to find a curve number for this " &
-			  //"combined landuse and soil type. See logfile for details.", &
-			  trim(__FILE__),__LINE__)
+            write(UNIT=LU_LOG,FMT=*) iRow,iCol,k, "LU:",pLU%iLandUseType, &
+  		        "Soil:",cel%iSoilGroup, "CN:",cel%rBaseCN
+            call assert(lFALSE, "Failed to find a curve number for this " &
+	  	        //"combined landuse and soil type. See logfile for details.", &
+              trim(__FILE__),__LINE__)
           endif
 
           exit

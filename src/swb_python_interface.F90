@@ -2,7 +2,7 @@ module swb_python_interface
 
   use types
   use swb_grid
-  use swb_stats
+  use stats
   use runoff_curve_number
   use et_thornthwaite_mather
   use et_turc
@@ -33,6 +33,16 @@ module swb_python_interface
 
   !f2py intent(hide) :: pConfig
   type (T_MODEL_CONFIGURATION), pointer :: pConfig
+
+  !f2py intent(hide) :: pGrd
+  type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
+
+  !f2py intent(hide) :: pGraph
+  type (T_GRAPH_CONFIGURATION), dimension(:),pointer :: pGraph
+                                            ! pointer to data structure that
+                                                   ! holds parameters for creating
+                                                   ! DISLIN plots
+
 
 contains
 

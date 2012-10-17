@@ -3,6 +3,7 @@ if(TARGET__SWB_EXECUTABLE)
 
   add_executable(swb
             control.F90
+            data_factory.F90
             et_FAO56_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
@@ -11,11 +12,13 @@ if(TARGET__SWB_EXECUTABLE)
             et_turc.F90
             graph.F90
             grid.F90
+#			interpolators.F90
             irrigation.F90
             main.F90
             meteorological_functions.F90
             model.F90
-            netcdf_support.F90
+            netcdf4_support.F90
+			netcdf_c_api_interfaces.F90
             output.F90
             RLE.F90
             runoff_curve_number.F90
@@ -36,6 +39,7 @@ if(TARGET__SWB_LIBRARY)
 
   add_library(swblib STATIC
             control.F90
+            data_factory.F90
             et_FAO56_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
@@ -44,11 +48,13 @@ if(TARGET__SWB_LIBRARY)
             et_turc.F90
             graph.F90
             grid.F90
+#			interpolators.F90
             irrigation.F90
             main.F90
             meteorological_functions.F90
             model.F90
-            netcdf_support.F90
+            netcdf4_support.F90
+			netcdf_c_api_interfaces.F90
             output.F90
             RLE.F90
             runoff_curve_number.F90
@@ -66,22 +72,6 @@ if(TARGET__SWB_LIBRARY)
 
 endif()
 
-#if(TARGET__SWBREAD)
-#
-#  add_executable(swbread
-#            graph.F90
-#            grid.F90
-#            RLE.F90
-#            stats.F90
-#            swbread.F90
-#            types.F90)
-#
-#  set_target_properties(swbread
-#            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
-#
-#  target_link_libraries(swbread ${EXTRA_LIBS})
-#
-#endif()
 
 if(TARGET__SWBSTATS)
 

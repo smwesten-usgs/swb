@@ -8,22 +8,25 @@
 module model
 
   use types
+  use data_factory
   use swb_grid
-  use swb_stats
+  use stats
   use runoff_curve_number
   use et_thornthwaite_mather
   use et_turc
   use et_hargreaves
   use et_jensen_haise
   use et_blaney_criddle
-  use et_crop_coefficients
   use sm_thornthwaite_mather
-  use water_balance
   use snow
   use irrigation
 
+#ifdef _OPENMP
+  use omp_lib
+#endif
+
 #ifdef NETCDF_SUPPORT
-  use netcdf_support
+  use netcdf4_support
 #endif
 
   implicit none
@@ -31,53 +34,83 @@ module model
   !! Counter for moving average water inputs
   integer (kind=T_INT) :: iDayCtr
 
+  !! Generic grids used to shuffle data between subroutines
+  type ( T_GENERAL_GRID ),pointer :: pGenericGrd_int
+  type ( T_GENERAL_GRID ),pointer :: pGenericGrd_sgl
+
   !! For the "downhill" solution
   integer (kind=T_INT) :: iOrderCount
   integer (kind=T_INT), dimension(:), allocatable :: iOrderCol
   integer (kind=T_INT), dimension(:), allocatable :: iOrderRow
   real(kind=T_SGL) :: rStartTime,rEndTime
 
-  type ( T_GENERAL_GRID ),pointer :: pDataGrd    ! pointer to precip, temperature grid
-
 contains
 
 
-subroutine model_OpenSingleSiteClimateFile(pGrd, pConfig)
+!--------------------------------------------------------------------------
+!!****s* model/model_Solve
+! NAME
+!   model_Solve - Reads and initializes model grids and executes process
+!                 subroutines.
+!
+! SYNOPSIS
+!   Reads and initializes model grids, reads climate data file, and handles
+!   calls each process subroutine on a daily basis.
+!
+! INPUTS
+!   pGrd - Pointer to the model grid data structure.
+!   pConfig - Pointer to the model configuration data structure.
+!
+! OUTPUTS
+!   NONE
+!
+!!***
 
-   ! [ ARGUMENTS ]
-   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
-   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
-   ! [ LOCALS ]
-   integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear, iStat
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+    ! model options, flags, and other settings
 
-   ! Connect to the single-site time-series file
-   open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
-     status="OLD", iostat=iStat )
-   write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
-     TRIM(pConfig%sTimeSeriesFilename)
-   flush(LU_LOG)
-   call Assert ( iStat == 0, &
-     "Can't open time-series data file "//dQuote(pConfig%sTimeSeriesFilename), &
-     trim(__FILE__), __LINE__)
-   pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
-   call gregorian_date(pConfig%iCurrentJulianDay, &
-     iTempYear, iTempMonth, iTempDay)
-   pConfig%iYear = iTempYear
-   pConfig%iMonth = iTempMonth
-   pConfig%iDay = iTempDay
+  type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
+    ! pointer to data structure that holds parameters for creating
+    ! DISLIN plots
+  type ( T_GENERAL_GRID ), pointer :: pLandUseGrid       ! pointer to land use grid
 
-end subroutine model_OpenSingleSiteClimateFile
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
+  integer (kind=T_INT) :: tj, ti
+  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
+  integer (kind=T_INT) :: iPos
+  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
+  integer (kind=T_INT) :: iCol, iRow
+  character(len=3) :: sMonthName
+  logical (kind=T_LOGICAL) :: lMonthEnd
+  integer (kind=T_INT),save :: iNumGridCells
 
+  real (kind=T_SGL) :: rmin,ravg,rmax
 
-subroutine model_Initialize( pGrd, pConfig )
+  type (T_CELL),pointer :: cel
+  character (len=256) :: sBuf
 
-    ! [ ARGUMENTS ]
-    type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
-    type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+  type (T_TIME_SERIES_FILE), pointer :: pTS
 
-   ! [ LOCALS ]
-   integer (kind=T_INT) :: iStat
+  ! allocate memory for the time-series data pointer
+  ALLOCATE (pTS, STAT=iStat)
+  call Assert( iStat == 0, &
+    "Could not allocate memory for time-series data structure", &
+    TRIM(__FILE__),__LINE__)
+
+!  call stats_OpenBinaryFiles(pConfig)
+
+  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+
+  pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+     pGrd%rX1, pGrd%rY1, DATATYPE_INT )
+
+  pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+     pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -115,6 +148,25 @@ subroutine model_Initialize( pGrd, pConfig )
     "Problem opening CSV file for summary annual statistics output.")
   call stats_WriteAnnualAccumulatorHeaderCSV(LU_CSV_ANNUAL)
 
+  iNumGridCells = pGrd%iNX * pGrd%iNY
+
+  ! Time the run
+  call cpu_time(rStartTime)
+
+  call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iFlowDir = pGrd%iData
+
+  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
+     sTitleTxt="D8 Flow Direction Grid", &
+     sAxisTxt="Flow Direction" )
+
+!  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
+
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
     ! if a routing table exists, read it in; else initialize and
@@ -129,127 +181,79 @@ subroutine model_Initialize( pGrd, pConfig )
     call model_InitializeFlowDirection( pGrd , pConfig)
   end if
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
-  flush(unit=LU_LOG)
+!  call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+  call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iSoilGroup = pGrd%iData
+!  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
+
+  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
+      sTitleTxt="Hydrologic Soils Group", &
+      sAxisTxt="HSG" )
+
+  call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%rSoilWaterCapInput = pGrd%rData
+
+  write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
+  write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
+
+  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
+
+  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
+     sTitleTxt="Available Water Capacity", &
+     sAxisTxt="AWC (inches per inch)" )
+
+!  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
+
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+  pGrd%Cells%iLandUse = pGrd%iData
+  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
+     sTitleTxt="Landuse / Landcover", &
+     sAxisTxt="LULC Code" )
+
+
+  ! Initialize the model landuse-related parameters
+  call model_InitializeLanduseRelatedParams( pGrd, pConfig )
+
+  ! Initialize evapotranspiration
   call model_InitializeET( pGrd, pConfig )
-
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
-
-  if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
-    .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
-
-    ! Initialize the model
-    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-    flush(unit=LU_LOG)
-    call model_InitializeSM(pGrd, pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-    flush(unit=LU_LOG)
-    call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_CreateLanduseIndex"
-    flush(unit=LU_LOG)
-    call model_CreateLanduseIndex(pGrd, pConfig )
-
-  endif
-
-end subroutine model_Initialize
-
-!--------------------------------------------------------------------------
-!!****s* model/model_Main
-! NAME
-!   model_Main - Reads and initializes model grids and executes process
-!                 subroutines.
-!
-! SYNOPSIS
-!   Reads and initializes model grids, reads climate data file, and handles
-!   calls each process subroutine on a daily basis.
-!
-! INPUTS
-!   pGrd - Pointer to the model grid data structure.
-!   pConfig - Pointer to the model configuration data structure.
-!
-! OUTPUTS
-!   NONE
-!
-!!***
-
-subroutine model_Main( pGrd, pConfig, pGraph )
-
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
-    ! pointer to data structure that holds parameters for creating
-    ! DISLIN plots
-
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC
-#endif
-
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
-!  integer (kind=T_INT) :: iDay, iYear, tj, ti
-  integer (kind=T_INT) :: tj, ti
-  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=T_INT) :: iPos
-  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
-  integer (kind=T_INT) :: iCol, iRow
-  character(len=3) :: sMonthName
-  logical (kind=T_LOGICAL) :: lMonthEnd
-!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
-  integer (kind=T_INT),save :: iNumGridCells
-!  integer (kind=T_INT) :: iNumDaysInYear
-!  integer (kind=T_INT) :: iEndOfYearJulianDay
-
-  real (kind=T_SGL) :: rmin,ravg,rmax
-
-  type (T_CELL),pointer :: cel
-  character (len=256) :: sBuf
-
-  type (T_TIME_SERIES_FILE), pointer :: pTS
-
-  ! allocate memory for the time-series data pointer
-  ALLOCATE (pTS, STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for time-series data structure", &
-    TRIM(__FILE__),__LINE__)
-
-!  call stats_OpenBinaryFiles(pConfig)
-
-  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
-
-    ! call subroutine that handles much of the model initialization,
-    ! opens *.csv files, etc.
-    call model_Initialize(pGrd, pConfig)
-
-    ! calculate number of gridcells here.
-    iNumGridCells = pGrd%iNX * pGrd%iNY
-
-    ! time the run; start the clock.
-    call cpu_time(rStartTime)
-
-    ! create the single, temporary grid to use for temperature and precip
-    ! data input
-    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   end if FIRST_YEAR
 
   ! close any existing open time-series files...
   close(LU_TS)
 
-  if(.not. pConfig%lGriddedData) &
-    call model_OpenSingleSiteClimateFile(pGrd, pConfig)
+  if(.not. pConfig%lGriddedData) then
+  ! Connect to the single-site time-series file
+    open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
+      status="OLD", iostat=iStat )
+    write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
+      TRIM(pConfig%sTimeSeriesFilename)
+    flush(LU_LOG)
+    call Assert ( iStat == 0, &
+      "Can't open time-series data file" )
+    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
+    call gregorian_date(pConfig%iCurrentJulianDay, &
+      iTempYear, iTempMonth, iTempDay)
+    pConfig%iYear = iTempYear
+    pConfig%iMonth = iTempMonth
+    pConfig%iDay = iTempDay
+  end if
 
   ! Zero out monthly and annual accumulators
   call stats_InitializeMonthlyAccumulators()
   call stats_InitializeAnnualAccumulators()
-  pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
   ! ***************************
   ! ***** BEGIN MAIN LOOP *****
@@ -270,32 +274,88 @@ subroutine model_Main( pGrd, pConfig, pGraph )
   pTS%rSunPct = iNO_DATA_NCDC
   pTS%lEOF = lFALSE
 
-  ! if we are not using gridded climate data, here is where we read in
-  ! the current days' values from the single-site time series file.
   if(.not. pConfig%lGriddedData) then
-
-    call model_ReadTimeSeriesFile(pConfig, pTS)
+    call model_ReadTimeSeriesFile(pTS)
     if(pTS%lEOF) then
+
+#ifdef STRICT_DATE_CHECKING
+      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
+        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
+        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
+        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
+           //TRIM(pConfig%sTimeSeriesFilename)
+        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
+      end if
+#endif
       close(unit=LU_TS)
       exit MAIN_LOOP
     end if
+
+    ! check to ensure that we have not skipped a day
+    if(.not. (pConfig%iYear == pTS%iYear &
+      .and. pConfig%iMonth == pTS%iMonth &
+      .and. pConfig%iDay == pTS%iDay)) then
+      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
+      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
+      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
+        //TRIM(int2char(pTS%iDay))//"/" &
+        //TRIM(int2char(pTS%iYear))
+      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
+        //TRIM(int2char(pConfig%iDay))//"/" &
+        //TRIM(int2char(pConfig%iYear))
+#ifdef STRICT_DATE_CHECKING
+      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
+#else
+      ! reset date to that of the input time-series data
+      pConfig%iYear = pTS%iYear
+      pConfig%iMonth = pTS%iMonth
+      pConfig%iDay = pTS%iDay
+      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
+#endif
+    end if
+
+    pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
   end if
 
   call LookupMonth(pConfig%iMonth,pConfig%iDay,pConfig%iYear, &
     pConfig%iDayOfYear,sMonthName,lMonthEnd)
 
-  ! Initialize landuse-associated variables; must be done each year if
+  ! initialize landuse-associated variables; must be done each year if
   ! dynamic landuse is being used
-  call model_ProcessDynamicLanduse(pGrd, pConfig)
 
-  ! Call this subroutine to have SWB record the present position in the
-  ! binary output file for later use when writing values
-  call stats_SetBinaryFilePosition(pConfig, pGrd)
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
 
-#ifdef NETCDF_SUPPORT
-    call model_WriteNetcdfAttributes(pConfig, pGrd)
-#endif
+  if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
+    pGrd%Cells%iLandUse = pGrd%iData
+    DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
+
+    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+    ! (Re)-initialize the model
+    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
+
+  endif
+
+  if(pConfig%lFirstDayOfSimulation) then
+    ! scan through list of potential output variables; if any
+    ! output is desired for a variable, note the current position
+    ! within the file, move to the position reserved for the first day's
+    ! date, write the date, and return to the position where the data
+    ! for the first day will be written
+    do k=1,iNUM_VARIABLES
+      if(STAT_INFO(k)%iDailyOutput > iNONE &
+        .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+        inquire(UNIT=STAT_INFO(k)%iLU,POS=iPos)  ! establish location to return to
+        write(UNIT=STAT_INFO(k)%iLU,POS=iSTARTDATE_POS) &
+          pConfig%iMonth,pConfig%iDay, pConfig%iYear
+        write(UNIT=STAT_INFO(k)%iLU,POS=iPos ) ! return to prior location in bin file
+      end if
+      pConfig%lFirstDayOfSimulation = lFALSE
+    end do
+
+  end if
 
   if(pConfig%lWriteToScreen) then
     write(UNIT=LU_STD_OUT,FMT=*)
@@ -310,28 +370,36 @@ subroutine model_Main( pGrd, pConfig, pGraph )
     write(UNIT=LU_STD_OUT,FMT=*)
   end if
 
-  ! Write current timestamp to any open binary files
-  call stats_TimestampBinaryFile(pConfig)
+  ! write timestamp to the unformatted fortran file(s)
+  do k=1,iNUM_VARIABLES
+    if(STAT_INFO(k)%iDailyOutput > iNONE &
+      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+    write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
+      pConfig%iYear, pConfig%iDayOfYear
+!    inquire(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
+!    write(UNIT=STAT_INFO(k)%iLU) iNO_DATA_NCDC  ! dummy value for now
+    end if
+  end do
 
-  ! Initialize precipitation value for current day
+!***********************************************************************
+
+!  ! Initialize precipitation value for current day
   call model_GetDailyPrecipValue(pGrd, pConfig, pTS%rPrecip, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear)
+    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
   ! Initialize temperature values for current day
   call model_GetDailyTemperatureValue(pGrd, pConfig, &
     pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pTS%rRH, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear)
+    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
   write(UNIT=LU_LOG,FMT="(1x,'Beginning calculations for day: '," &
     //"i3,4x,A3,4x,i2,'/',i2,'/',i4)") &
     pConfig%iDayOfYear,sMonthName,pConfig%iMonth,pConfig%iDay,pConfig%iYear
 
-#ifdef DEBUG_PRINT
-  call stats_WriteMinMeanMax (LU_LOG, "Precip: ", pGrd%Cells%rGrossPrecip)
-#endif
-
   if(pConfig%lWriteToScreen) then
     write(UNIT=LU_STD_OUT,FMT="(t39,a,t53,a,t69,a)") "min","mean","max"
+    call stats_WriteMinMeanMax(LU_STD_OUT,"Gross Precipitation (in)" , pGrd%Cells(:,:)%rGrossPrecip )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Minimum Temp (F)" , pGrd%Cells(:,:)%rTMin )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Mean Temp (F)" , pGrd%Cells(:,:)%rTAvg )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Maximum Temp (F)" , pGrd%Cells(:,:)%rTMax )
@@ -341,11 +409,12 @@ end if
 
   call model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
 
+#ifdef IRRIGATION_MODULE
   call model_UpdateGrowingDegreeDay( pGrd , pConfig)
+#endif
 
   ! Handle all the processes in turn
 
-  !! TODO: move this code to its own 'model_ProcessSnow' routine
   if(pConfig%iConfigureSnow == CONFIG_SNOW_ORIGINAL_SWB) then
     call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
   else if(pConfig%iConfigureSnow == CONFIG_SNOW_NEW_SWB) then
@@ -356,7 +425,9 @@ end if
       TRIM(__FILE__),__LINE__)
   end if
 
-  call irrigation_UpdateAmounts(pGrd, pConfig)
+#ifdef IRRIGATION_MODULE
+  call update_irrigation_amounts(pGrd, pConfig)
+#endif
 
   call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
 
@@ -364,10 +435,7 @@ end if
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
 
-  if(pConfig%iConfigureIrrigation == CONFIG_IRRIGATION_FAO56_DUAL ) &
-    call et_kc_ApplyCropCoefficients(pGrd, pConfig)
-
-  call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
+  call model_ProcessSM( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
 
   ! if desired, output daily mass balance file and daily model grids
@@ -392,18 +460,35 @@ end if
 
   end if
 
-  write ( unit=sBuf, fmt='("day",i3.3)' ) pConfig%iDayOfYear
-  call model_WriteGrids(pGrd, pConfig, sBuf, pConfig%iDay, pConfig%iMonth, &
-    pConfig%iYear, pConfig%iDayOfYear)
+  ! write OFFSET VALUE to the unformatted fortran file(s)
+!  do k=1,iNUM_VARIABLES
+!    if(STAT_INFO(k)%iDailyOutput > iNONE &
+!      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+!      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+!      ! get current file position
+!      inquire(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
+!      ! rewind to location of today's header, at the location
+!      ! where the offset is to be written
+!      write(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
+!      ! write an offset amount at the end of the current header
+!      write(UNIT=STAT_INFO(k)%iLU) iTempval - STAT_INFO(k)%iPos
+!      ! return to last file position
+!      write(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
+!    end if
+!  end do
+
+  call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_DAILY)
 
   ! Write the results at each month-end
   if ( lMonthEnd ) then
 
-    call model_WriteGrids(pGrd, pConfig, sMonthName,  pConfig%iDay, &
-      pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
+!      if ( pConfig%lReportDaily ) call stats_CalcMonthlyMeans(pConfig%iMonth, pConfig%iDay)
+!      call stats_WriteMonthlyReport (LU_STD_OUT, pGrd, sMonthName, iMonth)
 
-    if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
-      pConfig%iMonth, sMonthName, pConfig)
+    call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_MONTHLY)
+
+  if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
+    pConfig%iMonth, sMonthName, pConfig)
 
     write(UNIT=LU_LOG,FMT="(A,i2,A,i4)") &
       "finished monthly calculations for: ", &
@@ -429,10 +514,9 @@ end if
 
   end do MAIN_LOOP
 
-  call model_WriteGrids(pGrd, pConfig, "ANNUAL", pConfig%iDay, &
-    pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
+  call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_ANNUAL)
 
-  ! model_Main has been called once... any further calls will not require
+  ! model_Solve has been called once... any further calls will not require
   !    re-initialization of data structures and data arrays
   pConfig%lFirstYearOfSimulation = lFALSE
 
@@ -444,12 +528,11 @@ end if
   ! update value of last year
   if( .not. pConfig%lGriddedData) pConfig%iEndYear = pConfig%iYear
 
-  ! destroy time series pointer pTS
   DEALLOCATE(pTS, STAT=iStat)
   call Assert( iStat == 0, &
     "Could not deallocate memory for time-series data structure")
 
-end subroutine model_Main
+end subroutine model_Solve
 
 !!***
 
@@ -483,27 +566,10 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
     ! DISLIN plots
 
   ![LOCALS]
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC
-#endif
   integer (kind=T_INT) :: k
 
   ! finalize and close any open NetCDF or binary output files
   do k=1,iNUM_VARIABLES
-
-#ifdef NETCDF_SUPPORT
-    ! close any NetCDF files that have been opened for output
-    if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
-
-      pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-      call netcdf_check(nf90_close(pNC%iNCID))
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: closed NetCDF file "// &
-        TRIM(STAT_INFO(k)%sVARIABLE_NAME)//".nc"
-      flush(unit=LU_LOG)
-
-    end if
-
-#endif
 
     ! write the end date of the simulation into the header of
     ! the binary file (*.bin)
@@ -537,7 +603,9 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)
-  call grid_Destroy(pDataGrd)
+  call grid_Destroy(pGenericGrd_int)
+  call grid_Destroy(pGenericGrd_sgl)
+!  call grid_Destroy(pGenericGrd_short)
 
   ! how long did all this take, anyway?
   call cpu_time(rEndTime)
@@ -580,11 +648,10 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
           ! check to see if an existing downhill flow routing table exists
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
-        input_grd => grid_Read( sBuf, "ARC_GRID", T_INT_GRID )
-        call Assert( grid_Conform( pGrd, input_grd ), &
-          "Non-conforming grid - filename: " // sBuf )
-        pGrd%Cells%iLanduse = input_grd%iData
-        call grid_Destroy( input_grd )
+        input_grd => grid_Read( sBuf, "ARC_GRID", DATATYPE_INT )
+
+        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
+
         iStat = 0
       endif
     case( CONFIG_LANDUSE_DYNAMIC_SURFER )
@@ -592,20 +659,12 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
         trim(pConfig%sDynamicLanduseFilePrefix), iYear,trim(pConfig%sOutputFileSuffix)
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
-        input_grd => grid_Read( sBuf, "SURFER", T_INT_GRID )
-        call Assert( grid_Conform( pGrd, input_grd ), &
-          "Non-conforming grid - filename: " // sBuf )
-        pGrd%Cells%iLanduse = input_grd%iData
-        call grid_Destroy( input_grd )
+        input_grd => grid_Read( sBuf, "SURFER", DATATYPE_INT )
+
+        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
+
         iStat = 0
       endif
-!#ifdef NETCDF_SUPPORT
-!    case( CONFIG_LANDUSE_DYNAMIC_NETCDF )
-!call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, input_grd, &
-!         JULIAN_DAY(iYear, iMonth, iDay))
-!      pGrd%Cells%rGrossPrecip = input_grd%rData
-!      call grid_Destroy( input_grd )
-!#endif
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown landuse input type" )
@@ -629,7 +688,7 @@ end function if_GetDynamicLanduseValue
 ! INPUTS
 !   pGrd - Pointer to the model grid data structure.
 !   pConfig - Pointer to the model configuration data structure.
-!   rPrecip - Daily precipitation amount read in by model_Main.
+!   rPrecip - Daily precipitation amount read in by model_Solve.
 !   iDayOfYear - Day of the current year (January 1 = 1).
 !   iMonth - Month corresponding to the current model day (January = 1).
 !
@@ -643,7 +702,7 @@ end function if_GetDynamicLanduseValue
 !
 ! SOURCE
 
-subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYear)
+subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYear, iJulianDay)
   !! Populates Gross precipitation value on a cell-by-cell basis
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -653,39 +712,23 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   integer (kind=T_INT), intent(in) :: iMonth
   integer (kind=T_INT), intent(in) :: iDay
   integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=T_INT), intent(in) :: iJulianDay
   ! [ LOCALS ]
   real (kind=T_DBL) :: rMin, rMean, rMax, rSum
   integer (kind=T_INT) :: iCount, iNegCount
   character (len=256) sBuf
 
-  select case( pConfig%iConfigurePrecip )
-    case( CONFIG_PRECIP_SINGLE_STATION)
-      pGrd%Cells(:,:)%rGrossPrecip = rPrecip  ! use a single value for entire grid
-    case( CONFIG_PRECIP_ARC_GRID )
-      write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-        trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-!      input_grd => grid_Read( sBuf, "ARC_GRID", T_SGL_GRID )
-  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  pGrd%Cells%rGrossPrecip = pDataGrd%rData
 
-  case( CONFIG_PRECIP_SURFER_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-      trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    pGrd%Cells%rGrossPrecip = pDataGrd%rData
+  call DAT(PRECIP_DATA)%set_constant(rPrecip)
 
-#ifdef NETCDF_SUPPORT
-  case( CONFIG_PRECIP_NETCDF )
-    call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, pDataGrd, &
-      JULIAN_DAY(iYear, iMonth, iDay))
-    pGrd%Cells%rGrossPrecip = pDataGrd%rData
-!      call grid_Destroy( input_grd )
-#endif
+  call DAT(PRECIP_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, &
+      rValues=pGrd%Cells%rGrossPrecip)
 
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown precipitation input type", &
-      trim(__FILE__),__LINE__)
-end select
+  write(sBuf, fmt="(i4.4,'_',i2.2,'_',i2.2)") iYear, iMonth, iDay
+
+!  pGrd%Cells%rGrossPrecip = pGrd%rData
 
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
@@ -694,7 +737,14 @@ end select
     pGrd%Cells%rGrossPrecip = rZERO
   end where
 
-  if ( pConfig%lHaltIfMissingClimateData ) then
+!  pGenericGrd_sgl%rData = pGrd%Cells%rGrossPrecip
+!
+!  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "Precip_"//trim(sBuf)//".png", &
+!     sTitleTxt="Precip: "//trim(sBuf), &
+!     sAxisTxt="mm per day" )
+
+  if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= rZERO,"Precipitation values less than " &
       //real2char(pConfig%rMinValidPrecip)//" are not allowed. " &
       //"("//trim(int2char(iNegCount))//" cells with values < " &
@@ -755,7 +805,7 @@ end subroutine model_GetDailyPrecipValue
 ! SOURCE
 
 subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
-  rMaxT, rRH, iMonth, iDay, iYear)
+  rMaxT, rRH, iMonth, iDay, iYear, iJulianDay)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -768,20 +818,28 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   integer (kind=T_INT), intent(in) :: iMonth
   integer (kind=T_INT), intent(in) :: iDay
   integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=T_INT), intent(in) :: iJulianDay
+
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal
+  real (kind=T_DBL) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal, rMeanTMIN, rMeanTMAX
   integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT) :: iRow,iCol, iCount
+  integer (kind=T_INT) :: iRow,iCol, iCount, iCount_valid
   character (len=256) sBuf
   type (T_CELL),pointer :: cel
 
   iCount = 0
 
-  select case( pConfig%iConfigureTemperature )
-    case( CONFIG_TEMPERATURE_SINGLE_STATION)
-      pGrd%Cells(:,:)%rTMin = rMinT  ! use a single value for entire grid
-      pGrd%Cells(:,:)%rTMax = rMaxT
-      pGrd%Cells(:,:)%rTAvg = rAvgT
+  call DAT(TMAX_DATA)%set_constant(rMaxT)
+  call DAT(TMIN_DATA)%set_constant(rMinT)
+
+  call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMax)
+
+  call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
+
 
 #ifdef STREAM_INTERACTIONS
   !! Adjust cell-by-cell temperature
@@ -804,71 +862,30 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   end if
 #endif
 
-  case( CONFIG_TEMPERATURE_ARC_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-
-  write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-    trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-  where(pDataGrd%rData > pConfig%rMinValidTemp)
-    pGrd%Cells%rTMax = pDataGrd%rData
-  endwhere
-
-  case( CONFIG_TEMPERATURE_SURFER_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere
-
-#ifdef NETCDF_SUPPORT
-  case( CONFIG_TEMPERATURE_NETCDF )
-    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere
-
-    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-#endif
-
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
-end select
-
-
   if(pConfig%lHaltIfMissingClimateData) then
+
     call Assert(iCount == 0,"Temperature values less than " &
       //real2char(pConfig%rMinValidTemp)//" are not allowed. " &
       //"("//trim(int2char(iCount) )//" cells with values < " &
       //real2char(pConfig%rMinValidTemp)//")",TRIM(__FILE__),__LINE__)
+
   elseif(iCount > 0) then
+
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
       "Missing minimum or maximum TEMPERATURE values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
-    call echolog("  ==> Temperature values from the previous day will be used in place of" &
-      //" missing values")
+    write(sBuf,fmt="(a,f12.3,a)") "  ==> Missing TMIN values will be " &
+    //"replaced with the mean of the remaining non-missing values (", &
+    rMeanTMIN,")"
+
+    call echolog(sBuf)
+
+    write(sBuf,fmt="(a,f12.3,a)") "  ==> Missing TMAX values will be " &
+    //"replaced with the mean of the remaining non-missing values (", &
+    rMeanTMAX,")"
+
+    call echolog(sBuf)
+
   endif
 
   pGrd%Cells%rTAvg = (pGrd%Cells%rTMax + pGrd%Cells%rTMin) / 2_T_SGL
@@ -934,26 +951,36 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   real (kind=T_SGL) :: rTAvg_C              ! temporary variable holding avg temp in C
   real (kind=T_SGL) :: rSnowDepthCM         ! snow depth in centimeters
 
+  !$OMP DO
+
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
-
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
-
       rTAvg_C = FtoC(cel%rTAvg)
       ! assuming snow depth is 10 times the water content of the snow in inches
       rSnowDepthCM = cel%rSnowCover * 10.0_T_SGL * rCM_PER_INCH
 
-      if(cel%rTAvg > rFREEZING) then
-        cel%rCFGI = max(A*cel%rCFGI - &
-           (rTAvg_C * exp (-0.4_T_SGL * 0.5_T_SGL * rSnowDepthCM)),rZERO)
-      else ! temperature is below freezing
-        cel%rCFGI = max(A*cel%rCFGI - &
-           (rTAvg_C * exp (-0.4_T_SGL * 0.08_T_SGL * rSnowDepthCM)),rZERO)
-      end if
+  if(cel%rTAvg > rFREEZING) then
+    cel%rCFGI = max(A*cel%rCFGI - &
+      (rTAvg_C * exp (-0.4_T_SGL * 0.5_T_SGL * rSnowDepthCM)),rZERO)
+  else ! temperature is below freezing
+    cel%rCFGI = max(A*cel%rCFGI - &
+      (rTAvg_C * exp (-0.4_T_SGL * 0.08_T_SGL * rSnowDepthCM)),rZERO)
+  end if
 
-    end do
   end do
+end do
+
+  !$OMP END DO
+
+!  write(UNIT=LU_LOG,FMT=*)  "=========CFGI CALCULATION==========="
+!  write(UNIT=LU_STD_OUT,FMT="(A)") &
+!      "                                 min          mean           max"
+!  call stats_WriteMinMeanMax(LU_STD_OUT,"CFGI" , pGrd%Cells(:,:)%rCFGI )
+!
+!  write(UNIT=LU_LOG,FMT=*)  "=========CFGI CALCULATION==========="
+
+
 
 end subroutine model_UpdateContinuousFrozenGroundIndex
 
@@ -980,6 +1007,8 @@ end subroutine model_UpdateContinuousFrozenGroundIndex
 !
 ! SOURCE
 
+#ifdef IRRIGATION_MODULE
+
 subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
 
   implicit none
@@ -995,8 +1024,6 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   real (kind=T_SGL) :: rTMax
   real (kind=T_SGL) :: rW
   integer (kind=T_INT) :: iCol,iRow
-  real (kind=T_SGL) :: rGDD_BaseTemp, rGDD_MaxTemp
-  logical (kind=T_LOGICAL) :: lAssertTest
 
   ! zero out growing degree day at start of calendar year
   if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
@@ -1005,51 +1032,37 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
       cel => pGrd%Cells(iCol,iRow)
 
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
+  ! cap the maximum value used in GDD calculations on the basis of the value
+  ! provided by user...
+  rTMax = min(cel%rGDD_TMax, cel%rTMax)
 
-      ! cap the maximum value used in GDD calculations on the basis of the value
-      ! provided by user...
+  if(rTMax <= cel%rGDD_TBase) then
 
+  rDD = 0.
 
-      lAssertTest = cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses
+  elseif(cel%rTMin >= cel%rGDD_TBase) then
 
-      if(.not. lAssertTest) &
-        call assert(lAssertTest, &
-        "Array index out of bounds. Variable is iLandUseIndex with a value of " &
-        //trim(int2char(cel%iLandUseIndex)), trim(__FILE__),__LINE__)
+  rDD = cel%rTAvg - cel%rGDD_TBase
 
-      rGDD_BaseTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_BaseTemp
-      rGDD_MaxTemp = pConfig%IRRIGATION(cel%iLandUseIndex)%rGDD_MaxTemp
+  else
 
-      rTMax = min(rGDD_MaxTemp, cel%rTMax)
+  rW = (rTMax - cel%rTMin) / 2.
 
-      if(rTMax <= rGDD_BaseTemp) then
+  rAt = ( cel%rGDD_TBase - cel%rTAvg) / rW
 
-        rDD = 0.
+  if(rAt > 1) rAt = 1.
+  if(rAt < -1) rAt = -1.
 
-      elseif(cel%rTMin >= rGDD_BaseTemp) then
+  rA = asin(rAt)
 
-        rDD = cel%rTAvg - rGDD_BaseTemp
+  rDD = (( rW * cos(rA)) - ((cel%rGDD_TBase - cel%rTAvg) &
+    * ((dpPI / 2.) - rA))) / dpPI
 
-      else
+  end if
 
-        rW = (rTMax - cel%rTMin) / 2.
+  cel%rGDD = cel%rGDD + rDD
 
-        rAt = ( rGDD_BaseTemp - cel%rTAvg) / rW
-
-        if(rAt > 1) rAt = 1.
-        if(rAt < -1) rAt = -1.
-
-        rA = asin(rAt)
-
-        rDD = (( rW * cos(rA)) - ((rGDD_BaseTemp - cel%rTAvg) &
-               * ((dpPI / 2.) - rA))) / dpPI
-
-      end if
-
-      cel%rGDD = cel%rGDD + rDD
-
-    end do
+  end do
 
   end do
 
@@ -1086,30 +1099,30 @@ subroutine model_InitializeGrowingDegreeDay( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-!  real (kind=T_SGL) :: rDD                        ! daily departure from TBase
-!  type (T_CELL),pointer :: cel                      ! pointer to a particular cell
-!  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-!  real (kind=T_SGL) :: rA, rAt
-!  real (kind=T_SGL) :: rTMax
-!  real (kind=T_SGL) :: rW
-!  integer (kind=T_INT) :: iCol,iRow
+  real (kind=T_SGL) :: rDD                        ! daily departure from TBase
+  type (T_CELL),pointer :: cel                      ! pointer to a particular cell
+  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=T_SGL) :: rA, rAt
+  real (kind=T_SGL) :: rTMax
+  real (kind=T_SGL) :: rW
+  integer (kind=T_INT) :: iCol,iRow
 
-!  do iRow=1,pGrd%iNY
-!    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
-!      cel => pGrd%Cells(iCol,iRow)
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
+      cel => pGrd%Cells(iCol,iRow)
+      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
 
-!      if ( cel%iActive == iINACTIVE_CELL ) cycle
+  ! transfer table values to the grid cell
+  cel%rGDD_TMax = pIRRIGATION%rGDD_MaxTemp
+  cel%rGDD_TBase = pIRRIGATION%rGDD_BaseTemp
 
-!      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+  end do
 
-      ! transfer table values to the grid cell
-!      cel%rGDD_TMax = pIRRIGATION%rGDD_MaxTemp
-!      cel%rGDD_TBase = pIRRIGATION%rGDD_BaseTemp
-
-!    end do
-!  end do
+  end do
 
 end subroutine model_InitializeGrowingDegreeDay
+
+#endif
 
 !!***
 !--------------------------------------------------------------------------
@@ -1153,8 +1166,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   ! [ LOCALS ]
   real (kind=T_DBL) :: dpPotentialMelt,dpPotentialInterception,dpInterception
   real (kind=T_DBL) :: dpPreviousSnowCover,dpChgInSnowCover, dpSnowCover
-  real (kind=T_DBL) :: dpNetPrecip    ! all forms of precip, after interception
-  real (kind=T_DBL) :: dpNetRainfall  ! precip as RAINFALL, after interception
+  real (kind=T_DBL) :: dpNetPrecip, dpNetRainfall
   integer (kind=T_INT) :: iRow,iCol
   type (T_CELL),pointer :: cel
   integer (kind=T_INT) :: iNumGridCells
@@ -1173,110 +1185,111 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rSnowFall_SWE = rZERO
 
   ! calculate number of cells in model grid
-  iNumGridCells = pGrd%iNumGridCells
+  iNumGridCells = pGrd%iNX * pGrd%iNY
+
+!  pGrd%Cells(:,:)%rPrevious_SnowCover = pGrd%Cells(:,:)%rSnowCover
 
   ! Use "potential interception" for each cell to compute net precip
-
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
+    ! allow for correction factor to be applied to precip gage input data
+    if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
+      lFREEZING = lTRUE
+      cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+    else
+      lFREEZING = lFALSE
+      cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+    end if
 
-      ! allow for correction factor to be applied to precip gage input data
-      if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_T_SGL <= rFREEZING ) then
-        lFREEZING = lTRUE
-        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
-      else
-        lFREEZING = lFALSE
-        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
-      end if
+    dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
-      ! this simply retrieves the table value for the given landuse
-      dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
+    dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
+    dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
-      ! save the current snowcover value, create local copy as well
-      dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
-      dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
+    dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
+!      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
+!      if ( cel%dpNetPrecip < rZERO ) cel%dpNetPrecip = rZERO
+    if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+!      dpInterception = cel%rGrossPrecip - cel%dpNetPrecip
+    dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
 
-      ! calculate NET PRECIPITATION; assign value of zero if all of the
-      ! GROSS PRECIP is captured by the INTERCEPTION process
-      dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
+    if(dpInterception < dpZERO) &
+      call Assert(lFALSE, &
+        "Negative value for interception was calculated on day " &
+        //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
+        //"  iCol: "//trim(int2char(iCol)), &
+        trim(__FILE__), __LINE__)
 
-      if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+    call stats_UpdateAllAccumulatorsByCell(dpInterception, &
+      iINTERCEPTION,iMonth,iZERO)
 
-      dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
+    if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
+      .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
+        call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
+          real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
+          pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
+    end if
 
-      ! negative interception can only be generated if the user has supplied
-      ! *negative* values for GROSS PRECIPITATION; this has happened,
-      ! mostly due to interpolation schemes that generate pockets
-      ! of negative precip values
-      if(dpInterception < dpZERO) &
-        call Assert(lFALSE, &
-          "Negative value for interception was calculated on day " &
-          //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
-          //"  iCol: "//trim(int2char(iCol)), &
-          trim(__FILE__), __LINE__)
+!      cel%rAnnualInterception = cel%rAnnualInterception + cel%dpInterception
+!      rMonthlyInterception = rMonthlyInterception + cel%dpInterception
 
-      cel%rInterception = real(dpInterception, kind=T_DBL)
-!      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
+  ! NET PRECIP = GROSS PRECIP - INTERCEPTION
+    dpNetRainfall = dpNetPrecip
 
-      ! NOW we're through with INTERCEPTION calculations
-      ! Next, we partition between snow and rain
+  ! Is it snowing?
+    if (lFREEZING ) then
+!        cel%rSnowCover = cel%rSnowCover + cel%dpNetPrecip
+    dpSnowCover = dpSnowCover + dpNetPrecip
+!         rMonthlySnowFall = rMonthlySnowFall + sum(pGrd%Cells(:,:)%dpNetPrecip)
+    cel%rSnowFall_SWE = dpNetPrecip
+    dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
+  end if
 
-      ! Assume that all precipitation is rain, for now
-      dpNetRainfall = dpNetPrecip
+  ! Is there any melting?
+  if(cel%rTAvg>rFREEZING) then
+    dpPotentialMelt = rMELT_INDEX * ( cel%rTMax-rFREEZING )*dpC_PER_F / rMM_PER_INCH
 
-      ! Is it snowing?
-      if (lFREEZING ) then
-        dpSnowCover = dpSnowCover + dpNetPrecip
-        cel%rSnowFall_SWE = dpNetPrecip
-        dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
-      end if
+  if(dpSnowCover > dpPotentialMelt) then
+    cel%rSnowMelt = dpPotentialMelt
+    dpSnowCover = dpSnowCover - dpPotentialMelt
+  else
+    cel%rSnowMelt = dpSnowCover
+    dpSnowCover = dpZERO
+  end if
 
-      ! Is there any melting?
-      if ( cel%rTAvg > rFREEZING ) then
-        dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
-                            * dpC_PER_F / rMM_PER_INCH
+  end if
 
-        if(dpSnowCover > dpPotentialMelt) then
-          cel%rSnowMelt = dpPotentialMelt
-          dpSnowCover = dpSnowCover - dpPotentialMelt
-        else   ! not enough snowcover to satisfy the amount that *could* melt
-          cel%rSnowMelt = dpSnowCover
-          dpSnowCover = dpZERO
-        end if
+  dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
 
-      end if
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(dpChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
 
-      dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
+  call stats_UpdateAllAccumulatorsByCell( &
+    dpNetRainfall,iNET_PRECIP,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(dpChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell( &
-        dpNetRainfall,iNET_PRECIP,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    dpSnowCover,iSNOWCOVER,iMonth,iZERO)
 
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
-
-      call stats_UpdateAllAccumulatorsByCell( &
-        dpSnowCover,iSNOWCOVER,iMonth,iZERO)
-
-      ! copy temporary double-precision values back to single-precision
-      cel%rSnowCover = real(dpSnowCover, kind=T_SGL)
-      cel%rNetRainfall = real(dpNetRainfall, kind=T_SGL)
-
-    end do
+  ! copy temporary double-precision values back to single-precision
+  cel%rSnowCover = real(dpSnowCover, kind=T_SGL)
+  cel%rNetPrecip = real(dpNetRainfall, kind=T_SGL)
 
   end do
+end do
 
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
   ! as the final argument triggers the routine to update monthly and annual stats
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_PRECIP,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
@@ -1287,8 +1300,6 @@ end subroutine model_ProcessRain
 !----------------------------------------------------------------------
 
 subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInYear)
-
-  !> @TODO: rework to incorporate interception storage
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -1345,138 +1356,157 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
 
   do iRow=1,pGrd%iNY
 
-    rLatitude = row_latitude(pConfig%rNorthernLatitude, &
-      pConfig%rSouthernLatitude, pGrd%iNY, iRow)
-    rOmega_s = sunset_angle(rLatitude, rDelta)
-    rN = daylight_hours(rOmega_s)
+  rLatitude = row_latitude(pConfig%rNorthernLatitude, &
+    pConfig%rSouthernLatitude, pGrd%iNY, iRow)
+  rOmega_s = sunset_angle(rLatitude, rDelta)
+  rN = daylight_hours(rOmega_s)
 
-    ! NOTE that the following equation returns extraterrestrial radiation in
-    ! MJ / m**2 / day.
-    rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
-    rRso = clear_sky_solar_radiation_Rso(rRa)
-    rZenithAngle = zenith_angle(rLatitude, rDelta)
+  ! NOTE that the following equation returns extraterrestrial radiation in
+  ! MJ / m**2 / day.
+  rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
+  rRso = clear_sky_solar_radiation_Rso(rRa)
+  rZenithAngle = zenith_angle(rLatitude, rDelta)
 
-    ! determine the fraction of precip that falls as snow
-    do iCol=1,pGrd%iNX
+  !$OMP DO
 
-      cel => pGrd%Cells(iCol,iRow)
+  ! determine the fraction of precip that falls as snow
+  do iCol=1,pGrd%iNX
 
-      ! initialize accumulators for this cell
-      cel%rSnowMelt = rZERO
-      cel%rSnowFall_SWE = rZERO
-      cel%rSnowFall = rZERO
+  cel => pGrd%Cells(iCol,iRow)
 
-      if(cel%rTMin > pConfig%rTMaxAllSnow &
-        .or. cel%rTMax > pConfig%rTMaxAllRain) then
+  ! initialize accumulators for this cell
+  cel%rSnowMelt = rZERO
+  cel%rSnowFall_SWE = rZERO
+  cel%rSnowFall = rZERO
 
-        rFracRain = rONE
-        cel%iDaysSinceLastSnow = cel%iDaysSinceLastSnow + 1
+  if(cel%rTMin > pConfig%rTMaxAllSnow &
+    .or. cel%rTMax > pConfig%rTMaxAllRain) then
 
-      else if(cel%rTMax < pConfig%rTMaxAllSnow) then
+  rFracRain = rONE
+  cel%iDaysSinceLastSnow = cel%iDaysSinceLastSnow + 1
 
-        rFracRain = rZERO
-        cel%iDaysSinceLastSnow = 0
+  else if(cel%rTMax < pConfig%rTMaxAllSnow) then
 
-      else
+  rFracRain = rZERO
+  cel%iDaysSinceLastSnow = 0
 
-        ! this is straight from MMS/PRMS
-        rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
-                     / (cel%rTMax - cel%rTMin))
-        cel%iDaysSinceLastSnow = 0
+  else
 
-      end if
+  ! this is straight from MMS/PRMS
+  rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
+    / (cel%rTMax - cel%rTMin))
+  cel%iDaysSinceLastSnow = 0
 
-      cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
-         + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+  end if
 
-      rPotentialInterception = rf_model_GetInterception( pConfig, cel )
+  cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
+    + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
 
-      rPreviousSnowCover = cel%rSnowCover
+  rPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
-      cel%rNetRainfall = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
-      rInterception = MAX(cel%rGrossPrecip - cel%rNetRainfall,rZERO)
-      cel%rInterception = rInterception
-      cel%rInterceptionStorage = cel%rInterceptionStorage + rInterception
+  rPreviousSnowCover = cel%rSnowCover
 
-      cel%rSnowFall_SWE = cel%rNetRainfall * (rONE - rFracRain)
-      cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
-      cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
-      cel%rNetRainfall = cel%rNetRainfall - cel%rSnowFall_SWE
+  cel%rNetPrecip = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
+  rInterception = MAX(cel%rGrossPrecip - cel%rNetPrecip,rZERO)
 
-      if(cel%rSnowCover > rNEAR_ZERO .or. cel%rInterceptionStorage > rNEAR_ZERO) then
-      ! no point in calculating all this unless there is snowcover present
+  call stats_UpdateAllAccumulatorsByCell(REAL(rInterception,kind=T_DBL), &
+    iINTERCEPTION,iMonth,iZERO)
 
-        rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
+  if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
+    .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
+    .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
+      call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
+        REAL(rInterception,kind=T_SGL), pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
+        iNumGridCells, iINTERCEPTION)
+  end if
 
-        cel%rSnowAlbedo = snow_albedo(rAlbedoInit, cel%iDaysSinceLastSnow, &
-          rZenithAngle)
+!      cel%rAnnualInterception = cel%rAnnualInterception + cel%rInterception
+!      rMonthlyInterception = rMonthlyInterception + cel%rInterception
 
-        if(lENERGY_BALANCE) then
+  cel%rSnowFall_SWE = cel%rNetPrecip * (rONE - rFracRain)
+  cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
+  cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
+  cel%rNetPrecip = cel%rNetPrecip - cel%rSnowFall_SWE
 
-          call snow_energy_balance(cel%rTMin, cel%rTMax, &
-          cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
-          cel%rNetRainfall, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
+  if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
+    ! unless there is snowcover present
 
-        else
+  rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
 
-          ! amount average temperature exceeds freezing point
-          rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
-          rTd = max(rTempDifference,rZERO)
-          rRns = net_shortwave_radiation_Rns(rRs, cel%rSnowAlbedo)
-          rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
-          rRn = rRns - rRnl
-          rTempComp = rA_sub_r * rTd / rCM_PER_INCH
-          rRadComp = max(rM_sub_Q * rRn * 11.57  / rCM_PER_INCH,rZERO)
-          rPotentialMelt = rTempComp + rRadComp
+  cel%rSnowAlbedo = snow_albedo(rAlbedoInit, cel%iDaysSinceLastSnow, &
+    rZenithAngle)
 
+  if(lENERGY_BALANCE) then
+
+  call snow_energy_balance(cel%rTMin, cel%rTMax, &
+    cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
+    cel%rNetPrecip, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
+
+  else
+
+  ! amount average temperature exceeds freezing point
+  rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
+  rTd = max(rTempDifference,rZERO)
+
+  rRns = net_shortwave_radiation_Rns(rRs, cel%rSnowAlbedo)
+
+  rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
+
+  rRn = rRns - rRnl
+
+  rTempComp = rA_sub_r * rTd / rCM_PER_INCH
+
+  rRadComp = max(rM_sub_Q * rRn * 11.57  / rCM_PER_INCH,rZERO)
+
+  rPotentialMelt = rTempComp + rRadComp
 #ifdef DEBUG_PRINT
-
-    if(iCol > 3 .and. iCol < 5 .and. iRow > 20 .and. iRow < 22) then
-      write(*,FMT="('Snow albedo:',t32,F14.3)") cel%rSnowAlbedo
-      write(*,FMT="('Extraterrestrial radiation (Ra):',t32,F14.3)") rRa
-      write(*,FMT="('Incoming shortwave (Rs):',t32,F14.3)") rRs
-      write(*,FMT="('Clear sky shortwave (Rso):',t32,F14.3)") rRso
-      write(*,FMT="('Zenith angle :',t32,F14.3)") rZenithAngle
-      write(*,FMT="('Net shortwave (Rns):',t32,F14.3)") rRns
-      write(*,FMT="('Net longwave (Rnl):',t32,F14.3)") rRnl
-      write(*,FMT="('Net shortwave + longwave (Rn):',t32,F14.3)") rRn
-      write(*,FMT="('Amount temp > 0 (rTd):',t32,F14.3)") rTd
-      write(*,FMT="('Average temp  (rTAvg):',t32,F14.3)") cel%rTAvg
-      write(*,FMT="('Temp Difference:',t32,F14.3)") rTempDifference
-      write(*,FMT="('Snowcover (SWE, inches):',t32,F14.3)") cel%rSnowCover
-      write(*,FMT="('Potential snowmelt (temp):',t32,F14.3)") rTempComp
-      write(*,FMT="('Potential snowmelt (rad):',t32,F14.3)") rRadComp
-      write(*,FMT="('Potential snowmelt:',t32,F14.3)") rPotentialMelt
-      write(*,FMT="('----------------------------------------------------')")
-    end if
-
+  if(iCol > 3 .and. iCol < 5 .and. iRow > 20 .and. iRow < 22) then
+    write(*,FMT="('Snow albedo:',t32,F14.3)") cel%rSnowAlbedo
+    write(*,FMT="('Extraterrestrial radiation (Ra):',t32,F14.3)") rRa
+    write(*,FMT="('Incoming shortwave (Rs):',t32,F14.3)") rRs
+    write(*,FMT="('Clear sky shortwave (Rso):',t32,F14.3)") rRso
+    write(*,FMT="('Zenith angle :',t32,F14.3)") rZenithAngle
+    write(*,FMT="('Net shortwave (Rns):',t32,F14.3)") rRns
+    write(*,FMT="('Net longwave (Rnl):',t32,F14.3)") rRnl
+    write(*,FMT="('Net shortwave + longwave (Rn):',t32,F14.3)") rRn
+    write(*,FMT="('Amount temp > 0 (rTd):',t32,F14.3)") rTd
+    write(*,FMT="('Average temp  (rTAvg):',t32,F14.3)") cel%rTAvg
+    write(*,FMT="('Temp Difference:',t32,F14.3)") rTempDifference
+    write(*,FMT="('Snowcover (SWE, inches):',t32,F14.3)") cel%rSnowCover
+    write(*,FMT="('Potential snowmelt (temp):',t32,F14.3)") rTempComp
+    write(*,FMT="('Potential snowmelt (rad):',t32,F14.3)") rRadComp
+    write(*,FMT="('Potential snowmelt:',t32,F14.3)") rPotentialMelt
+    write(*,FMT="('----------------------------------------------------')")
+  end if
 #endif
 
-          if(cel%rSnowCover > rPotentialMelt) then
-            cel%rSnowMelt = rPotentialMelt
-            cel%rSnowCover = cel%rSnowCover - rPotentialMelt
-          else
-            cel%rSnowMelt = cel%rSnowCover
-            cel%rSnowCover = rZERO
-          end if
-        end if
-      end if
+  if(cel%rSnowCover > rPotentialMelt) then
+    cel%rSnowMelt = rPotentialMelt
+    cel%rSnowCover = cel%rSnowCover - rPotentialMelt
+  else
+    cel%rSnowMelt = cel%rSnowCover
+    cel%rSnowCover = rZERO
+  end if
+end if
+end if
 
-      rChgInSnowCover = cel%rSnowCover - rPreviousSnowCover
+  rChgInSnowCover = cel%rSnowCover - rPreviousSnowCover
 
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rNetRainfall,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
-      call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowCover,kind=T_DBL),iSNOWCOVER,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rNetPrecip,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rSnowFall_SWE,kind=T_DBL),iSNOWFALL_SWE,iMonth,iZERO)
+  call stats_UpdateAllAccumulatorsByCell( &
+    REAL(cel%rSnowCover,kind=T_DBL),iSNOWCOVER,iMonth,iZERO)
 
 
-    end do
+  end do
+
+  !$OMP END DO
 
   end do
 
@@ -1488,6 +1518,8 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
+
+  return
 
 end subroutine model_ProcessRainPRMS
 
@@ -1567,9 +1599,10 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   if ( iDayCtr > iMOVING_AVG_TERMS ) iDayCtr = 1
 
   ! Update the inflow buffer (used to determine antecedent runoff conditions)
-  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetRainfall &
+  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetPrecip &
     + pGrd%Cells(:,:)%rSnowMelt + pGrd%Cells(:,:)%rInflow
 
+  return
 end subroutine model_ProcessRunoff
 
 !!***
@@ -1629,10 +1662,8 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   ! set iteration counter
   iNumIterationsNochange = 0
 
-#ifdef DEBUG_PRINT
   pTempGrid=>grid_Create( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_INT_GRID )
-#endif
+    pGrd%rX1, pGrd%rY1, DATATYPE_INT )
 
   allocate(iOrderCol(pGrd%iNY*pGrd%iNX), iOrderRow(pGrd%iNY*pGrd%iNX), stat=iStat)
   call Assert( iStat == 0, &
@@ -1681,11 +1712,10 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     end if
   end do
 
-  ! If there are no flow inputs to the current cell, we can mark it
-  ! and it to the downhill-sorted list.
+  ! If there are none, we can mark this cell
   ! If we have circular flow (a points to b, b points to a),
   ! we can mark the current cell; both a and b will be set to
-  ! closed depressions in subsequent processing.
+  ! closed depressions in subsequent processing
   if ( iUpstreamCount == 0  &
     .or. (iUpstreamCount == 1 .and. lCircular)) then
     iNChange = iNChange+1
@@ -1701,7 +1731,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     ! likely to be a depression
     iNChange = iNChange+1
     cel%lDownhillMarked = lTRUE
-    cel%iFlowDir = iDIR_DEPRESSION
+    cel%iFlowDir = 0
     iOrderCount = iOrderCount+1
     iOrderCol(iOrderCount) = iCol
     iOrderRow(iOrderCount) = iRow
@@ -1720,8 +1750,8 @@ end do  ! loop over columns
 
   ! loop over possible (legal) values of ther flow direction grid
   do k=0,128
-    iCount=COUNT( .not. pGrd%Cells%lDownHillMarked &
-      .and. pGrd%Cells%iFlowDir==k )
+    iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
+      .and.pGrd%Cells%iFlowDir==k)
     if(iCount>0) then
       iCumlCount = iCumlCount + iCount
       write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
@@ -1733,19 +1763,23 @@ end do  ! loop over columns
   write(LU_LOG,FMT="(3x,i8,' Total cells with nonzero flow " &
     //"direction values')") iCumlCount
 
-#ifdef DEBUG_PRINT
-  ! the purpose of this code is to output progress of the
-  ! flow direction initialization
   where( pGrd%Cells%lDownHillMarked )
     pTempGrid%iData = iROUTE_CELL_MARKED
   elsewhere
     pTempGrid%iData = pGrd%Cells%iFlowDir
   end where
 
+!#ifdef GRAPHICS_SUPPORT
+!        call genericgraph(pTempGrid)
+!#endif
+
+#ifdef DEBUG_PRINT
+
   call grid_WriteArcGrid("iteration"//TRIM(int2char(iPasses))// &
     "problem_gridcells.asc", &
     pTempGrid%rX0,pTempGrid%rX1,pTempGrid%rY0,pTempGrid%rY1, &
     REAL(pTempGrid%iData,kind=T_SGL))
+
 #endif
 
   else
@@ -1852,7 +1886,6 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   real (kind=T_SGL) :: rP,rR,rDelta
   type (T_CELL),pointer :: cel
   type (T_CELL),pointer :: target_cel
-  logical (kind=T_LOGICAL) :: lAssertTest
 
 
   ! Reset the upstream flows (note that iOrderCount, iOrderCol, and iOrderRow are globals)
@@ -1881,21 +1914,15 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
   ! MUST screen target values to ensure we don't start attempting
   ! manipulation of memory that is out of bounds!!
-  lAssertTest = iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY
-  if (.not. lAssertTest) &
-    call Assert(lAssertTest, &
-      "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
-      //"  Col = "//int2char(iOrderCol(ic)), &
-      trim(__FILE__),__LINE__)
+  call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=T_LOGICAL), &
+    "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
+    //"  Col = "//int2char(iOrderCol(ic)), &
+    trim(__FILE__),__LINE__)
+  call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=T_LOGICAL), &
+    "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
+    //"  Col = "//int2char(iOrderCol(ic)), &
+    trim(__FILE__),__LINE__)
 
-  lAssertTest = iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX
-  if (.not. lAssertTest) &
-    call Assert(lAssertTest, &
-      "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
-      //"  Col = "//int2char(iOrderCol(ic)), &
-      trim(__FILE__),__LINE__)
-
-  ! we're past the sanity checks; OK to set pointer location
   target_cel => pGrd%Cells(iTgt_Col,iTgt_Row)
 
 #ifdef STREAM_INTERACTIONS
@@ -1905,13 +1932,9 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     cel%rStreamCapture = cel%rOutFlow
     cel%rOutFlow = rZERO
   else if &
-
 #else
-
   if &
-
 #endif
-
   (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
   .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
   ! Don't route any further; the water has joined a generic
@@ -1986,13 +2009,15 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
+  ! Compute the runoff for each cell
+  rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-      ! Compute the runoff for each cell
-      rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+  ! Now, remove any runoff from the model grid
+!      call stats_UpdateAllAccumulatorsByCell(REAL(rR,kind=T_DBL), &
+!         iRUNOFF_OUTSIDE,iMonth,iZERO)
 
-      ! Now, remove any runoff from the model grid
-      cel%rFlowOutOfGrid = rR
+  cel%rFlowOutOfGrid = rR
+!       cel%rOutFlow = rR
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -2015,12 +2040,14 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
   end if
 #endif
 
-      ! we've removed the water from the grid; it shouldn't be included in
-      ! "outflow" water
-      cel%rOutFlow = rZERO
+  ! we've removed the water from the grid; it shouldn't be included in
+  ! "outflow" water
+  cel%rOutFlow = rZERO
 
-    end do
   end do
+end do
+
+  return
 
 end subroutine model_Runoff_NoRouting
 
@@ -2162,20 +2189,14 @@ function rf_model_CellRunoff(pConfig, cel, iDayOfYear) result(rOutFlow)
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rOutFlow
   ! [ LOCALS ]
-  logical (kind=T_LOGICAL) :: lAssertTest
 
   if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_CURVE_NUMBER) then
     rOutFlow = runoff_CellRunoff_CurveNumber(pConfig, cel, iDayOfYear)
-    lAssertTest = rOutFlow >= rZERO
-    if(.not. lAssertTest) &
-      call Assert(lFALSE,"CN outflow is negative", &
+    call Assert(rOutFlow >= rZERO,"CN outflow is negative", &
       TRIM(__FILE__),__LINE__)
-
   else if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_GREEN_AMPT) then
     rOutFlow = rf_model_CellRunoff_GreenAmpt(pConfig, cel, iDayOfYear)
-    lAssertTest = rOutFlow >= rZERO
-    if(.not. lAssertTest) &
-      call assert(lFALSE, "Green-Ampt outflow is negative", &
+    call Assert(rOutFlow >= rZERO,"Green-Ampt outflow is negative", &
       TRIM(__FILE__),__LINE__)
   end if
 
@@ -2261,174 +2282,168 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
 
-  ! [ LOCALS ]
   integer (kind=T_INT) :: iRow,iCol
   integer (kind=T_INT) :: iTgt_Row,iTgt_Col
+  ! [ PARAMETERS ]
+  integer (kind=T_SHORT),parameter :: DIR_DEPRESSION=0
+  integer (kind=T_SHORT),parameter :: DIR_RIGHT=1
+  integer (kind=T_SHORT),parameter :: DIR_DOWN_RIGHT=2
+  integer (kind=T_SHORT),parameter :: DIR_DOWN=4
+  integer (kind=T_SHORT),parameter :: DIR_DOWN_LEFT=8
+  integer (kind=T_SHORT),parameter :: DIR_LEFT=16
+  integer (kind=T_SHORT),parameter :: DIR_UP_LEFT=32
+  integer (kind=T_SHORT),parameter :: DIR_UP=64
+  integer (kind=T_SHORT),parameter :: DIR_UP_RIGHT=128
   character (len=256) :: sBuf
 
   ! no point in doing these calculations unless we're really going to
   ! route water
-  if (pConfig%iConfigureRunoffMode==CONFIG_RUNOFF_NO_ROUTING) return
+  if(pConfig%iConfigureRunoffMode==CONFIG_RUNOFF_NO_ROUTING) return
 
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
-    select case (pGrd%Cells(iCol,iRow)%iFlowDir)
-      case ( iDIR_DEPRESSION )
-        iTgt_Col = iROUTE_DEPRESSION               ! added Jan 2009 SMW
-        iTgt_Row = iROUTE_DEPRESSION               ! added Jan 2009 SMW
-        continue
-      case ( iDIR_RIGHT )
-        iTgt_Row = iRow
-        iTgt_Col = iCol+1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_LEFT ) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_DOWN_RIGHT )
-        iTgt_Row = iRow+1
-        iTgt_Col = iCol+1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP_LEFT ) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_DOWN )
-        iTgt_Row = iRow+1
-        iTgt_Col = iCol
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP ) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_DOWN_LEFT )
-        iTgt_Row = iRow+1
-        iTgt_Col = iCol-1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_UP_RIGHT ) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_LEFT )
-        iTgt_Row = iRow
-        iTgt_Col = iCol-1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_RIGHT) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_UP_LEFT )
-        iTgt_Row = iRow-1
-        iTgt_Col = iCol-1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN_RIGHT) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_UP )
-        iTgt_Row = iRow-1
-        iTgt_Col = iCol
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case ( iDIR_UP_RIGHT )
-        iTgt_Row = iRow-1
-        iTgt_Col = iCol+1
-        if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
-          iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
-          if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == iDIR_DOWN_LEFT) then
-            pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-            pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = iDIR_DEPRESSION
-            write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
-          end if
-        end if
-      case default  !! flow direction indeterminate
-      !!
-      !!  NOTE: This may not be the correct way to deal with indeterminate
-      !!        flow directions!!
-      !!
-        write ( unit=sBuf, fmt='("Flow direction grid element (row:",i3,", col:",i3,' &
-          // '") contains undefined flow direction with integer value: ",i4)' ) &
-          iRow,iCol,pGrd%Cells(iCol,iRow)%iFlowDir
-        write(UNIT=LU_LOG,FMT=*)  sBuf
-        pGrd%Cells(iCol,iRow)%iFlowDir = iDIR_DEPRESSION
-        iTgt_Col = iROUTE_DEPRESSION
-        iTgt_Row = iROUTE_DEPRESSION
-    end select
+  select case (pGrd%Cells(iCol,iRow)%iFlowDir)
+    case ( DIR_DEPRESSION )
+      iTgt_Col = iROUTE_DEPRESSION               ! added Jan 2009 SMW
+      iTgt_Row = iROUTE_DEPRESSION               ! added Jan 2009 SMW
+      continue
+    case ( DIR_RIGHT )
+      iTgt_Row = iRow
+      iTgt_Col = iCol+1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_LEFT ) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_DOWN_RIGHT )
+      iTgt_Row = iRow+1
+      iTgt_Col = iCol+1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP_LEFT ) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_DOWN )
+      iTgt_Row = iRow+1
+      iTgt_Col = iCol
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP ) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_DOWN_LEFT )
+      iTgt_Row = iRow+1
+      iTgt_Col = iCol-1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_UP_RIGHT ) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_LEFT )
+      iTgt_Row = iRow
+      iTgt_Col = iCol-1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_RIGHT) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_UP_LEFT )
+      iTgt_Row = iRow-1
+      iTgt_Col = iCol-1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN_RIGHT) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_UP )
+      iTgt_Row = iRow-1
+      iTgt_Col = iCol
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case ( DIR_UP_RIGHT )
+      iTgt_Row = iRow-1
+      iTgt_Col = iCol+1
+      if ( iTgt_Row >= 1 .and. iTgt_Row <= pGrd%iNY .and. &
+        iTgt_Col >= 1 .and. iTgt_Col <= pGrd%iNX ) then
+      if ( pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir == DIR_DOWN_LEFT) then
+        pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+        pGrd%Cells(iTgt_Col,iTgt_Row)%iFlowDir = DIR_DEPRESSION
+        write(UNIT=LU_LOG,FMT=*) 'depression found in cell (row, col): ',iRow,iCol
+      end if
+      end if
+    case default  !! flow direction indeterminate
+    !!
+    !!  NOTE: This may not be the correct way to deal with indeterminate
+    !!        flow directions!!
+    !!
+      write ( unit=sBuf, fmt='("Flow direction grid element (",i5,",",i5,' &
+        // '") contains undefined flow direction with integer value: ",i4)' ) &
+          iCol,iRow,pGrd%Cells(iCol,iRow)%iFlowDir
+      write(UNIT=LU_LOG,FMT=*)  sBuf
+      pGrd%Cells(iCol,iRow)%iFlowDir = DIR_DEPRESSION
+      iTgt_Col = iROUTE_DEPRESSION
+      iTgt_Row = iROUTE_DEPRESSION
+  end select
 
-    ! does the current value of either target point outside of the grid?
-    if ( iTgt_Row == 0 .or. iTgt_Row > pGrd%iNY .or. &
-      iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX ) then
-        iTgt_Row = iROUTE_LEFT_GRID
-        iTgt_Col = iROUTE_LEFT_GRID
-    endif
+  ! does the current value of either target point outside of the grid?
+  if ( iTgt_Row == 0 .or. iTgt_Row > pGrd%iNY .or. &
+    iTgt_Col == 0 .or. iTgt_Col > pGrd%iNX ) then
+      iTgt_Row = iROUTE_LEFT_GRID
+      iTgt_Col = iROUTE_LEFT_GRID
+  end if
 
-    ! is target cell inactive?
-    if ( iTgt_Row > 0 .and. iTgt_Row <= pGrd%iNY  &
-        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX ) then
-      if( pGrd%Cells(iTgt_Col,iTgt_Row)%iActive == iINACTIVE_CELL ) then
-        iTgt_Row = iROUTE_LEFT_GRID
-        iTgt_Col = iROUTE_LEFT_GRID
-      endif
-    endif
-
-    ! now assign the value of the targets to the iTgt element of the
-    ! grid data structure
-    pGrd%Cells(iCol,iRow)%iTgt_Row = iTgt_Row
-    pGrd%Cells(iCol,iRow)%iTgt_Col = iTgt_Col
-  enddo
-enddo
+  ! now assign the value of the targets to the iTgt element of the
+  ! grid data structure
+  pGrd%Cells(iCol,iRow)%iTgt_Row = iTgt_Row
+  pGrd%Cells(iCol,iRow)%iTgt_Col = iTgt_Col
+end do
+end do
 
 #ifdef DEBUG_PRINT
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
-      ! we only want to perform this test if the target cell row and column
-      ! are within legal values, else we segfault!
-      if ( iTgt_Row > 0 .and. iTgt_Row <= pGrd%iNY  &
-        .and. iTgt_Col > 0 .and. iTgt_Col <= pGrd%iNX ) then
-
-        if(pGrd%Cells(iCol,iRow)%iTgt_Col==iCol .and. pGrd%Cells(iCol,iRow)%iTgt_Row==iRow) then
-          write(unit=LU_LOG,FMT=*) 'ALERT** target is the same as the originating cell'
-          write(unit=LU_LOG,FMT=*) '  ORIG   (iRow, iCol) : ',iRow, iCol
-          write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ',pGrd%Cells(iCol,iRow)%iFlowDir
-          write(unit=LU_LOG,FMT=*) '  TARGET (iRow, iCol) : ',pGrd%Cells(iCol,iRow)%iTgt_Row, &
-            pGrd%Cells(iCol,iRow)%iTgt_Col
-          write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ' , &
-            pGrd%Cells(pGrd%Cells(iCol,iRow)%iTgt_Row,pGrd%Cells(iCol,iRow)%iTgt_Col)%iFlowDir
-        end if
-
-      endif
-    enddo
-  enddo
+      if(pGrd%Cells(iCol,iRow)%iTgt_Col==iCol .and. pGrd%Cells(iCol,iRow)%iTgt_Row==iRow) then
+        write(unit=LU_LOG,FMT=*) 'ALERT** target is the same as the originating cell'
+        write(unit=LU_LOG,FMT=*) '  ORIG   (iRow, iCol) : ',iRow, iCol
+        write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ',pGrd%Cells(iCol,iRow)%iFlowDir
+        write(unit=LU_LOG,FMT=*) '  TARGET (iRow, iCol) : ',pGrd%Cells(iCol,iRow)%iTgt_Row, &
+          pGrd%Cells(iCol,iRow)%iTgt_Col
+        write(unit=LU_LOG,FMT=*) '  ==> FLOWDIR: ' , &
+          pGrd%Cells(pGrd%Cells(iCol,iRow)%iTgt_Row,pGrd%Cells(iCol,iRow)%iTgt_Col)%iFlowDir
+      end if
+    end do
+end do
 
 #endif
 
+  return
 end subroutine model_InitializeFlowDirection
 
 !!***
@@ -2661,7 +2676,6 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
     call Assert( iStat == 0, "Failed to read number of landuse types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumLandUses,"landuse types within lookup table"
-    pConfig%iNumberOfLanduses = iNumLandUses
   else
     call Assert( lFALSE, &
       "Unknown option in landuse lookup table; was expecting NUM_LANDUSE_TYPES #")
@@ -2680,7 +2694,6 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     read ( unit=sItem, fmt=*, iostat=iStat ) iNumSoilTypes
     call Assert( iStat == 0, "Failed to read number of soil types" )
     write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumSoilTypes,"soil types within lookup table"
-    pConfig%iNumberOfSoilTypes = iNumSoilTypes
   else
     call Assert( lFALSE, &
       "Unknown option in landuse lookup table; was expecting NUM_SOIL_TYPES #")
@@ -2690,13 +2703,6 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   allocate ( pConfig%LU( iNumLandUses ), stat=iStat )
   call Assert ( iStat == 0, &
     "Could not allocate space for landuse data structure" )
-
-  ! now allocate memory for IRRIGATION subtable
-  ! even if irrigation is not actively being used, this must be in place so that
-  ! the default growing-degree day baseline temps are available elsewhere in the code
-  allocate ( pConfig%IRRIGATION( pConfig%iNumberOfLanduses ), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
 
   iSize = size(pConfig%LU,1)
 
@@ -2714,6 +2720,14 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   allocate ( pConfig%MAX_RECHARGE( iNumLandUses,iNumSoilTypes ), stat=iStat )
   call Assert ( iStat == 0, &
     "Could not allocate space for MAX_RECHARGE subtable within landuse data structure" )
+
+#ifdef IRRIGATION_MODULE
+  ! now allocate memory for IRRIGATION subtable within landuse table
+  ! note that this table is NOT populated in this subroutine, but in "readIrrgationLookupTable"
+  allocate ( pConfig%IRRIGATION( iNumLandUses ), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for IRRIGATION data structure" )
+#endif
 
   iRecNum = 1
 
@@ -2791,8 +2805,9 @@ read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowi
 
   end do LU_READ
 
-  ! Copy the landuse codes over to the new IRRIGATION table
+#ifdef IRRIGATION_MODULE
   pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
+#endif
 
   ! That's all!
   close ( unit=LU_LOOKUP )
@@ -2802,346 +2817,366 @@ end subroutine model_ReadLanduseLookupTable
 
 !--------------------------------------------------------------------------
 
+#ifdef IRRIGATION_MODULE
+
 subroutine model_ReadIrrigationLookupTable( pConfig )
   !! Reads the irrigation data from pConfig%sIrrigationLookupFilename
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iStat, iNumLandUses, i, j, iType, iRecNum, iSize
+  integer (kind=T_INT) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
   integer (kind=T_INT) :: iLandUseType
-  integer (kind=T_INT) :: iLandUseIndex
   integer (kind=T_INT) :: iNumSoilTypes
-  logical (kind=T_LOGICAL) :: lFound
-  real (kind=T_SGL) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
 
-  ! open IRRIGATION file
+  ! open landuse file
   open ( LU_LOOKUP, file=pConfig%sIrrigationLookupFilename, &
     status="OLD", iostat=iStat )
   call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
     "Open failed for file: " // pConfig%sIrrigationLookupFilename )
 
+  ! read first line of file
+  read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
+  call Assert( iStat == 0, &
+    "Error reading first line of irrigation lookup table" )
+
+  ! read landuse file to obtain expected number of landuse types
+  call chomp(sRecord, sItem, sTAB)
+  call Uppercase( sItem )
+  if ( sItem == "NUM_LANDUSE_TYPES" ) then
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) iNumLandUses
+    call Assert( iStat == 0, "Failed to read number of landuse types" )
+    call Assert(iNumLandUses == size(pConfig%IRRIGATION), &
+      "Number of landuses in IRRIGATION table is unequal to number in LANDUSE lookup table", &
+      trim(__FILE__),__LINE__)
+    write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumLandUses,"landuse types within lookup table"
+  else
+    call Assert( lFALSE, &
+      "Unknown option in irrigation lookup table; was expecting NUM_LANDUSE_TYPES #")
+  end if
+
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
     //"before the irrigation lookup table may be read.", trim(__FILE__),__LINE__)
 
-  ! set the configuration option; if we're reading in the irrigation table,
-  ! it is assumed that the crop coefficients should be applied and
-  ! irrigation amounts calculated
-
-
-  !!!!! WHY IS THIS HARD-WIRED >??????
-  pConfig%iConfigureIrrigation = CONFIG_IRRIGATION_FAO56_DUAL
-
-  ! now allocate memory for READILY_EVAPORABLE_WATER subtable
-  allocate ( pConfig%READILY_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
-    pConfig%iNumberOfSoilTypes), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for READILY_EVAPORABLE_WATER  data structure", &
-    trim(__FILE__), __LINE__ )
-
-   ! assign a reasonable default value
-   pConfig%READILY_EVAPORABLE_WATER = 0.3
-
-  ! now allocate memory for TOTAL_EVAPORABLE_WATER subtable
-  allocate ( pConfig%TOTAL_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
-    pConfig%iNumberOfSoilTypes), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for TOTAL_EVAPORABLE_WATER  data structure", &
-    trim(__FILE__), __LINE__ )
-
-  ! assign another reasonable default value
-  pConfig%TOTAL_EVAPORABLE_WATER = 0.6
-
   iSize = size(pConfig%LU,1)
-  iNumSoilTypes = size(pConfig%CN,2)
 
   iRecNum = 1
 
   LU_READ: do
 
-    read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
-    if ( iStat < 0 ) exit     ! EOF mark
-    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
+  read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
+  if ( iStat < 0 ) exit     ! EOF mark
+  if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
 
+  if(iRecNum > iSize) then
     write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-    write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum
+    write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of irrigation lookup table elements has"
+    write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
     write(UNIT=LU_LOG,FMT=*) ""
+    write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for IRRIGATION table: ",iSize
+    write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
+    exit
+  end if
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
-    call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*) ""
+  write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
+  write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
+  write(UNIT=LU_LOG,FMT=*) ""
 
-    ! scan the landuse codes already supplied in the landuse lookup table and
-    ! find a match
-    lFound = lFALSE
-    do j=1,pConfig%iNumberOfLanduses
-      if(iLandUseType == pConfig%LU(j)%iLandUseType) then
-        iLandUseIndex = j
-        lFound = lTRUE
-        exit
-      endif
-    enddo
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
+  call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
+  call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
+    "Landuse types in the irrigation lookup table must match those in the landuse lookup table", &
+      trim(__FILE__), __LINE__)
+  pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
 
-    call assert(lFound, "Unknown landuse code found while reading from the " &
-      //"crop coefficient and irrigation parameters table.~Landuse specified "&
-      //"in the irrigation table but not found in the landuse table: " &
-      //trim(int2char(iLandUseType)),trim(__FILE__), __LINE__)
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKc_Max
+  call Assert( iStat == 0, &
+    "Error reading maximum crop coefficient in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "  maximum crop coefficient ", &
+    pConfig%IRRIGATION(iRecNum)%rKc_Max
 
-    call assert(iLandUseIndex >= 1 .and. iLandUseIndex <= pConfig%iNumberOfLanduses, &
-      "Array index out of bounds. Variable is iLandUseIndex with a value of " &
-      //trim(int2char(iLandUseIndex)), trim(__FILE__),__LINE__)
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rK0
+  call Assert( iStat == 0, &
+    "Error reading first phenological stage crop coefficient in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   first phenological stage crop coefficient ", &
+    pConfig%IRRIGATION(iRecNum)%rK0
 
-    ! store index value for future reference; allows us to easily match up
-    ! records in the landuse lookup table even if the irrigation table
-    ! is supplied in a different order
-    pConfig%IRRIGATION(iLandUseIndex)%iLandUseType = iLandUseType
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rAlpha1
+  call Assert( iStat == 0, &
+    "Error reading shape coefficient (Alpha1) in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   shape coefficient (Alpha1) ", &
+    pConfig%IRRIGATION(iRecNum)%rAlpha1
 
-    call chomp(sRecord, sItem, sTAB)
-    pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription = trim(sItem)
-    write(UNIT=LU_LOG,FMT=*)  "  landuse description ", &
-      pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
+  call Assert( iStat == 0, &
+    "Error reading GDD associated with max crop coefficient in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   GDD associated with max crop coefficient ", &
+    pConfig%IRRIGATION(iRecNum)%rGDD_Kc_Max
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rMeanPlantHeight
-    call Assert( iStat == 0, &
-      "Error reading mean plant height " &
-        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  mean plant height (feet) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rMeanPlantHeight
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_Death
+  call Assert( iStat == 0, &
+    "Error reading GDD associated with plant death in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   GDD associated with plant death ", &
+    pConfig%IRRIGATION(iRecNum)%rGDD_Death
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini
-    call Assert( iStat == 0, &
-      "Error reading initial basal crop coefficient (Kcb_ini) " &
-        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  initial basal crop coefficient (Kcb_ini) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
+  call Assert( iStat == 0, &
+    "Error reading GDD base temperature in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
+    pConfig%IRRIGATION(iRecNum)%rGDD_BaseTemp
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_mid
-    call Assert( iStat == 0, &
-      "Error reading mid-growth basal crop coefficient (Kcb_mid) " &
-        //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  mid-growth basal crop coefficient (Kcb_ini) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rKcb_mid
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
+  call Assert( iStat == 0, &
+    "Error reading GDD max temperature in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
+    pConfig%IRRIGATION(iRecNum)%rGDD_MaxTemp
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
-    call Assert( iStat == 0, &
-      "Error reading end-growth phase basal crop coefficient (Kcb_end) " &
-         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
+  call chomp(sRecord, sItem, sTAB)
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rMAD
+  call Assert( iStat == 0, &
+    "Error reading management allowable deficit (MAD) in irrigation lookup table" )
+  write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
+    pConfig%IRRIGATION(iRecNum)%rMAD
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
-    call Assert( iStat == 0, &
-      "Error reading minimum allowable crop coefficient (Kcb_min) " &
-         //"from irrigation lookup table", trim(__FILE__), __LINE__ )
-    write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_min) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
+  call chomp(sRecord, sItem, sTAB)
+  pConfig%IRRIGATION(iRecNum)%iBeginIrrigation = mmddyyyy2doy(sItem)
+  write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
+    pConfig%IRRIGATION(iRecNum)%iBeginIrrigation
 
-    ! we're reading an item and throwing it away...this contains the
-    ! planting date in days and months, which is useful for the user
-    call chomp(sRecord, sItem, sTAB)
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) of initial planting from " &
-        //"irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_plant = int(rTempValue)
-    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
-      pConfig%IRRIGATION(iLandUseIndex)%iL_plant
+  call chomp(sRecord, sItem, sTAB)
+  pConfig%IRRIGATION(iRecNum)%iEndIrrigation = mmddyyyy2doy(sItem)
+  write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
+    pConfig%IRRIGATION(iRecNum)%iEndIrrigation
 
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) for end of initial plant growth " &
-        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_ini = int(rTempValue)
-    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"initial plant growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_ini
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) for end of plant development " &
-        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_dev = int(rTempValue)
-    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"plant development ", pConfig%IRRIGATION(iLandUseIndex)%iL_dev
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) for end of mid-season growth " &
-        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_mid = int(rTempValue)
-    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"mid-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_mid
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) for end of late-season growth " &
-        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_late = int(rTempValue)
-    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
-      //"late-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_late
-
-    call chomp(sRecord, sItem, sTAB)
-    if(str_compare(sItem,"GDD") ) then
-      pConfig%IRRIGATION(iLandUseIndex)%lUnitsAreDOY = lFALSE
-    elseif(str_compare(sItem,"DOY") ) then
-      pConfig%IRRIGATION(iLandUseIndex)%lUnitsAreDOY = lTRUE
-    else
-      call Assert( lFALSE, &
-      "Error reading units label from irrigation lookup table.~ Valid" &
-        //" entries are 'GDD' or 'DOY'", trim(__FILE__), __LINE__ )
-    endif
-    write(UNIT=LU_LOG,FMT=*)  "  growth targets given in units of ", &
-      dquote(sItem)
-
-    do i=1,iNumSoilTypes
-      call chomp(sRecord, sItem, sTAB)
-      ! READILY_EVAPORABLE_WATER(# LU, #Soil Types)
-      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%READILY_EVAPORABLE_WATER(iLandUseIndex,i)
-      call Assert( iStat == 0, &
-        "Error reading readily evaporable water for soil group " &
-          //trim(int2char(i))//" and landuse " &
-          //trim(int2char(pConfig%IRRIGATION(iLandUseIndex)%iLandUseType) ) &
-          //" in landuse lookup table" , trim(__FILE__), __LINE__ )
-      write(UNIT=LU_LOG,FMT=*)  "  readily evaporable water for soil group",i,": ", &
-        pConfig%READILY_EVAPORABLE_WATER(iLandUseIndex,i)
-    end do
-
-    do i=1,iNumSoilTypes
-      call chomp(sRecord, sItem, sTAB)
-      ! TOTAL_EVAPORABLE_WATER(# LU, #Soil Types)
-      read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
-      call Assert( iStat == 0, &
-        "Error reading total evaporable water for soil group " &
-          //trim(int2char(i))//" and landuse " &
-          //trim(int2char(pConfig%IRRIGATION(iLandUseIndex)%iLandUseType) ) &
-          //" in landuse lookup table" , trim(__FILE__), __LINE__ )
-      write(UNIT=LU_LOG,FMT=*)  "  total evaporable water for soil group",i,": ", &
-        pConfig%TOTAL_EVAPORABLE_WATER(iLandUseIndex,i)
-    end do
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rDepletionFraction
-    call Assert( iStat == 0, &
-      "Error reading plant stress depletion fraction in irrigation lookup table" )
-    write(UNIT=LU_LOG,FMT=*)  "   plant stress depletion fraction: ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rDepletionFraction
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rGDD_BaseTemp
-    call Assert( iStat == 0, &
-      "Error reading GDD base temperature in irrigation lookup table" )
-    write(UNIT=LU_LOG,FMT=*)  "   GDD base temperature ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rGDD_BaseTemp
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rGDD_MaxTemp
-    call Assert( iStat == 0, &
-      "Error reading GDD max temperature in irrigation lookup table" )
-    write(UNIT=LU_LOG,FMT=*)  "   GDD max temperature ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rGDD_MaxTemp
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rMAD
-    call Assert( iStat == 0, &
-      "Error reading management allowable deficit (MAD) in irrigation lookup table" )
-    write(UNIT=LU_LOG,FMT=*)  "   management allowable deficit (MAD) ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rMAD
-
-    call chomp(sRecord, sItem, sTAB)
-    pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation = mmddyyyy2doy(sItem)
-    write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
-      pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation
-
-    call chomp(sRecord, sItem, sTAB)
-    pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation = mmddyyyy2doy(sItem)
-    write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
-      pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) &
-      pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
-    call Assert( iStat == 0, &
-      "Error reading the fraction of irrigation water obtained from groundwater " &
-      //"from the irrigation lookup table" )
-    write(UNIT=LU_LOG,FMT=*)  "  fraction of irrigation water obtained from groundwater ", &
-      pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading the fraction of irrigation water obtained from groundwater " &
-      //"from the irrigation lookup table" )
-    call assert(rTempValue > 0., &
-      "Fractional irrigation efficiency for groundwater sources must be greater than 0.", &
-      trim(__FILE__),__LINE__)
-    write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for groundwater sources ", &
-      rTempValue
-    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW = 1.0 / rTempValue
-
-    call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading the fraction of irrigation water obtained from surface water " &
-      //"from the irrigation lookup table" )
-    call assert(rTempValue > 0., &
-      "Fractional irrigation efficiency for surface-water sources must be greater than 0.", &
-      trim(__FILE__),__LINE__)
-    write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for surface-water sources ", &
-      rTempValue
-    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW = 1.0 / rTempValue
-
-    iRecNum = iRecNum + 1
+  iRecNum = iRecNum + 1
 
   end do LU_READ
 
   ! That's all!
   close ( unit=LU_LOOKUP )
 
+  return
 end subroutine model_ReadIrrigationLookupTable
+
+#endif
 
 !--------------------------------------------------------------------------
 
-function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
-  !! Looks up the interception value for land-use type iType.
+subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
 
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  type (T_CELL),pointer :: cel
 
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pLandUseGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sLandUse_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pLandUseGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sLandUse_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pLandUseGrid, &
+                        sFromPROJ4=pConfig%sLandUse_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pLandUseGrid ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pLandUseGrid,&
+                            iArrayFrom=pLandUseGrid%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iLandUse )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pLandUseGrid ), &
+                      "Non-conforming LANDUSE grid. Filename: " &
+                      //dquote(pLandUseGrid%sFilename) )
+    pGrd%Cells%iLandUse = pLandUseGrid%iData
+
+  endif
+
+  call grid_Destroy(pLandUseGrid)
+
+  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Land_Use_Land_Cover" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+end subroutine model_PopulateLandUseArray
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pSoilGroupGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sSoilGroup_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pSoilGroupGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sSoilGroup_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pSoilGroupGrid, &
+                        sFromPROJ4=pConfig%sSoilGroup_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pSoilGroupGrid ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pSoilGroupGrid,&
+                            iArrayFrom=pSoilGroupGrid%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iSoilGroup )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pSoilGroupGrid ), &
+                      "Non-conforming HYDROLOGIC SOILS grid. Filename: " &
+                      //dquote(pSoilGroupGrid%sFilename) )
+    pGrd%Cells%iSoilGroup = pSoilGroupGrid%iData
+
+  endif
+
+  call grid_Destroy(pSoilGroupGrid)
+
+  !********************************************************
+  !*** HACK ALERT !!!
+  !********************************************************
+  where (pGrd%Cells%iSoilGroup <= 0) pGrd%Cells%iSoilGroup = 4
+
+  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+end subroutine model_PopulateSoilGroupArray
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pFlowDirGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sFlowDir_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pFlowDirGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sFlowDir_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pFlowDirGrid, &
+                        sFromPROJ4=pConfig%sFlowDir_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pFlowDirGrid ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pFlowDirGrid,&
+                            iArrayFrom=pFlowDirGrid%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iFlowDir )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pFlowDirGrid ), &
+                      "Non-conforming FLOW_DIRECTION grid. Filename: " &
+                      //dquote(pFlowDirGrid%sFilename) )
+    pGrd%Cells%iFlowDir = pFlowDirGrid%iData
+
+  endif
+
+  call grid_Destroy(pFlowDirGrid)
+
+  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_D8_Flow_Direction" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+end subroutine model_PopulateFlowDirectionArray
+
+!--------------------------------------------------------------------------
+
+function rf_model_GetInterception( pConfig, iType, iDayOfYear ) result(rIntRate)
+  !! Looks up the interception value for land-use type iType.
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+  integer (kind=T_INT), intent(in) :: iType
+  integer (kind=T_INT), intent(in) :: iDayOfYear
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rIntRate
-
   ! [ LOCALS ]
   integer ( kind=T_INT ) :: i
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU
 
-  pLU => pConfig%LU(cel%iLandUseIndex)
-
   ! Default is zero
   rIntRate = rZERO
-  if ( lf_model_GrowingSeason(pConfig, pConfig%iDayOfYear) ) then
-    rIntRate = pLU%rIntercept_GrowingSeason
-  else
-    rIntRate = pLU%rIntercept_NonGrowingSeason
-  end if
+  ! Search the default values
+  do i = 1,size(pConfig%LU,1)
+    pLU => pConfig%LU(i)
+    if ( pLU%iLandUseType == iType ) then
+      if ( lf_model_GrowingSeason(pConfig, iDayOfYear) ) then
+        rIntRate = pLU%rIntercept_GrowingSeason
+      else
+        rIntRate = pLU%rIntercept_NonGrowingSeason
+      end if
+      exit
+    end if
+  end do
 
   call Assert(LOGICAL(rIntRate >= rZERO,kind=T_LOGICAL), &
     "Negative value was determined for interception. Check your lookup tables.")
 
+  return
 end function rf_model_GetInterception
+
+!--------------------------------------------------------------------------
+
+subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+  flush(unit=LU_LOG)
+  call model_InitializeSM(pGrd, pConfig)
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+  flush(unit=LU_LOG)
+  call runoff_InitializeCurveNumber( pGrd ,pConfig)
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+  flush(unit=LU_LOG)
+  call model_InitializeMaxInfil(pGrd, pConfig )
+
+
+end subroutine model_InitializeLanduseRelatedParams
 
 !--------------------------------------------------------------------------
 
@@ -3169,7 +3204,7 @@ subroutine model_InitializeET( pGrd, pConfig )
     case ( CONFIG_ET_BLANEY_CRIDDLE )
       call et_bc_initialize ( pGrd, pConfig%sTimeSeriesFilename)
     case ( CONFIG_ET_HARGREAVES )
-      call et_hargreaves_initialize ( pGrd, pConfig%sTimeSeriesFilename)
+
   end select
 
 end subroutine model_InitializeET
@@ -3192,8 +3227,9 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel                      ! pointer to a particular cell
   integer (kind=T_INT) :: iCol, iRow
-
+#ifdef IRRIGATION_MODULE
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+#endif
 
   select case ( pConfig%iConfigureET )
     case ( CONFIG_ET_NONE )
@@ -3213,33 +3249,62 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
       call et_hargreaves_ComputeET ( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   end select
 
+#ifdef IRRIGATION_MODULE
+
   ! modify potential ET by the crop coefficient
-!  do iRow=1,pGrd%iNY
-!    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-!      cel => pGrd%Cells(iCol,iRow)
-!      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+      cel => pGrd%Cells(iCol,iRow)
+      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
 
-!! $$$ NEEDS WORK !!!!
+  cel%rSM_PotentialET = cel%rSM_PotentialET &
+    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
+      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
 
+  enddo
+enddo
 
-!  cel%rReferenceET0 = cel%rReferenceET0 &
-!    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
-!      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
-
-!  enddo
-!enddo
+#endif
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
 where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-  pGrd%Cells%rReferenceET0 = rZERO
+  pGrd%Cells%rSM_PotentialET = rZERO
 endwhere
 
-pGrd%Cells%rAdjustedPotentialET = pGrd%Cells%rReferenceET0
 
-!  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rReferenceET0 )
+!  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rSM_PotentialET )
 
+  return
 end subroutine model_ProcessET
+
+!--------------------------------------------------------------------------
+
+subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
+  !! Depending on the SM model in use, computes the change in soil moisture
+  !! and also the recharge (if any) for each cell in the grid, given the
+  !! precipitation rPrecip and the snow melt rSnowMelt
+  !!
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  integer (kind=T_INT),intent(in) :: iDayOfYear
+  integer (kind=T_INT),intent(in) :: iDay
+  integer (kind=T_INT),intent(in) :: iMonth
+  integer (kind=T_INT),intent(in) :: iYear
+
+  select case ( pConfig%iConfigureSM )
+    case ( CONFIG_SM_NONE )
+      call Assert( .false._T_LOGICAL, "No soil moisture calculation method was specified" )
+    case ( CONFIG_SM_THORNTHWAITE_MATHER )
+      call sm_thornthwaite_mather_UpdateSM (pGrd, pConfig, &
+        iDayOfYear, iDay, iMonth,iYear)
+  end select
+
+  return
+end subroutine model_ProcessSM
 
 !--------------------------------------------------------------------------
 
@@ -3267,9 +3332,6 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
         lMatch = lFALSE
         cel => pGrd%Cells(iCol,iRow)
-
-        if ( cel%iActive == iINACTIVE_CELL ) cycle
-
         ! loop over all LAND USE types...
         do k=1,size(pConfig%LU,1)
           pLU => pConfig%LU(k)
@@ -3304,8 +3366,8 @@ end subroutine model_InitializeSM
 
 !--------------------------------------------------------------------------
 
-subroutine model_CreateLanduseIndex(pGrd, pConfig )
-
+subroutine model_InitializeMaxInfil(pGrd, pConfig )
+  !!
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -3316,26 +3378,24 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
   logical ( kind=T_LOGICAL ) :: lMatch
 
+  ! Update the MAXIMUM RECHARGE RATE based on land-cover and soil type
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
 
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
-
-!      if ( cel%iActive == iINACTIVE_CELL ) cycle
-
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
         if ( pLU%iLandUseType == cel%iLandUse ) then
           ! save index of matching landuse for ease of processing land use properties later
           cel%iLandUseIndex = k
- !         ! need to ensure that the soil type doesn't exceed
- !         ! the max number of soil types or we get a core dump
-          call Assert(cel%iSoilGroup <= size(pConfig%MAX_RECHARGE,2), &
-             "Value in soil type grid exceeds the maximum " &
-             // "number of soil types in the land use lookup table.", &
-             trim(__FILE__),__LINE__)
- !         cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
+          ! need to ensure that the soil type doesn't exceed
+          ! the max number of soil types or we get a core dump
+          call Assert(INT(cel%iSoilGroup, kind=T_INT) &
+            <= size(pConfig%MAX_RECHARGE,2), &
+            "Value in soil type grid exceeds the maximum " &
+            // "number of soil types in the land use lookup table.")
+          cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
           lMatch=lTRUE
           exit
         end if
@@ -3343,388 +3403,140 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
       if(.not. lMATCH) then
         write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
         call Assert(lFALSE,&
-          "Failed to match landuse grid with landuse table during creation of landuse indices", &
-          trim(__FILE__),__LINE__)
+          "Failed to match landuse grid with landuse table during maximum infiltration initialization")
       endif
     end do
   end do
 
-end subroutine model_CreateLanduseIndex
+end subroutine model_InitializeMaxInfil
 
 !--------------------------------------------------------------------------
 
-subroutine model_WriteGrids(pGrd, pConfig, sMonthName, iDay,iMonth, &
-  iYear, iDayOfYear)
+subroutine model_WriteGrids(pGrd, pConfig, iOutputType)
 !! Writes the monthly output arrays in the proper grid format
 ! [ ARGUMENTS ]
 type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
 type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
   ! model options, flags, and other settings
-character (len=*),intent(in) :: sMonthName
-integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
+integer (kind=T_INT), intent(in) :: iOutputType
 
   ! [ LOCALS ]
   real (kind=T_DBL) :: xmin,xmax,ymin,ymax
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
     sYearText
 
-  sBufOut = "output"//pConfig%sSlash//trim(sMonthName)
-  sBufFuture = "output"//pConfig%sSlash//"future"//pConfig%sSlash
+  sBufOut = trim(pConfig%sOutputFilePrefix)//trim( YEAR_INFO(pConfig%iMonth)%sName )
+  sBufFuture = trim(pConfig%sFutureFilePrefix)
   sBufSuffix = trim(pConfig%sOutputFileSuffix)
 
-  write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",iMonth,"_",iDay,"_",iYear
-  write(sMonthText,fmt="(a1,i2.2,a1,i4)") "_",iMonth,"_",iYear
-  write(sYearText,fmt="(a1,i4)") "_",iYear
+  write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iDay,"_",pConfig%iYear
+  write(sMonthText,fmt="(a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iYear
+  write(sYearText,fmt="(a1,i4)") "_",pConfig%iYear
 
   xmin = pGrd%rX0
   xmax = pGrd%rX1
   ymin = pGrd%rY0
   ymax = pGrd%rY1
 
-  if ( pConfig%iOutputFormat == OUTPUT_ARC ) then
-    if(MAXVAL(pGrd%Cells%rMSB)>0.1) then
-      call grid_WriteArcGrid("MASS_BALANCE" // &
-        trim(sDayText) // "." //trim(sBufSuffix), &
-        xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
-    elseif ( trim(sMonthName) == "ANNUAL" ) then
-!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rej_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_RejectedRecharge )
-!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_Recharge )
-!      call grid_WriteArcGrid( trim(sBufOut) // "_row_tgt." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Row) )
-!
-!      call grid_WriteArcGrid( trim(sBufOut) // "_col_tgt." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Col) )
-!
-!      call grid_WriteArcGrid( trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualPotET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualActET )
-  call grid_WriteArcGrid(trim(sBufFuture) // "final_pct_sm" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisturePct )
-  call grid_WriteArcGrid(trim(sBufFuture) // "final_snow_cover" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_soil_water_cap" // &
-!        trim(sYearText) // "." //trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
-  else if ( sMonthName(1:3) == 'day' ) then
-!         call grid_WriteArcGrid("output/daily/ALT_GrossPrecip_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
-!         call grid_WriteArcGrid("output/daily/ALT_TMin_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMin )
-!         call grid_WriteArcGrid("output/daily/ALT_TMax_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMax )
-!
-!       call grid_WriteArcGrid("output/daily/ALT_recharge" // trim(sDayText) // &
-!           "." // sBufSuffix, &
-!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
-!       call grid_WriteArcGrid("output/daily/ALT_Snowcover_" // trim(sDayText) // &
-!           "." // sBufSuffix, &
-!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowcover )
-!
-!      call grid_WriteArcGrid("output/daily/TempRange_" // trim(sDayText) // &
-!        "." // sBufSuffix, &
-!        xmin,xmax,ymin,ymax,pGrd%Cells%rTAvg &
-!           - 0.33333*(pGrd%Cells%rTMax - pGrd%Cells%rTMin) )
+   if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < -0.1) then
 
-!        call grid_WriteArcGrid("output\\daily\\pot_et" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rReferenceET0 )
-!        call grid_WriteArcGrid("output\\act_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
-!        call grid_WriteArcGrid("output\\net_infil." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rNetInfil )
-!        call grid_WriteArcGrid("output\\daily\\inflow" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rInFlow )
-!        call grid_WriteArcGrid("output\\daily\\outflow" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rOutFlow )
-!        call grid_WriteArcGrid("output\\daily\\soil_mois" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-!        call grid_WriteArcGrid("output\\daily\\curve_num" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAdjCN )
-!        call grid_WriteArcGrid("output\\daily\\snow_cov" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
+     pGenericGrd_sgl%rData = pGrd%Cells%rMSB
+     call grid_WriteGrid( &
+       sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig)
 
-  else
+   elseif ( iOutputType == WRITE_ASCII_GRID_ANNUAL ) then
 
-!      call grid_WriteArcGrid(trim(sBufOut) // "_rch"// trim(sMonthText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyRecharge )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyPotET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyActET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_inflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyInFlow )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_outflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyOutFlow )
-!        call grid_WriteArcGrid(trim(sBufOut) // "_sm." // trim(sBufSuffix), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-  end if
-else if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-  if(MAXVAL(pGrd%Cells%rMSB)>0.1) then
-    call grid_WriteSurferGrid("MASS_BALANCE" // &
-      trim(sDayText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
-  elseif ( trim(sMonthName) == "ANNUAL" ) then
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualPotET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualActET )
-  call grid_WriteSurferGrid(trim(sBufFuture) // "final_pct_sm" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisturePct )
-  call grid_WriteSurferGrid(trim(sBufFuture) // "final_snow_cover" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_soil_water_cap" // &
-!        trim(sYearText) // "." //trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
+     pGenericGrd_sgl%rData = pGrd%Cells%rSoilMoisturePct
+     call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_pct_sm" // &
+     trim(sYearText) // "." //trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig)
 
-  else if ( sMonthName(1:3) == 'day' ) then
+     pGenericGrd_sgl%rData = pGrd%Cells%rSnowCover
+     call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_snow_cover" // &
+       trim(sYearText) // "." //trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig )
 
-!      call grid_WriteSurferGrid("output\\recharge." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
+   elseif ( iOutputType == WRITE_ASCII_GRID_DAILY ) then
 
-!        call grid_WriteSurferGrid("output\\daily\\pot_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rReferenceET0 )
-!        call grid_WriteSurferGrid("output\\act_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
-!        call grid_WriteSurferGrid("output\\net_infil." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rNetInfil )
-!        call grid_WriteSurferGrid("output\\daily\\inflow." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rInFlow )
-!        call grid_WriteSurferGrid("output\\daily\\outflow." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rOutFlow )
+   elseif ( iOutputType == WRITE_ASCII_GRID_MONTHLY ) then
 
-!        call grid_WriteSurferGrid("output\\daily\\soil_mois." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-!        call grid_WriteSurferGrid("output\\daily\\curve_num." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAdjCN )
-!        call grid_WriteSurferGrid("output\\daily\\snow_cov." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
+   elseif ( iOutputType == WRITE_ASCII_GRID_DIAGNOSTIC ) then
 
-  else
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyRecharge )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyPotET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyActET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_inflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyInFlow )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_outflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyOutFlow )
-!        call grid_WriteSurferGrid(trim(sBufOut) // "_sm." // trim(sBufSuffix), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-  end if
-else
-  call Assert( .false._T_LOGICAL, "Illegal output format specified" )
-end if
+   elseif ( iOutputType == WRITE_ASCII_GRID_DEBUG ) then
+
+   end if
 
 end subroutine model_WriteGrids
 
-#ifdef NETCDF_SUPPORT
+! read a single line from the time-series file and return a pointer to the values
+subroutine model_ReadTimeSeriesFile(pTS)
 
-subroutine model_WriteNetcdfAttributes(pConfig, pGrd)
-  ! this code block initializes NetCDF output files for any
-  ! valid SWB variable, as specified in the OUTPUT_OPTIONS
-  ! input block
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
-    ! model options, flags, and other settings
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: k
-  type (T_NETCDF_FILE), pointer :: pNC
-
-  if( pConfig%lFirstDayOfSimulation ) then
-
-    do k=1,iNUM_VARIABLES
-
-      if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
-
-        pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-        pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-        pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
-        pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
-        pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
-        pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
-        call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
-        write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
-        write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
-        write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
-
-      endif
-
-    end do
-
-  endif
-
-end subroutine model_WriteNetcdfAttributes
-#endif
-
-!------------------------------------------------------------------------------
-
-subroutine model_ProcessDynamicLanduse(pGrd, pConfig)
-
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
-
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: iStat
-
-  if( ( pConfig%lFirstDayOfSimulation &
-    .or. ( pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) ) &
-    .and.(pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
-    .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_SURFER) ) then
-
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-    iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
-
-    if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
-      call assert( lFALSE, &
-      "Dynamic landuse option requires that landuse data be provided~" &
-      //"for at least the first year of simulation. No dynamic landuse~" &
-      //"file was found.", trim(__FILE__), __LINE__)
-
-    if(.not. pConfig%lFirstDayOfSimulation) then
-
-      ! calculate percent moisture; when landuse changes, it will assume
-      ! the same percent moisture. This implies a discontinuity in
-      ! the mass balance from one year to the next.
-      call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-    endif
-
-    ! (Re)-initialize the model
-    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-    flush(unit=LU_LOG)
-    call model_InitializeSM(pGrd, pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-    flush(unit=LU_LOG)
-    call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_CreateLanduseIndex"
-    flush(unit=LU_LOG)
-    call model_CreateLanduseIndex(pGrd, pConfig )
-
-  endif
-
-end subroutine model_ProcessDynamicLanduse
-
-
-
-!> @brief This subroutine reads a single line from a single-station
-!> climate data file, parses the values, and returns a pointer to a
-!> time-series data object.
-!> @todo Make logic at end of routine more robust; currently the logic
-!> to test for the presence of a header could mask errors reading in
-!> values from the data file.
-subroutine model_ReadTimeSeriesFile(pConfig, pTS)
-
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
   type (T_TIME_SERIES_FILE), pointer :: pTS
 
   ! [ LOCALS ]
   character(len=256) :: sBuf
   integer (kind=T_INT) :: iStat
+  real (kind=T_SGL) :: rTemp
 
   do
 
-    ! read line from the time series file
     read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
-
-    ! check for end-of-file condition
+#ifdef DEBUG_PRINT
+    print *, trim(sBuf)
+#endif
     if ( iStat<0 ) then
       pTS%lEOF = lTRUE
-      ! if we have enabled STRICT_DATE_CHECKING, terminate the run
-#ifdef STRICT_DATE_CHECKING
-      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
-        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
-        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
-        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
-           //TRIM(pConfig%sTimeSeriesFilename)
-        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
-      end if
-#endif
-      exit ! END OF FILE; exit main do loop
+      exit ! END OF FILE
     end if
 
-    ! check for errors
-    call Assert ( iStat == 0, "Problems reading time series file: " &
-           //TRIM(pConfig%sTimeSeriesFilename), TRIM(__FILE__),__LINE__)
+    call Assert ( iStat == 0, &
+      "Cannot read record from time-series file", TRIM(__FILE__),__LINE__)
 
-    ! Ignore comment statements
-    if ( sBuf(1:1) == '#' ) cycle
+    if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
 
-    ! eliminate punctuation
     call CleanUpCsv ( sBuf )
+
     read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
       pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
       pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
-    if (iStat /= 0) then  ! this is a sloppy way of getting past the header
+
+    ! on read error, skip onto the next line
+    if (iStat/=0) then
       write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
       write(UNIT=LU_LOG,FMT=*)
       cycle
     end if
 
-    if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
-      .or. pTS%rPrecip < 0.) then
-      write(UNIT=LU_LOG,fmt=*) "Missing or corrupt data in climate file"
-      call Assert(lFALSE, &
-        "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
+    ! check for ridiculous PRECIP values; halt if such values are found
+    if( pTS%rPrecip < 0.) then
+      call echolog("Missing or corrupt precipitation data in climate file. " &
+        //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
     end if
 
-    ! Check to ensure that we have not skipped a day
-    ! we have to ignore the very first day because when running while using
-    ! a single-site file, the pConfig values are populated with the
-    ! values read from the time series file. Thus, this test will always
-    ! be true on the first day of the simulation when reading from a
-    ! single-site file.
+    ! check for ridiculous TMAX values; halt if such values are found
+    if(pTS%rMaxT < -100 .or. pTS%rMaxT > 150. ) then
+      call echolog("Missing or corrupt maximum air value (TMAX) in climate file. " &
+        //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
+    end if
 
-    if (.not. pConfig%lFirstDayOfSimulation) then
+    ! check for ridiculous values; halt if such values are found
+    if(pTS%rMinT > 120. .or. pTS%rMinT < -100. ) then
+        call echolog("Missing or corrupt minimum air value (TMIN) in climate file. " &
+          //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
+    end if
 
-      if(.not. ( (pConfig%iYear == pTS%iYear) &
-         .and.   (pConfig%iMonth == pTS%iMonth) &
-         .and.   (pConfig%iDay == pTS%iDay) ) ) then
-        write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
-        write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
-        write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
-          //TRIM(int2char(pTS%iDay))//"/" &
-          //TRIM(int2char(pTS%iYear))
-        write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
-          //TRIM(int2char(pConfig%iDay))//"/" &
-          //TRIM(int2char(pConfig%iYear))
-#ifdef STRICT_DATE_CHECKING
-        call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
-#else
-        ! reset date to that of the input time-series data
-        pConfig%iYear = pTS%iYear
-        pConfig%iMonth = pTS%iMonth
-        pConfig%iDay = pTS%iDay
-        pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
-#endif
-      endif
-
+    ! if MAXIMUM temperature is less than the MINIMUM, assume that they
+    ! were inadvertently swapped; swap them back and keep running
+    if(pTS%rMaxT < pTS%rMinT) then
+      rTemp = pTS%rMinT
+      pTS%rMinT = pTS%rMaxT
+      pTS%rMaxT = rTemp
+      call echolog(repeat("*", 40)//"~ALERT: TMAX value is less than TMIN. Swapping values. " &
+        //"~Offending line: "//TRIM(sBuf)//"~"//repeat("*", 40) )
     endif
 
     exit

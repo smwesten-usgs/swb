@@ -90,6 +90,7 @@
     <Folder name="Resource Files" sorted="Yes" />
     <Folder name="Source Files" sorted="Yes">
         <File>..\src\control.F90</File>
+        <File>..\src\data_factory.F90</File>
         <File>..\src\et_blaney_criddle.F90</File>
         <File>..\src\et_FAO56_crop_coefficients.F90</File>
         <File>..\src\et_hargreaves.F90</File>
@@ -98,16 +99,21 @@
         <File>..\src\et_turc.F90</File>
         <File>..\src\graph.F90</File>
         <File>..\src\grid.F90</File>
+        <File>..\src\interpolators.F90</File>
         <File>..\src\irrigation.F90</File>
         <File>..\src\main.F90</File>
         <File>..\src\meteorological_functions.F90</File>
         <File>..\src\model.F90</File>
-        <File>..\src\netcdf_support.F90</File>
+        <File>..\src\netcdf4_support.F90</File>
+        <File>..\src\netcdf_c_api_interfaces.f90</File>
+        <File>..\src\output.F90</File>
+        <File>..\..\Interpolators\r8lib.f90</File>
         <File>..\src\RLE.F90</File>
         <File>..\src\runoff_curve_number.F90</File>
         <File>..\src\sm_thornthwaite_mather.F90</File>
         <File>..\src\snow.F90</File>
         <File>..\src\stats.F90</File>
+        <File>..\src\swb_python_interface.F90</File>
         <File>..\src\swbstats.F90</File>
         <File>..\src\types.F90</File>
         <File>..\src\water_balance.F90</File>

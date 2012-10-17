@@ -30,7 +30,7 @@ module et_thornthwaite_mather
 !!***
 
   use types
-  use swb_stats
+  use stats
 
   implicit none
 

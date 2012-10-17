@@ -26,7 +26,7 @@ module et_hargreaves
 !!***
 
   use types
-  use swb_stats
+  use stats
   use meteorological_functions
 
   implicit none
@@ -57,21 +57,7 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
   call Assert( iStat == 0, "Could not read the northerly latitude" )
   pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_T_SGL
 
-  return
 end subroutine et_hargreaves_configure
-
-subroutine et_hargreaves_initialize( pGrd, sFileName )
-  !! Preconfigures necessary information from the time-series file 'sFileName'
-  !! and based on the model grid 'grd'.
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd
-  character (len=*),intent(in) :: sFileName
-  ! [ LOCALS ]
-
-  write(UNIT=LU_LOG,FMT=*)"Initializing Hargreaves PET model"
-
-  return
-end subroutine et_hargreaves_initialize
 
 !------------------------------------------------------------------------------
 
@@ -192,14 +178,3 @@ end function ET0_hargreaves
 !!***
 
 end module et_hargreaves
-
-
-
-
-
-
-
-
-
-
-
