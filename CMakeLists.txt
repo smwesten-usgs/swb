@@ -44,7 +44,7 @@ cmake_minimum_required(VERSION 2.8)
 set_property(CACHE CMAKE_BUILD_TYPE
         PROPERTY STRINGS "Release" "Debug")
 
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING
+set( CMAKE_BUILD_TYPE "Debug" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
 set_property(CACHE PLATFORM_TYPE
@@ -116,10 +116,25 @@ endif()
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
+<<<<<<< HEAD
+=======
+  set(CMAKE_INSTALL_PREFIX "d:/dos")
+
+  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
+        COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
+  )
+
+>>>>>>> 0cf10ab... Minor tweaks
   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
 
      message(" <-- setting options for gfortran on MinGW (32-bit/64-bit) -->")
 
+<<<<<<< HEAD
+=======
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fbounds-check -fexceptions -ffree-line-length-none")
+
+     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -static-libgcc -static-libgfortran")
+>>>>>>> 0cf10ab... Minor tweaks
 
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
@@ -162,11 +177,14 @@ if(CMAKE_HOST_WIN32)
 
      include_directories( ${MODULE_DIR} )
 
+<<<<<<< HEAD
      SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
 
+=======
+>>>>>>> 0cf10ab... Minor tweaks
      add_custom_target(makelib
          ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${NETCDF_FORTRAN_LIB}
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -xv ${DISLIN_FORTRAN_LIB}

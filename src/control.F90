@@ -1014,7 +1014,7 @@ subroutine control_setModelOptions(sControlFile)
       call assert(len_trim(pConfig%sLandUseLookupFilename) > 0, &
          "The irrigation module cannot be activated before specifying " &
          //"a land use lookup table", trim(__FILE__), __LINE__ )
-      call model_ReadIrrigationLookupTable( pConfig )
+      call model_ReadIrrigationLookupTable( pConfig, pGrd )
       flush(UNIT=LU_LOG)
 
     else if ( sItem == "BASIN_MASK_LOOKUP_TABLE" ) then
@@ -1529,13 +1529,27 @@ subroutine control_setModelOptions(sControlFile)
       if ( trim(sOption) == "T-M" .or. trim(sOption) == "THORNTHWAITE-MATHER") then
         pConfig%iConfigureSM = CONFIG_SM_THORNTHWAITE_MATHER
         call sm_thornthwaite_mather_Configure( sRecord )
-      elseif ( trim(sOption) == "FAO56") then
-          pConfig%iConfigureSM = CONFIG_SM_FAO56_CROP_COEFFICIENT
-          STAT_INFO(iBARE_SOIL_EVAP)%lActive = lTRUE
       else
         call Assert( lFALSE, "Illegal soil-moisture option specified" )
       end if
       flush(UNIT=LU_LOG)
+
+    else if ( sItem == "FAO56" ) then
+      write(UNIT=LU_LOG,FMT=*) "Configuring swb to use FAO56 crop coefficients"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      if ( trim(sOption) == "CROP_COEFFICIENTS_STANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_CROP_COEFFICIENTS_STANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_NONSTANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD
+      else
+        call Assert( lFALSE, "Illegal FAO56 option specified" )
+      end if
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "ENABLE_IRRIGATION" ) then
+      write(UNIT=LU_LOG,FMT=*) "Allowing swb to supplement soil moisture by means of irrigation"
+      pConfig%lEnableIrrigation = lTRUE
 
     else if ( sItem == "OUTPUT_FORMAT" ) then
       call Chomp ( sRecord, sOption )

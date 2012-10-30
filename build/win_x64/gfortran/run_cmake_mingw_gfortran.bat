@@ -75,6 +75,7 @@ set CTEST_OUTPUT_ON_FAILURE=1
 
 :: add --trace to see copious details re: CMAKE
 
+<<<<<<< HEAD
 cmake ..\..\.. -G "MinGW Makefiles" ^
 -DMINGWBASE=%MINGWBASE% ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^

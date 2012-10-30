@@ -5,7 +5,7 @@ module output
 
   use types
   use swb_grid
-  use swb_stats
+  use stats
   use RLE
 
 #ifdef NETCDF_SUPPORT
@@ -107,6 +107,12 @@ subroutine output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
           case(iREFERENCE_ET)
             call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
               cel%rReferenceET0, pGrd, iRow, iCol, iTime)
+
+          case(iREFERENCE_ET_ADJ)
+            call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
+              cel%rReferenceET0_adj, pGrd, iRow, iCol, iTime)
+
+
           case(iCROP_ET)
             call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
               cel%rCropETc, pGrd, iRow, iCol, iTime)
@@ -140,6 +146,15 @@ subroutine output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
           case(iGDD)
             call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
               cel%rGDD, pGrd, iRow, iCol, iTime)
+
+          case(iROOTING_DEPTH)
+            call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
+              cel%rCurrentRootingDepth, pGrd, iRow, iCol, iTime)
+
+          case(iCROP_COEFFICIENT)
+            call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
+              cel%rKcb, pGrd, iRow, iCol, iTime)
+
           case(iIRRIGATION)
             call netcdf_write_variable_byte(iIndex, iNC_OUTPUT, pConfig, &
               cel%rIrrigationAmount, pGrd, iRow, iCol, iTime)
@@ -209,119 +224,168 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
           call RLE_writeByte(STAT_INFO(iGROSS_PRECIP)%iLU, &
             cel%rGrossPrecip, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iGROSS_PRECIP)
+
         case(iSNOWFALL_SWE)
           call RLE_writeByte(STAT_INFO(iSNOWFALL_SWE)%iLU, &
             cel%rSnowFall_SWE, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSNOWFALL_SWE)
+
         case(iSNOWCOVER)
           call RLE_writeByte(STAT_INFO(iSNOWCOVER)%iLU, &
               cel%rSnowCover, pConfig%iRLE_MULT, &
               pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSNOWCOVER)
+
         case(iCFGI)
           call RLE_writeByte(STAT_INFO(iCFGI)%iLU, &
             cel%rCFGI, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCFGI)
+
         case(iMIN_TEMP)
           call RLE_writeByte(STAT_INFO(iMIN_TEMP)%iLU, &
             cel%rTMin, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iMIN_TEMP)
+
         case(iMAX_TEMP)
           call RLE_writeByte(STAT_INFO(iMAX_TEMP)%iLU, &
             cel%rTMax, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iMAX_TEMP)
+
         case(iAVG_TEMP)
           call RLE_writeByte(STAT_INFO(iAVG_TEMP)%iLU, &
             cel%rTAvg, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iAVG_TEMP)
+
         case(iCHG_IN_SNOW_COV)
           call RLE_writeByte(STAT_INFO(iCHG_IN_SNOW_COV)%iLU, &
             cel%rSnowFall_SWE-cel%rSnowmelt, &
             pConfig%iRLE_MULT, pConfig%rRLE_OFFSET, &
             pGrd%iNumGridCells, iCHG_IN_SNOW_COV)
+
         case(iSNOWMELT)
           call RLE_writeByte(STAT_INFO(iSNOWMELT)%iLU, &
             cel%rSnowmelt, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSnowmelt)
+
         case(iINTERCEPTION)
           call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
             cel%rInterception, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iINTERCEPTION)
+
         case(iNET_PRECIP)
           call RLE_writeByte(STAT_INFO(iNET_PRECIP)%iLU, &
             cel%rNetRainfall, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iNET_PRECIP)
+
         case(iINFLOW)
           call RLE_writeByte(STAT_INFO(iINFLOW)%iLU, &
             cel%rInflow, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iINFLOW)
+
         case(iOUTFLOW)
           call RLE_writeByte(STAT_INFO(iOUTFLOW)%iLU, &
             cel%rOutflow, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iOUTFLOW)
+
         case(iRUNOFF_OUTSIDE)
           call RLE_writeByte(STAT_INFO(iRUNOFF_OUTSIDE)%iLU, &
             cel%rFlowOutOfGrid, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iRUNOFF_OUTSIDE)
+
         case(iREJECTED_RECHARGE)
           call RLE_writeByte(STAT_INFO(iREJECTED_RECHARGE)%iLU, &
             rDailyRejectedRecharge, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iREJECTED_RECHARGE)
+
         case(iNET_INFLOW)
           call RLE_writeByte(STAT_INFO(iNET_INFLOW)%iLU, &
             rNetInflow, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iNET_INFLOW)
+
         case(iNET_INFIL)
           call RLE_writeByte(STAT_INFO(iNET_INFIL)%iLU, &
             rNetInfil, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iNET_INFIL)
+
         case(iREFERENCE_ET)
           call RLE_writeByte(STAT_INFO(iREFERENCE_ET)%iLU, &
             cel%rReferenceET0, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iREFERENCE_ET)
+
+        case(iREFERENCE_ET_ADJ)
+          call RLE_writeByte(STAT_INFO(iREFERENCE_ET_ADJ)%iLU, &
+            cel%rReferenceET0_adj, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iREFERENCE_ET_ADJ)
+
         case(iCROP_ET)
           call RLE_writeByte(STAT_INFO(iCROP_ET)%iLU, &
             cel%rCropETc, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCROP_ET)
+
+        case(iCROP_ET_ADJ)
+          call RLE_writeByte(STAT_INFO(iCROP_ET_ADJ)%iLU, &
+            cel%rCropETc_adj, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCROP_ET_ADJ)
+
         case(iBARE_SOIL_EVAP)
           call RLE_writeByte(STAT_INFO(iBARE_SOIL_EVAP)%iLU, &
             cel%rBareSoilEvap, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iBARE_SOIL_EVAP)
+
         case(iACT_ET)
           call RLE_writeByte(STAT_INFO(iACT_ET)%iLU, &
             rSM_ActualET, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iACT_ET)
+
         case(iP_MINUS_PET)
           call RLE_writeByte(STAT_INFO(iP_MINUS_PET)%iLU, &
             rPrecipMinusPotentET, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iP_MINUS_PET)
+
         case(iSM_DEFICIT)
           call RLE_writeByte(STAT_INFO(iSM_DEFICIT)%iLU, &
             rMoistureDeficit, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSM_DEFICIT)
+
         case(iSM_SURPLUS)
           call RLE_writeByte(STAT_INFO(iSM_SURPLUS)%iLU, &
             rMoistureSurplus, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSM_SURPLUS)
+
         case(iSM_APWL)
           call RLE_writeByte(STAT_INFO(iSM_APWL)%iLU, &
             cel%rSM_AccumPotentWatLoss, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSM_APWL)
+
         case(iSOIL_MOISTURE)
           call RLE_writeByte(STAT_INFO(iSOIL_MOISTURE)%iLU, &
             cel%rSoilMoisture, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSOIL_MOISTURE)
+
         case(iCHG_IN_SOIL_MOIST)
           call RLE_writeByte(STAT_INFO(iCHG_IN_SOIL_MOIST)%iLU, &
             rChangeInStorage, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCHG_IN_SOIL_MOIST)
+
         case(iRECHARGE)
           call RLE_writeByte(STAT_INFO(iRECHARGE)%iLU, &
             rDailyRecharge, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iRECHARGE)
+
         case(iGDD)
           call RLE_writeByte(STAT_INFO(iGDD)%iLU, &
             cel%rGDD, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iGDD)
+
+        case(iROOTING_DEPTH)
+          call RLE_writeByte(STAT_INFO(iROOTING_DEPTH)%iLU, &
+            cel%rCurrentRootingDepth, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iROOTING_DEPTH)
+
+        case(iCROP_COEFFICIENT)
+          call RLE_writeByte(STAT_INFO(iCROP_COEFFICIENT)%iLU, &
+            cel%rKcb, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCROP_COEFFICIENT)
+
         case(iIRRIGATION)
           call RLE_writeByte(STAT_INFO(iIRRIGATION)%iLU, &
             cel%rIrrigationAmount, pConfig%iRLE_MULT, &
@@ -466,9 +530,19 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
           case(iREFERENCE_ET)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rReferenceET0)
+
+          case(iREFERENCE_ET_ADJ)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rReferenceET0_adj)
+
           case(iCROP_ET)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rCropETc)
+
+          case(iCROP_ET_ADJ)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rCropETc_adj)
+
           case(iBARE_SOIL_EVAP)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rBareSoilEvap)
@@ -499,6 +573,15 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
           case(iGDD)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rGDD)
+
+          case(iROOTING_DEPTH)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rCurrentRootingDepth)
+
+          case(iCROP_COEFFICIENT)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rKcb)
+
           case(iIRRIGATION)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rIrrigationAmount)
@@ -602,8 +685,14 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0,kind=T_DBL), &
        iREFERENCE_ET,iMonth,iZERO)
 
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0_adj,kind=T_DBL), &
+       iREFERENCE_ET_ADJ,iMonth,iZERO)
+
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc,kind=T_DBL), &
        iCROP_ET,iMonth,iZERO)
+
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc_adj,kind=T_DBL), &
+       iCROP_ET_ADJ,iMonth,iZERO)
 
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rBareSoilEvap,kind=T_DBL), &
        iBARE_SOIL_EVAP,iMonth,iZERO)
@@ -627,6 +716,12 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=T_DBL), &
        iGDD,iMonth,iZERO)
 
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCurrentRootingDepth,kind=T_DBL), &
+       iROOTING_DEPTH,iMonth,iZERO)
+
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rKcb,kind=T_DBL), &
+       iCROP_COEFFICIENT,iMonth,iZERO)
+
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=T_DBL), &
        iIRRIGATION,iMonth,iZERO)
 
@@ -635,7 +730,6 @@ subroutine output_update_accumulators(cel, iMonth, &
 
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromSW,kind=T_DBL), &
        iIRRIGATION_FROM_SW,iMonth,iZERO)
-
 
 end subroutine output_update_accumulators
 
@@ -680,7 +774,9 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iINTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iP_MINUS_PET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iREFERENCE_ET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iREFERENCE_ET_ADJ,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET_ADJ,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iBARE_SOIL_EVAP,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_DEFICIT,iMonth,iNumGridCells)
@@ -701,6 +797,11 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
 
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iGDD, &
       iMonth,iNumGridCells)
+
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iROOTING_DEPTH, iMonth,iNumGridCells)
+
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_COEFFICIENT, iMonth,iNumGridCells)
+
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, &
       iMonth,iNumGridCells)
 

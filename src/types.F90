@@ -157,21 +157,25 @@ module types
       integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
       integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
       real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
+      integer (kind=T_INT) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
+      real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
       real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
+			real (kind=T_SGL) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
+			real (kind=T_SGL) :: rKcb                         ! crop coefficient for this cell
 
       real (kind=T_SGL) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
 
 !      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
-      real (kind=T_SGL) :: rReferenceET0 = rZERO    ! Reference ET0, presumably alfalfa
-      real (kind=T_SGL) :: rCropETc = rZERO         ! unadjusted crop ET
-      real (kind=T_SGL) :: rCropETc_adj = rZERO     ! ADJUSTED crop ET
+      real (kind=T_SGL) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
+      real (kind=T_SGL) :: rCropETc = rZERO            ! unadjusted crop ET
+      real (kind=T_SGL) :: rCropETc_adj = rZERO        ! ADJUSTED crop ET
       real (kind=T_SGL) :: rBareSoilEvap = rZERO
-      real (kind=T_SGL) :: rAdjustedPotentialET = rZERO
-!      real (kind=T_SGL) :: rSM_ActualET            ! Actual Evapotranspiration
+      real (kind=T_SGL) :: rReferenceET0_adj = rZERO
+      real (kind=T_SGL) :: rActualET = rZERO           ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
       integer (kind=T_INT) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
@@ -336,22 +340,22 @@ module types
     character (len=256) :: sCropDescription
 
     !> Mean plant or crop height, feet
-    real (kind=T_SGL) :: rMeanPlantHeight = 1.5
+    real (kind=T_SGL) :: rMeanPlantHeight = 3.0
 
     !> Crop coefficient, basal, for a given day (calculated in code)
     real (kind=T_SGL) :: rKcb
 
     !> Crop coefficient, basal, initial growth phase (Kcb_ini)
-    real (kind=T_SGL) :: rKcb_ini = 0.15
+    real (kind=T_SGL) :: rKcb_ini = 0.25
 
     !> Crop coefficient, basal, mid-growth phase (Kcb_mid)
-    real (kind=T_SGL) :: rKcb_mid = 1.0
+    real (kind=T_SGL) :: rKcb_mid = 1.3
 
     !> Crop coefficient, basal, end-growth phase (Kcb_end)
     real (kind=T_SGL) :: rKcb_end = 0.7
 
     !> Crop coefficient, MINIMUM allowed value (Kc_min)
-    real (kind=T_SGL) :: rKcb_min = 0.02
+    real (kind=T_SGL) :: rKcb_min = 0.1
 
     !> Day of year (or GDD) for initial planting
     integer (kind=T_INT) :: iL_plant = 50
@@ -505,7 +509,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 34
+  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 37
 
   ! constants defining T_STATS output types
   integer(kind=T_INT), parameter :: iNONE = 0
@@ -618,15 +622,19 @@ module types
       'inches','reference evapotranspiration (ET0)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
+    T_STATS ('REFERENCE_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','adjusted reference evapotranspiration (ET0_adj)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
     T_STATS ('CROP_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','crop evapotranspiration (ETc)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('CROP_ET_ADJ',0,2,0,lFALSE, lFALSE, lFALSE, &
+    T_STATS ('CROP_ET_ADJ',0,2,0,lFALSE, lFALSE, lTRUE, &
       'inches','ADJUSTED crop evapotranspiration (ETc_adj)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lFALSE, &
+    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','evaporation from bare soil', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
@@ -650,18 +658,23 @@ module types
       'inches','daily soil moisture', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
-      lTRUE, &
+    T_STATS ('GDD',0,2,0,lFALSE,lFALSE,lTRUE, &
       'degree-day','growing degree day', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, &
-      lTRUE, &
+    T_STATS ('ROOTING_DEPTH',0,2,0,lFALSE,lFALSE,lTRUE, &
+      'feet','current rooting depth', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('CROP_COEFFICIENT',0,2,0,lFALSE,lFALSE,lTRUE, &
+      'unitless','crop coefficient (Kcb)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','amount of water required from groundwater for irrigation', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, &
-      lTRUE, &
+    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','amount of water required from surface water for irrigation', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) &
     ]
@@ -711,17 +724,20 @@ module types
   integer (kind=T_INT), parameter :: iNET_INFLOW = 21
   integer (kind=T_INT), parameter :: iNET_INFIL = 22
   integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
-  integer (kind=T_INT), parameter :: iCROP_ET = 24
-  integer (kind=T_INT), parameter :: iCROP_ET_ADJ = 25
-  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 26
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 27
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 28
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 29
-  integer (kind=T_INT), parameter :: iSM_APWL = 30
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 31
-  integer (kind=T_INT), parameter :: iGDD = 32
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 33
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 34
+  integer (kind=T_INT), parameter :: iREFERENCE_ET_ADJ = 24
+  integer (kind=T_INT), parameter :: iCROP_ET = 25
+  integer (kind=T_INT), parameter :: iCROP_ET_ADJ = 26
+  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 27
+  integer (kind=T_INT), parameter :: iP_MINUS_PET = 28
+  integer (kind=T_INT), parameter :: iSM_DEFICIT = 29
+  integer (kind=T_INT), parameter :: iSM_SURPLUS = 30
+  integer (kind=T_INT), parameter :: iSM_APWL = 31
+  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 32
+  integer (kind=T_INT), parameter :: iGDD = 33
+  integer (kind=T_INT), parameter :: iROOTING_DEPTH = 34
+  integer (kind=T_INT), parameter :: iCROP_COEFFICIENT = 35
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 36
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 37
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
@@ -729,7 +745,7 @@ module types
 #endif
 
   !> generic configuration
-  integer (kind=T_INT), parameter :: CONFIG_NONE = -999
+  integer (kind=T_INT), parameter :: CONFIG_NONE = 0
 
   !> @}
 
@@ -742,26 +758,40 @@ module types
 
       !> Runoff calculation method @ref const_runoffCalc "(\em see defined constants)"
       integer (kind=T_INT) :: iConfigureRunoff = CONFIG_NONE
+
       !> Runoff routing solution mode @ref const_runoffSoln "(\em see defined constants)"
       integer (kind=T_INT) :: iConfigureRunoffMode = CONFIG_NONE
+
       !> Reference evapotranspiration calculation method
       integer (kind=T_INT) :: iConfigureET = CONFIG_NONE
+
       !> Precipitation input option
       integer (kind=T_INT) :: iConfigurePrecip = CONFIG_NONE
+
       !> Temperature data input option
       integer (kind=T_INT) :: iConfigureTemperature = CONFIG_NONE
+
       !> Landuse data input option
       integer (kind=T_INT) :: iConfigureLanduse = CONFIG_NONE
+
       !> Soil moisture calculation option
       integer (kind=T_INT) :: iConfigureSM = CONFIG_NONE
+
       !> Snowfall and snowmelt option
       integer (kind=T_INT) :: iConfigureSnow = CONFIG_NONE
+
       !> Maximum soil water capacity option
       integer (kind=T_INT) :: iConfigureSMCapacity = CONFIG_NONE
-      !> Irrigation calculation option
-      integer (kind=T_INT) :: iConfigureIrrigation = CONFIG_NONE
+
+      !> FAO56 module options calculation option
+      integer (kind=T_INT) :: iConfigureFAO56 = CONFIG_NONE
+
       !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
       integer (kind=T_INT) :: iConfigureInitialAbstraction = CONFIG_NONE
+
+			!> Enable irrigation calculations?
+			logical (kind=T_LOGICAL) ::lEnableIrrigation = lFALSE
+
       !> Option to write extra files when using PEST
       logical (kind=T_LOGICAL) :: lWriteExtraPestFiles = lFALSE
 
@@ -1109,14 +1139,14 @@ module types
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
   !> @}
 
-  !> @name Constants: Landuse input data format
+  !> @name Constants: Snow module
   !> Configuration for selection of snowfall and snowmelt modules
   !> @{
   integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
   integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
   !> @}
 
-  !> @name Constants: Landuse input data format
+  !> @name Constants: Soil-moisture input data format
   !> Configuration information for soil-moisture capacity calculations
   !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
@@ -1124,22 +1154,22 @@ module types
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
   !> @}
 
-  !> @name Constants: Landuse input data format
+  !> @name Constants: Soil-moisture calculation
   !> Configuration information for soil-moisture retention calculations
   !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
-  integer (kind=T_INT),parameter :: CONFIG_SM_FAO56_CROP_COEFFICIENT = 2
   !> @}
 
-  !> @name Constants: Landuse input data format
-  !> Configuration information for irrigation calculations
+  !> @name Constants: FAO56 module
+  !> Configuration information for FAO56 calculations
   !> @{
-  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_NONE = 0
-  integer (kind=T_INT), parameter :: CONFIG_IRRIGATION_FAO56_DUAL = 1
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_CROP_COEFFICIENTS_STANDARD = 1
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD = 2
   !> @}
 
-  !> @name Constants: Landuse input data format
+  !> @name Constants: SCS curve number
   !> Configuration information for initial abstraction assumptions
   !> @{
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
@@ -1150,7 +1180,7 @@ module types
   integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
   integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
 
-  !> @name Constants: Landuse input data format
+  !> @name Constants: Output grid format
   !> Options for output formats
   !> @{
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
