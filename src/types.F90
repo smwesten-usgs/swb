@@ -858,6 +858,7 @@ module types
       integer (kind=T_INT) :: iZoneNumber = 0
       character(len=48) :: sEllipsoidName = "GRS 1980"
       integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
+      logical (kind=T_LOGICAL) :: lNetCDF_FlipVertical = lFALSE
 #endif
 
 #ifdef STREAM_INTERACTIONS

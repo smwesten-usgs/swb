@@ -1,7 +1,7 @@
 rm(list=ls())
 
 #setwd("D:/SMWData/Active_Projects/LakeMI_Recharge/monthly_A1Fi_results")
-setwd("Z:/swb_test_cases/Derek-Transient_LU")
+setwd("D:\\SMWData\\Westenbroek\\swb\\Hostetler_test")
 #setwd("D:/SMWData/Source_Code/SWB/test_cases/bec")
 
 cex.main=1.0
@@ -45,7 +45,8 @@ box(lwd=1.5)
 par(mar=c(3,6,1,3))
 y1 <- mb$Net.Rainfall
 y2 <- mb$Snowmelt + y1
-y3 <- mb$Irrigation + y2
+#y3 <- mb$Irrigation + y2
+y3 <- 0 + y2
 
 x<-as.vector(c(mb$Date,rev(mb$Date)))
 ylim.min<-0.

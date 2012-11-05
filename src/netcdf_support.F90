@@ -283,8 +283,8 @@ end function netcdf_open
     call assert(iVarDim(i) == 3,"The gridded values supplied to SWB must contain 3" &
       //"~dimensions AND be written to the NetCDF file as~either variable(time,x,y) or variable(time,y,x)", &
       TRIM(__FILE__), __LINE__)
-      
-    ! test for the ordering of the x and y dimensions  
+
+    ! test for the ordering of the x and y dimensions
     lFound = lFALSE
     do n=1, iVarDim(i)
       if( str_compare(sDimName(iVarDimID(i,1)),"x") &
@@ -305,7 +305,7 @@ end function netcdf_open
       call assert(lFound, "Could not find a variable with any of the following values {x, easting, y, northing} "&
          //"for variable "//dquote(sVariableName)//".~The dimensions for the variable must be either~"&
          //"variable(x, y, time) or variable(y, x, time).",trim(__FILE__), __LINE__)
-    enddo  
+    enddo
   endif
 
   ! for current variable, list all known attributes...
@@ -322,7 +322,7 @@ end function netcdf_open
       write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,a)") &
         TRIM(sAttribName(i,j)),TRIM(sAttribValue(i,j))
     else
-    ! assume we have a real as an attribute (attribute type /=2)    
+    ! assume we have a real as an attribute (attribute type /=2)
       call netcdf_check(nf90_get_att(pNC%iNCID,i,TRIM(sAttribName(i,j)),&
       rAttribValue(i,j)),TRIM(__FILE__),__LINE__)
       write(unit=LU_LOG,fmt="(t8,'==> 'a,t35,f14.3)") &
@@ -459,6 +459,9 @@ write(unit=LU_LOG,FMT="('  start Julian day = ',t25,i14,/,/)") &
       flush(unit=LU_LOG)
     endif
   enddo
+
+  print *, iVarDimID(iZVar,1), iDimLen(iVarDimID(iZVar,1))
+  print *, iVarDimID(iZVar,2), iDimLen(iVarDimID(iZVar,2))
 
   call netcdf_check(nf90_get_var(pNC%iNCID, iZVar, iValue, &
     start= (/1,1,4/), &
@@ -663,79 +666,106 @@ end subroutine netcdf_chk_extent
 
   if(pNC%lYVarBeforeXVar) then
 
-  allocate(rValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for rValues", &
-    TRIM(__FILE__),__LINE__)
+    allocate(rValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
+    call Assert( iStat == 0, &
+      "Could not allocate memory for rValues", &
+      TRIM(__FILE__),__LINE__)
 
-  allocate(iValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for iValues", &
-    TRIM(__FILE__),__LINE__)
+    allocate(iValues(pNC%iY_NumGridCells, pNC%iX_NumGridCells),STAT=iStat)
+    call Assert( iStat == 0, &
+      "Could not allocate memory for iValues", &
+      TRIM(__FILE__),__LINE__)
 
-  call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
-    start= (/1,1,iTime/), &
-    count= (/ pNC%iY_NumGridCells, &
+    call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
+      start= (/1,1,iTime/), &
+      count= (/ pNC%iY_NumGridCells, &
       pNC%iX_NumGridCells,1/) ), &
       TRIM(__FILE__),__LINE__, pNC, iTime)
 
-  iCount = count(iValues <= -998)
+    iCount = count(iValues <= -998)
 
-  if(iCount == pGrd%iNumGridCells) then
-    ! elsewhere in code, SWB will substitute 0.0 if this is precip data, or
-    ! if this is temperature dat, will substitute the previous day's value.
-    rValues = -rBIGVAL
-  else
-    if( pNC%rScaleFactor > 1.) then
-      rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-    elseif( pNC%rScaleFactor < 1. ) then
-      rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+    if(iCount == pGrd%iNumGridCells) then
+      ! elsewhere in code, SWB will substitute 0.0 if this is precip data, or
+      ! if this is temperature dat, will substitute the previous day's value.
+      rValues = -rBIGVAL
+    else
+      if( pNC%rScaleFactor > 1.) then
+        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+      elseif( pNC%rScaleFactor < 1. ) then
+        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      endif
     endif
-  endif
 
-  ! flip values vertically
-  do iRow=1,pDataGrd%iNY    
-    do iCol=1,pDataGrd%iNX    
-      pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
-    end do
-  end do
+    if(pConfig%lNetCDF_FlipVertical) then
+
+      ! flip values vertically
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iRow,iCol)
+        end do
+      end do
+
+    else
+
+      ! do *NOT* flip values vertically
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, iRow) = rValues(iRow,iCol)
+        end do
+      end do
+
+    endif
 
   elseif(.not. pNC%lYVarBeforeXVar) then
 
-  allocate(rValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for rValues", &
-    TRIM(__FILE__),__LINE__)
+    allocate(rValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+    call Assert( iStat == 0, &
+      "Could not allocate memory for rValues", &
+      TRIM(__FILE__),__LINE__)
 
-  allocate(iValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for iValues", &
-    TRIM(__FILE__),__LINE__)
+    allocate(iValues(pNC%iX_NumGridCells, pNC%iY_NumGridCells),STAT=iStat)
+    call Assert( iStat == 0, &
+      "Could not allocate memory for iValues", &
+      TRIM(__FILE__),__LINE__)
 
-  call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
-  start= (/1,1,iTime/), &
-  count= (/ pNC%iX_NumGridCells, &
-    pNC%iY_NumGridCells,1/) ), &
-    TRIM(__FILE__),__LINE__, pNC, iTime)
+    call netcdf_check(nf90_get_var(pNC%iNCID, pNC%iVarID, iValues, &
+      start= (/1,1,iTime/), &
+      count= (/ pNC%iX_NumGridCells, &
+      pNC%iY_NumGridCells,1/) ), &
+      TRIM(__FILE__),__LINE__, pNC, iTime)
 
-  iCount = count(iValues <= -998)
+    iCount = count(iValues <= -998)
 
-  if(iCount == pGrd%iNumGridCells) then
-    rValues = -rBIGVAL
-  else
-    if( pNC%rScaleFactor > 1.) then
-      rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
-    elseif( pNC%rScaleFactor < 1. ) then
-      rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+    if(iCount == pGrd%iNumGridCells) then
+      rValues = -rBIGVAL
+    else
+      if( pNC%rScaleFactor > 1.) then
+        rValues = REAL(iValues, kind=T_SGL) / pNC%rScaleFactor + pNC%rAddOffset
+      elseif( pNC%rScaleFactor < 1. ) then
+        rValues = REAL(iValues, kind=T_SGL) * pNC%rScaleFactor + pNC%rAddOffset
+      endif
     endif
-  endif
 
-  do iRow=1,pDataGrd%iNY
-    do iCol=1,pDataGrd%iNX
-      pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
-    end do
-  end do
-  
+    if(pConfig%lNetCDF_FlipVertical) then
+
+      ! flip values vertically
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, (pDataGrd%iNY - iRow + 1)) = rValues(iCol,iRow)
+       end do
+      end do
+
+    else
+
+      ! do *NOT* flip values vertically
+      do iRow=1,pDataGrd%iNY
+        do iCol=1,pDataGrd%iNX
+          pDataGrd%rData(iCol, iRow) = rValues(iCol,iRow)
+        end do
+      end do
+
+    endif
+
   endif
 
 !    pOutGrd => grid_Create ( pGrd%iNX,  pGrd%iNY, &
