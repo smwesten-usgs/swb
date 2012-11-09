@@ -164,6 +164,8 @@ module types
       real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
 			real (kind=T_SGL) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
 			real (kind=T_SGL) :: rKcb                         ! crop coefficient for this cell
+			real (kind=T_SGL) :: rTotalAvailableWater = rZERO
+			real (kind=T_SGL) :: rReadilyAvailableWater = rZERO
 
       real (kind=T_SGL) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
       real (kind=T_SGL) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss

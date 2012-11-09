@@ -118,17 +118,18 @@ end function et_kc_CalcFractionExposedAndWettedSoil
 !> stage of plant growth, the soil type, and the land cover type.
 !> @note Implemented as equation 8-1 (Annex 8), FAO-56, Allen and others.
 
-function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max) 	result(rZr_i)
+function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(rZr_i)
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
 	real (kind=T_SGL) :: rZr_max
+	integer (kind=T_INT) :: iThreshold ! either GDD or DOY
 
   ! [ RESULT ]
   real (kind=T_SGL) :: rZr_i
 
 	! [ LOCALS ]
-	real (kind=T_SGL), parameter :: rZr_min = 0.1
+	real (kind=T_SGL), parameter :: rZr_min = 0.328
 
 	if ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini < 0.1) then
 	  ! this is needed because for areas like forests, where the
@@ -136,14 +137,17 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max) 	result(rZr_i)
 		 ! constant
 	  rZr_i = rZr_max
 
-	elseif(pIRRIGATION%rKcb < pIRRIGATION%rKcb_ini) then
+	elseif(iThreshold < pIRRIGATION%iL_plant) then
 
 	  rZr_i = rZr_min
 
 	else
 
-    rZr_i = rZr_min + (rZr_max - rZr_min) * ( pIRRIGATION%rKcb - pIRRIGATION%rKcb_ini) &
-                                           / ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini )
+    rZr_i = rZr_min + (rZr_max - rZr_min) * ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
+                                           / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
+
+    print *, "EFFRTDEPTH: ",pIRRIGATION%rKcb, ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
+                                           / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
   endif
 
 end function et_kc_CalcEffectiveRootDepth
@@ -169,6 +173,24 @@ end function et_kc_CalcSurfaceEvaporationCoefficient
 
 !------------------------------------------------------------------------------
 
+!> @brief This subroutine updates the total available water (TAW)
+!> (water within the rootzone) for a gridcell
+
+subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
+
+  ! [ ARGUMENTS ]
+  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  type (T_CELL), pointer :: cel
+
+  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+  cel%rReadilyAvailableWater = cel%rTotalAvailableWater * pIRRIGATION%rDepletionFraction
+
+  return
+
+end subroutine et_kc_CalcTotalAvailableWater
+
+!------------------------------------------------------------------------------
+
 !> @brief This function estimates Ks, water stress coefficient
 !> @note Implemented as equation 84, FAO-56, Allen and others
 function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
@@ -183,9 +205,19 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
   ! [ RESULT ]
   real (kind=T_SGL) :: rKs
 
-  rKs = ( cel%rSoilWaterCap - rDeficit + 1.0e-6) &
-        / ( (1.0 - pIRRIGATION%rDepletionFraction) &
-        * (cel%rSoilWaterCap + 1.0e-6) )
+  if (rDeficit < cel%rReadilyAvailableWater) then
+    rKs = rONE
+  elseif (rDeficit < cel%rTotalAvailableWater) then
+
+    rKs = ( cel%rTotalAvailableWater - rDeficit + 1.0e-6) &
+          / ( (1.0 - pIRRIGATION%rDepletionFraction) &
+          * (cel%rTotalAvailableWater + 1.0e-6) )
+
+  print *, "Ks: ",rKs
+
+  else
+    rKs = rZERO
+  endif
 
 end function et_kc_CalcWaterStressCoefficient
 
@@ -230,17 +262,19 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        if(pIRRIGATION%lUnitsAreDOY) then
          call et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
 
-				 if(pConfig%iDayOfYear < pIRRIGATION%iL_mid) then
-				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max)
-					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+				 if(pConfig%iDayOfYear < pIRRIGATION%iL_dev) then
+				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
+				     rZr_max, pConfig%iDayOfYear)
+!					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
 				 endif
 
        else
          call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=T_INT))
 
-				 if(int(cel%rGDD, kind=T_INT) < pIRRIGATION%iL_mid) then
-				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max)
-					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+				 if(int(cel%rGDD, kind=T_INT) < pIRRIGATION%iL_dev) then
+				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
+				     rZr_max,INT(cel%rGDD, kind=T_INT))
+!					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
 				 endif
 
        endif
@@ -248,6 +282,12 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
+
+       !> "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
+       !> "STANDARD" is used to refer to crop ET requirements under
+       !> ideal conditions (i.e. plants not stressed due to scarcity
+       !. of water. "NONSTANDARD" is the term used to describe ET requirements
+       !> when plants are under stress, when water is scarce.
 
        if ( pConfig%iConfigureFAO56 == CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
@@ -258,6 +298,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
          rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
+
+         call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
+         print *, "(",iRow, iCol,") TAW:",cel%rTotalAvailableWater
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
 
@@ -294,10 +337,6 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        endif
      enddo
    enddo
-
-   ! last we need to update the percent soil moisture given that the
-   ! rooting depth may have changed
-   call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
 end subroutine et_kc_ApplyCropCoefficients
 

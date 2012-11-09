@@ -52,7 +52,15 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
         if( pIRRIGATION%rMAD > 0.99 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
 
         ! cell is active and irrigation enabled and in season
-        rDepletionFraction = 1_T_SGL - (cel%rSoilMoisturePct * 0.01)
+        rDepletionFraction = min((cel%rSoilWaterCap - cel%rSoilMoisture) &
+                               / cel%rTotalAvailableWater, 1.0)
+
+    print *, "Depletion fraction, ",iRow, ",", iCol, ",", &
+        pConfig%iMonth,",",pConfig%iDay,",", &
+        pConfig%iYear,",", cel%rSoilWaterCap, ",",&
+        cel%rSoilMoisture, ",", cel%rTotalAvailableWater, ",", rDepletionFraction
+
+!        rDepletionFraction = 1_T_SGL - (cel%rSoilMoisturePct * 0.01)
 
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
           rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
