@@ -192,7 +192,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             ! determine soil moisture given updated accumulated potential water loss
             L1a: if ( cel%rSoilWaterCap > rNEAR_ZERO) then
 
-                L1b: if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD ) then
+                L1b: if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_ONE_FACTOR_NONSTANDARD &
+                .and. pConfig%iConfigureFAO56 /= CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
 
 #ifdef TM_TABLE
                   ! look up soil moisture in T-M tables

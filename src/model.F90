@@ -229,6 +229,64 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   ! Initialize evapotranspiration
   call model_InitializeET( pGrd, pConfig )
 
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
+!  integer (kind=T_INT) :: iDay, iYear, tj, ti
+  integer (kind=T_INT) :: tj, ti
+  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
+  integer (kind=T_INT) :: iPos
+  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
+  integer (kind=T_INT) :: iCol, iRow
+  character(len=3) :: sMonthName
+  logical (kind=T_LOGICAL) :: lMonthEnd
+!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
+  integer (kind=T_INT),save :: iNumGridCells
+!  integer (kind=T_INT) :: iNumDaysInYear
+!  integer (kind=T_INT) :: iEndOfYearJulianDay
+
+  real (kind=T_SGL) :: rmin,ravg,rmax
+
+  type (T_CELL),pointer :: cel
+  character (len=256) :: sBuf
+
+  type (T_TIME_SERIES_FILE), pointer :: pTS
+
+  ! allocate memory for the time-series data pointer
+  ALLOCATE (pTS, STAT=iStat)
+  call Assert( iStat == 0, &
+    "Could not allocate memory for time-series data structure", &
+    TRIM(__FILE__),__LINE__)
+
+!  call stats_OpenBinaryFiles(pConfig)
+
+  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+
+    if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
+      call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
+        //"coefficient submodels enabled. These can be enabled by adding one of the following~" &
+        //"to your control file:~"//sTAB//"~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_STANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_STANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
+    endif
+
+    ! call subroutine that handles much of the model initialization,
+    ! opens *.csv files, etc.
+    call model_Initialize(pGrd, pConfig)
+
+    ! calculate number of gridcells here.
+    iNumGridCells = pGrd%iNX * pGrd%iNY
+
+    ! time the run; start the clock.
+    call cpu_time(rStartTime)
+
+    ! create the single, temporary grid to use for temperature and precip
+    ! data input
+    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+      pGrd%rX1, pGrd%rY1, T_SGL_GRID )
+
   end if FIRST_YEAR
 
   ! close any existing open time-series files...
@@ -2969,17 +3027,19 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
 
   return
 end subroutine model_ReadIrrigationLookupTable
-
-#endif
-
-!--------------------------------------------------------------------------
+      ! initialize rKcb to the minimum value
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb = pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
-    call Assert( iStat == 0, &
-      "Error reading day of year (or GDD) of initial planting from " &
-        //"irrigation lookup table" , trim(__FILE__), __LINE__ )
-    pConfig%IRRIGATION(iLandUseIndex)%iL_plant = int(rTempValue)
+      if ( scan(sItem, "/") /= 0 ) then
+        pConfig%IRRIGATION(iLandUseIndex)%iL_plant = mmdd2doy(sItem)
+      else
+        read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+        call Assert( iStat == 0, &
+          "Error reading day of year (or GDD) of initial planting from " &
+            //"irrigation lookup table" , trim(__FILE__), __LINE__ )
+        pConfig%IRRIGATION(iLandUseIndex)%iL_plant = int(rTempValue)
+      endif
     write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
       pConfig%IRRIGATION(iLandUseIndex)%iL_plant
 
@@ -3060,9 +3120,15 @@ end subroutine model_ReadIrrigationLookupTable
 
   call grid_Destroy(pLandUseGrid)
 
-  pGenericGrd_int%iData = pGrd%Cells%iLandUse
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Land_Use_Land_Cover" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation = mmdd2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
+      pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation
+
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation = mmdd2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
+      pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
 
 end subroutine model_PopulateLandUseArray
 
@@ -3103,8 +3169,8 @@ subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
 
       call assert(lFound, "Unknown landuse code found while reading from the " &
         //"crop coefficient and irrigation parameters table.~Landuse specified "&
-        //"in the landuse grid but not found in the landuse table: " &
-        //trim(int2char(iLandUseType)),trim(__FILE__), __LINE__)
+        //"in the landuse grid but not found in the irrigation table.~ " &
+        //"  Landuse grid value: "//trim(int2char(cel%iLanduse)),trim(__FILE__), __LINE__)
 
 		enddo
 	enddo

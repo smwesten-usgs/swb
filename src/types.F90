@@ -173,10 +173,9 @@ module types
 !      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
       real (kind=T_SGL) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
+      real (kind=T_SGL) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
       real (kind=T_SGL) :: rCropETc = rZERO            ! unadjusted crop ET
-      real (kind=T_SGL) :: rCropETc_adj = rZERO        ! ADJUSTED crop ET
       real (kind=T_SGL) :: rBareSoilEvap = rZERO
-      real (kind=T_SGL) :: rReferenceET0_adj = rZERO
       real (kind=T_SGL) :: rActualET = rZERO           ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
@@ -511,7 +510,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 37
+  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 36
 
   ! constants defining T_STATS output types
   integer(kind=T_INT), parameter :: iNONE = 0
@@ -632,10 +631,6 @@ module types
       'inches','crop evapotranspiration (ETc)', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('CROP_ET_ADJ',0,2,0,lFALSE, lFALSE, lTRUE, &
-      'inches','ADJUSTED crop evapotranspiration (ETc_adj)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
-
     T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
       'inches','evaporation from bare soil', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
@@ -728,18 +723,17 @@ module types
   integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
   integer (kind=T_INT), parameter :: iREFERENCE_ET_ADJ = 24
   integer (kind=T_INT), parameter :: iCROP_ET = 25
-  integer (kind=T_INT), parameter :: iCROP_ET_ADJ = 26
-  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 27
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 28
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 29
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 30
-  integer (kind=T_INT), parameter :: iSM_APWL = 31
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 32
-  integer (kind=T_INT), parameter :: iGDD = 33
-  integer (kind=T_INT), parameter :: iROOTING_DEPTH = 34
-  integer (kind=T_INT), parameter :: iCROP_COEFFICIENT = 35
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 36
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 37
+  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 26
+  integer (kind=T_INT), parameter :: iP_MINUS_PET = 27
+  integer (kind=T_INT), parameter :: iSM_DEFICIT = 28
+  integer (kind=T_INT), parameter :: iSM_SURPLUS = 29
+  integer (kind=T_INT), parameter :: iSM_APWL = 30
+  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 31
+  integer (kind=T_INT), parameter :: iGDD = 32
+  integer (kind=T_INT), parameter :: iROOTING_DEPTH = 33
+  integer (kind=T_INT), parameter :: iCROP_COEFFICIENT = 34
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 35
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 36
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
@@ -1167,8 +1161,11 @@ module types
   !> Configuration information for FAO56 calculations
   !> @{
   integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_CROP_COEFFICIENTS_STANDARD = 1
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD = 2
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
+
   !> @}
 
   !> @name Constants: SCS curve number
@@ -1693,6 +1690,46 @@ function mmddyyyy2julian(sMMDDYYYY)  result(iJD)
   return
 
 end function mmddyyyy2julian
+
+!--------------------------------------------------------------------------
+
+function mmdd2doy(sMMDD)  result(iDOY)
+
+  character (len=*) :: sMMDD
+  integer (kind=T_INT) :: iDOY
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iMonth
+  integer (kind=T_INT) :: iDay
+  integer (kind=T_INT) :: iYear
+  character (len=256) :: sItem, sBuf
+  integer (kind=T_INT) :: iStat
+  integer (kind=T_INT) :: iJD
+  integer (kind=T_INT) :: iStartingJD
+
+  sItem = sMMDD
+
+  ! parse month value
+  call Chomp_slash(sItem, sBuf)
+  read(sBuf,*,iostat = iStat) iMonth
+  call Assert(iStat==0, "Problem reading month value from string "//TRIM(sMMDD), &
+    TRIM(__FILE__),__LINE__)
+
+  ! parse day value
+  call Chomp_slash(sItem, sBuf)
+  read(sBuf,*,iostat=iStat) iDay
+  call Assert(iStat==0, "Problem reading day value from string "//TRIM(sMMDD), &
+    TRIM(__FILE__),__LINE__)
+
+
+  iStartingJD = julian_day ( 1999, 1, 1)
+  iJD = julian_day ( 1999, iMonth, iDay)
+
+  iDOY = iJD - iStartingJD + 1
+
+  return
+
+end function mmdd2doy
 
 !--------------------------------------------------------------------------
 

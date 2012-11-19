@@ -1512,8 +1512,10 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureET = CONFIG_ET_JENSEN_HAISE
         call et_jh_configure( sRecord )
       else if ( trim(sOption) == "B-C" ) then
-        pConfig%iConfigureET = CONFIG_ET_BLANEY_CRIDDLE
-        call et_bc_configure( sRecord )
+!        pConfig%iConfigureET = CONFIG_ET_BLANEY_CRIDDLE
+        call assert(lFALSE, "The Blaney-Criddle method has been removed from this " &
+         //"version of swb.", trim(__FILE__),__LINE__)
+!        call et_bc_configure( sRecord )
       else if ( trim(sOption) == "HARGREAVES" ) then
         pConfig%iConfigureET = CONFIG_ET_HARGREAVES
         call et_hargreaves_configure( pConfig, sRecord )
@@ -1538,10 +1540,15 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Configuring swb to use FAO56 crop coefficients"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
-      if ( trim(sOption) == "CROP_COEFFICIENTS_STANDARD") then
-        pConfig%iConfigureFAO56 = CONFIG_FAO56_CROP_COEFFICIENTS_STANDARD
-      elseif ( trim(sOption) == "CROP_COEFFICIENTS_NONSTANDARD") then
-        pConfig%iConfigureFAO56 = CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD
+      if ( trim(sOption) == "CROP_COEFFICIENTS_ONE_FACTOR_STANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_ONE_FACTOR_STANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_ONE_FACTOR_NONSTANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_TWO_FACTOR_STANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_TWO_FACTOR_STANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_TWO_FACTOR_NONSTANDARD
+
       else
         call Assert( lFALSE, "Illegal FAO56 option specified" )
       end if

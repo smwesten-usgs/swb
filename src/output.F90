@@ -321,11 +321,6 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
             cel%rCropETc, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCROP_ET)
 
-        case(iCROP_ET_ADJ)
-          call RLE_writeByte(STAT_INFO(iCROP_ET_ADJ)%iLU, &
-            cel%rCropETc_adj, pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iCROP_ET_ADJ)
-
         case(iBARE_SOIL_EVAP)
           call RLE_writeByte(STAT_INFO(iBARE_SOIL_EVAP)%iLU, &
             cel%rBareSoilEvap, pConfig%iRLE_MULT, &
@@ -539,10 +534,6 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rCropETc)
 
-          case(iCROP_ET_ADJ)
-            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
-              iYear, cel%rCropETc_adj)
-
           case(iBARE_SOIL_EVAP)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rBareSoilEvap)
@@ -691,9 +682,6 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc,kind=T_DBL), &
        iCROP_ET,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc_adj,kind=T_DBL), &
-       iCROP_ET_ADJ,iMonth,iZERO)
-
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rBareSoilEvap,kind=T_DBL), &
        iBARE_SOIL_EVAP,iMonth,iZERO)
 
@@ -776,7 +764,6 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iREFERENCE_ET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iREFERENCE_ET_ADJ,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET_ADJ,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iBARE_SOIL_EVAP,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_DEFICIT,iMonth,iNumGridCells)

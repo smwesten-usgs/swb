@@ -515,8 +515,6 @@ function solar_declination(iDayOfYear, iNumDaysInYear) result(rDelta)
            * sin ( (2_T_SGL * dpPI * iDayOfYear / iNumDaysInYear) &
 		          - 1.39_T_SGL)
 
-  return
-
 end function solar_declination
 
 !!***
@@ -647,11 +645,44 @@ function solar_radiation_Hargreaves_Rs(rRa, rTMIN, rTMAX) result(rRs)
   real (kind=T_SGL) :: rRs
   real (kind=T_SGL), parameter :: rKRs = 0.175
 
-  rRs = rKRs * sqrt(FtoC(rTMAX) - FtoC(rTMIN)) * rRa
+  rRs = rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) * rRa
 
   return
 
 end function solar_radiation_Hargreaves_Rs
+
+!!***
+!--------------------------------------------------------------------------
+function estimate_percent_of_possible_sunshine(rTMAX, rTMIN)  result(rPsun)
+
+  ! this function follows from equation 5 in "The Rational Use of the FAO Blaney-
+  ! Criddle
+  ! substituting the rearranged Hargreaves solar radiation formula into
+  ! equation 5 results in the formulation below
+
+  ! [ ARGUMENTS ]
+  real (kind=T_SGL), intent(in) :: rTMIN
+  real (kind=T_SGL), intent(in) :: rTMAX
+
+  ! [ RETURNS ]
+
+  real (kind=T_SGL) :: rPsun
+
+  ! [ LOCALS ]
+  real (kind=T_SGL), parameter :: rKRs = 0.175
+
+  rPsun = ( 2_T_SGL * rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) ) - 0.5_T_SGL
+
+  if (rPsun < 0_T_SGL) then
+    rPsun = 0_T_SGL
+  elseif (rPsun > 1.0_T_SGL) then
+    rPsun = 100_T_SGL
+  else
+    rPsun = rPsun * 100_T_SGL
+  endif
+
+end function estimate_percent_of_possible_sunshine
+
 !!***
 !--------------------------------------------------------------------------
 !!****f* meteorological_functions/clear_sky_solar_radiation_Rso
@@ -952,6 +983,7 @@ function minimum_rel_hum(rTMin, rTMax) result (rMinRH)
   return
 
 end function minimum_rel_hum
+
 !!***
 !--------------------------------------------------------------------------
 !!****f* meteorological_functions/maximum_rel_hum

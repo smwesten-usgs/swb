@@ -55,13 +55,6 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
         rDepletionFraction = min((cel%rSoilWaterCap - cel%rSoilMoisture) &
                                / cel%rTotalAvailableWater, 1.0)
 
-    print *, "Depletion fraction, ",iRow, ",", iCol, ",", &
-        pConfig%iMonth,",",pConfig%iDay,",", &
-        pConfig%iYear,",", cel%rSoilWaterCap, ",",&
-        cel%rSoilMoisture, ",", cel%rTotalAvailableWater, ",", rDepletionFraction
-
-!        rDepletionFraction = 1_T_SGL - (cel%rSoilMoisturePct * 0.01)
-
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
           rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
           cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW, &

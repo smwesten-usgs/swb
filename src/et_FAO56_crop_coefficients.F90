@@ -146,8 +146,6 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
     rZr_i = rZr_min + (rZr_max - rZr_min) * ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
                                            / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
 
-    print *, "EFFRTDEPTH: ",pIRRIGATION%rKcb, ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
-                                           / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
   endif
 
 end function et_kc_CalcEffectiveRootDepth
@@ -212,8 +210,6 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
     rKs = ( cel%rTotalAvailableWater - rDeficit + 1.0e-6) &
           / ( (1.0 - pIRRIGATION%rDepletionFraction) &
           * (cel%rTotalAvailableWater + 1.0e-6) )
-
-  print *, "Ks: ",rKs
 
   else
     rKs = rZERO
@@ -282,6 +278,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
+       call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
 
        !> "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
        !> "STANDARD" is used to refer to crop ET requirements under
@@ -289,7 +286,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        !. of water. "NONSTANDARD" is the term used to describe ET requirements
        !> when plants are under stress, when water is scarce.
 
-       if ( pConfig%iConfigureFAO56 == CONFIG_FAO56_CROP_COEFFICIENTS_NONSTANDARD ) then
+       if ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
 				 ! the adjustments for nonstandard growing conditions (e.g. plant
 				 ! stress and resulting decrease in ET during dry conditions).
@@ -299,17 +296,23 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
 
-         call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
-         print *, "(",iRow, iCol,") TAW:",cel%rTotalAvailableWater
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
+         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs)
 
-         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs) ! &
+       elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_NONSTANDARD ) then
+         ! we are using the full FAO56 soil water balance approach, *INCLUDING*
+				 ! the adjustments for nonstandard growing conditions (e.g. plant
+				 ! stress and resulting decrease in ET during dry conditions).
+				 ! *EXCLUDING* explicit calculation of BareSoilEvap
 
-         ! this is the general term being used in the water balance
-         cel%rReferenceET0_adj = cel%rCropETc + cel%rBareSoilEvap
+         rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
-       elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_CROP_COEFFICIENTS_STANDARD ) then
+         cel%rBareSoilEvap = rZERO
+         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs)
+
+       elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_STANDARD ) then
 
          ! if we are not using the full FAO56 soil water balance approach,
          ! we should just adjust the potential ET by the crop coefficient.
@@ -325,9 +328,16 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
 
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
+         cel%rCropETc = cel%rReferenceET0 * pIRRIGATION%rKcb
 
-         cel%rReferenceET0_adj = cel%rReferenceET0 * pIRRIGATION%rKcb + cel%rBareSoilEvap
-         cel%rCropETc = cel%rReferenceET0_adj
+       elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_STANDARD ) then
+
+				 ! NO reductions in Kc due to water availability
+				 ! NO explicit calculation of BareSoilEvap
+				 ! no real calculations required because we're applying the crop coefficient directly
+
+         cel%rBareSoilEvap = rZERO
+         cel%rCropETc = cel%rReferenceET0 * pIRRIGATION%rKcb
 
 			 else
 
@@ -335,6 +345,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				   trim(__FILE__), __LINE__)
 
        endif
+
+       ! "Adjusted" Reference ET is the general term being used in the water balance
+       cel%rReferenceET0_adj = cel%rCropETc + cel%rBareSoilEvap
+
      enddo
    enddo
 
