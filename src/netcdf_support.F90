@@ -459,10 +459,7 @@ write(unit=LU_LOG,FMT="('  start Julian day = ',t25,i14,/,/)") &
       flush(unit=LU_LOG)
     endif
   enddo
-
-  print *, iVarDimID(iZVar,1), iDimLen(iVarDimID(iZVar,1))
-  print *, iVarDimID(iZVar,2), iDimLen(iVarDimID(iZVar,2))
-
+  
   call netcdf_check(nf90_get_var(pNC%iNCID, iZVar, iValue, &
     start= (/1,1,4/), &
     count= (/ iDimLen(iVarDimID(iZVar,1)), iDimLen(iVarDimID(iZVar,2)),1/) ), &

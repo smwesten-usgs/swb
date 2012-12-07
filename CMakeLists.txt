@@ -275,13 +275,13 @@ elseif(CMAKE_HOST_UNIX)
      #------------------------------------------------------------------------
      # Set compilation and link preferences for Intel Fortran on Linux
      #------------------------------------------------------------------------
-     set (CMAKE_Fortran_FLAGS_RELEASE "-fast -fPIC")
+     set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -fPIC")
      set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all -fPIC")
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" "")
 #     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" "")
 
-#     set(CMAKE_Fortran_LINK_FLAGS "-Bdynamic -pie")
+     set(CMAKE_Fortran_LINK_FLAGS "-Bdynamic -fPIC -pie")
 #     set(CMAKE_LINKER "/usr/bin/gcc")
 #     set(CMAKE_Fortran_LINK_EXECUTABLE "/usr/bin/gcc")
 
