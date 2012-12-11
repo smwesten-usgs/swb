@@ -887,9 +887,9 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   integer (kind=T_INT), intent(in) :: iDay
   integer (kind=T_INT), intent(in) :: iYear
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal
+  real (kind=T_DBL) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal, rMeanTMIN, rMeanTMAX
   integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT) :: iRow,iCol, iCount
+  integer (kind=T_INT) :: iRow,iCol, iCount, iCount_valid
   character (len=256) sBuf
   type (T_CELL),pointer :: cel
 
@@ -900,6 +900,114 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
       pGrd%Cells(:,:)%rTMin = rMinT  ! use a single value for entire grid
       pGrd%Cells(:,:)%rTMax = rMaxT
       pGrd%Cells(:,:)%rTAvg = rAvgT
+
+  case( CONFIG_TEMPERATURE_ARC_GRID )
+    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
+      trim(pConfig%sTMINFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
+    call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
+    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    if (iCount_valid > 0) then
+      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+                / real(iCount_valid, kind=T_SGL)
+    else
+      rMeanTMIN = 0_T_SGL
+    endif
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMin = rMeanTMIN
+    endwhere
+
+  write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
+    trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
+  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
+  iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+  if (iCount_valid > 0) then
+    rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+              / real(iCount_valid, kind=T_SGL)
+  else
+    rMeanTMAX = 0_T_SGL
+  endif
+  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
+  where(pDataGrd%rData > pConfig%rMinValidTemp)
+  !! note: this logic assumes that missing values are supplied as "-9999" or the like
+    pGrd%Cells%rTMax = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMax = rMeanTMAX
+  endwhere
+
+  case( CONFIG_TEMPERATURE_SURFER_GRID )
+    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
+      trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
+    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
+    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    if (iCount_valid > 0) then
+      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+                / real(iCount_valid, kind=T_SGL)
+    else
+      rMeanTMIN = 0_T_SGL
+    endif
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMin = rMeanTMIN
+    endwhere
+
+    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
+      trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
+    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
+    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    if (iCount_valid > 0) then
+      rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+                / real(iCount_valid, kind=T_SGL)
+    else
+      rMeanTMAX = 0_T_SGL
+    endif
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMax = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMax = rMeanTMAX
+    endwhere
+
+#ifdef NETCDF_SUPPORT
+  case( CONFIG_TEMPERATURE_NETCDF )
+    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
+    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    if (iCount_valid > 0) then
+      rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+                / real(iCount_valid, kind=T_SGL)
+    else
+      rMeanTMAX = 0_T_SGL
+    endif
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMax = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMax = rMeanTMAX
+    endwhere
+
+    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
+    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    if (iCount_valid > 0) then
+      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+                / real(iCount_valid, kind=T_SGL)
+    else
+      rMeanTMIN = 0_T_SGL
+    endif
+    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
+    where(pDataGrd%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pDataGrd%rData
+    elsewhere
+      pGrd%Cells%rTMin = rMeanTMIN
+    endwhere
+#endif
+
+  case default
+    call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
+end select
 
 #ifdef STREAM_INTERACTIONS
   !! Adjust cell-by-cell temperature
@@ -922,72 +1030,30 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   end if
 #endif
 
-  case( CONFIG_TEMPERATURE_ARC_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-
-  write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-    trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-  where(pDataGrd%rData > pConfig%rMinValidTemp)
-  !! note: this logic assumes that missing values are supplied as "-9999" or the like
-    pGrd%Cells%rTMax = pDataGrd%rData
-  endwhere
-
-  case( CONFIG_TEMPERATURE_SURFER_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere
-
-#ifdef NETCDF_SUPPORT
-  case( CONFIG_TEMPERATURE_NETCDF )
-    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
-    endwhere
-
-    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
-    endwhere
-#endif
-
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
-end select
-
-
   if(pConfig%lHaltIfMissingClimateData) then
+
     call Assert(iCount == 0,"Temperature values less than " &
       //real2char(pConfig%rMinValidTemp)//" are not allowed. " &
       //"("//trim(int2char(iCount) )//" cells with values < " &
       //real2char(pConfig%rMinValidTemp)//")",TRIM(__FILE__),__LINE__)
+
   elseif(iCount > 0) then
+
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iCount, &
       "Missing minimum or maximum TEMPERATURE values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
-    call echolog("  ==> Temperature values from the previous day will be used in place of" &
-      //" missing values")
+    write(sBuf,fmt="(a,f12.3,a)") "  ==> Missing TMIN values will be " &
+    //"replaced with the mean of the remaining non-missing values (", &
+    rMeanTMIN,")"
+
+    call echolog(sBuf)
+
+    write(sBuf,fmt="(a,f12.3,a)") "  ==> Missing TMAX values will be " &
+    //"replaced with the mean of the remaining non-missing values (", &
+    rMeanTMAX,")"
+
+    call echolog(sBuf)
+
   endif
 
   pGrd%Cells%rTAvg = (pGrd%Cells%rTMax + pGrd%Cells%rTMin) / 2_T_SGL

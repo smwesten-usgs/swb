@@ -499,11 +499,16 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%lWriteExtraPestFiles = lTRUE
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "GRID_FLIP_VERTICAL" ) then
+      call echolog(dquote("GRID_FLIP_VERTICAL")//" is enabled.")
+      call echolog("SWB will FLIP *NetCDF* CLIMATE GRID VALUES VERTICALLY.")
+      pConfig%lNetCDF_FlipVertical = lTRUE
+
     else if ( sItem == "IGNORE_MISSING_CLIMATE_DATA" ) then
       write(UNIT=LU_LOG,FMT=*) &
         "SWB will ignore missing climate data. Missing precip will be set to zero."
       write(UNIT=LU_LOG,FMT=*) &
-        "  Missing temperature data will be filled with the values from the previous day."
+        "  Missing temperature data will be replaced with the mean value of the non-missing values."
       pConfig%lHaltIfMissingClimateData = lFALSE
       flush(UNIT=LU_LOG)
 
