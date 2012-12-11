@@ -276,6 +276,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     ! opens *.csv files, etc.
     call model_Initialize(pGrd, pConfig)
 
+    if (pConfig%lEnableIrrigation .and. &
+       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+      call model_CreateIrrigationTableIndex(pGrd, pConfig )
+    endif
     ! calculate number of gridcells here.
     iNumGridCells = pGrd%iNX * pGrd%iNY
 
@@ -689,7 +694,8 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
   ! [ LOCALS ]
   type (T_GENERAL_GRID),pointer :: input_grd      ! Pointer to temporary grid for I/O
   character (len=256) sBuf
-  logical (kind=T_LOGICAL) :: lExists
+  integer (kind=T_INT) :: iRow, iCol
+  logical (kind=T_LOGICAL) :: lExists, lFound
 
   ! set to a nonzero value
   iStat = iEOF
@@ -727,7 +733,7 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown landuse input type" )
-end select
+  end select
 
 end function if_GetDynamicLanduseValue
 
@@ -3509,13 +3515,13 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   ! [ LOCALS ]
   integer (kind=T_INT) :: iCol,iRow,k
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
   logical ( kind=T_LOGICAL ) :: lMatch
 
   ! Update the MAXIMUM RECHARGE RATE based on land-cover and soil type
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
-
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
       do k=1,size(pConfig%LU,1)
@@ -3543,6 +3549,43 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   end do
 
 end subroutine model_InitializeMaxInfil
+
+!--------------------------------------------------------------------------------------------
+
+subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iCol,iRow,j
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+  logical ( kind=T_LOGICAL ) :: lMatch
+
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+
+      cel => pGrd%Cells(iCol,iRow)
+
+      lMatch = lFALSE
+      do j=1,size(pConfig%IRRIGATION,1)
+        if(cel%iLanduse == pConfig%IRRIGATION(j)%iLandUseType) then
+          cel%iIrrigationTableIndex = j
+          lMatch = lTRUE
+          exit
+        endif
+      enddo
+
+      call assert(lMatch, "Unknown landuse code found while reading from the " &
+        //"crop coefficient and irrigation parameters table.~Landuse specified "&
+        //"in the landuse grid but not found in the irrigation table.~ " &
+        //"  Landuse grid value: "//trim(int2char(cel%iLanduse)),trim(__FILE__), __LINE__)
+
+		enddo
+	enddo
+
+end subroutine model_CreateIrrigationTableIndex
 
 !--------------------------------------------------------------------------
 
@@ -3606,6 +3649,10 @@ end subroutine model_WriteGrids
 ! read a single line from the time-series file and return a pointer to the values
 subroutine model_ReadTimeSeriesFile(pTS)
 
+
+subroutine model_ReadTimeSeriesFile(pConfig, pTS)
+
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains model configuration info
   type (T_TIME_SERIES_FILE), pointer :: pTS
 
   ! [ LOCALS ]
