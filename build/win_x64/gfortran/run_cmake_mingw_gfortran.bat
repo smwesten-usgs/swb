@@ -34,16 +34,16 @@ set INCLUDE=%MinGWbase%\include
 set LIB=%MinGWbase%\lib
 
 set TEMP=d:/TEMP
-set FC=%MinGWbase%/bin/gfortran.exe
-set F90=%MinGWbase%/bin/gfortran.exe
-set CC=%MinGWbase%/bin/gcc.exe
-set CXX=%MinGWbase%/bin/g++.exe
-set AR=%MinGWbase%/bin/ar.exe
-set NM=%MinGWbase%/bin/nm.exe
-set LD=%MinGWbase%/bin/ld.exe
-set STRIP=%MinGWbase%/bin/strip.exe
-set CMAKE_RANLIB=%MinGWbase%/bin/ranlib.exe
-set LIBRARY_PATH=%MinGWbase%/lib
+set FC=%MinGWbase%\bin\gfortran.exe
+set F90=%MinGWbase%\bin\gfortran.exe
+set CC=%MinGWbase%\bin\gcc.exe
+set CXX=%MinGWbase%\bin\g++.exe
+set AR=%MinGWbase%\bin\ar.exe
+set NM=%MinGWbase%\bin\nm.exe
+set LD=%MinGWbase%\bin\ld.exe
+set STRIP=%MinGWbase%\bin\strip.exe
+set CMAKE_RANLIB=%MinGWbase%\bin\ranlib.exe
+set LIBRARY_PATH=%MinGWbase%\lib
 set LDFLAGS="-flto"
 set CPPFLAGS="-DgFortran"
  

@@ -39,10 +39,6 @@ set_property(CACHE PLATFORM_TYPE
 set( PLATFORM_TYPE "x64" CACHE STRING
        "Compile for 32-bit or 64-bit" )
 
-
-set_property(CACHE Fortran_COMPILER_NAME
-        PROPERTY STRINGS "gfortran" "ifort")
-
 set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
        "Which Fortran compiler is used?" )
 
@@ -51,20 +47,20 @@ set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
 #------------------------------------------------------------------------
 
 option (TARGET__SWB_EXECUTABLE
-      "Compile the main SWB executable?" ON)
+      "Compile the main SWB executable?" OFF)
 
 option (TARGET__SWB_LIBRARY
       "Compile SWB as a library?" ON)
 
 option (TARGET__SWBSTATS
-      "Compile the swbstats application?" ON)
+      "Compile the swbstats application?" OFF)
 
 #------------------------------------------------------------------------
 # Set PREPROCESSOR DEFINES for conditional compilation
 #------------------------------------------------------------------------
 
 option (OPTION__GRAPHICS_SUPPORT
-      "Compile the code with graphics (DISLIN) support?" ON)
+      "Compile the code with graphics (DISLIN) support?" OFF)
 if(OPTION__GRAPHICS_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "GRAPHICS_SUPPORT")
 endif()
@@ -77,7 +73,7 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" ON)
+      "Compile the code with NETCDF support?" OFF)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
 endif()

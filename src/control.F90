@@ -499,10 +499,14 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%lWriteExtraPestFiles = lTRUE
       flush(UNIT=LU_LOG)
 
+#ifdef NETCDF_SUPPORT
+
     else if ( sItem == "GRID_FLIP_VERTICAL" ) then
       call echolog(dquote("GRID_FLIP_VERTICAL")//" is enabled.")
       call echolog("SWB will FLIP *NetCDF* CLIMATE GRID VALUES VERTICALLY.")
       pConfig%lNetCDF_FlipVertical = lTRUE
+
+#endif
 
     else if ( sItem == "IGNORE_MISSING_CLIMATE_DATA" ) then
       write(UNIT=LU_LOG,FMT=*) &
