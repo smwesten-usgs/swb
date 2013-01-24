@@ -59,10 +59,11 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph )
+subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pLandUseGrid       ! pointer to land use grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
     ! model options, flags, and other settings
 
@@ -161,16 +162,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
     call model_InitializeFlowDirection( pGrd , pConfig)
   end if
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
-  flush(unit=LU_LOG)
-  call model_InitializeET( pGrd, pConfig )
-
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
-
   if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
+
+    if (pConfig%iConfigureLanduse /= CONFIG_LANDUSE_CONSTANT) &
+      call model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
 
     ! Initialize the model
     write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
@@ -186,6 +182,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph )
     call model_InitializeMaxInfil(pGrd, pConfig )
 
   endif
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
+  flush(unit=LU_LOG)
+  call model_InitializeET( pGrd, pConfig )
 
   ! create the single, temporary grid to use for temperature and precip
   ! data input
@@ -699,10 +699,9 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
         input_grd => grid_Read( sBuf, "ARC_GRID", T_INT_GRID )
-        call Assert( grid_Conform( pGrd, input_grd ), &
-          "Non-conforming grid - filename: " // sBuf )
-        pGrd%Cells%iLanduse = input_grd%iData
-        call grid_Destroy( input_grd )
+
+        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
+
         iStat = 0
       endif
     case( CONFIG_LANDUSE_DYNAMIC_SURFER )
@@ -711,10 +710,9 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
         input_grd => grid_Read( sBuf, "SURFER", T_INT_GRID )
-        call Assert( grid_Conform( pGrd, input_grd ), &
-          "Non-conforming grid - filename: " // sBuf )
-        pGrd%Cells%iLanduse = input_grd%iData
-        call grid_Destroy( input_grd )
+
+        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
+
         iStat = 0
       endif
 !#ifdef NETCDF_SUPPORT
@@ -3139,6 +3137,43 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
 end subroutine model_ReadIrrigationLookupTable
 
 #endif
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrd)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pLandUseGrd     ! pointer to model grid
+
+  if( len_trim( pConfig%sLandUse_PROJ4 ) > 0 ) then
+
+    call grid_Transform(pGrd=pLandUseGrd, &
+                        sFromPROJ4=pConfig%sLandUse_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pLandUseGrd ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid_int(pGrdFrom=pLandUseGrd,&
+                             iArrayFrom=pLandUseGrd%iData, &
+                             pGrdTo=pGrd, &
+                             iArrayTo=int(pGrd%Cells%iLandUse, kind=T_INT))
+
+  else
+
+    call Assert( grid_Conform( pGrd, pLandUseGrd ), &
+                      "Non-conforming grid" )
+    pGrd%Cells%iLandUse = pLandUseGrd%iData
+
+  endif
+
+  call grid_Destroy(pLandUseGrd)
+
+end subroutine model_PopulateLandUseArray
 
 !--------------------------------------------------------------------------
 

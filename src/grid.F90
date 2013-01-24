@@ -23,6 +23,68 @@ module swb_grid
 
   implicit none
 
+  type T_ERROR_MESSAGE
+    character(len=40) :: cErrorMessageText
+    integer           :: iErrorNumber
+  end type T_ERROR_MESSAGE
+
+  ! error messages adapted from file "pj_strerrno.c" in PROJ.4.8.0
+  type(T_ERROR_MESSAGE), dimension(49) :: tErrorMessage = (/ &
+    T_ERROR_MESSAGE("no arguments in initialization list          ",  -1), &
+    T_ERROR_MESSAGE("no options found in 'init' file              ",  -2), &
+    T_ERROR_MESSAGE("no colon in init= string                     ",  -3), &
+    T_ERROR_MESSAGE("projection not named                         ",  -4), &
+    T_ERROR_MESSAGE("unknown projection id                        ",  -5), &
+    T_ERROR_MESSAGE("effective eccentricity = 1.                  ",  -6), &
+    T_ERROR_MESSAGE("unknown unit conversion id                   ",  -7), &
+    T_ERROR_MESSAGE("invalid boolean param argument               ",  -8), &
+    T_ERROR_MESSAGE("unknown elliptical parameter name            ",  -9), &
+    T_ERROR_MESSAGE("reciprocal flattening (1/f) = 0              ", -10), &
+    T_ERROR_MESSAGE("|radius reference latitude| > 90             ", -11), &
+    T_ERROR_MESSAGE("squared eccentricity < 0                     ", -12), &
+    T_ERROR_MESSAGE("major axis or radius = 0 or not given        ", -13), &
+    T_ERROR_MESSAGE("latitude or longitude exceeded limits        ", -14), &
+    T_ERROR_MESSAGE("invalid x or y                               ", -15), &
+    T_ERROR_MESSAGE("improperly formed DMS value                  ", -16), &
+    T_ERROR_MESSAGE("non-convergent inverse meridional dist       ", -17), &
+    T_ERROR_MESSAGE("non-convergent inverse phi2                  ", -18), &
+    T_ERROR_MESSAGE("acos/asin: |arg| >1.+1e-14                   ", -19), &
+    T_ERROR_MESSAGE("tolerance condition error                    ", -20), &
+    T_ERROR_MESSAGE("conic lat_1 = -lat_2                         ", -21), &
+    T_ERROR_MESSAGE("lat_1 >= 90                                  ", -22), &
+    T_ERROR_MESSAGE("lat_1 = 0                                    ", -23), &
+    T_ERROR_MESSAGE("lat_ts >= 90                                 ", -24), &
+    T_ERROR_MESSAGE("no distance between control points           ", -25), &
+    T_ERROR_MESSAGE("projection not selected to be rotated        ", -26), &
+    T_ERROR_MESSAGE("W <= 0 or M <= 0                             ", -27), &
+    T_ERROR_MESSAGE("lsat not in 1-5 range                        ", -28), &
+    T_ERROR_MESSAGE("path not in range                            ", -29), &
+    T_ERROR_MESSAGE("h <= 0                                       ", -30), &
+    T_ERROR_MESSAGE("k <= 0                                       ", -31), &
+    T_ERROR_MESSAGE("lat_0 = 0 or 90 or alpha = 90                ", -32), &
+    T_ERROR_MESSAGE("lat_1=lat_2 or lat_1=0 or lat_2=90           ", -33), &
+    T_ERROR_MESSAGE("elliptical usage required                    ", -34), &
+    T_ERROR_MESSAGE("invalid UTM zone number                      ", -35), &
+    T_ERROR_MESSAGE("arg(s) out of range for Tcheby eval          ", -36), &
+    T_ERROR_MESSAGE("failed to find projection to be rotated      ", -37), &
+    T_ERROR_MESSAGE("failed to load datum shift file              ", -38), &
+    T_ERROR_MESSAGE("both n ), & m must be spec'd and > 0         ", -39), &
+    T_ERROR_MESSAGE("n <= 0, n > 1 or not specified               ", -40), &
+    T_ERROR_MESSAGE("lat_1 or lat_2 not specified                 ", -41), &
+    T_ERROR_MESSAGE("|lat_1| == |lat_2|                           ", -42), &
+    T_ERROR_MESSAGE("lat_0 is pi/2 from mean lat                  ", -43), &
+    T_ERROR_MESSAGE("unparseable coordinate system definition     ", -44), &
+    T_ERROR_MESSAGE("geocentric transformation missing z or ellps ", -45), &
+    T_ERROR_MESSAGE("unknown prime meridian conversion id         ", -46), &
+    T_ERROR_MESSAGE("illegal axis orientation combination         ", -47), &
+    T_ERROR_MESSAGE("point not within available datum shift grids ", -48), &
+    T_ERROR_MESSAGE("invalid sweep axis, choose x or y            ", -49) /)
+
+  interface grid_gridToGrid
+    module procedure grid_gridToGrid_int
+    module procedure grid_gridToGrid_sgl
+  end interface grid_gridToGrid
+
 contains
 
 !--------------------------------------------------------------------------
@@ -134,6 +196,7 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   pGrd%rY0 = rY0
   pGrd%rY1 = rY1
   pGrd%rGridCellSize = (pGrd%rX1 - pGrd%rX0) / real(pGrd%iNX, kind=T_SGL)
+  pGrd%iNumGridCells = iNX * iNY
 
 end function grid_Create
 
@@ -233,7 +296,6 @@ function grid_Read ( sFileName, sFileType, iDataType ) result ( pGrd )
       call Assert( lFALSE, "Illegal grid file type requested" )
   end if
 
-  return
 end function grid_Read
 
 subroutine grid_Read_sub ( sFileName, sFileType, pGrd )
@@ -946,6 +1008,40 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
 
   return
 end function grid_Conform
+
+function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompletelyCover )
+  !! Returns .true. if the T_GRID objects conform (in terms of cell sizes and extents)
+  !! The optional argument rTolerance is the precision for checking the (floating-point)
+  !! extent coordinates (this defaults to rDEFAULT_TOLERANCE, below). The tolerance
+  !! is set to abs(rTolerance * ( rX1-rX1 ) )
+  ! ARGUMENTS
+  type (T_GENERAL_GRID), pointer :: pBaseGrd,pOtherGrd
+  real (kind=T_SGL), intent(in), optional :: rTolerance
+  ! RETURN VALUE
+  logical (kind=T_LOGICAL) :: lCompletelyCover
+  ! LOCALS
+  real (kind=T_SGL) :: rTol
+  real (kind=T_SGL) :: rDEFAULT_TOLERANCE
+
+  rDEFAULT_TOLERANCE = pBaseGrd%rGridCellSize * 2.
+
+  if ( present ( rTolerance ) ) then
+      rTol = rTolerance
+  else
+      rTol = rDEFAULT_TOLERANCE
+  end if
+
+  if ( ((pBaseGrd%rX0 - pOtherGrd%rX0) > rTol) .and. &
+       ((pBaseGrd%rY0 - pOtherGrd%rY0) > rTol) .and. &
+       ((pOtherGrd%rX1 - pBaseGrd%rX1) > rTol) .and. &
+       ((pOtherGrd%rY1 - pBaseGrd%rY1) > rTol) ) then
+      lCompletelyCover = lTRUE
+  else
+      lCompletelyCover = lFALSE
+  end if
+
+end function grid_CompletelyCover
+
 !!***
 !--------------------------------------------------------------------------
 !!****s* grid/grid_LookupColumn
@@ -1087,6 +1183,93 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
 
   return
 end subroutine grid_LookupRow
+
+subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
+
+  use proj
+  use, intrinsic :: iso_c_binding
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd
+  character (len=*) :: sFromPROJ4, sToPROJ4
+
+  ! [ LOCALS ]
+  type(C_PTR) :: pFromPROJ4
+  type(C_PTR) :: pToPROJ4
+  integer (kind=T_SGL) :: iRetVal
+  character (len=256) :: sErrorMessage
+  logical (kind=T_LOGICAL) :: lFound
+  integer (kind=T_INT) :: i
+  REAL(kind=c_double), dimension( pGrd%iNumGridCells ) :: x
+  REAL(kind=c_double), dimension( pGrd%iNumGridCells ) :: y
+  REAL(kind=c_double), dimension( pGrd%iNumGridCells ) :: z
+  logical (kind=T_LOGICAL), dimension(pGrd%iNY, pGrd%iNX) :: lMask
+
+  call grid_PopulateXY(pGrd)
+
+  lMask = lTRUE
+
+  x = pack(pGrd%rX, lMask)
+  y = pack(pGrd%rY, lTRUE)
+  z = rZERO
+
+  sErrorMessage = repeat(" ",256)
+
+  ! obtain pointer to PROJ.4 projection object for the base projection
+  pFromPROJ4 = pj_init_plus(trim(sFromPROJ4))
+
+  print *, pFromPROJ4
+
+  ! obtain pointer to PROJ.4 projection object for the new projection
+  pToPROJ4 = pj_init_plus(trim(sToPROJ4))
+
+  print*, pToPROJ4
+
+print *, 5, "  ", dquote(sToPROJ4)
+  iRetVal = pj_transform(pFromPROJ4, pToPROJ4, size(x), 1, x, y, z)
+
+print *, 6
+  lFound = lFALSE
+
+  if (iRetVal /= 0) then
+
+    write(sErrorMessage,fmt="(a,a,a,a,a)") &
+      "There was an error transforming a grid from this projection:~", &
+      dquote(sFromPROJ4), "    to:~", &
+      dquote(sToPROJ4)
+
+
+    do i=1,49
+      if(iRetVal == tErrorMessage(i)%iErrorNumber) then
+          sErrorMessage = sErrorMessage &
+          //"~ PROJ4 Error number "//int2char(iRetVal)//" reported.~" &
+          //"   ==> error description: "//trim(tErrorMessage(i)%cErrorMessageText)
+          lFound = lTRUE
+        exit
+      endif
+    enddo
+
+    call assert(lFALSE, trim(sErrorMessage), trim(__FILE__), __LINE__)
+
+  endif
+
+
+          print *, 7
+  ! transfer coordinate values back into an array structure
+  pGrd%rX = unpack(x, lMask, pGrd%rX)
+
+  print *, 8
+  pGrd%rY = unpack(y, lMask, pGrd%rY)
+
+  ! now update the grid boundaries based on the transformed coordinate values
+  pGrd%rX0 = minval(x)
+  pGrd%rX1 = maxval(x)
+  pGrd%rY0 = minval(y)
+  pGrd%rY1 = maxval(y)
+
+print *, 9
+
+end subroutine grid_Transform
+
 !!***
 !--------------------------------------------------------------------------
 !!****f* grid/grid_Interpolate
@@ -1094,6 +1277,7 @@ end subroutine grid_LookupRow
 !  grid_Interpolate - Returns an interpolated table value given a row
 !     and column position
 !
+
 ! SYNOPSIS
 !  Returns an interpolated table value given a row and column position
 !
@@ -1336,9 +1520,12 @@ function grid_GetGridColNum(pGrd,rX)  result(iColumnNumber)
   real (kind=T_DBL) :: rX
   integer (kind=T_INT) :: iColumnNumber
 
-  iColumnNumber = NINT(( rX - pGrd%rX0 ) / pGrd%rGridCellSize + 0.5,kind=T_INT)
+  iColumnNumber = NINT(real(pGrd%iNX, kind=T_SGL) &
+               * ( rX - pGrd%rX0 ) / (pGrd%rX1 - pGrd%rX0) + 0.5, kind=T_INT)
 
-  return
+  call assert(iColumnNumber > 0 .and. iColumnNumber <= pGrd%iNX, &
+     "INTERNAL PROGRAMMING ERROR: Column number out of bounds", &
+     trim(__FILE__), __LINE__)
 
 end function grid_GetGridColNum
 
@@ -1350,9 +1537,12 @@ function grid_GetGridRowNum(pGrd,rY)  result(iRowNumber)
   real (kind=T_DBL) :: rY
   integer (kind=T_INT) :: iRowNumber
 
-  iRowNumber = NINT(( pGrd%rY1 - rY ) / pGrd%rGridCellSize + 0.5,kind=T_INT)
+  iRowNumber = NINT(real(pGrd%iNY, kind=T_SGL) &
+               * ( rY - pGrd%rY0 ) / (pGrd%rY1 - pGrd%rY0) + 0.5, kind=T_INT)
 
-  return
+  call assert(iRowNumber > 0 .and. iRowNumber <= pGrd%iNY, &
+     "INTERNAL PROGRAMMING ERROR: Column number out of bounds", &
+     trim(__FILE__), __LINE__)
 
 end function grid_GetGridRowNum
 
@@ -1365,8 +1555,6 @@ function grid_GetGridX(pGrd,iColumnNumber)  result(rX)
   integer (kind=T_INT) :: iColumnNumber
 
   rX = pGrd%rX0 + pGrd%rGridCellSize * (REAL(iColumnNumber, kind=T_SGL) - rHALF)
-
-  return
 
 end function grid_GetGridX
 
@@ -1381,10 +1569,91 @@ function grid_GetGridY(pGrd,iRowNumber)  result(rY)
   rY = pGrd%rY1 &
           - pGrd%rGridCellSize * (REAL(iRowNumber, kind=T_SGL) - rHALF)
 
-  return
-
 end function grid_GetGridY
 
+!----------------------------------------------------------------------
 
+subroutine grid_PopulateXY(pGrd)
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
+    ! model options, flags, and other settings
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iCol,iRow
+  integer (kind=T_INT) :: iStat
+
+  if ( .not. associated(pGrd%rX) ) then
+
+    ALLOCATE (pGrd%rX(pGrd%iNX, pGrd%iNY), STAT=iStat)
+    call Assert( iStat == 0, &
+       "Could not allocate memory for x-coordinates within grid data structure", &
+       trim(__FILE__), __LINE__)
+  endif
+
+  if ( .not. associated(pGrd%rY) ) then
+    ALLOCATE (pGrd%rY(pGrd%iNX, pGrd%iNY), STAT=iStat)
+    call Assert( iStat == 0, &
+       "Could not allocate memory for y-coordinates within grid data structure", &
+       trim(__FILE__), __LINE__)
+  endif
+
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+      pGrd%rX(iCol, iRow) = grid_GetGridX(pGrd, iCol)
+      pGrd%rY(iCol, iRow) = grid_GetGridY(pGrd, iRow)
+    enddo
+  enddo
+
+end subroutine grid_PopulateXY
+
+!----------------------------------------------------------------------
+
+subroutine grid_gridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
+  type ( T_GENERAL_GRID ),pointer :: pGrdTo     ! pointer to destination grid
+  integer (kind=T_INT), dimension(:,:) :: iArrayFrom
+  integer (kind=T_INT), dimension(:,:) :: iArrayTo
+
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iCol, iRow
+  integer (kind=T_INT) :: iSrc_Col, iSrc_Row
+
+  do iRow=1,pGrdTo%iNY
+    do iCol=1,pGrdTo%iNX
+      iSrc_Col = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
+      iSrc_Row = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+      iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
+    enddo
+  enddo
+
+end subroutine grid_gridToGrid_int
+
+!----------------------------------------------------------------------
+
+subroutine grid_gridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
+  type ( T_GENERAL_GRID ),pointer :: pGrdTo     ! pointer to destination grid
+  real (kind=T_SGL), dimension(:,:) :: rArrayFrom
+  real (kind=T_SGL), dimension(:,:) :: rArrayTo
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iCol, iRow
+  integer (kind=T_INT) :: iSrc_Col, iSrc_Row
+
+  do iRow=1,pGrdTo%iNY
+    do iCol=1,pGrdTo%iNX
+      iSrc_Col = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
+      iSrc_Row = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+      rArrayTo(iCol,iRow) = rArrayFrom(iSrc_Col, iSrc_Row)
+    enddo
+  enddo
+
+end subroutine grid_gridToGrid_sgl
 
 end module swb_grid

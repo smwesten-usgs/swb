@@ -98,12 +98,13 @@
         <File>..\src\et_turc.F90</File>
         <File>..\src\graph.F90</File>
         <File>..\src\grid.F90</File>
+        <File>..\src\interpolators.F90</File>
         <File>..\src\irrigation.F90</File>
         <File>..\src\main.F90</File>
         <File>..\src\meteorological_functions.F90</File>
         <File>..\src\model.F90</File>
-        <File>..\src\netcdf_support.F90</File>
         <File>..\src\output.F90</File>
+        <File>..\..\Interpolators\r8lib.f90</File>
         <File>..\src\RLE.F90</File>
         <File>..\src\runoff_curve_number.F90</File>
         <File>..\src\sm_thornthwaite_mather.F90</File>

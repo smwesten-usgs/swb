@@ -14,13 +14,14 @@ module types
   use ifport
 #endif
 
+  use iso_c_binding
   implicit none
 
   !> @defgroup types types
   !> @{
 
-  character(len=16), public, parameter :: &
-      SWB_VERSION = "1.0.1"
+  character(len=45), public, parameter :: &
+      SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
 
   !> Define the sizes of base types used in the model
   integer, public, parameter :: T_LOGICAL = 4
@@ -216,15 +217,17 @@ module types
       integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
       integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
       integer (kind=T_INT) :: iDataType             ! Type of the grid
-      real (kind=T_SGL) :: rGridCellSize            ! size of one side of a grid cell
+      character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
+      real (kind=T_SGL)    :: rGridCellSize         ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
-      real (kind=T_DBL) :: rX0, rX1              ! World-coordinate range in X
-      real (kind=T_DBL) :: rY0, rY1              ! World-coordinate range in Y
+      real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
+      real (kind=T_DBL)    :: rY0, rY1              ! World-coordinate range in Y
       integer (kind=T_INT), dimension(:,:), pointer :: iData ! Integer data
       real (kind=T_SGL), dimension(:,:), pointer :: rData    ! Real data
+      real (kind=c_double), dimension(:,:), pointer :: rX       ! x coordinate associated with data
+      real (kind=c_double), dimension(:,:), pointer :: rY       ! y coordinate associated with data
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
-
 
   !> define parameter values for working with type T_GENERAL_GRID
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
@@ -724,14 +727,14 @@ module types
       logical (kind=T_LOGICAL) :: lDownhillRoutingTableExists = lFALSE
 
       ! Prefix of input ARC or SURFER gridded precip time-series files
-      character (len=256) :: sPrecipFilePrefix
+      character (len=256) :: sPrecipFilePrefix = repeat(" ", 256)
 
       ! Prefix of input ARC or SURFER gridded temperature time-series files
-      character (len=256) :: sTMAXFilePrefix
-      character (len=256) :: sTMINFilePrefix
+      character (len=256) :: sTMAXFilePrefix = repeat(" ", 256)
+      character (len=256) :: sTMINFilePrefix = repeat(" ", 256)
 
       ! Prefix of the input ARC of SURFER gridded DYNAMIC LANDUSE files
-      character (len=256) :: sDynamicLanduseFilePrefix
+      character (len=256) :: sDynamicLanduseFilePrefix = repeat(" ", 256)
 
       ! ET parameters
       real (kind=T_SGL) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
@@ -756,25 +759,39 @@ module types
       real (kind=T_SGL) :: rSNWD_denom = 2.6
 
       ! Filename for standard (single-station) time-series file
-      character (len=256) :: sTimeSeriesFilename
+      character (len=256) :: sTimeSeriesFilename = repeat(" ", 256)
 
       ! Filename for land use lookup table
-      character (len=256) :: sLanduseLookupFilename
+      character (len=256) :: sLanduseLookupFilename = repeat(" ", 256)
 
 #ifdef IRRIGATION_MODULE
       ! Filename for irrigation lookup table
-      character (len=256) :: sIrrigationLookupFilename
+      character (len=256) :: sIrrigationLookupFilename = repeat(" ", 256)
 #endif
 
+      ! PROJ4 string for BASE Grid
+      character (len=256) :: sBASE_PROJ4 = repeat(" ", 256)
+
+      !> project grid definitions
+      real (kind=T_DBL) :: rX0, rY0          ! Lower-left corner (world coords)
+      real (kind=T_DBL) :: rX1, rY1          ! Upper-right corner (world coords)
+      integer (kind=T_INT) :: iNumGridCells  !
+      real (kind=T_SGL) :: rGridCellSize     !
+      integer (kind=T_INT) :: iNX            !
+      integer (kind=T_INT) :: iNY            !
+
+      ! PROJ4 string for Landuse Grid
+      character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
+
       ! Filename for basin mask table
-      character (len=256) :: sBasinMaskFilename
+      character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
 
       ! Target prefixes for output files
-      character (len=256) :: sOutputFilePrefix = ""
-      character (len=256) :: sFutureFilePrefix = ""
+      character (len=256) :: sOutputFilePrefix = repeat(" ", 256)
+      character (len=256) :: sFutureFilePrefix = repeat(" ", 256)
 
       ! Target suffixes for output files
-      character (len=256) :: sOutputFileSuffix
+      character (len=256) :: sOutputFileSuffix = repeat(" ", 256)
 
       ! Precipitation amounts describing antecedent runoff conditions
       real (kind=T_SGL) :: rDRY_DORMANT = 0.50_T_SGL   ! shift to Type I
@@ -1030,8 +1047,6 @@ module types
   ! Options for output formats
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
-
-
 
 !**********************************************************************
 !! GENERIC interfaces

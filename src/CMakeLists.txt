@@ -9,6 +9,7 @@ if(TARGET__SWB_EXECUTABLE)
             et_turc.F90
             graph.F90
             grid.F90
+			interpolators.F90
             irrigation.F90
             main.F90
             meteorological_functions.F90
@@ -39,6 +40,7 @@ if(TARGET__SWB_LIBRARY)
             et_turc.F90
             graph.F90
             grid.F90
+			interpolators.F90
             irrigation.F90
             meteorological_functions.F90
             model.F90

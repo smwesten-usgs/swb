@@ -52,4 +52,4 @@ set CMAKE_LIBRARY_PATH=%LIB%
 
 :: add --trace to see copious details re: CMAKE
 
-cmake ..\..\.. -G "MinGW Makefiles" -DPLATFORM_TYPE="x64" -DCMAKE_BUILD_TYPE="Release" -DCMAKE_INSTALL_PREFIX:PATH="D:\DOS" -DCMAKE_MAKE_PROGRAM="c:\MinGW64\bin\make.exe" -DCMAKE_RANLIB:FILEPATH="c:\MinGW64\bin\ranlib.exe" -DCMAKE_C_COMPILER:FILEPATH="c:\MinGW64\bin\gcc.exe" -DCMAKE_Fortran_COMPILER:FILEPATH="c:\MinGW64\bin\gfortran.exe"
+cmake ..\..\.. -G "MinGW Makefiles" -DPLATFORM_TYPE="x64" -DCMAKE_BUILD_TYPE="Debug" -DCMAKE_INSTALL_PREFIX:PATH="D:\DOS" -DCMAKE_MAKE_PROGRAM="c:\MinGW64\bin\make.exe" -DCMAKE_RANLIB:FILEPATH="c:\MinGW64\bin\ranlib.exe" -DCMAKE_C_COMPILER:FILEPATH="c:\MinGW64\bin\gcc.exe" -DCMAKE_Fortran_COMPILER:FILEPATH="c:\MinGW64\bin\gfortran.exe"

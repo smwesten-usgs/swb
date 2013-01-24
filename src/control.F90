@@ -26,8 +26,14 @@ subroutine control_setModelOptions(sControlFile)
   ! [ARGUMENTS]
   character (len=*), intent(in) :: sControlFile
   ! [LOCALS]
-  type (T_GENERAL_GRID),pointer :: input_grd      ! Temporary grid for I/O
-  type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
+  type (T_GENERAL_GRID),pointer :: input_grd          ! Temporary grid for I/O
+  type (T_GENERAL_GRID),pointer :: pGrd               ! Grid of model cells
+  type (T_GENERAL_GRID),pointer :: pLandUseGrid       ! Landuse input grid
+  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid     ! Soil HSG input grid
+  type (T_GENERAL_GRID),pointer :: pFlowDirGrid       ! Flow direction input grid
+  type (T_GENERAL_GRID),pointer :: pAvailWaterCapGrid ! AWC input grid
+
+
   type (T_GRAPH_CONFIGURATION), dimension(:),pointer :: pGraph
                                             ! pointer to data structure that
                                                    ! holds parameters for creating
@@ -209,9 +215,18 @@ subroutine control_setModelOptions(sControlFile)
         //" match calculated grid cell size ("//trim(real2char(pGrd%rGridCellSize)) &
         //"). ~Check the control file.", &
         trim(__FILE__), __LINE__)
-      pGrd%iNumGridCells = iNX * iNY
+      pConfig%iNumGridCells = iNX * iNY
+      pConfig%iNX = iNX; pConfig%iNY = iNY
+      pConfig%rX0 = rX0; pCOnfig%rX1 = rX1
+      pConfig%rY0 = rY0; pConfig%rY1 = rY1
+      pConfig%rGridCellSize = rGridCellSize
       write(UNIT=LU_LOG,FMT="('    total number of gridcells: ',i8)") pGrd%iNumGridCells
       flush(UNIT=LU_LOG)
+
+    else if (sItem == "BASE_PROJECTION_DEFINITION") then
+      pConfig%sBase_PROJ4 = trim(sRecord)
+      call Assert(associated(pGrd), "The project grid must be specified " &
+        //"before the base grid projection information can be specified.")
 
 #ifdef DEBUG_PRINT
     elseif ( str_compare(sItem,"MEM_TEST") ) then
@@ -403,16 +418,23 @@ subroutine control_setModelOptions(sControlFile)
          .or. trim(sOption) == "SURFER" ) then   ! read in a static gridded landuse file
         pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
         pConfig%sDynamicLanduseFilePrefix = "none"
-        input_grd => grid_Read( sArgument, sOption, T_INT_GRID )
-        call Assert( grid_Conform( pGrd, input_grd ),  &
-                      "Non-conforming grid" )
-        pGrd%Cells%iLandUse = input_grd%iData
-        call grid_Destroy( input_grd )
+        pLandUseGrid => grid_Read( sArgument, sOption, T_INT_GRID )
+!        call Assert( grid_Conform( pGrd, input_grd ),  &
+!                      "Non-conforming grid" )
+!        pGrd%Cells%iLandUse = input_grd%iData
+!        call grid_Destroy( input_grd )
       else
         call Assert( lFALSE, "Illegal landuse input option or format specified", &
           TRIM(__FILE__),__LINE__)
       endif
       flush(UNIT=LU_LOG)
+
+    else if (sItem == "LANDUSE_PROJECTION_DEFINITION") then
+      pConfig%sLandUse_PROJ4 = trim(sRecord)
+      call Assert(associated(pLandUseGrid), "The landuse grid must be specified " &
+        //"before the landuse grid projection information can be specified.")
+      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
+        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
 
     else if ( sItem == "FLOW_DIRECTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating flow direction grid"
@@ -1439,7 +1461,7 @@ subroutine control_setModelOptions(sControlFile)
 
       pConfig%lGriddedData = lFALSE
       ! actual call to "model_Solve" subroutine
-      call model_Solve( pGrd, pConfig, pGraph)
+      call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     else if ( sItem == "SOLVE_NO_TS_DATA" .or. sItem == "SOLVE_NO_TS_FILE" ) then
       write(UNIT=LU_LOG,FMT=*) &
@@ -1476,7 +1498,7 @@ subroutine control_setModelOptions(sControlFile)
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
         ! actual call to "model_Solve" subroutine
-        call model_Solve( pGrd, pConfig, pGraph)
+        call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
       end do
 
     else if ( trim(sItem) == "CALC_BASIN_STATS" ) then

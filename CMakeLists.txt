@@ -13,9 +13,9 @@ enable_language (Fortran)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
-set(PACKAGE_STRING "swb 1.0.1")
+set(PACKAGE_STRING "swb 1.2 BETA")
 set(PACKAGE_TARNAME "swb")
-set(PACKAGE_VERSION "1.0.1")
+set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -30,7 +30,7 @@ option (MAKEFILE_VERBOSE
 set_property(CACHE CMAKE_BUILD_TYPE
         PROPERTY STRINGS "Release" "Debug")
 
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING
+set( CMAKE_BUILD_TYPE "Debug" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
 set_property(CACHE PLATFORM_TYPE
@@ -47,7 +47,7 @@ set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
 #------------------------------------------------------------------------
 
 option (TARGET__SWB_EXECUTABLE
-      "Compile the main SWB executable?" OFF)
+      "Compile the main SWB executable?" ON)
 
 option (TARGET__SWB_LIBRARY
       "Compile SWB as a library?" ON)
@@ -60,7 +60,7 @@ option (TARGET__SWBSTATS
 #------------------------------------------------------------------------
 
 option (OPTION__GRAPHICS_SUPPORT
-      "Compile the code with graphics (DISLIN) support?" OFF)
+      "Compile the code with graphics (DISLIN) support?" ON)
 if(OPTION__GRAPHICS_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "GRAPHICS_SUPPORT")
 endif()
@@ -73,7 +73,7 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" OFF)
+      "Compile the code with NETCDF support?" ON)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
 endif()
@@ -112,7 +112,7 @@ if(CMAKE_HOST_WIN32)
 
      message(" <-- setting options for gfortran on MinGW (32-bit/64-bit) -->")
 
-     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran")
+     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -mrtd -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran")
 
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
@@ -122,6 +122,10 @@ if(CMAKE_HOST_WIN32)
        set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
         CACHE FILEPATH "Location of NetCDF library")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
+       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libproj.a
+         CACHE FILEPATH "Location of PROJ4 C library")
+	   set(FORTRANGIS_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libfortrangis.a
+         CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
        set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
        set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
@@ -134,6 +138,10 @@ if(CMAKE_HOST_WIN32)
          CACHE FILEPATH "Location of NetCDF Fortran library")
        set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdf.a
          CACHE FILEPATH "Location of NetCDF C library")
+       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj.a
+         CACHE FILEPATH "Location of PROJ4 C library")
+	   set(FORTRANGIS_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libfortrangis.a
+         CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
        set(USER32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libuser32.a)
@@ -149,6 +157,8 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${FORTRANGIS_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
