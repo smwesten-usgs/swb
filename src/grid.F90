@@ -1184,6 +1184,14 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
   return
 end subroutine grid_LookupRow
 
+
+!> @brief Call PROJ4 to transform coordinates.
+!> @details This subroutine calls a Fortran wrapper to the C library
+!> PROJ4. A set of input coordinates is transformed to a different
+!> coordinate system.
+!> @param[inout] pGrd
+!> @param[in] sFromPROJ4
+!> @param[in] sToPROJ4
 subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   use proj

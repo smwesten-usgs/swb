@@ -19,10 +19,6 @@ set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
-#
-option (MAKEFILE_VERBOSE
-      "Produce verbose makefiles?" OFF)
-
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
@@ -30,7 +26,7 @@ option (MAKEFILE_VERBOSE
 set_property(CACHE CMAKE_BUILD_TYPE
         PROPERTY STRINGS "Release" "Debug")
 
-set( CMAKE_BUILD_TYPE "Debug" CACHE STRING
+set( CMAKE_BUILD_TYPE "Release" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
 set_property(CACHE PLATFORM_TYPE
@@ -47,7 +43,7 @@ set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
 #------------------------------------------------------------------------
 
 option (TARGET__SWB_EXECUTABLE
-      "Compile the main SWB executable?" ON)
+      "Compile the main SWB executable?" OFF)
 
 option (TARGET__SWB_LIBRARY
       "Compile SWB as a library?" ON)
@@ -60,7 +56,7 @@ option (TARGET__SWBSTATS
 #------------------------------------------------------------------------
 
 option (OPTION__GRAPHICS_SUPPORT
-      "Compile the code with graphics (DISLIN) support?" ON)
+      "Compile the code with graphics (DISLIN) support?" OFF)
 if(OPTION__GRAPHICS_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "GRAPHICS_SUPPORT")
 endif()
@@ -73,15 +69,15 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" ON)
+      "Compile the code with NETCDF support?" OFF)
 if(OPTION__NETCDF_SUPPORT)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "NETCDF_SUPPORT")
+  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "NETCDF_SUPPORT")
 endif()
 
 option (OPTION__THORNTHWAITE_MATHER_TABLES
       "Use T-M tables (if not use T-M equations)?" ON)
 if(OPTION__THORNTHWAITE_MATHER_TABLES)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "THORNTHWAITE_MATHER_TABLE")
+  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "THORNTHWAITE_MATHER_TABLE")
 endif()
 
 option (OPTION__IRRIGATION_MODULE
@@ -100,7 +96,7 @@ endif()
 option (OPTION__DEBUG_PRINT
       "Compile the code with extra debug print options enabled?" OFF )
 if(OPTION__DEBUG_PRINT)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES}  "DEBUG_PRINT")
+  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "DEBUG_PRINT")
 endif()
 
 #------------------------------------------------------------------------
@@ -112,13 +108,10 @@ if(CMAKE_HOST_WIN32)
 
      message(" <-- setting options for gfortran on MinGW (32-bit/64-bit) -->")
 
-     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -mrtd -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran")
-
      set_property(CACHE CMAKE_BUILD_TYPE
              PROPERTY STRINGS "Release" "Debug")
 
      if( PLATFORM_TYPE MATCHES "x86" )
-       set (MINGW_BASE_DIR "c:/MinGW32" CACHE FILEPATH "Path to base MinGW install")
        set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
         CACHE FILEPATH "Location of NetCDF library")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
@@ -127,13 +120,11 @@ if(CMAKE_HOST_WIN32)
 	   set(FORTRANGIS_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libfortrangis.a
          CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
-       set(USER32_LIB ${MINGW_BASE_DIR}/lib/libuser32.a)
-       set(GDI32_LIB ${MINGW_BASE_DIR}/lib/libgdi32.a)
-       set(OPENGL32_LIB ${MINGW_BASE_DIR}/lib/libopengl32.a)
-       set(GCC_LIB ${MINGW_BASE_DIR}/lib/libgcc.a)
-       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -ffree-line-length-none -static-libgcc -static-libgfortran")
+       set(USER32_LIB ${MINGWBASE}/lib/libuser32.a)
+       set(GDI32_LIB ${MINGWBASE}/lib/libgdi32.a)
+       set(OPENGL32_LIB ${MINGWBASE}/lib/libopengl32.a)
+       set(GCC_LIB ${MINGWBASE}/lib/libgcc.a)
      else()
-       set (MINGW_BASE_DIR "c:/MinGW64" CACHE FILEPATH "Path to base MinGW install")
        set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdff.a
          CACHE FILEPATH "Location of NetCDF Fortran library")
        set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdf.a
@@ -144,14 +135,13 @@ if(CMAKE_HOST_WIN32)
          CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
-       set(USER32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libuser32.a)
-       set(GDI32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libgdi32.a)
-       set(OPENGL32_LIB ${MINGW_BASE_DIR}/x86_64-w64-mingw32/lib/libopengl32.a)
-       set(GCC_LIB ${MINGW_BASE_DIR}/lib/gcc/x86_64-w64-mingw32/4.7.2/libgcc.a)
-       set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran")
+       set(USER32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libuser32.a)
+       set(GDI32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libgdi32.a)
+       set(OPENGL32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libopengl32.a)
+       set(GCC_LIB ${MINGWBASE}/lib/gcc/x86_64-w64-mingw32/4.7.2/libgcc.a)
      endif()
 
-     set(GFORTRAN_LIB ${MINGW_BASE_DIR}/lib/libgfortran.a)
+     set(GFORTRAN_LIB ${MINGWBASE}/lib/libgfortran.a)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
@@ -365,7 +355,7 @@ elseif(CMAKE_HOST_UNIX)
 
 else()
 
-  message(FATAL_ERROR "Windows 32/gfortran/MinGW or Linux-64/Intel environments were not detected!")
+  message(FATAL_ERROR "Windows 32/64/gfortran/MinGW or Linux-64/Intel environments were not detected!")
 
 endif()
 

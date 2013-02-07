@@ -99,6 +99,7 @@ module types
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
   character (len=1), parameter :: sFORWARDSLASH = achar(47)
+  character (len=1), parameter :: sRETURN = achar(13)
   !> @}
 
   !> @name Globals: Variables for run-length encoding operation
@@ -1147,34 +1148,18 @@ subroutine assert_simple_sub(lCondition,sErrorMessage)
   ! ARGUMENTS
   logical (kind=T_LOGICAL), intent(in) :: lCondition
   character (len=*), intent(in) :: sErrorMessage
-  character (len=len(sErrorMessage)) :: sRecord
-  character (len=256) :: sItem
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT) :: i
   integer (kind=T_INT), dimension(2) :: iLU
-  logical (kind=T_LOGICAL) :: lFileOpen
 
   iLU = [ LU_STD_OUT, LU_LOG ]
 
   if ( .not. lCondition ) then
 
-  ! echo error condition to the log file ONLY if it is open!
-  inquire (unit=LU_LOG, opened=lFileOpen)
-  if(lFileOpen) then
-      iEnd = 2
-    else
-      iEnd = 1
-    endif
-
     do i=1,2
-      sRecord = sErrorMessage
       write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
-      do
-        call chomp(sRecord, sItem, "~")
-        if(len_trim(sItem) == 0) exit
-        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
-      enddo
+      call writeMultiLine(trim(sErrorMessage), iLU(i))
     enddo
 
     stop
@@ -1192,13 +1177,10 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
   character (len=*), intent(in) :: sErrorMessage
   character (len=*) :: sFilename
   integer (kind=T_INT) :: iLineNum
-  character (len=len(sErrorMessage)) :: sRecord
-  character (len=256) :: sItem
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, iEnd
+  integer (kind=T_INT) :: i
   integer (kind=T_INT), dimension(2) :: iLU
-  logical (kind=T_LOGICAL) :: lFileOpen
   character (len=12) :: sLineNum
 
   iLU = [ LU_STD_OUT, LU_LOG ]
@@ -1207,23 +1189,9 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
 
     write(sLineNum,fmt="(i12)") iLineNum
 
-    ! echo error condition to the log file ONLY if it is open!
-    inquire (unit=LU_LOG, opened=lFileOpen)
-    if(lFileOpen) then
-      iEnd = 2
-    else
-      iEnd = 1
-    endif
-
     do i=1,2
-      sRecord = sErrorMessage
       write(UNIT=iLU(i),FMT="(/,a,/)") '** FATAL ERROR - HALTING SWB **'
-      do
-        call chomp(sRecord, sItem, "~")
-        if(len_trim(sItem) == 0) exit
-        write(UNIT=iLU(i),FMT="(a)") trim(sItem)
-      enddo
-
+      call writeMultiLine(trim(sErrorMessage), iLU(i))
       write(UNIT=iLU(i),FMT="(/,'   fortran module:',t27, a)") trim(sFilename)
       write(UNIT=iLU(i),FMT="('   module line number:',t27,a)") trim(adjustl(sLineNum))
     enddo
@@ -1237,25 +1205,15 @@ end subroutine assert_module_details_sub
 !-------------------------------------------------------------------------------
 
 !> @brief echo to screen AND write to logfile
-  subroutine echolog(sMessage, sFormat)
+  subroutine echolog(sMessage)
 
     character(len=*), intent(in)             :: sMessage
-    character(len=*), intent(in), optional   :: sFormat
 
     ! [ LOCALS ]
-    character (len=256) :: sFormatString = ""
-    logical (kind=T_LOGICAL) :: lOpened
+    logical (kind=T_LOGICAL) :: lFileOpen
 
-    if(present(sFormat)) then
-      sFormatString = '('//trim(sFormat)//')'
-    else
-      sFormatString = '(3x,a)'
-    endif
-
-    write(unit=LU_STD_OUT, fmt=trim(sFormatString)) sMessage
-
-    inquire(unit=LU_LOG, opened = lOpened)
-    if(lOpened)  write(unit=LU_LOG, fmt=trim(sFormatString)) sMessage
+    call writeMultiLine(trim(sMessage), LU_STD_OUT )
+    call writeMultiLine(trim(sMessage), LU_LOG )
 
   end subroutine echolog
 
@@ -2298,11 +2256,48 @@ end function solstice
 
 !--------------------------------------------------------------------------
 
+!> @brief Write multiple lines of output to Fortran logical unit
+!> @details Writes one or more lines of an input text string to a Fortran
+!> logical unit number. To output multiple lines, insert a tilde (~) at
+!> each point in the text string where a carriage return is desired.
+!> @param[in] sMessageText Character string that contains the message to be written.
+!> @param[in] iLU Integer value of the Fortran logical unit number to write to.
+subroutine writeMultiLine(sMessageText, iLU)
+
+  ! [ ARGUMENTS ]
+  character (len=*) :: sMessageText
+  integer (kind=T_INT) :: iLU
+
+  ! [ LOCALS ]
+  character (len=len(sMessageText) ) :: sRecord
+  character (len=256) :: sItem
+  logical (kind=T_LOGICAL) :: lFileOpen
+
+  inquire (unit=iLU, opened=lFileOpen)
+
+  sRecord = trim(sMessageText)
+
+  if (lFileOpen) then
+
+    do
+
+      ! break up string with '~' as delimiter
+      call chomp(sRecord, sItem, "~")
+      if(len_trim(sItem) == 0) exit
+      write(UNIT=iLU,FMT="(a)") trim(sItem)
+    enddo
+
+  endif
+
+end subroutine writeMultiLine
+
+!--------------------------------------------------------------------------
+
 !> Convert an integer value into a formatted character string
 function int2char(iValue)  result(sBuf)
 
   integer (kind=T_INT) :: iValue
-  character(len=256) :: sBuf
+  character (len=256) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
   sBuf = ADJUSTL(sBuf)

@@ -3678,6 +3678,7 @@ subroutine model_ReadTimeSeriesFile(pTS)
   ! [ LOCALS ]
   character(len=256) :: sBuf
   integer (kind=T_INT) :: iStat
+  real (kind=T_SGL) :: rTemp
 
   do
 
@@ -3689,25 +3690,55 @@ subroutine model_ReadTimeSeriesFile(pTS)
       pTS%lEOF = lTRUE
       exit ! END OF FILE
     end if
+
     call Assert ( iStat == 0, &
       "Cannot read record from time-series file", TRIM(__FILE__),__LINE__)
+
     if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
+
     call CleanUpCsv ( sBuf )
+
     read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
       pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
       pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
+
+    ! on read error, skip onto the next line
     if (iStat/=0) then
       write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
       write(UNIT=LU_LOG,FMT=*)
       cycle
     end if
 
-    if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
-      .or. pTS%rPrecip < 0.) then
-      write(UNIT=LU_LOG,fmt=*) "Missing or corrupt data in climate file"
-      call Assert(lFALSE, &
-        "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
+    ! check for ridiculous PRECIP values; halt if such values are found
+    if( pTS%rPrecip < 0.) then
+      call echolog("Missing or corrupt precipitation data in climate file. " &
+        //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
     end if
+
+    ! check for ridiculous TMAX values; halt if such values are found
+    if(pTS%rMaxT < -100 .or. pTS%rMaxT > 150. ) then
+      call echolog("Missing or corrupt maximum air value (TMAX) in climate file. " &
+        //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
+    end if
+
+    ! check for ridiculous values; halt if such values are found
+    if(pTS%rMinT > 120. .or. pTS%rMinT < -100. ) then
+        call echolog("Missing or corrupt minimum air value (TMIN) in climate file. " &
+          //"~Offending line: "//TRIM(sBuf) )
+      call Assert(lFALSE, "")
+    end if
+
+    ! if MAXIMUM temperature is less than the MINIMUM, assume that they
+    ! were inadvertently swapped; swap them back and keep running
+    if(pTS%rMaxT < pTS%rMinT) then
+      rTemp = pTS%rMinT
+      pTS%rMinT = pTS%rMaxT
+      pTS%rMaxT = rTemp
+      call echolog(repeat("*", 40)//"~ALERT: TMAX value is less than TMIN. Swapping values. " &
+        //"~Offending line: "//TRIM(sBuf)//"~"//repeat("*", 40) )
+    endif
 
     exit
 
