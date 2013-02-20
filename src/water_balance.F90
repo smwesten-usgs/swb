@@ -13,7 +13,7 @@ module water_balance
   use types
   use sm_thornthwaite_mather
   use swb_grid
-  use swb_stats
+  use stats
   use output
   use RLE
 
