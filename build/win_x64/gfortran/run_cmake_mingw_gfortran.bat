@@ -12,7 +12,7 @@ set INSTALL_PREFIX=d:\DOS
 
 :: define other variables for use in the CMakeList.txt file
 :: options are "Release" or "Debug"
-set BUILD_TYPE="Debug"
+set BUILD_TYPE="Release"
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set PLATFORM_TYPE="x64"
 
@@ -31,7 +31,7 @@ set OPTION__STRICT_DATE_CHECKING="FALSE"
 set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
-set CMAKE_Fortran_FLAGS_DEBUG="-O0 -mrtd -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -ftree-parallelize-loops=8 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 

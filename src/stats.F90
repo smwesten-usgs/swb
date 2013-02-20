@@ -1624,8 +1624,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
-        TRIM(pConfig%sOutputFilePrefix) //"_" &
+      open(nextunit(STAT_INFO(i)%iLU), FILE= TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')
 
@@ -1703,7 +1702,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
+      open(nextunit(STAT_INFO(i)%iLU), FILE= &
         TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='OLD',ACCESS='STREAM', ACTION='READWRITE')

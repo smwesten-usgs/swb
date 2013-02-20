@@ -3158,14 +3158,10 @@ subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrd)
     call Assert( grid_CompletelyCover( pGrd, pLandUseGrd ), &
       "Transformed grid doesn't completely cover your model domain.")
 
-    print *, "back from grid_CompletelyCover"
-
     call grid_gridToGrid(pGrdFrom=pLandUseGrd,&
                             iArrayFrom=pLandUseGrd%iData, &
                             pGrdTo=pGrd, &
                             iArrayTo=pGrd%Cells%iLandUse )
-
-    print *, "back from grid_gridToGrid_int"
 
   else
 
@@ -3176,6 +3172,10 @@ subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrd)
   endif
 
   call grid_Destroy(pLandUseGrd)
+
+  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Land_Use_Land_Cover" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
 end subroutine model_PopulateLandUseArray
 
@@ -3462,8 +3462,8 @@ integer (kind=T_INT), intent(in) :: iOutputType
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
     sYearText
 
-  sBufOut = "output"//pConfig%sSlash//trim( YEAR_INFO(pConfig%iMonth)%sName )
-  sBufFuture = "output"//pConfig%sSlash//"future"//pConfig%sSlash
+  sBufOut = trim(pConfig%sOutputFilePrefix)//trim( YEAR_INFO(pConfig%iMonth)%sName )
+  sBufFuture = trim(pConfig%sFutureFilePrefix)
   sBufSuffix = trim(pConfig%sOutputFileSuffix)
 
   write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iDay,"_",pConfig%iYear
@@ -3475,34 +3475,34 @@ integer (kind=T_INT), intent(in) :: iOutputType
   ymin = pGrd%rY0
   ymax = pGrd%rY1
 
-  if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < -0.1) then
+   if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < -0.1) then
 
-    pGenericGrd_sgl%rData => pGrd%Cells%rMSB
-    call grid_WriteGrid( &
-      sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
-      pGrd=pGenericGrd_sgl, pConfig=pConfig)
+     pGenericGrd_sgl%rData = pGrd%Cells%rMSB
+     call grid_WriteGrid( &
+       sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig)
 
-  elseif ( iOutputType == WRITE_ASCII_GRID_ANNUAL ) then
+   elseif ( iOutputType == WRITE_ASCII_GRID_ANNUAL ) then
 
-    pGenericGrd_sgl%rData => pGrd%Cells%rSoilMoisturePct
-    call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_pct_sm" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      pGrd=pGenericGrd_sgl, pConfig=pConfig)
+     pGenericGrd_sgl%rData = pGrd%Cells%rSoilMoisturePct
+     call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_pct_sm" // &
+     trim(sYearText) // "." //trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig)
 
-    pGenericGrd_sgl%rData => pGrd%Cells%rSnowCover
-    call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_snow_cover" // &
-      trim(sYearText) // "." //trim(sBufSuffix), &
-      pGrd=pGenericGrd_sgl, pConfig=pConfig )
+     pGenericGrd_sgl%rData = pGrd%Cells%rSnowCover
+     call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_snow_cover" // &
+       trim(sYearText) // "." //trim(sBufSuffix), &
+       pGrd=pGenericGrd_sgl, pConfig=pConfig )
 
-  elseif ( iOutputType == WRITE_ASCII_GRID_DAILY ) then
+   elseif ( iOutputType == WRITE_ASCII_GRID_DAILY ) then
 
-  elseif ( iOutputType == WRITE_ASCII_GRID_MONTHLY ) then
+   elseif ( iOutputType == WRITE_ASCII_GRID_MONTHLY ) then
 
-  elseif ( iOutputType == WRITE_ASCII_GRID_DIAGNOSTIC ) then
+   elseif ( iOutputType == WRITE_ASCII_GRID_DIAGNOSTIC ) then
 
-  elseif ( iOutputType == WRITE_ASCII_GRID_DEBUG ) then
+   elseif ( iOutputType == WRITE_ASCII_GRID_DEBUG ) then
 
-  end if
+   end if
 
 end subroutine model_WriteGrids
 

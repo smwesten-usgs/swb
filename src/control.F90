@@ -113,8 +113,8 @@ subroutine control_setModelOptions(sControlFile)
 
   ! Initialize the module variables - set default program options
 
-  pConfig%sOutputFilePrefix = "swb"
-  pConfig%sFutureFilePrefix = "swb_future"
+  pConfig%sOutputFilePrefix = "output"//pConfig%sSlash//"swb_"
+  pConfig%sFutureFilePrefix = "output"//pConfig%sSlash//"future"//pConfig%sSlash//"swb_future_"
   pConfig%sTimeSeriesFilename = ""
   pConfig%sLanduseLookupFilename = ""
   pConfig%iOutputFormat = OUTPUT_ARC
@@ -128,7 +128,7 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_CALCULATE
   pConfig%iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
   pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_TR55
-  pConfig%sOutputFileSuffix = "grd"
+  pConfig%sOutputFileSuffix = "asc"
   pConfig%iHeaderPrintInterval = 7
   pConfig%lWriteToScreen = lTRUE
   pConfig%lReportDaily = lTRUE
@@ -1423,19 +1423,32 @@ subroutine control_setModelOptions(sControlFile)
 
     else if ( sItem == "OUTPUT_GRID_SUFFIX" ) then
       write(UNIT=LU_LOG,FMT=*) "Setting output grid file suffix"
-      call Chomp ( sRecord, pConfig%sOutputFileSuffix )
-      if ( len_trim(pConfig%sOutputFileSuffix) == 0 ) then
-        write(UNIT=LU_LOG,FMT=*)  "[No output grid file suffix specified.  Default is 'grd']"
-        pConfig%sOutputFileSuffix = "grd"
+      call Chomp ( sRecord, sArgument )
+      if ( len_trim(sArgument) == 0 ) then
+        write(UNIT=LU_LOG,FMT=*)  "[No output grid file suffix specified.  Default is 'asc']"
+        pConfig%sOutputFileSuffix = "asc"
+      else
+        pConfig%sOutputFileSuffix = trim(sArgument)
       endif
       flush(UNIT=LU_LOG)
 
     else if ( sItem == "OUTPUT_GRID_PREFIX" ) then
       write(UNIT=LU_LOG,FMT=*) "Setting output grid file prefix"
-      call Chomp ( sRecord, pConfig%sOutputFilePrefix )
-      if ( len_trim(pConfig%sOutputFileSuffix) == 0 ) then
-        write(UNIT=LU_LOG,FMT=*)  "[No output grid file prefix specified.  Default is NULL]"
-        pConfig%sOutputFilePrefix = ""
+      call Chomp ( sRecord, sArgument )
+      if ( len_trim(sArgument) == 0 ) then
+        write(UNIT=LU_LOG,FMT=*)  "[No output grid file prefix specified.  Default is 'output/swb_']"
+      else
+        pConfig%sOutputFilePrefix = trim(sArgument)
+      endif
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "FUTURE_GRID_PREFIX" ) then
+      write(UNIT=LU_LOG,FMT=*) "Setting future grid file prefix"
+      call Chomp ( sRecord, sArgument )
+      if ( len_trim(sArgument) == 0 ) then
+        write(UNIT=LU_LOG,FMT=*)  "[No future output grid file prefix specified.  Default is 'output/future/swb_future_']"
+      else
+        pConfig%sFutureFilePrefix = trim(sArgument)
       endif
       flush(UNIT=LU_LOG)
 

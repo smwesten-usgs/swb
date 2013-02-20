@@ -794,7 +794,7 @@ module types
       character (len=256) :: sOutputFilePrefix = repeat(" ", 256)
       character (len=256) :: sFutureFilePrefix = repeat(" ", 256)
 
-      ! Target suffixes for output files
+      ! Target suffix for output files
       character (len=256) :: sOutputFileSuffix = repeat(" ", 256)
 
       ! Precipitation amounts describing antecedent runoff conditions

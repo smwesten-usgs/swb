@@ -134,7 +134,7 @@ if(CMAKE_HOST_WIN32)
        set(USER32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libuser32.a)
        set(GDI32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libopengl32.a)
-       set(GCC_LIB ${MINGWBASE}/lib/gcc/x86_64-w64-mingw32/4.7.2/libgcc.a)
+       set(GCC_LIB ${MINGWBASE}/lib/gcc/x86_64-w64-mingw32/4.8.0/libgcc.a)
      endif()
 
      set(GFORTRAN_LIB ${MINGWBASE}/lib/libgfortran.a)
