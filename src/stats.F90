@@ -908,17 +908,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
            iYear,iMonth,iDay, &
            trim(pConfig%sOutputFileSuffix)
 
-          if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-            call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-          else
-
-            call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-          end if
+          call grid_WriteGrid(TRIM(sBuf), pGrd, pConfig)
 
        end if
 
@@ -1029,17 +1019,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear,iMonth, &
            TRIM(pConfig%sOutputFileSuffix)
 
-         if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-           call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         else
-
-           call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         end if
+         call grid_WriteGrid(TRIM(sBuf), pGrd, pConfig)
 
        end if
 
@@ -1151,17 +1131,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear, &
             TRIM(pConfig%sOutputFileSuffix)
 
-         if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-           call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         else
-
-           call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         end if
+         call grid_WriteGrid(TRIM(sBuf), pGrd, pConfig)
 
        end if
 
@@ -1424,8 +1394,8 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
     TRIM(pConfig%sSlash), &
     "RECHARGE",pConfig%iStartYearforCalculation, &
     pConfig%iEndYearforCalculation
-  call grid_WriteArcGrid(sBuf,pGrd%rX0,pGrd%rX1,pGrd%rY0,pGrd%rY1, &
-      pTmpGrd%rData)
+
+  call grid_WriteGrid(TRIM(sBuf), pTmpGrd, pConfig)
 
   write(sBuf,FMT="('images',a,'MEAN_',a,i4.4,'_'i4.4,a)") &
             TRIM(pConfig%sSlash), &

@@ -419,6 +419,7 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
         pConfig%sDynamicLanduseFilePrefix = "none"
         pLandUseGrid => grid_Read( sArgument, sOption, T_INT_GRID )
+        pLandUseGrid%sFilename = trim(sArgument)
 !        call Assert( grid_Conform( pGrd, input_grd ),  &
 !                      "Non-conforming grid" )
 !        pGrd%Cells%iLandUse = input_grd%iData

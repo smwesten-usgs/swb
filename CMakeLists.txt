@@ -115,10 +115,8 @@ if(CMAKE_HOST_WIN32)
        set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
         CACHE FILEPATH "Location of NetCDF library")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
-       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libproj.a
+       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libproj4.a
          CACHE FILEPATH "Location of PROJ4 C library")
-	   set(FORTRANGIS_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libfortrangis.a
-         CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
        set(USER32_LIB ${MINGWBASE}/lib/libuser32.a)
        set(GDI32_LIB ${MINGWBASE}/lib/libgdi32.a)
@@ -129,10 +127,8 @@ if(CMAKE_HOST_WIN32)
          CACHE FILEPATH "Location of NetCDF Fortran library")
        set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdf.a
          CACHE FILEPATH "Location of NetCDF C library")
-       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj.a
+       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj4.a
          CACHE FILEPATH "Location of PROJ4 C library")
-	   set(FORTRANGIS_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libfortrangis.a
-         CACHE FILEPATH "Location of Libfortran library (PROJ4 wrapper only)")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
        set(USER32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libuser32.a)
@@ -148,7 +144,6 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${FORTRANGIS_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )

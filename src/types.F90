@@ -136,10 +136,10 @@ module types
 !> a grid of T_CELL types. Each variable added to this data type
 !> consumes Ny * Nx * size(T_SGL) bytes.
   type T_CELL
-      integer (kind=T_SHORT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
-      integer (kind=T_SHORT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
-      integer (kind=T_SHORT) :: iLandUseIndex       ! Index (row num) of land use table
-      integer (kind=T_SHORT) :: iLandUse = iZERO    ! Land use from land-use grid
+      integer (kind=T_INT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
+      integer (kind=T_INT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
+      integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
+      integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
       real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
@@ -203,7 +203,7 @@ module types
   ! Generic grid data type identifier constants
   integer (kind=T_INT), public, parameter :: T_INT_GRID = 0       ! Integer data
   integer (kind=T_INT), public, parameter :: T_SGL_GRID = 1       ! Real data
-  integer (kind=T_INT), public, parameter :: T_CELL_GRID = 2       ! SWB cell data
+  integer (kind=T_INT), public, parameter :: T_CELL_GRID = 2      ! SWB cell data
 
 !> @brief Type that contains the data for a grid.
 !>
@@ -219,14 +219,17 @@ module types
       integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
       integer (kind=T_INT) :: iDataType             ! Type of the grid
       character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
+      character (len=256)  :: sFilename             ! proj4 original file name that the data was read from
       real (kind=T_SGL)    :: rGridCellSize         ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
       real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
       real (kind=T_DBL)    :: rY0, rY1              ! World-coordinate range in Y
       integer (kind=T_INT), dimension(:,:), pointer :: iData ! Integer data
+      integer (kind=T_INT) :: iNoDataValue = -9999
       real (kind=T_SGL), dimension(:,:), pointer :: rData    ! Real data
-      real (kind=c_double), dimension(:,:), pointer :: rX       ! x coordinate associated with data
-      real (kind=c_double), dimension(:,:), pointer :: rY       ! y coordinate associated with data
+      real (kind=T_SGL) :: rNoDataValue
+      real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
+      real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
@@ -1049,6 +1052,13 @@ module types
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
 
+  ! Options for ASCII grid output
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DEBUG = 3
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
+
 !**********************************************************************
 !! GENERIC interfaces
 !**********************************************************************
@@ -1063,10 +1073,16 @@ module types
     module procedure assert_module_details_sub
   end interface assert
 
+  interface asCharacter
+    module procedure int2char
+    module procedure real2char
+    module procedure dbl2char
+  end interface asCharacter
+
   interface chomp
     module procedure chomp_delim_sub
     module procedure chomp_default_sub
-  end interface
+  end interface chomp
 
 contains
 
@@ -1209,11 +1225,8 @@ end subroutine assert_module_details_sub
 
     character(len=*), intent(in)             :: sMessage
 
-    ! [ LOCALS ]
-    logical (kind=T_LOGICAL) :: lFileOpen
-
-    call writeMultiLine(trim(sMessage), LU_STD_OUT )
-    call writeMultiLine(trim(sMessage), LU_LOG )
+    call writeMultiLine(sMessage, LU_STD_OUT )
+    call writeMultiLine(sMessage, LU_LOG )
 
   end subroutine echolog
 
@@ -2319,7 +2332,38 @@ function real2char(rValue, iDec, iWidth)  result(sBuf)
   character(len=256) :: sBuf, sFmt
   integer (kind=T_INT) :: iD, iW
 
+  if(present(iDec)) then
+    iD = iDec
+  else
+    iD = 4
+  endif
 
+  if(present(iWidth)) then
+    iW = iWidth
+  else
+   iW = 16
+  endif
+
+  if(abs(rValue) < rNEAR_ZERO) then
+    sBuf = "0."
+  else
+    sFmt = "(G"//TRIM(int2char(iW))//"."//TRIM(int2char(iD))//")"
+    write(UNIT=sBuf,FMT=TRIM(sFmt)) rValue
+    sBuf = ADJUSTL(sBuf)
+  endif
+
+end function real2char
+
+!> Convert a double precision real value into a formatted character string
+function dbl2char(rValue, iDec, iWidth)  result(sBuf)
+
+  real (kind=T_DBL) :: rValue
+  integer (kind=T_INT), optional :: iDec
+  integer (kind=T_INT), optional :: iWidth
+
+  ![ LOCALS ]
+  character(len=256) :: sBuf, sFmt
+  integer (kind=T_INT) :: iD, iW
 
   if(present(iDec)) then
     iD = iDec
@@ -2343,7 +2387,7 @@ function real2char(rValue, iDec, iWidth)  result(sBuf)
 
   return
 
-end function real2char
+end function dbl2char
 
 !> @brief Return the number of days in the given year.
 !>

@@ -29,13 +29,15 @@ module model
   !! Counter for moving average water inputs
   integer (kind=T_INT) :: iDayCtr
 
+  !! Generic grids used to shuffle data between subroutines
+  type ( T_GENERAL_GRID ),pointer :: pGenericGrd_int
+  type ( T_GENERAL_GRID ),pointer :: pGenericGrd_sgl
+
   !! For the "downhill" solution
   integer (kind=T_INT) :: iOrderCount
   integer (kind=T_INT), dimension(:), allocatable :: iOrderCol
   integer (kind=T_INT), dimension(:), allocatable :: iOrderRow
   real(kind=T_SGL) :: rStartTime,rEndTime
-
-  type ( T_GENERAL_GRID ),pointer :: pDataGrd    ! pointer to precip, temperature grid
 
 contains
 
@@ -62,7 +64,7 @@ contains
 subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd, pTempGrid    ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
   type ( T_GENERAL_GRID ),pointer :: pLandUseGrid       ! pointer to land use grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
     ! model options, flags, and other settings
@@ -77,7 +79,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
 
   ! [ LOCALS ]
   integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
-!  integer (kind=T_INT) :: iDay, iYear, tj, ti
   integer (kind=T_INT) :: tj, ti
   integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
   integer (kind=T_INT) :: iPos
@@ -85,10 +86,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
   integer (kind=T_INT) :: iCol, iRow
   character(len=3) :: sMonthName
   logical (kind=T_LOGICAL) :: lMonthEnd
-!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
   integer (kind=T_INT),save :: iNumGridCells
-!  integer (kind=T_INT) :: iNumDaysInYear
-!  integer (kind=T_INT) :: iEndOfYearJulianDay
 
   real (kind=T_SGL) :: rmin,ravg,rmax
 
@@ -106,6 +104,12 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
 !  call stats_OpenBinaryFiles(pConfig)
 
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+
+  pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+     pGrd%rX1, pGrd%rY1, T_INT_GRID )
+
+  pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+     pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -186,11 +190,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
   write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
   flush(unit=LU_LOG)
   call model_InitializeET( pGrd, pConfig )
-
-  ! create the single, temporary grid to use for temperature and precip
-  ! data input
-  pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   end if FIRST_YEAR
 
@@ -509,17 +508,15 @@ end if
 !    end if
 !  end do
 
-  write ( unit=sBuf, fmt='("day",i3.3)' ) pConfig%iDayOfYear
-  call model_WriteGrids(pGrd, pConfig, sBuf, pConfig%iDay, pConfig%iMonth, &
-    pConfig%iYear, pConfig%iDayOfYear)
+  call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_DAILY)
 
   ! Write the results at each month-end
   if ( lMonthEnd ) then
 
 !      if ( pConfig%lReportDaily ) call stats_CalcMonthlyMeans(pConfig%iMonth, pConfig%iDay)
 !      call stats_WriteMonthlyReport (LU_STD_OUT, pGrd, sMonthName, iMonth)
-    call model_WriteGrids(pGrd, pConfig, sMonthName,  pConfig%iDay, &
-      pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
+
+    call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_MONTHLY)
 
   if ( pConfig%lWriteToScreen) call stats_DumpMonthlyAccumulatorValues(LU_STD_OUT, &
     pConfig%iMonth, sMonthName, pConfig)
@@ -548,8 +545,7 @@ end if
 
   end do MAIN_LOOP
 
-  call model_WriteGrids(pGrd, pConfig, "ANNUAL", pConfig%iDay, &
-    pConfig%iMonth, pConfig%iYear, pConfig%iDayOfYear)
+  call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_ANNUAL)
 
   ! model_Solve has been called once... any further calls will not require
   !    re-initialization of data structures and data arrays
@@ -655,7 +651,9 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)
-  call grid_Destroy(pDataGrd)
+  call grid_Destroy(pGenericGrd_int)
+!  call grid_Destroy(pGenericGrd_short)
+  call grid_Destroy(pGenericGrd_sgl)
 
   ! how long did all this take, anyway?
   call cpu_time(rEndTime)
@@ -775,33 +773,35 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   character (len=256) sBuf
 
   select case( pConfig%iConfigurePrecip )
+
     case( CONFIG_PRECIP_SINGLE_STATION)
       pGrd%Cells(:,:)%rGrossPrecip = rPrecip  ! use a single value for entire grid
+
     case( CONFIG_PRECIP_ARC_GRID )
       write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
         trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
 !      input_grd => grid_Read( sBuf, "ARC_GRID", T_SGL_GRID )
-  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  pGrd%Cells%rGrossPrecip = pDataGrd%rData
+      call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
+      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
 
-  case( CONFIG_PRECIP_SURFER_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-      trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    pGrd%Cells%rGrossPrecip = pDataGrd%rData
+    case( CONFIG_PRECIP_SURFER_GRID )
+      write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
+        trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
+      call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
+      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
 
 #ifdef NETCDF_SUPPORT
-  case( CONFIG_PRECIP_NETCDF )
-    call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, pDataGrd, &
-      JULIAN_DAY(iYear, iMonth, iDay))
-    pGrd%Cells%rGrossPrecip = pDataGrd%rData
+    case( CONFIG_PRECIP_NETCDF )
+      call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, &
+        JULIAN_DAY(iYear, iMonth, iDay))
+      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
 !      call grid_Destroy( input_grd )
 #endif
 
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown precipitation input type", &
-      trim(__FILE__),__LINE__)
-end select
+    case default
+      call Assert ( lFALSE, "Internal error -- unknown precipitation input type", &
+        trim(__FILE__),__LINE__)
+  end select
 
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
@@ -902,35 +902,35 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   case( CONFIG_TEMPERATURE_ARC_GRID )
     write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
       trim(pConfig%sTMINFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
+    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
     if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
                 / real(iCount_valid, kind=T_SGL)
     else
       rMeanTMIN = 0_T_SGL
     endif
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
+    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
+    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMin = rMeanTMIN
     endwhere
 
   write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
     trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-  call grid_Read_sub( sBuf, "ARC_GRID", pDataGrd )
-  iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+  call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
+  iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
   if (iCount_valid > 0) then
-    rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+    rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
               / real(iCount_valid, kind=T_SGL)
   else
     rMeanTMAX = 0_T_SGL
   endif
-  iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-  where(pDataGrd%rData > pConfig%rMinValidTemp)
+  iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
+  where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
   !! note: this logic assumes that missing values are supplied as "-9999" or the like
-    pGrd%Cells%rTMax = pDataGrd%rData
+    pGrd%Cells%rTMax = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMax = rMeanTMAX
   endwhere
@@ -938,66 +938,66 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   case( CONFIG_TEMPERATURE_SURFER_GRID )
     write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
       trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
+    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
     if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
                 / real(iCount_valid, kind=T_SGL)
     else
       rMeanTMIN = 0_T_SGL
     endif
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
+    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
+    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMin = rMeanTMIN
     endwhere
 
     write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
       trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pDataGrd )
-    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
+    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
     if (iCount_valid > 0) then
-      rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+      rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
                 / real(iCount_valid, kind=T_SGL)
     else
       rMeanTMAX = 0_T_SGL
     endif
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
+    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
+    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMax = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMax = rMeanTMAX
     endwhere
 
 #ifdef NETCDF_SUPPORT
   case( CONFIG_TEMPERATURE_NETCDF )
-    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, JULIAN_DAY(iYear, iMonth, iDay))
+    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
     if (iCount_valid > 0) then
-      rMeanTMAX = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+      rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
                 / real(iCount_valid, kind=T_SGL)
     else
       rMeanTMAX = 0_T_SGL
     endif
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp)
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pDataGrd%rData
+    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
+    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMax = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMax = rMeanTMAX
     endwhere
 
-    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pDataGrd, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount_valid = count(pDataGrd%rData >= pConfig%rMinValidTemp)
+    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, JULIAN_DAY(iYear, iMonth, iDay))
+    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
     if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pDataGrd%rData, pDataGrd%rData >= pConfig%rMinValidTemp) &
+      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
                 / real(iCount_valid, kind=T_SGL)
     else
       rMeanTMIN = 0_T_SGL
     endif
-    iCount = count(pDataGrd%rData < pConfig%rMinValidTemp) + iCount
-    where(pDataGrd%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pDataGrd%rData
+    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
+    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
+      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
     elsewhere
       pGrd%Cells%rTMin = rMeanTMIN
     endwhere
@@ -3158,10 +3158,14 @@ subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrd)
     call Assert( grid_CompletelyCover( pGrd, pLandUseGrd ), &
       "Transformed grid doesn't completely cover your model domain.")
 
-    call grid_gridToGrid_int(pGrdFrom=pLandUseGrd,&
-                             iArrayFrom=pLandUseGrd%iData, &
-                             pGrdTo=pGrd, &
-                             iArrayTo=int(pGrd%Cells%iLandUse, kind=T_INT))
+    print *, "back from grid_CompletelyCover"
+
+    call grid_gridToGrid(pGrdFrom=pLandUseGrd,&
+                            iArrayFrom=pLandUseGrd%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iLandUse )
+
+    print *, "back from grid_gridToGrid_int"
 
   else
 
@@ -3182,7 +3186,7 @@ function rf_model_GetInterception( pConfig, iType, iDayOfYear ) result(rIntRate)
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=T_SHORT), intent(in) :: iType
+  integer (kind=T_INT), intent(in) :: iType
   integer (kind=T_INT), intent(in) :: iDayOfYear
   ! [ RETURN VALUE ]
   real (kind=T_SGL) :: rIntRate
@@ -3445,191 +3449,61 @@ end subroutine model_InitializeMaxInfil
 
 !--------------------------------------------------------------------------
 
-subroutine model_WriteGrids(pGrd, pConfig, sMonthName, iDay,iMonth, &
-  iYear, iDayOfYear)
+subroutine model_WriteGrids(pGrd, pConfig, iOutputType)
 !! Writes the monthly output arrays in the proper grid format
 ! [ ARGUMENTS ]
 type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
 type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
   ! model options, flags, and other settings
-character (len=*),intent(in) :: sMonthName
-integer (kind=T_INT), intent(in) :: iDayOfYear, iMonth, iDay, iYear
+integer (kind=T_INT), intent(in) :: iOutputType
 
   ! [ LOCALS ]
   real (kind=T_DBL) :: xmin,xmax,ymin,ymax
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
     sYearText
 
-  sBufOut = "output"//pConfig%sSlash//trim(sMonthName)
+  sBufOut = "output"//pConfig%sSlash//trim( YEAR_INFO(pConfig%iMonth)%sName )
   sBufFuture = "output"//pConfig%sSlash//"future"//pConfig%sSlash
   sBufSuffix = trim(pConfig%sOutputFileSuffix)
 
-  write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",iMonth,"_",iDay,"_",iYear
-  write(sMonthText,fmt="(a1,i2.2,a1,i4)") "_",iMonth,"_",iYear
-  write(sYearText,fmt="(a1,i4)") "_",iYear
+  write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iDay,"_",pConfig%iYear
+  write(sMonthText,fmt="(a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iYear
+  write(sYearText,fmt="(a1,i4)") "_",pConfig%iYear
 
   xmin = pGrd%rX0
   xmax = pGrd%rX1
   ymin = pGrd%rY0
   ymax = pGrd%rY1
 
-  if ( pConfig%iOutputFormat == OUTPUT_ARC ) then
-    if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < -0.1) then
-      call grid_WriteArcGrid("MASS_BALANCE" // &
-        trim(sDayText) // "." //trim(sBufSuffix), &
-        xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
-    elseif ( trim(sMonthName) == "ANNUAL" ) then
-!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rej_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_RejectedRecharge )
-!      call grid_WriteArcGrid( trim(sBufOut) // "_cum_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSUM_Recharge )
-!      call grid_WriteArcGrid( trim(sBufOut) // "_row_tgt." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Row) )
-!
-!      call grid_WriteArcGrid( trim(sBufOut) // "_col_tgt." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,real(pGrd%Cells(:,:)%iTgt_Col) )
-!
-!      call grid_WriteArcGrid( trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!               xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualPotET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualActET )
-  call grid_WriteArcGrid(trim(sBufFuture) // "final_pct_sm" // &
+  if(MAXVAL(pGrd%Cells%rMSB) > 0.1 .or. MINVAL(pGrd%Cells%rMSB) < -0.1) then
+
+    pGenericGrd_sgl%rData => pGrd%Cells%rMSB
+    call grid_WriteGrid( &
+      sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
+      pGrd=pGenericGrd_sgl, pConfig=pConfig)
+
+  elseif ( iOutputType == WRITE_ASCII_GRID_ANNUAL ) then
+
+    pGenericGrd_sgl%rData => pGrd%Cells%rSoilMoisturePct
+    call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_pct_sm" // &
     trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisturePct )
-  call grid_WriteArcGrid(trim(sBufFuture) // "final_snow_cover" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_soil_water_cap" // &
-!        trim(sYearText) // "." //trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
-  else if ( sMonthName(1:3) == 'day' ) then
-!         call grid_WriteArcGrid("output/daily/ALT_GrossPrecip_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rGrossPrecip )
-!         call grid_WriteArcGrid("output/daily/ALT_TMin_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMin )
-!         call grid_WriteArcGrid("output/daily/ALT_TMax_" // trim(sDayText) // &
-!             "." // sBufSuffix, &
-!             xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rTMax )
-!
-!       call grid_WriteArcGrid("output/daily/ALT_recharge" // trim(sDayText) // &
-!           "." // sBufSuffix, &
-!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
-!       call grid_WriteArcGrid("output/daily/ALT_Snowcover_" // trim(sDayText) // &
-!           "." // sBufSuffix, &
-!           xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowcover )
-!
-!      call grid_WriteArcGrid("output/daily/TempRange_" // trim(sDayText) // &
-!        "." // sBufSuffix, &
-!        xmin,xmax,ymin,ymax,pGrd%Cells%rTAvg &
-!           - 0.33333*(pGrd%Cells%rTMax - pGrd%Cells%rTMin) )
+      pGrd=pGenericGrd_sgl, pConfig=pConfig)
 
-!        call grid_WriteArcGrid("output\\daily\\pot_et" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_PotentialET )
-!        call grid_WriteArcGrid("output\\act_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
-!        call grid_WriteArcGrid("output\\net_infil." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rNetInfil )
-!        call grid_WriteArcGrid("output\\daily\\inflow" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rInFlow )
-!        call grid_WriteArcGrid("output\\daily\\outflow" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rOutFlow )
-!        call grid_WriteArcGrid("output\\daily\\soil_mois" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-!        call grid_WriteArcGrid("output\\daily\\curve_num" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAdjCN )
-!        call grid_WriteArcGrid("output\\daily\\snow_cov" // trim(sDayText) // &
-!          "." // sBufSuffix, &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
+    pGenericGrd_sgl%rData => pGrd%Cells%rSnowCover
+    call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_snow_cover" // &
+      trim(sYearText) // "." //trim(sBufSuffix), &
+      pGrd=pGenericGrd_sgl, pConfig=pConfig )
 
-  else
+  elseif ( iOutputType == WRITE_ASCII_GRID_DAILY ) then
 
-!      call grid_WriteArcGrid(trim(sBufOut) // "_rch"// trim(sMonthText) // &
-!          "." // sBufSuffix, &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyRecharge )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyPotET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyActET )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_inflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyInFlow )
-!      call grid_WriteArcGrid(trim(sBufOut) // "_outflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyOutFlow )
-!        call grid_WriteArcGrid(trim(sBufOut) // "_sm." // trim(sBufSuffix), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
+  elseif ( iOutputType == WRITE_ASCII_GRID_MONTHLY ) then
+
+  elseif ( iOutputType == WRITE_ASCII_GRID_DIAGNOSTIC ) then
+
+  elseif ( iOutputType == WRITE_ASCII_GRID_DEBUG ) then
+
   end if
-else if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-  if(MAXVAL(pGrd%Cells%rMSB)>0.1) then
-    call grid_WriteSurferGrid("MASS_BALANCE" // &
-      trim(sDayText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMSB )
-  elseif ( trim(sMonthName) == "ANNUAL" ) then
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualRecharge )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualPotET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAnnualActET )
-  call grid_WriteSurferGrid(trim(sBufFuture) // "final_pct_sm" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisturePct )
-  call grid_WriteSurferGrid(trim(sBufFuture) // "final_snow_cover" // &
-    trim(sYearText) // "." //trim(sBufSuffix), &
-      xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_soil_water_cap" // &
-!        trim(sYearText) // "." //trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilWaterCap )
 
-  else if ( sMonthName(1:3) == 'day' ) then
-
-!      call grid_WriteSurferGrid("output\\recharge." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rDailyRecharge )
-
-!        call grid_WriteSurferGrid("output\\daily\\pot_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_PotentialET )
-!        call grid_WriteSurferGrid("output\\act_et." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSM_ActualET )
-!        call grid_WriteSurferGrid("output\\net_infil." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rNetInfil )
-!        call grid_WriteSurferGrid("output\\daily\\inflow." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rInFlow )
-!        call grid_WriteSurferGrid("output\\daily\\outflow." // sMonthName(4:6), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rOutFlow )
-
-!        call grid_WriteSurferGrid("output\\daily\\soil_mois." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-!        call grid_WriteSurferGrid("output\\daily\\curve_num." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rAdjCN )
-!        call grid_WriteSurferGrid("output\\daily\\snow_cov." // sMonthName(4:6), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSnowCover )
-
-  else
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_rch." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyRecharge )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_pot_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyPotET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_act_et." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyActET )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_inflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyInFlow )
-!      call grid_WriteSurferGrid(trim(sBufOut) // "_outflow." // trim(sBufSuffix), &
-!          xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rMonthlyOutFlow )
-!        call grid_WriteSurferGrid(trim(sBufOut) // "_sm." // trim(sBufSuffix), &
-!            xmin,xmax,ymin,ymax,pGrd%Cells(:,:)%rSoilMoisture )
-  end if
-else
-  call Assert( .false._T_LOGICAL, "Illegal output format specified" )
-end if
-
-  return
 end subroutine model_WriteGrids
 
 #ifdef NETCDF_SUPPORT
@@ -3648,23 +3522,22 @@ subroutine model_write_NetCDF_attributes(pConfig, pGrd)
 
   do k=1,iNUM_VARIABLES
 
-  if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
+    if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
 
-  pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-  pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-  pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
-  pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
-  pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
-  pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
-  call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
-  write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
-  write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
-  write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
-end if
+      pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
+      pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
+      pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
+      pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
+      pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
+      pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
+      call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
+      write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
+      write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
+      write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
+
+    end if
 
   end do
-
-  return
 
 end subroutine model_write_NetCDF_attributes
 
