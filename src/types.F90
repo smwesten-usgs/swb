@@ -69,6 +69,7 @@ module types
   real (kind=T_SGL), parameter :: rNEAR_ZERO = 1E-9_T_SGL
   real (kind=T_SGL), parameter :: rPOINT2 = 0.2_T_SGL
   real (kind=T_SGL), parameter :: rHALF = 0.5_T_SGL
+  real (kind=T_SGL), parameter :: dpHALF = 0.5_T_DBL
   real (kind=T_SGL), parameter :: rPOINT8 = 0.8_T_SGL
   real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
   real (kind=T_DBL), parameter :: dpONE = 1.0_T_DBL
@@ -80,7 +81,8 @@ module types
   real (kind=T_DBL), parameter :: dpF_PER_C = 9.0_T_DBL / 5.0_T_DBL
   real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
   real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
-  real (kind=T_DBL), parameter :: dpPI = 3.14159265_T_DBL
+  real (kind=T_DBL), parameter :: dpPI = 3.141592653589793_T_DBL
+  real (kind=T_DBL), parameter :: dpPI_OVER_180 = dpPI / 180_T_DBL
   real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
   real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
   integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
@@ -787,15 +789,29 @@ module types
       ! PROJ4 string for Landuse Grid
       character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
 
+      ! PROJ4 string for Soil Group Grid
+      character (len=256) :: sSoilGroup_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for Soil Available Water Capacity  Grid
+      character (len=256) :: sSoilAWC_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for Flow Direction Grid
+      character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
+
       ! Filename for basin mask table
       character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
 
       ! Target prefixes for output files
-      character (len=256) :: sOutputFilePrefix = repeat(" ", 256)
-      character (len=256) :: sFutureFilePrefix = repeat(" ", 256)
+      character (len=256) :: sOutputFilePath = "output"
+      character (len=256) :: sFutureFilePath = "future"
+      character (len=256) :: sImageFilePath = "images"
+
+      ! Target prefixes for output files
+      character (len=256) :: sOutputFilePrefix = "swb"
+      character (len=256) :: sFutureFilePrefix = "swb_future"
 
       ! Target suffix for output files
-      character (len=256) :: sOutputFileSuffix = repeat(" ", 256)
+      character (len=256) :: sOutputFileSuffix = "asc"
 
       ! Precipitation amounts describing antecedent runoff conditions
       real (kind=T_SGL) :: rDRY_DORMANT = 0.50_T_SGL   ! shift to Type I
@@ -2322,70 +2338,42 @@ end function int2char
 !--------------------------------------------------------------------------
 
 !> Convert a real value into a formatted character string
-function real2char(rValue, iDec, iWidth)  result(sBuf)
+function real2char(rValue, sFmt)  result(sBuf)
 
   real (kind=T_SGL) :: rValue
-  integer (kind=T_INT), optional :: iDec
-  integer (kind=T_INT), optional :: iWidth
+  character (len=*), optional :: sFmt
 
   ![ LOCALS ]
-  character(len=256) :: sBuf, sFmt
-  integer (kind=T_INT) :: iD, iW
+  character(len=64) :: sBuf, sFormat
 
-  if(present(iDec)) then
-    iD = iDec
+  if (present(sFmt) ) then
+    sFormat = "("//sFmt//")"
   else
-    iD = 4
+    sFormat = "(F16.4)"
   endif
 
-  if(present(iWidth)) then
-    iW = iWidth
-  else
-   iW = 16
-  endif
-
-  if(abs(rValue) < rNEAR_ZERO) then
-    sBuf = "0."
-  else
-    sFmt = "(G"//TRIM(int2char(iW))//"."//TRIM(int2char(iD))//")"
-    write(UNIT=sBuf,FMT=TRIM(sFmt)) rValue
-    sBuf = ADJUSTL(sBuf)
-  endif
+  write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue
+  sBuf = ADJUSTL(sBuf)
 
 end function real2char
 
 !> Convert a double precision real value into a formatted character string
-function dbl2char(rValue, iDec, iWidth)  result(sBuf)
+function dbl2char(rValue, sFmt)  result(sBuf)
 
   real (kind=T_DBL) :: rValue
-  integer (kind=T_INT), optional :: iDec
-  integer (kind=T_INT), optional :: iWidth
+  character (len=*), optional :: sFmt
 
   ![ LOCALS ]
-  character(len=256) :: sBuf, sFmt
-  integer (kind=T_INT) :: iD, iW
+  character(len=64) :: sBuf, sFormat
 
-  if(present(iDec)) then
-    iD = iDec
+  if (present(sFmt) ) then
+    sFormat = "("//sFmt//")"
   else
-    iD = 4
+    sFormat = "(F16.4)"
   endif
 
-  if(present(iWidth)) then
-    iW = iWidth
-  else
-   iW = 16
-  endif
-
-  if(abs(rValue) < rNEAR_ZERO) then
-    sBuf = "0."
-  else
-    sFmt = "(G"//TRIM(int2char(iW))//"."//TRIM(int2char(iD))//")"
-    write(UNIT=sBuf,FMT=TRIM(sFmt)) rValue
-    sBuf = ADJUSTL(sBuf)
-  endif
-
-  return
+  write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue
+  sBuf = ADJUSTL(sBuf)
 
 end function dbl2char
 

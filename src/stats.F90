@@ -901,7 +901,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
-           "output"//pConfig%sSlash//"daily"//pConfig%sSlash, &
+           trim(pConfig%sOutputFilePath)//pConfig%sSlash//"daily"//pConfig%sSlash, &
            trim(pConfig%sOutputFilePrefix), &
            trim(sDelimiter), &
            TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -918,7 +918,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
-           "images"//pConfig%sSlash//"daily"//pConfig%sSlash, &
+           trim(pConfig%sImageFilePath)//pConfig%sSlash//"daily"//pConfig%sSlash, &
            trim(pConfig%sOutputFilePrefix), &
            trim(sDelimiter), &
            TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -1013,7 +1013,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
         .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'.',a)") &
-           "output"//pConfig%sSlash//"monthly"//pConfig%sSlash, &
+           trim(pConfig%sOutputFilePath)//pConfig%sSlash//"monthly"//pConfig%sSlash, &
            TRIM(pConfig%sOutputFilePrefix), &
            trim(sDelimiter), &
            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear,iMonth, &
@@ -1029,7 +1029,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'.',a)") &
-           "images"//pConfig%sSlash//"monthly"//pConfig%sSlash, &
+           trim(pConfig%sImageFilePath)//pConfig%sSlash//"monthly"//pConfig%sSlash, &
            TRIM(pConfig%sOutputFilePrefix), &
            trim(sDelimiter), &
            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear,iMonth, &
@@ -1125,7 +1125,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
         .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'.',a)") &
-           "output"//pConfig%sSlash//"annual"//pConfig%sSlash, &
+            trim(pConfig%sOutputFilePath)//pConfig%sSlash//"annual"//pConfig%sSlash, &
             TRIM(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
             TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear, &
@@ -1141,7 +1141,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
 
          write(sBuf,FMT="(A,A,A,A,'_',i4.4,'.',A)") &
-            "images"//pConfig%sSlash//"annual"//pConfig%sSlash, &
+            trim(pConfig%sImageFilePath)//pConfig%sSlash//"annual"//pConfig%sSlash, &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
             TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear, &
@@ -1624,7 +1624,8 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE= TRIM(pConfig%sOutputFilePrefix) //"_" &
+      open(nextunit(STAT_INFO(i)%iLU), FILE= TRIM(pConfig%sOutputFilePath) &
+        //pConfig%sSlash//TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')
 
@@ -1703,7 +1704,8 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
       open(nextunit(STAT_INFO(i)%iLU), FILE= &
-        TRIM(pConfig%sOutputFilePrefix) //"_" &
+        trim(pConfig%sOutputFilePath)//pConfig%sSLASH &
+        //TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='OLD',ACCESS='STREAM', ACTION='READWRITE')
 

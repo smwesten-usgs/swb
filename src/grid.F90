@@ -100,6 +100,11 @@ module swb_grid
     module procedure grid_gridToGrid_sgl
   end interface grid_gridToGrid
 
+  interface grid_Create
+    module procedure grid_CreateSimple
+    module procedure grid_CreateComplete
+  end interface grid_Create
+
   ! global parameters for use with the majority filter
   integer (kind=T_INT), parameter :: FOUR_CELLS = 1
   integer (kind=T_INT), parameter :: EIGHT_CELLS = 2
@@ -133,7 +138,7 @@ contains
 !
 ! SOURCE
 
-function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
+function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   !! Creates a new iNX-by-iNY T_GRID of data type iDataType, over the extent
   !! (rX0,rY0)-(rX1,rY1), and returns a pointer.
   ! ARGUMENTS
@@ -145,28 +150,16 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   type (T_GENERAL_GRID), pointer :: pGrd
   ! LOCALS
   integer (kind=T_INT) :: iStat
-#ifdef DEBUG_PRINT
-  integer (kind=T_INT) :: iNumGridCells
-  integer(kind=T_INT) :: iSize
-  integer(kind=T_INT) :: iSizeCells
-  integer(kind=T_INT) :: iNumCells
-  integer(kind=T_INT) :: iSizeSingleCell
-
-  iNumGridCells = iNX * iNY
-#endif
 
   allocate ( pGrd, stat=iStat )
   call Assert ( iStat == 0, &
      "Could not allocate pointer to T_GRID object", trim(__FILE__),__LINE__ )
-  call Assert ( LOGICAL(iNX>0 .and. iNY>0,kind=T_LOGICAL), &
+  call Assert ( iNX > 0 .and. iNY > 0, &
      "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
 
   select case (iDataType)
       case ( T_INT_GRID )
-#ifdef DEBUG_PRINT
-          write(unit=LU_LOG,FMT="( &
-          '  attempting to allocate memory for INT_GRID with ',i14,' cells')") iNumGridCells
-#endif
+
           allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate integer data", &
@@ -174,39 +167,20 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
           pGrd%iData = 0
 
       case ( T_SGL_GRID )
-#ifdef DEBUG_PRINT
-          write(unit=LU_LOG,FMT="( &
-          '  attempting to allocate memory for SGL_GRID with ',i14,' cells')") iNumGridCells
-#endif
           allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
           pGrd%rData = rZERO
+
       case ( T_CELL_GRID )
-#ifdef DEBUG_PRINT
-          write(unit=LU_LOG,FMT="( &
-          '  attempting to allocate memory for CELL_GRID with ',i14,' cells')") iNumGridCells
-          flush(unit=LU_LOG)
-#endif
           allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
              TRIM(__FILE__),__LINE__)
 
-#ifdef DEBUG_PRINT
-          iSize = SIZEOF(pGrd)
-          iSizeCells = SIZEOF(pGrd%Cells)
-          iNumCells = SIZE(pGrd%Cells)
-          iSizeSingleCell = iSizeCells / iNumCells
-
-          write(unit=LU_LOG,FMT=*) '    Allocated size (Grid):',iSize
-          write(unit=LU_LOG,FMT=*) '    Allocated size (Cells):',iSizeCells,'(',iSizeCells/1024./1024.,' MB)'
-          write(unit=LU_LOG,FMT=*) '    Memory required for each grid cell: ',iSizeSingleCell,' (bytes)'
-#endif
-
       case default
-          call Assert ( .false._T_LOGICAL, 'Internal error -- illegal grid data type' )
+          call Assert ( lFALSE, 'Internal error -- illegal grid data type' )
   end select
   pGrd%iDataType = iDataType
   pGrd%iNX = iNX
@@ -218,7 +192,64 @@ function grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
   pGrd%rGridCellSize = (pGrd%rX1 - pGrd%rX0) / real(pGrd%iNX, kind=T_SGL)
   pGrd%iNumGridCells = iNX * iNY
 
-end function grid_Create
+end function grid_CreateComplete
+
+function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) result ( pGrd )
+  !! Creates a new iNX-by-iNY T_GRID of data type iDataType, over the extent
+  !! (rX0,rY0)-(rX1,rY1), and returns a pointer.
+  ! ARGUMENTS
+  integer (kind=T_INT), intent(in) :: iNX, iNY        ! Grid dimensions
+  real (kind=T_DBL), intent(in) :: rX0, rY0          ! Lower-left corner (world coords)
+  real (kind=T_DBL), intent(in) :: rGridCellSize
+  integer (kind=T_INT), intent(in) :: iDataType       ! Data type (T_INT_GRID, etc.)
+
+  ! RETURN VALUE
+  type (T_GENERAL_GRID), pointer :: pGrd
+  ! LOCALS
+  integer (kind=T_INT) :: iStat
+
+  allocate ( pGrd, stat=iStat )
+  call Assert ( iStat == 0, &
+     "Could not allocate pointer to T_GRID object", trim(__FILE__),__LINE__ )
+  call Assert ( iNX > 0 .and. iNY > 0, &
+     "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
+
+  select case (iDataType)
+      case ( T_INT_GRID )
+
+          allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
+          call Assert (iStat == 0, &
+             "Could not allocate integer data", &
+              TRIM(__FILE__),__LINE__)
+          pGrd%iData = 0
+
+      case ( T_SGL_GRID )
+          allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
+          call Assert (iStat == 0, &
+             "Could not allocate real data", &
+              TRIM(__FILE__),__LINE__)
+          pGrd%rData = rZERO
+
+      case ( T_CELL_GRID )
+          allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
+          call Assert (iStat == 0, &
+             "Could not allocate cell-by-cell data", &
+             TRIM(__FILE__),__LINE__)
+
+      case default
+          call Assert ( lFALSE, 'Internal error -- illegal grid data type' )
+  end select
+  pGrd%iDataType = iDataType
+  pGrd%iNX = iNX
+  pGrd%iNY = iNY
+  pGrd%rX0 = rX0
+  pGrd%rX1 = rX0 + real(iNX, kind=T_DBL) * rGridCellSize
+  pGrd%rY0 = rY0
+  pGrd%rY1 = rY0 + real(iNY, kind=T_DBL) * rGridCellSize
+  pGrd%rGridCellSize = rGridCellSize
+  pGrd%iNumGridCells = iNX * iNY
+
+end function grid_CreateSimple
 
 !!***
 
@@ -1121,17 +1152,12 @@ function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompl
       call echolog("Extents of the grid file "//dquote(pOtherGrd%sFilename) &
           //" do not cover the base grid extents.")
 
-      print *, pBaseGrd%rX0, pOtherGrd%rX0
-      print *, pBaseGrd%rY0, pOtherGrd%rY0
-      print *, pBaseGrd%rX1, pOtherGrd%rX1
-      print *, pBaseGrd%rY1, pOtherGrd%rY1
-
       call echolog(" ")
-      call echolog("    BASE GRID EXTENTS           ANCILLARY GRID EXTENTS")
-      call echolog("X0:  "//asCharacter(pBaseGrd%rX0)//"  "//asCharacter(pOtherGrd%rX0) )
-      call echolog("Y0:  "//asCharacter(pBaseGrd%rY0)//"  "//asCharacter(pOtherGrd%rY0) )
-      call echolog("X1:  "//asCharacter(pBaseGrd%rX1)//"  "//asCharacter(pOtherGrd%rX1) )
-      call echolog("Y1:  "//asCharacter(pBaseGrd%rY1)//"  "//asCharacter(pOtherGrd%rY1) )
+      call echolog("    BASE GRID EXTENTS    ANCILLARY GRID EXTENTS")
+      call echolog("X0:  "//trim(asCharacter(pBaseGrd%rX0))//"      "//trim(asCharacter(pOtherGrd%rX0)) )
+      call echolog("Y0:  "//trim(asCharacter(pBaseGrd%rY0))//"      "//trim(asCharacter(pOtherGrd%rY0)) )
+      call echolog("X1:  "//trim(asCharacter(pBaseGrd%rX1))//"      "//trim(asCharacter(pOtherGrd%rX1)) )
+      call echolog("Y1:  "//trim(asCharacter(pBaseGrd%rY1))//"      "//trim(asCharacter(pOtherGrd%rY1)) )
       call echolog(" ")
 
   end if
@@ -1302,8 +1328,6 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
   character (len=256) :: sErrorMessage
   logical (kind=T_LOGICAL) :: lFound
   integer (kind=T_INT) :: i
-  REAL(kind=c_double), dimension( pGrd%iNumGridCells ) :: x
-  REAL(kind=c_double), dimension( pGrd%iNumGridCells ) :: y
   logical (kind=T_LOGICAL), dimension(pGrd%iNY, pGrd%iNX) :: lMask
 
   call grid_PopulateXY(pGrd)
@@ -1318,9 +1342,19 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   sErrorMessage = repeat(" ",256)
 
+  !> PROJ4 expects unprojected coordinates (i.e. lat lon) to be provided
+  !> in RADIANS. Therefore, we convert to radians prior to the call...
+  if( index(string=csFromPROJ4, substring="latlon") > 0 &
+      .or. index(string=csFromPROJ4, substring="lonlat") > 0 ) then
+
+    pGrd%rX = pGrd%rX * dpPI_OVER_180
+    pGrd%rY = pGrd%rY * dpPI_OVER_180
+
+  endif
+
   iRetVal = pj_init_and_transform(csFromPROJ4//C_NULL_CHAR, &
                                   csToPROJ4//C_NULL_CHAR, &
-                                  size(x), pGrd%rX, pGrd%rY)
+                                  pGrd%iNumGridCells, pGrd%rX, pGrd%rY)
 
   lFound = lFALSE
 
@@ -1352,6 +1386,8 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 !  pGrd%rX = unpack(x, lMask, pGrd%rX)
 
   ! now update the grid boundaries based on the transformed coordinate values
+  pGrd%rGridCellSize = ( maxval(pGrd%rX) - minval(pGrd%rX) ) &
+             / real(pGrd%iNX - 1, kind=T_DBL)
   pGrd%rX0 = minval(pGrd%rX) - pGrd%rGridCellSize / 2_T_SGL
   pGrd%rX1 = maxval(pGrd%rX) + pGrd%rGridCellSize / 2_T_SGL
   pGrd%rY0 = minval(pGrd%rY) - pGrd%rGridCellSize / 2_T_SGL
@@ -1623,10 +1659,13 @@ function grid_GetGridColNum(pGrd,rX)  result(iColumnNumber)
 !  print *, "numerator (RHS): ", rX, pGrd%rX0, ( rX - pGrd%rX0 )
 !  print *, "denominator: ", (pGrd%rX1 - pGrd%rX0)
 
-  call assert(iColumnNumber > 0 .and. iColumnNumber <= pGrd%iNX, &
-     "INTERNAL PROGRAMMING ERROR: Column number out of bounds (value: " &
-     //int2char(iColumnNumber)//")", &
+  if ( iColumnNumber < 0 .or. iColumnNumber > pGrd%iNX ) then
+    call grid_DumpGridExtent(pGrd)
+    write(*, fmt="(a)") "was attempting to find column associated with X: "//trim(asCharacter(rX))
+    call assert(lFALSE,  "INTERNAL PROGRAMMING ERROR: Column number out of bounds (value: " &
+     //trim(int2char(iColumnNumber))//")", &
      trim(__FILE__), __LINE__)
+  endif
 
 end function grid_GetGridColNum
 
@@ -1641,10 +1680,13 @@ function grid_GetGridRowNum(pGrd,rY)  result(iRowNumber)
   iRowNumber = pGrd%iNY - NINT(real(pGrd%iNY, kind=T_DBL) &
                * ( rY - pGrd%rY0 ) / (pGrd%rY1 - pGrd%rY0) - 0.5_T_DBL, kind=T_INT)
 
-  call assert(iRowNumber > 0 .and. iRowNumber <= pGrd%iNY, &
-     "INTERNAL PROGRAMMING ERROR: Row number out of bounds (value: " &
-     //int2char(iRowNumber)//")", &
+  if ( iRowNumber < 0 .or. iRowNumber > pGrd%iNY ) then
+    call grid_DumpGridExtent(pGrd)
+    write(*, fmt="(a)") "was attempting to find row associated with Y: "//trim(asCharacter(rY))
+    call assert(lFALSE,  "INTERNAL PROGRAMMING ERROR: Row number out of bounds (value: " &
+     //trim(int2char(iRowNumber))//")", &
      trim(__FILE__), __LINE__)
+  endif
 
 end function grid_GetGridRowNum
 
@@ -1653,10 +1695,10 @@ end function grid_GetGridRowNum
 function grid_GetGridX(pGrd,iColumnNumber)  result(rX)
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  real (kind=T_SGL) :: rX
+  real (kind=T_DBL) :: rX
   integer (kind=T_INT) :: iColumnNumber
 
-  rX = pGrd%rX0 + pGrd%rGridCellSize * (REAL(iColumnNumber, kind=T_SGL) - rHALF)
+  rX = pGrd%rX0 + pGrd%rGridCellSize * (REAL(iColumnNumber, kind=T_DBL) - dpHALF)
 
 end function grid_GetGridX
 
@@ -1665,11 +1707,11 @@ end function grid_GetGridX
 function grid_GetGridY(pGrd,iRowNumber)  result(rY)
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  real (kind=T_SGL) :: rY
+  real (kind=T_DBL) :: rY
   integer (kind=T_INT) :: iRowNumber
 
   rY = pGrd%rY1 &
-          - pGrd%rGridCellSize * (REAL(iRowNumber, kind=T_SGL) - rHALF)
+          - pGrd%rGridCellSize * (REAL(iRowNumber, kind=T_DBL) - dpHALF)
 
 end function grid_GetGridY
 
@@ -1709,9 +1751,29 @@ subroutine grid_PopulateXY(pGrd)
 
 end subroutine grid_PopulateXY
 
+
+subroutine grid_DumpGridExtent(pGrd)
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd
+
+  call echolog("---------------------------------------------------")
+  call echolog("GRID DETAILS:")
+  call echolog("---------------------------------------------------")
+  call echolog("file: "//dquote(pGrd%sFilename) )
+  call echolog("nx: "//trim(int2char(pGrd%iNX) ) )
+  call echolog("ny: "//trim(int2char(pGrd%iNY) ) )
+  call echolog("cellsize: "//trim(asCharacter(pGrd%rGridCellSize) ) )
+  call echolog("X0: "//trim(asCharacter(pGrd%rX0) ) )
+  call echolog("Y0: "//trim(asCharacter(pGrd%rY0) ) )
+  call echolog("X1: "//trim(asCharacter(pGrd%rX1) ) )
+  call echolog("Y1: "//trim(asCharacter(pGrd%rY1) ) )
+  call echolog("---------------------------------------------------")
+
+end subroutine grid_DumpGridExtent
+
 !----------------------------------------------------------------------
 
-subroutine grid_gridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
+subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
@@ -1750,19 +1812,19 @@ subroutine grid_gridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
         "Internal programming error: exceeded bounds in iSrc_Row (value: "//int2char(iSrc_Row), &
         trim(__FILE__), __LINE__)
 
-      if(iArrayFrom(iSrc_Col, iSrc_Row) /= pGrdFrom%iNoDataValue) then
-        iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
-      else
-        iArrayTo(iCol,iRow) = 81
-      endif
+!      if(iArrayFrom(iSrc_Col, iSrc_Row) /= pGrdFrom%iNoDataValue) then
+!        iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
+!      else
+!        iArrayTo(iCol,iRow) = 81
+!      endif
 
-!      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-!         iNX=pGrdFrom%iNX, &
-!         iNY=pGrdFrom%iNY, &
-!         iTargetCol=iSrc_Col, &
-!         iTargetRow=iSrc_Row, &
-!         iKernel=FOUR_CELLS, &
-!         iNoDataValue=pGrdFrom%iNoDataValue)
+      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
+         iNX=pGrdFrom%iNX, &
+         iNY=pGrdFrom%iNY, &
+         iTargetCol=iSrc_Col, &
+         iTargetRow=iSrc_Row, &
+         iKernel=FOUR_CELLS, &
+         iNoDataValue=pGrdFrom%iNoDataValue)
 
 !      print *, "iArrayFrom(col, row): ",iArrayFrom(iSrc_Col, iSrc_Row)
 
@@ -1771,9 +1833,9 @@ subroutine grid_gridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
     enddo
   enddo
 
-end subroutine grid_gridToGrid_int
+end subroutine grid_GridToGrid_int
 
-subroutine grid_gridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
+subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
@@ -1807,29 +1869,29 @@ subroutine grid_gridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
 !      iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
 
-      if(iArrayFrom(iSrc_Col, iSrc_Row) /= pGrdFrom%iNoDataValue) then
-        iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
-      else
-        iArrayTo(iCol,iRow) = 81
-      endif
+!      if(iArrayFrom(iSrc_Col, iSrc_Row) /= pGrdFrom%iNoDataValue) then
+!        iArrayTo(iCol,iRow) = iArrayFrom(iSrc_Col, iSrc_Row)
+!      else
+!        iArrayTo(iCol,iRow) = 81
+!      endif
 
 
-!      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-!         iNX=pGrdFrom%iNX, &
-!         iNY=pGrdFrom%iNY, &
-!         iTargetCol=iSrc_Col, &
-!         iTargetRow=iSrc_Row, &
-!         iKernel=FOUR_CELLS, &
-!         iNoDataValue=pGrdFrom%iNoDataValue)
+      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
+         iNX=pGrdFrom%iNX, &
+         iNY=pGrdFrom%iNY, &
+         iTargetCol=iSrc_Col, &
+         iTargetRow=iSrc_Row, &
+         iKernel=FOUR_CELLS, &
+         iNoDataValue=pGrdFrom%iNoDataValue)
 
     enddo
   enddo
 
-end subroutine grid_gridToGrid_short
+end subroutine grid_GridToGrid_short
 
 !----------------------------------------------------------------------
 
-subroutine grid_gridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
+subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
@@ -1844,12 +1906,12 @@ subroutine grid_gridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   do iRow=1,pGrdTo%iNY
     do iCol=1,pGrdTo%iNX
       iSrc_Col = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
-      iSrc_Row = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+      iSrc_Row = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
       rArrayTo(iCol,iRow) = rArrayFrom(iSrc_Col, iSrc_Row)
     enddo
   enddo
 
-end subroutine grid_gridToGrid_sgl
+end subroutine grid_GridToGrid_sgl
 
 !----------------------------------------------------------------------
 

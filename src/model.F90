@@ -20,6 +20,10 @@ module model
   use snow
   use irrigation
 
+#ifdef _OPENMP
+  use omp_lib
+#endif
+
 #ifdef NETCDF_SUPPORT
   use netcdf_support
 #endif
@@ -61,17 +65,21 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
+subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
+   pSoilGroupGrid, pSoilAWCGrid, pFlowDirGrid)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pLandUseGrid       ! pointer to land use grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
     ! model options, flags, and other settings
 
   type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
     ! pointer to data structure that holds parameters for creating
     ! DISLIN plots
+  type ( T_GENERAL_GRID ), pointer :: pLandUseGrid       ! pointer to land use grid
+  type ( T_GENERAL_GRID ), pointer :: pSoilGroupGrid     ! pointer to soil group grid
+  type ( T_GENERAL_GRID ), pointer :: pSoilAWCGrid       ! pointer to soil AWC grid
+  type ( T_GENERAL_GRID ), pointer :: pFlowDirGrid       ! pointer to flow direction grid
 
 #ifdef NETCDF_SUPPORT
   type (T_NETCDF_FILE), pointer :: pNC
@@ -152,6 +160,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
   ! Time the run
   call cpu_time(rStartTime)
 
+  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
+
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
     ! if a routing table exists, read it in; else initialize and
@@ -165,6 +175,9 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid )
     write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeFlowDirection"
     call model_InitializeFlowDirection( pGrd , pConfig)
   end if
+
+  call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
 
   if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
@@ -1360,59 +1373,59 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  ! allow for correction factor to be applied to precip gage input data
-  if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
-    lFREEZING = lTRUE
-    cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
-  else
-    lFREEZING = lFALSE
-    cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
-  end if
+    ! allow for correction factor to be applied to precip gage input data
+    if ( cel%rTAvg - (cel%rTMax-cel%rTMin)/3.0_T_SGL <= rFREEZING ) then
+      lFREEZING = lTRUE
+      cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+    else
+      lFREEZING = lFALSE
+      cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+    end if
 
-  dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
+    dpPotentialInterception = rf_model_GetInterception(pConfig,cel%iLandUse,iDayOfYear)
 
-  dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
-  dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
+    dpPreviousSnowCover = real(cel%rSnowCover, kind=T_DBL)
+    dpSnowCover = real(cel%rSnowCover, kind=T_DBL)
 
-  dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
+    dpNetPrecip = real(cel%rGrossPrecip, kind=T_DBL) - dpPotentialInterception
 !      cel%dpNetPrecip = cel%rGrossPrecip-dpPotentialInterception
 !      if ( cel%dpNetPrecip < rZERO ) cel%dpNetPrecip = rZERO
-  if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+    if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
 !      dpInterception = cel%rGrossPrecip - cel%dpNetPrecip
-  dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
+    dpInterception = real(cel%rGrossPrecip, kind=T_DBL) - dpNetPrecip
 
-  if(dpInterception < dpZERO) &
-    call Assert(lFALSE, &
-      "Negative value for interception was calculated on day " &
-      //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
-      //"  iCol: "//trim(int2char(iCol)), &
-      trim(__FILE__), __LINE__)
+    if(dpInterception < dpZERO) &
+      call Assert(lFALSE, &
+        "Negative value for interception was calculated on day " &
+        //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
+        //"  iCol: "//trim(int2char(iCol)), &
+        trim(__FILE__), __LINE__)
 
-  call stats_UpdateAllAccumulatorsByCell(dpInterception, &
-    iINTERCEPTION,iMonth,iZERO)
+    call stats_UpdateAllAccumulatorsByCell(dpInterception, &
+      iINTERCEPTION,iMonth,iZERO)
 
-  if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
-    .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
-      call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
-        real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
-        pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
-  end if
+    if(STAT_INFO(iINTERCEPTION)%iDailyOutput > iNONE &
+      .or. STAT_INFO(iINTERCEPTION)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(iINTERCEPTION)%iAnnualOutput > iNONE)  then
+        call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
+          real(dpInterception, kind=T_SGL), pConfig%iRLE_MULT, &
+          pConfig%rRLE_OFFSET, iNumGridCells, iINTERCEPTION)
+    end if
 
 !      cel%rAnnualInterception = cel%rAnnualInterception + cel%dpInterception
 !      rMonthlyInterception = rMonthlyInterception + cel%dpInterception
 
   ! NET PRECIP = GROSS PRECIP - INTERCEPTION
-  dpNetRainfall = dpNetPrecip
+    dpNetRainfall = dpNetPrecip
 
   ! Is it snowing?
-  if (lFREEZING ) then
+    if (lFREEZING ) then
 !        cel%rSnowCover = cel%rSnowCover + cel%dpNetPrecip
-  dpSnowCover = dpSnowCover + dpNetPrecip
+    dpSnowCover = dpSnowCover + dpNetPrecip
 !         rMonthlySnowFall = rMonthlySnowFall + sum(pGrd%Cells(:,:)%dpNetPrecip)
-  cel%rSnowFall_SWE = dpNetPrecip
-  dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
-end if
+    cel%rSnowFall_SWE = dpNetPrecip
+    dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
+  end if
 
   ! Is there any melting?
   if(cel%rTAvg>rFREEZING) then
@@ -3140,44 +3153,191 @@ end subroutine model_ReadIrrigationLookupTable
 
 !--------------------------------------------------------------------------
 
-subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrd)
+subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
 
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
 
   type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pLandUseGrd     ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pLandUseGrid     ! pointer to model grid
 
   if( len_trim( pConfig%sLandUse_PROJ4 ) > 0 ) then
 
-    call grid_Transform(pGrd=pLandUseGrd, &
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pLandUseGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sLandUse_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pLandUseGrid, &
                         sFromPROJ4=pConfig%sLandUse_PROJ4, &
                         sToPROJ4=pConfig%sBase_PROJ4 )
 
-    call Assert( grid_CompletelyCover( pGrd, pLandUseGrd ), &
+    call Assert( grid_CompletelyCover( pGrd, pLandUseGrid ), &
       "Transformed grid doesn't completely cover your model domain.")
 
-    call grid_gridToGrid(pGrdFrom=pLandUseGrd,&
-                            iArrayFrom=pLandUseGrd%iData, &
+    call grid_gridToGrid(pGrdFrom=pLandUseGrid,&
+                            iArrayFrom=pLandUseGrid%iData, &
                             pGrdTo=pGrd, &
                             iArrayTo=pGrd%Cells%iLandUse )
 
   else
 
-    call Assert( grid_Conform( pGrd, pLandUseGrd ), &
-                      "Non-conforming grid" )
-    pGrd%Cells%iLandUse = pLandUseGrd%iData
+    call Assert( grid_Conform( pGrd, pLandUseGrid ), &
+                      "Non-conforming LANDUSE grid. Filename: " &
+                      //dquote(pLandUseGrid%sFilename) )
+    pGrd%Cells%iLandUse = pLandUseGrid%iData
 
   endif
 
-  call grid_Destroy(pLandUseGrd)
+  call grid_Destroy(pLandUseGrid)
 
   pGenericGrd_int%iData = pGrd%Cells%iLandUse
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Land_Use_Land_Cover" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
 end subroutine model_PopulateLandUseArray
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pSoilGroupGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sSoilGroup_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pSoilGroupGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sSoilGroup_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pSoilGroupGrid, &
+                        sFromPROJ4=pConfig%sSoilGroup_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pSoilGroupGrid ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pSoilGroupGrid,&
+                            iArrayFrom=pSoilGroupGrid%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iSoilGroup )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pSoilGroupGrid ), &
+                      "Non-conforming HYDROLOGIC SOILS grid. Filename: " &
+                      //dquote(pSoilGroupGrid%sFilename) )
+    pGrd%Cells%iSoilGroup = pSoilGroupGrid%iData
+
+  endif
+
+  call grid_Destroy(pSoilGroupGrid)
+
+  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+end subroutine model_PopulateSoilGroupArray
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pFlowDirGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sFlowDir_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pFlowDirGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sFlowDir_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pFlowDirGrid, &
+                        sFromPROJ4=pConfig%sFlowDir_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pFlowDirGrid ), &
+      "Transformed grid doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pFlowDirGrid,&
+                            iArrayFrom=pFlowDirGrid%iData, &
+                            pGrdTo=pGrd, &
+                            iArrayTo=pGrd%Cells%iFlowDir )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pFlowDirGrid ), &
+                      "Non-conforming FLOW_DIRECTION grid. Filename: " &
+                      //dquote(pFlowDirGrid%sFilename) )
+    pGrd%Cells%iFlowDir = pFlowDirGrid%iData
+
+  endif
+
+  call grid_Destroy(pFlowDirGrid)
+
+  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_D8_Flow_Direction" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+end subroutine model_PopulateFlowDirectionArray
+
+!--------------------------------------------------------------------------
+
+subroutine model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
+
+  ! [ ARGUMENTS ]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
+  type ( T_GENERAL_GRID ),pointer :: pSoilAWCGrid     ! pointer to model grid
+
+  if( len_trim( pConfig%sSoilAWC_PROJ4 ) > 0 ) then
+
+    call echolog(" ")
+    call echolog("Transforming gridded data in file: "//dquote(pSoilAWCGrid%sFilename) )
+    call echolog("  FROM: "//squote(pConfig%sSoilAWC_PROJ4) )
+    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call grid_Transform(pGrd=pSoilAWCGrid, &
+                        sFromPROJ4=pConfig%sSoilAWC_PROJ4, &
+                        sToPROJ4=pConfig%sBase_PROJ4 )
+
+    call Assert( grid_CompletelyCover( pGrd, pSoilAWCGrid ), &
+      "Transformed grid (available water capacity) doesn't completely cover your model domain.")
+
+    call grid_gridToGrid(pGrdFrom=pSoilAWCGrid,&
+                            rArrayFrom=pSoilAWCGrid%rData, &
+                            pGrdTo=pGrd, &
+                            rArrayTo=pGrd%Cells%rSoilWaterCapInput )
+
+  else
+
+    call Assert( grid_Conform( pGrd, pSoilAWCGrid ), &
+                      "Non-conforming AVAILABLE WATER CAPACITY grid. Filename: " &
+                      //dquote(pSoilAWCGrid%sFilename) )
+    pGrd%Cells%rSoilWaterCapInput = pSoilAWCGrid%rData
+
+  endif
+
+  call grid_Destroy(pSoilAWCGrid)
+
+  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_AWC" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
+
+end subroutine model_PopulateAvailableWaterCapacityArray
 
 !--------------------------------------------------------------------------
 
