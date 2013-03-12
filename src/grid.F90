@@ -145,7 +145,7 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   integer (kind=T_INT), intent(in) :: iNX, iNY        ! Grid dimensions
   real (kind=T_DBL), intent(in) :: rX0, rY0          ! Lower-left corner (world coords)
   real (kind=T_DBL), intent(in) :: rX1, rY1          ! Upper-right corner (world coords)
-  integer (kind=T_INT), intent(in) :: iDataType       ! Data type (T_INT_GRID, etc.)
+  integer (kind=T_INT), intent(in) :: iDataType       ! Data type (DATATYPE_INT, etc.)
   ! RETURN VALUE
   type (T_GENERAL_GRID), pointer :: pGrd
   ! LOCALS
@@ -158,7 +158,7 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
      "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
 
   select case (iDataType)
-      case ( T_INT_GRID )
+      case ( DATATYPE_INT )
 
           allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
@@ -166,14 +166,14 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
               TRIM(__FILE__),__LINE__)
           pGrd%iData = 0
 
-      case ( T_SGL_GRID )
+      case ( DATATYPE_REAL )
           allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
           pGrd%rData = rZERO
 
-      case ( T_CELL_GRID )
+      case ( DATATYPE_CELL_GRID )
           allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
@@ -201,7 +201,7 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
   integer (kind=T_INT), intent(in) :: iNX, iNY        ! Grid dimensions
   real (kind=T_DBL), intent(in) :: rX0, rY0          ! Lower-left corner (world coords)
   real (kind=T_DBL), intent(in) :: rGridCellSize
-  integer (kind=T_INT), intent(in) :: iDataType       ! Data type (T_INT_GRID, etc.)
+  integer (kind=T_INT), intent(in) :: iDataType       ! Data type (DATATYPE_INT, etc.)
 
   ! RETURN VALUE
   type (T_GENERAL_GRID), pointer :: pGrd
@@ -215,7 +215,7 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
      "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
 
   select case (iDataType)
-      case ( T_INT_GRID )
+      case ( DATATYPE_INT )
 
           allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
@@ -223,14 +223,14 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
               TRIM(__FILE__),__LINE__)
           pGrd%iData = 0
 
-      case ( T_SGL_GRID )
+      case ( DATATYPE_REAL )
           allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
           pGrd%rData = rZERO
 
-      case ( T_CELL_GRID )
+      case ( DATATYPE_CELL_GRID )
           allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
@@ -282,13 +282,13 @@ subroutine grid_Destroy ( pGrd )
 
   if(associated(pGrd) )then
 
-    if ( pGrd%iDataType == T_INT_GRID ) then
+    if ( pGrd%iDataType == DATATYPE_INT ) then
       deallocate ( pGrd%iData, stat=iStat )
       call Assert ( iStat == 0, "Failed to deallocate integer grid" )
-    else if ( pGrd%iDataType == T_SGL_GRID ) then
+    else if ( pGrd%iDataType == DATATYPE_REAL ) then
       deallocate ( pGrd%rData, stat=iStat )
       call Assert ( iStat == 0, "Failed to deallocate real grid" )
-    else if ( pGrd%iDataType == T_CELL_GRID ) then
+    else if ( pGrd%iDataType == DATATYPE_CELL_GRID ) then
       deallocate ( pGrd%Cells, stat=iStat )
       call Assert ( iStat == 0, "Failed to deallocate cell grid" )
     else
@@ -335,15 +335,15 @@ end subroutine grid_Destroy
 !    "SURFER"              Golden Software SURFER grid (ASCII)
 !
 ! Valid data types are (see module 'types'):
-!    T_INT_GRID
-!    T_SGL_GRID
+!    DATATYPE_INT
+!    DATATYPE_REAL
 !
 ! SOURCE
 
-function grid_Read ( sFileName, sFileType, iDataType ) result ( pGrd )
+function grid_Read ( sFilename, sFileType, iDataType ) result ( pGrd )
 
   ! ARGUMENTS
-  character (len=*), intent(in) :: sFileName          ! Name of the grid input file
+  character (len=*), intent(in) :: sFilename          ! Name of the grid input file
   character (len=*), intent(in) :: sFileType          ! File type (see above)
   integer (kind=T_INT), intent(in) :: iDataType       ! T_GRID_INT or T_GRID_REAL
   ! RETURN VALUE
@@ -357,22 +357,26 @@ function grid_Read ( sFileName, sFileType, iDataType ) result ( pGrd )
       call Assert( lFALSE, "Illegal grid file type requested" )
   end if
 
+  pGrd%sFilename = trim(sFilename)
+
 end function grid_Read
 
 subroutine grid_Read_sub ( sFileName, sFileType, pGrd )
 
   ! ARGUMENTS
-  character (len=*), intent(in) :: sFileName          ! Name of the grid input file
+  character (len=*), intent(in) :: sFilename          ! Name of the grid input file
   character (len=*), intent(in) :: sFileType          ! File type (see above)
   type (T_GENERAL_GRID), pointer :: pGrd
 
   if ( trim(sFileType) == "ARC_GRID" ) then
-      call grid_ReadArcGrid_sub( sFileName, pGrd )
+      call grid_ReadArcGrid_sub( sFilename, pGrd )
   else if ( trim(sFileType) == "SURFER" ) then
-      call grid_ReadSurferGrid_sub( sFileName, pGrd )
+      call grid_ReadSurferGrid_sub( sFilename, pGrd )
   else
       call Assert( lFALSE, "Illegal grid file type requested" )
   end if
+
+  pGrd%sFilename = trim(sFilename)
 
 end subroutine grid_Read_sub
 
@@ -396,8 +400,8 @@ end subroutine grid_Read_sub
 ! NOTES
 !
 ! Valid data types are (see module 'types'):
-!    T_INT_GRID
-!    T_SGL_GRID
+!    DATATYPE_INT
+!    DATATYPE_REAL
 !
 ! SOURCE
 
@@ -497,7 +501,7 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
           end do
           ! ... and read the data.
           select case ( iDataType )
-              case ( T_INT_GRID )
+              case ( DATATYPE_INT )
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -511,7 +515,7 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
                     "Failed to read NODATA value in grid data - file: " &
                     //dquote(sFileName), TRIM(__FILE__),__LINE__ )
                 endif
-              case ( T_SGL_GRID )
+              case ( DATATYPE_REAL )
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -534,7 +538,7 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
       end if
   end do
 
-  if(iDataType==T_INT_GRID) then    ! check for strange or illegal values
+  if(iDataType==DATATYPE_INT) then    ! check for strange or illegal values
     iCumlCount = 0
     write(LU_LOG,"(1x,'Summary of integer grid data values')")
 
@@ -659,7 +663,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
           end do
           ! ... and read the data.
           select case ( pGrd%iDataType )
-              case ( T_INT_GRID )
+              case ( DATATYPE_INT )
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -673,7 +677,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
                     "Failed to read NODATA value in grid data - file: " &
                     //trim(sFileName), TRIM(__FILE__),__LINE__ )
                 endif
-              case ( T_SGL_GRID )
+              case ( DATATYPE_REAL )
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -696,7 +700,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
       end if
   end do
 
-  if(pGrd%iDataType==T_INT_GRID) then    ! check for strange or illegal values
+  if(pGrd%iDataType==DATATYPE_INT) then    ! check for strange or illegal values
     iCumlCount = 0
     write(LU_LOG,"(1x,'Summary of integer grid data values')")
 
@@ -748,8 +752,8 @@ end subroutine grid_ReadArcGrid_sub
 ! NOTES
 !
 ! Valid data types are (see module 'types'):
-!    T_INT_GRID
-!    T_SGL_GRID
+!    DATATYPE_INT
+!    DATATYPE_REAL
 !
 ! SOURCE
 
@@ -798,12 +802,12 @@ function grid_ReadSurferGrid_fn ( sFileName, iDataType ) result ( pGrd )
 
   pGrd => grid_Create ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType )
   select case ( iDataType )
-      case ( T_INT_GRID )
+      case ( DATATYPE_INT )
           do iRow=1, iNY
               read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(:,iRow)
               call Assert ( iStat == 0, "Failed to read integer grid data" )
           end do
-      case ( T_SGL_GRID )
+      case ( DATATYPE_REAL )
           do iRow=1, iNY
               read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
               call Assert ( iStat == 0, "Failed to read real grid data" )
@@ -867,12 +871,12 @@ subroutine grid_ReadSurferGrid_sub ( sFileName, pGrd )
      "Error reading SURFER Z limits" )
 
   select case ( pGrd%iDataType )
-      case ( T_INT_GRID )
+      case ( DATATYPE_INT )
           do iRow=1, iNY
               read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(:,iRow)
               call Assert ( iStat == 0, "Failed to read integer grid data" )
           end do
-      case ( T_SGL_GRID )
+      case ( DATATYPE_REAL )
           do iRow=1, iNY
               read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
               call Assert ( iStat == 0, "Failed to read real grid data" )
@@ -925,10 +929,10 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
   integer (kind=T_INT) ::  iStat
   character(len=256) :: sBuf
 
-  if ( pGrd%iDataType == T_INT_GRID ) then
+  if ( pGrd%iDataType == DATATYPE_INT ) then
     iNumCols = size(pGrd%iData,1)
     iNumRows = size(pGrd%iData,2)
-  elseif ( pGrd%iDataType == T_SGL_GRID ) then
+  elseif ( pGrd%iDataType == DATATYPE_REAL ) then
     iNumCols = size(pGrd%rData,1)
     iNumRows = size(pGrd%rData,2)
   else
@@ -958,7 +962,7 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
   write ( unit=LU_TEMP, fmt="('CELLSIZE ',f14.3)", iostat=istat ) pGrd%rGridCellSize
   call Assert( istat==0, "Error writing cell size", trim(__FILE__), __LINE__)
 
-  if ( pGrd%iDataType == T_INT_GRID ) then
+  if ( pGrd%iDataType == DATATYPE_INT ) then
 
     write ( unit=LU_TEMP, fmt="('NODATA_VALUE ',i14)", iostat=istat ) pGrd%iNoDataValue
     call Assert( istat==0, "Error writing NODATA value", trim(__FILE__), __LINE__)
@@ -969,7 +973,7 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
         trim(__FILE__), __LINE__)
     end do
 
-  elseif ( pGrd%iDataType == T_SGL_GRID ) then
+  elseif ( pGrd%iDataType == DATATYPE_REAL ) then
 
     write ( unit=LU_TEMP, fmt="('NODATA_VALUE ',f14.3)", iostat=istat ) pGrd%rNoDataValue
     call Assert( istat==0, "Error writing NODATA value", trim(__FILE__), __LINE__)
@@ -999,10 +1003,10 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
   integer (kind=T_INT) ::  iStat
   character(len=256) :: sBuf
 
-  if ( pGrd%iDataType == T_INT_GRID ) then
+  if ( pGrd%iDataType == DATATYPE_INT ) then
     iNumCols = size(pGrd%iData,1)
     iNumRows = size(pGrd%iData,2)
-  elseif ( pGrd%iDataType == T_SGL_GRID ) then
+  elseif ( pGrd%iDataType == DATATYPE_REAL ) then
     iNumCols = size(pGrd%rData,1)
     iNumRows = size(pGrd%rData,2)
   else
@@ -1032,7 +1036,7 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
   call Assert( istat==0, "Error writing SURFER Y limits", &
     trim(__FILE__), __LINE__)
 
-  if ( pGrd%iDataType == T_INT_GRID ) then
+  if ( pGrd%iDataType == DATATYPE_INT ) then
 
     write ( unit=LU_TEMP, fmt="(2i14)", iostat=istat ) minval(pGrd%iData),maxval(pGrd%iData)
     call Assert( istat==0, "Error writing SURFER Z limits", &
@@ -1046,7 +1050,7 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
         trim(__FILE__), __LINE__)
     end do
 
-  elseif ( pGrd%iDataType == T_SGL_GRID ) then
+  elseif ( pGrd%iDataType == DATATYPE_REAL ) then
 
     write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) minval(pGrd%rData),maxval(pGrd%rData)
     call Assert( istat==0, "Error writing SURFER Z limits", &
@@ -1424,7 +1428,7 @@ end subroutine grid_Transform
 function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   !! Interpolates values from the grid 'grd' for the row position 'yval' and
   !! the column position 'xval'. Assumes that the row and column spacing
-  !! are constant. Applicable only to T_SGL_GRID grids.
+  !! are constant. Applicable only to DATATYPE_REAL grids.
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd
   real (kind=T_SGL),intent(in) :: rXval,rYval
@@ -1472,7 +1476,7 @@ end function grid_Interpolate
 !  Searches in the y-direction, given the x value and the table value
 !  z, and returns the value of y. Assumes that the row and
 !  column spacing are constant. The search begins at the _top_ of the
-!  table (y=pGrd%rY1). Applicable only to T_SGL_GRID grids.
+!  table (y=pGrd%rY1). Applicable only to DATATYPE_REAL grids.
 !  Parameter 'rNoData' is the missing value code for the grid.
 
 ! INPUTS
@@ -1506,7 +1510,7 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   !! Searches in the y-direction, given the x value 'xval', for the value
   !! 'zval', and returns the value of y in 'ry'. Assumes that the row and
   !! column spacing are constant. The search begins at the _top_ of the
-  !! table (y=pGrd%rY1). Applicable only to T_SGL_GRID grids.
+  !! table (y=pGrd%rY1). Applicable only to DATATYPE_REAL grids.
   !! Parameter 'rmv' is the missing value code for the grid.
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd

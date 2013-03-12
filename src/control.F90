@@ -9,6 +9,7 @@ module control
   use model
   use swb_grid
   use stats
+  use data_factory
 
   contains
 
@@ -26,12 +27,13 @@ subroutine control_setModelOptions(sControlFile)
   ! [ARGUMENTS]
   character (len=*), intent(in) :: sControlFile
   ! [LOCALS]
-  type (T_GENERAL_GRID),pointer :: input_grd          ! Temporary grid for I/O
-  type (T_GENERAL_GRID),pointer :: pGrd               ! Grid of model cells
-  type (T_GENERAL_GRID),pointer :: pLandUseGrid       ! Landuse input grid
-  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid     ! Soil HSG input grid
-  type (T_GENERAL_GRID),pointer :: pFlowDirGrid       ! Flow direction input grid
-  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid       ! Available Water Capacity input grid
+  type (T_GENERAL_GRID),pointer :: input_grd         ! Temporary grid for I/O
+  type (T_GENERAL_GRID),pointer :: pGrd              ! Grid of model cells
+  type (T_GENERAL_GRID),pointer :: pLandUseGrid      ! Landuse input grid
+  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
+  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
+  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
+  real (kind=T_SGL), dimension(:,:), pointer :: pArray_sgl
 
 
   type (T_GRAPH_CONFIGURATION), dimension(:),pointer :: pGraph
@@ -39,12 +41,12 @@ subroutine control_setModelOptions(sControlFile)
                                                    ! holds parameters for creating
                                                    ! DISLIN plots
 #ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC            ! pointer to struct containing NetCDF info
+  type (T_NETCDF_FILE), pointer :: pNC => null            ! pointer to struct containing NetCDF info
 #endif
 
   type (T_TIME_SERIES_FILE), pointer :: pTSt
 
-  type (T_SSF_FILES), dimension(:), pointer :: pSSF      ! pointer to struct containing SSF file info
+  type (T_SSF_FILES), dimension(:), pointer :: pSSF   ! pointer to struct containing SSF file info
   logical (kind=t_LOGICAL), save :: lNO_SSF_FILES = lTRUE
   logical (kind=T_LOGICAL) :: lOpened
   integer (kind=T_INT) :: iOldSize, iNewSize
@@ -201,7 +203,7 @@ subroutine control_setModelOptions(sControlFile)
       if( len_trim(sRecord) == 0 ) then
 
         rGridCellSize = rTemp
-        pGrd => grid_Create(iNX, iNY, rX0, rY0, rGridCellSize, T_CELL_GRID)
+        pGrd => grid_Create(iNX, iNY, rX0, rY0, rGridCellSize, DATATYPE_CELL_GRID)
 
       else
 
@@ -216,7 +218,7 @@ subroutine control_setModelOptions(sControlFile)
         call Assert ( iStat == 0, "Failed to read grid cell size" )
         ! Now, build the grid
 
-        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_CELL_GRID)
+        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_CELL_GRID)
         call assert(pGrd%rGridCellSize == rGridCellSize, "Grid cell size entered in the " &
           //"control file ("//trim(asCharacter(rGridCellSize))//")~does not" &
           //" match calculated grid cell size ("//trim(real2char(pGrd%rGridCellSize)) &
@@ -242,6 +244,7 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%sBase_PROJ4 = trim(sRecord)
       call Assert(associated(pGrd), "The project grid must be specified " &
         //"before the base grid projection information can be specified.")
+      pGrd%sPROJ4_string = trim(sRecord)
 
 #ifdef DEBUG_PRINT
     elseif ( str_compare(sItem,"MEM_TEST") ) then
@@ -252,7 +255,7 @@ subroutine control_setModelOptions(sControlFile)
 
       do iNX = 10,10000,10
         iNY = iNX
-        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_CELL_GRID)
+        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_CELL_GRID)
         call grid_Destroy( pGrd )
       end do
 #endif
@@ -321,6 +324,9 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
+
+
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
       call Chomp ( sRecord, sOption )
@@ -357,29 +363,12 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
           write(UNIT=LU_LOG,FMT=*) &
             "Temperature data will be read from a NetCDF file"
+          pConfig%NC_TMAX_VarName = TRIM(sArgument)
 
-          ! first open and check extents for the TMAX file
-          pConfig%NETCDF_FILE(iMAX_TEMP,iNC_INPUT)%iNCID = &
-              netcdf_open(TRIM(sArgument))
-          pConfig%NETCDF_FILE(iMAX_TEMP,iNC_INPUT)%sFilename = &
-              TRIM(sArgument)
-          ! read in the NetCDF variable that corresponds to TMAX
-          call Chomp ( sRecord, sArgument )
-          call netcdf_info(pConfig, iMAX_TEMP,iNC_INPUT, TRIM(sArgument))
-          pConfig%NETCDF_FILE(iMAX_TEMP,iNC_INPUT)%sVarName = TRIM(sArgument)
-          call netcdf_chk_extent(pConfig,iMAX_TEMP,iNC_INPUT,pGrd)
-
-          ! now repeat for TMIN file
-          call Chomp ( sRecord, sArgument )
-          pConfig%NETCDF_FILE(iMIN_TEMP,iNC_INPUT)%iNCID = &
-              netcdf_open(TRIM(sArgument))
-          pConfig%NETCDF_FILE(iMIN_TEMP,iNC_INPUT)%sFilename = &
-              TRIM(sArgument)
           ! read in the NetCDF variable that corresponds to TMIN
           call Chomp ( sRecord, sArgument )
-          call netcdf_info(pConfig, iMIN_TEMP, iNC_INPUT, TRIM(sArgument))
-          pConfig%NETCDF_FILE(iMIN_TEMP, iNC_INPUT)%sVarName = TRIM(sArgument)
-          call netcdf_chk_extent(pConfig,iMIN_TEMP,iNC_INPUT,pGrd)
+          pConfig%NC_TMIN_VarName = TRIM(sArgument)
+
 #endif
         else
           call Assert( lFALSE, "Illegal temperature input format specified", &
@@ -387,6 +376,11 @@ subroutine control_setModelOptions(sControlFile)
         endif
       end if
       flush(UNIT=LU_LOG)
+
+    else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
+      pConfig%sTemperatureGrid_PROJ4 = trim(sRecord)
+      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
+        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
 
     else if ( sItem == "LAND_USE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating land use grid"
@@ -398,7 +392,7 @@ subroutine control_setModelOptions(sControlFile)
         read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
         call Assert( iStat == 0, "Cannot read integer data value" )
         pLandUseGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, T_INT_GRID )
+          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
         pLandUseGrid%iData = iValue
         pLandUseGrid%sFilename = "Constant-value grid"
       elseif(trim(sOption) == "DYNAMIC" ) then
@@ -424,7 +418,7 @@ subroutine control_setModelOptions(sControlFile)
          .or. trim(sOption) == "SURFER" ) then   ! read in a static gridded landuse file
         pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
         pConfig%sDynamicLanduseFilePrefix = "none"
-        pLandUseGrid => grid_Read( sArgument, sOption, T_INT_GRID )
+        pLandUseGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
         pLandUseGrid%sFilename = trim(sArgument)
 !        call Assert( grid_Conform( pGrd, input_grd ),  &
 !                      "Non-conforming grid" )
@@ -452,11 +446,11 @@ subroutine control_setModelOptions(sControlFile)
         read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
         call Assert( iStat == 0, "Cannot read integer data value" )
         pFlowDirGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, T_INT_GRID )
+          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
         pFlowDirGrid%iData = iValue
         pFlowDirGrid%sFilename = "Constant-value grid"
       else
-        pFlowDirGrid => grid_Read( sArgument, sOption, T_INT_GRID )
+        pFlowDirGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
         pFlowDirGrid%sFilename = trim(sArgument)
       end if
       flush(UNIT=LU_LOG)
@@ -480,7 +474,7 @@ subroutine control_setModelOptions(sControlFile)
           "Cannot read real data value" )
         pGrd%Cells%rRouteFraction = rValue
       else
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rRouteFraction = input_grd%rData
@@ -512,7 +506,7 @@ subroutine control_setModelOptions(sControlFile)
         call Assert( iStat == 0, "Cannot read real data value" )
         pGrd%Cells%rCFGI = rValue
       else
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rCFGI = input_grd%rData
@@ -862,7 +856,7 @@ subroutine control_setModelOptions(sControlFile)
           "Cannot read floating point data value" )
         pGrd%Cells%rElevation = rValue
       else
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rElevation = input_grd%rData
@@ -879,12 +873,12 @@ subroutine control_setModelOptions(sControlFile)
         call Assert( iStat == 0, &
           "Cannot read integer data value" )
         pSoilGroupGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, T_INT_GRID )
+          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
         pSoilGroupGrid%iData = iValue
         pSoilGroupGrid%sFilename = "Constant-value grid"
         !pGrd%Cells%iSoilGroup = iValue
       else
-        pSoilGroupGrid => grid_Read( sArgument, sOption, T_INT_GRID )
+        pSoilGroupGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
         pSoilGroupGrid%sFilename = trim(sArgument)
       end if
       flush(UNIT=LU_LOG)
@@ -941,7 +935,7 @@ subroutine control_setModelOptions(sControlFile)
         write(UNIT=LU_LOG,FMT=*)  "NOTE: any option specified with the 'WATER_CAPACITY' option will be ignored"
       else
         pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_FM_TABLE
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rSoilWaterCap = input_grd%rData
@@ -966,33 +960,36 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
+!      allocate(pSoilAWCGrid, stat=iStat)
+!      call assert(iStat==0,"Problem allocating memory for the " &
+!        //"Soil Available Water Capacity data object", &
+!        trim(__FILE__), __LINE__)
+
       if ( trim(sOption) == "CONSTANT" ) then
+
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
         call Assert( iStat == 0, "Cannot read real data value" )
-        pSoilAWCGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, T_SGL_GRID )
-        pSoilAWCGrid%rData = rValue
-      else
-        pSoilAWCGrid => grid_Read( sArgument, sOption, T_SGL_GRID )
-        pSoilAWCGrid%sFilename = trim(sArgument)
-      end if
-      write(UNIT=LU_LOG,FMT=*)  "Water capacity grid MINIMUM VALUE:", &
-         minval(pGrd%Cells%rSoilWaterCapInput)
-      write(UNIT=LU_LOG,FMT=*)  "Water capacity grid MAXIMUM VALUE:", &
-         maxval(pGrd%Cells%rSoilWaterCapInput)
+!        pSoilAWCGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+!          pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
+!        pSoilAWCGrid%rData = rValue
+        pArray_sgl => pGrd%Cells%rSoilWaterCapInput
+        call DAT(AWC_DATA)%initialize(sDescription=sItem, &
+           rConstant=rValue, &
+           pGrdBase=pGrd, &
+           pArray_real=pArray_sgl)
 
-      call Assert(maxval(pSoilAWCGrid%rData) <= 12.0 &
-         .and. maxval(pSoilAWCGrid%rData) >= 0., &
-         "Available water capacity must be in the range" &
-         //" from 0 to 12 inches [of water] per foot [of soil].",TRIM(__FILE__),__LINE__)
-      flush(UNIT=LU_LOG)
+      else
+
+        call DAT(AWC_DATA)%initialize(sDescription=sItem, &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          pGrdBase=pGrd, &
+          pArray_real=pArray_sgl)
+
+      end if
 
     else if (sItem == "WATER_CAPACITY_PROJECTION_DEFINITION") then
-      pConfig%sSoilAWC_PROJ4 = trim(sRecord)
-      call Assert(associated(pSoilAWCGrid), "The soil available water content grid must be specified " &
-        //"before the grid projection information can be specified.")
-      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
-        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
+      call DAT(AWC_DATA)%definePROJ4( trim(sRecord) )
 
     else if ( sItem == "INITIAL_SOIL_MOISTURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating initial moisture grid"
@@ -1004,7 +1001,7 @@ subroutine control_setModelOptions(sControlFile)
         call Assert( iStat == 0, "Cannot read real data value" )
         pGrd%Cells%rSoilMoisturePct = rValue
       else
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rSoilMoisturePct = input_grd%rData
@@ -1307,7 +1304,7 @@ subroutine control_setModelOptions(sControlFile)
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
       write(UNIT=LU_LOG,FMT=*) "Testing the ability to read from grid: "//dquote(sArgument)
-      input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+      input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
       if(.not. grid_Conform( pGrd, input_grd ) ) &
         write(UNIT=LU_LOG,FMT=*) "INPUT GRID DOES NOT ALIGN WITH PROJECT COORDINATES..."
       call stats_WriteMinMeanMax( LU_LOG, dquote(sArgument), input_grd%rData)
@@ -1324,14 +1321,14 @@ subroutine control_setModelOptions(sControlFile)
         pGrd%Cells%rSnowCover = rValue
       else if ( trim(sOption) == "ARC_GRID" ) then
         write(UNIT=LU_LOG,FMT=*) "Snow cover data will be read as an ARC grid"
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rSnowCover = input_grd%rData
         call grid_Destroy( input_grd )
       else if ( trim(sOption) == "SURFER" ) then
         write(UNIT=LU_LOG,FMT=*) "Snow cover data will be read as a SURFER grid"
-        input_grd => grid_Read( sArgument, sOption, T_SGL_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%rSnowCover = input_grd%rData
@@ -1588,7 +1585,7 @@ subroutine control_setModelOptions(sControlFile)
         call Assert( iStat == 0, "Cannot read integer data value" )
         pGrd%Cells%iStreamIndex = iValue
       else
-        input_grd => grid_Read( sArgument, sOption, T_INT_GRID )
+        input_grd => grid_Read( sArgument, sOption, DATATYPE_INT )
         call Assert( grid_Conform( pGrd, input_grd ), &
                       "Non-conforming grid" )
         pGrd%Cells%iStreamIndex = input_grd%iData

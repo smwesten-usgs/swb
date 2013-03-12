@@ -2,6 +2,7 @@
 if(TARGET__SWB_EXECUTABLE)
 
   add_executable(swb
+            data_factory.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
             et_jensen_haise.F90
@@ -15,7 +16,8 @@ if(TARGET__SWB_EXECUTABLE)
             meteorological_functions.F90
             model.F90
             control.F90
-            netcdf_support.F90
+            netcdf4_support.F90
+			netcdf_c_api_interfaces.F90
             RLE.F90
             runoff_curve_number.F90
             sm_thornthwaite_mather.F90
@@ -33,6 +35,7 @@ endif()
 if(TARGET__SWB_LIBRARY)
 
   add_library(swblib STATIC
+            data_factory.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
             et_jensen_haise.F90
@@ -44,7 +47,8 @@ if(TARGET__SWB_LIBRARY)
             irrigation.F90
             meteorological_functions.F90
             model.F90
-            netcdf_support.F90
+            netcdf4_support.F90
+			netcdf_c_api_interfaces.F90
             RLE.F90
             runoff_curve_number.F90
             sm_thornthwaite_mather.F90

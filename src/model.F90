@@ -8,6 +8,7 @@
 module model
 
   use types
+  use data_factory
   use swb_grid
   use stats
   use runoff_curve_number
@@ -25,7 +26,7 @@ module model
 #endif
 
 #ifdef NETCDF_SUPPORT
-  use netcdf_support
+  use netcdf4_support
 #endif
 
   implicit none
@@ -81,10 +82,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   type ( T_GENERAL_GRID ), pointer :: pSoilAWCGrid       ! pointer to soil AWC grid
   type ( T_GENERAL_GRID ), pointer :: pFlowDirGrid       ! pointer to flow direction grid
 
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC
-#endif
-
   ! [ LOCALS ]
   integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=T_INT) :: tj, ti
@@ -114,10 +111,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
   pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-     pGrd%rX1, pGrd%rY1, T_INT_GRID )
+     pGrd%rX1, pGrd%rY1, DATATYPE_INT )
 
   pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-     pGrd%rX1, pGrd%rY1, T_SGL_GRID )
+     pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -177,7 +174,13 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   end if
 
   call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
-  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
+
+  call DAT(AWC_DATA)%getvalues_real()
+  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
+
+!  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
 
   if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
     .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
@@ -395,9 +398,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
       pConfig%lFirstDayOfSimulation = lFALSE
     end do
 
-#ifdef NETCDF_SUPPORT
-    call model_write_NetCDF_attributes(pConfig, pGrd)
-#endif
   end if
 
   if(pConfig%lWriteToScreen) then
@@ -610,27 +610,10 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
     ! DISLIN plots
 
   ![LOCALS]
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC
-#endif
   integer (kind=T_INT) :: k
 
   ! finalize and close any open NetCDF or binary output files
   do k=1,iNUM_VARIABLES
-
-#ifdef NETCDF_SUPPORT
-    ! close any NetCDF files that have been opened for output
-    if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
-
-      pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-      call netcdf_check(nf90_close(pNC%iNCID))
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: closed NetCDF file "// &
-        TRIM(STAT_INFO(k)%sVARIABLE_NAME)//".nc"
-      flush(unit=LU_LOG)
-
-    end if
-
-#endif
 
     ! write the end date of the simulation into the header of
     ! the binary file (*.bin)
@@ -665,8 +648,8 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)
   call grid_Destroy(pGenericGrd_int)
-!  call grid_Destroy(pGenericGrd_short)
   call grid_Destroy(pGenericGrd_sgl)
+!  call grid_Destroy(pGenericGrd_short)
 
   ! how long did all this take, anyway?
   call cpu_time(rEndTime)
@@ -709,7 +692,7 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
           ! check to see if an existing downhill flow routing table exists
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
-        input_grd => grid_Read( sBuf, "ARC_GRID", T_INT_GRID )
+        input_grd => grid_Read( sBuf, "ARC_GRID", DATATYPE_INT )
 
         call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
 
@@ -720,19 +703,12 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
         trim(pConfig%sDynamicLanduseFilePrefix), iYear,trim(pConfig%sOutputFileSuffix)
       inquire( file=trim(sBuf), EXIST=lExists)
       if(lExists) then
-        input_grd => grid_Read( sBuf, "SURFER", T_INT_GRID )
+        input_grd => grid_Read( sBuf, "SURFER", DATATYPE_INT )
 
         call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
 
         iStat = 0
       endif
-!#ifdef NETCDF_SUPPORT
-!    case( CONFIG_LANDUSE_DYNAMIC_NETCDF )
-!call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, input_grd, &
-!         JULIAN_DAY(iYear, iMonth, iDay))
-!      pGrd%Cells%rGrossPrecip = input_grd%rData
-!      call grid_Destroy( input_grd )
-!#endif
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown landuse input type" )
@@ -793,7 +769,7 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
     case( CONFIG_PRECIP_ARC_GRID )
       write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
         trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-!      input_grd => grid_Read( sBuf, "ARC_GRID", T_SGL_GRID )
+!      input_grd => grid_Read( sBuf, "ARC_GRID", DATATYPE_REAL )
       call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
       pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
 
@@ -1842,7 +1818,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   iNumIterationsNochange = 0
 
   pTempGrid=>grid_Create( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_INT_GRID )
+    pGrd%rX1, pGrd%rY1, DATATYPE_INT )
 
   allocate(iOrderCol(pGrd%iNY*pGrd%iNX), iOrderRow(pGrd%iNY*pGrd%iNX), stat=iStat)
   call Assert( iStat == 0, &
@@ -3240,6 +3216,7 @@ subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
   call grid_Destroy(pSoilGroupGrid)
 
   pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
@@ -3291,53 +3268,6 @@ subroutine model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
 end subroutine model_PopulateFlowDirectionArray
-
-!--------------------------------------------------------------------------
-
-subroutine model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
-
-  ! [ ARGUMENTS ]
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pSoilAWCGrid     ! pointer to model grid
-
-  if( len_trim( pConfig%sSoilAWC_PROJ4 ) > 0 ) then
-
-    call echolog(" ")
-    call echolog("Transforming gridded data in file: "//dquote(pSoilAWCGrid%sFilename) )
-    call echolog("  FROM: "//squote(pConfig%sSoilAWC_PROJ4) )
-    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
-
-    call grid_Transform(pGrd=pSoilAWCGrid, &
-                        sFromPROJ4=pConfig%sSoilAWC_PROJ4, &
-                        sToPROJ4=pConfig%sBase_PROJ4 )
-
-    call Assert( grid_CompletelyCover( pGrd, pSoilAWCGrid ), &
-      "Transformed grid (available water capacity) doesn't completely cover your model domain.")
-
-    call grid_gridToGrid(pGrdFrom=pSoilAWCGrid,&
-                            rArrayFrom=pSoilAWCGrid%rData, &
-                            pGrdTo=pGrd, &
-                            rArrayTo=pGrd%Cells%rSoilWaterCapInput )
-
-  else
-
-    call Assert( grid_Conform( pGrd, pSoilAWCGrid ), &
-                      "Non-conforming AVAILABLE WATER CAPACITY grid. Filename: " &
-                      //dquote(pSoilAWCGrid%sFilename) )
-    pGrd%Cells%rSoilWaterCapInput = pSoilAWCGrid%rData
-
-  endif
-
-  call grid_Destroy(pSoilAWCGrid)
-
-  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_AWC" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
-
-end subroutine model_PopulateAvailableWaterCapacityArray
 
 !--------------------------------------------------------------------------
 

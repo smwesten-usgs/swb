@@ -806,7 +806,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   ! we need a grid data structure in order that we might call
   ! the grid-writing subroutines elsewhere in code
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_REAL)
 
 #ifdef DEBUG_PRINT
   write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
@@ -1209,7 +1209,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
     trim(__FILE__),__LINE__)
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+      pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   open(LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
@@ -1253,7 +1253,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
     write(UNIT=LU_LOG,FMT=*) k," : Attempting to read mask file: ", &
        TRIM(pConfig%BMASK(k)%sBasinMaskFilename)
     input_grd => grid_Read(TRIM(pConfig%BMASK(k)%sBasinMaskFilename), &
-       "ARC_GRID", T_SGL_GRID )
+       "ARC_GRID", DATATYPE_REAL )
     call Assert( grid_Conform( pGrd, input_grd ), &
               "Non-conforming grid - filename: " &
               // TRIM(pConfig%BMASK(k)%sBasinMaskFilename))
@@ -1365,7 +1365,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   type (T_GENERAL_GRID),pointer :: input_grd    ! Pointer to temporary grid for I/O
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+      pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   if(pConfig%iStartYearforCalculation<pConfig%iStartYear) &
     pConfig%iStartYearforCalculation = pConfig%iStartYear
@@ -1452,7 +1452,7 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       pConfig%iEndYearforCalculation
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+    pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   if(pConfig%iStartYearforCalculation<0) &
     pConfig%iStartYearforCalculation = pConfig%iStartYear
@@ -1631,7 +1631,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNY             ! Number of cells in the y-direction
-      write(UNIT=STAT_INFO(i)%iLU) T_SGL_GRID           ! Type of the grid
+      write(UNIT=STAT_INFO(i)%iLU) DATATYPE_REAL           ! Type of the grid
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iLengthUnits    ! length units code
       write(UNIT=STAT_INFO(i)%iLU) i                    ! STAT_INFO variable number

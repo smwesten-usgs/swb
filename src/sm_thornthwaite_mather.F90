@@ -57,7 +57,7 @@ subroutine sm_thornthwaite_mather_Configure ( sRecord )
      "No Soil-moisture retention table file was specified", &
      TRIM(__FILE__), __LINE__)
   write(UNIT=LU_LOG,FMT=*)"Reading ",trim(sOption)," for soil-moisture retention information"
-  gWLT => grid_Read( sOption, "SURFER", T_SGL_GRID )
+  gWLT => grid_Read( sOption, "SURFER", DATATYPE_REAL )
 
   write(UNIT=LU_LOG,FMT=*)"Read in the soil-moisture retention file with the following dimensions:"
   write(UNIT=LU_LOG,FMT=*)"iNX = ",gWLT%iNX

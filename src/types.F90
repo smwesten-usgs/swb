@@ -114,11 +114,6 @@ module types
   !> @}
 
 
-  integer (kind=T_INT), parameter :: iNC_INPUT = 1
-  integer (kind=T_INT), parameter :: iNC_OUTPUT = 2
-  integer (kind=T_INT), parameter :: iNC_OBSERVATION = 3
-
-
   !> @name Constants: Definitions for ANSI.sys-like text colors
   !> @{
   character (len=7), parameter :: sRED = char(27)//'[1;31m'
@@ -203,9 +198,22 @@ module types
   end type T_CELL
 
   ! Generic grid data type identifier constants
-  integer (kind=T_INT), public, parameter :: T_INT_GRID = 0       ! Integer data
-  integer (kind=T_INT), public, parameter :: T_SGL_GRID = 1       ! Real data
-  integer (kind=T_INT), public, parameter :: T_CELL_GRID = 2      ! SWB cell data
+  integer (kind=T_INT), parameter :: CONSTANT_GRID = 0
+  integer (kind=T_INT), parameter :: STATIC_GRID = 1
+  integer (kind=T_INT), parameter :: DYNAMIC_GRID = 2
+
+  integer (kind=T_INT), parameter :: DATATYPE_INT = 0
+  integer (kind=T_INT), parameter :: DATATYPE_REAL = 1
+  integer (kind=T_INT), parameter :: DATATYPE_CELL_GRID = 2
+  integer (kind=T_INT), parameter :: DATATYPE_SHORT = 3
+  integer (kind=T_INT), parameter :: DATATYPE_DOUBLE = 4
+
+  integer (kind=T_INT), parameter :: FILETYPE_ARC_ASCII = 0
+  integer (kind=T_INT), parameter :: FILETYPE_SURFER = 1
+  integer (kind=T_INT), parameter :: FILETYPE_NETCDF = 2
+  integer (kind=T_INT), parameter :: FILETYPE_NONE = 3
+
+
 
 !> @brief Type that contains the data for a grid.
 !>
@@ -219,9 +227,9 @@ module types
       integer (kind=T_INT) :: iNX                   ! Number of cells in the x-direction
       integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
       integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
-      integer (kind=T_INT) :: iDataType             ! Type of the grid
+      integer (kind=T_INT) :: iDataType             ! Data type contained in the grid (integer, real, SWB cell)
       character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
-      character (len=256)  :: sFilename             ! proj4 original file name that the data was read from
+      character (len=256)  :: sFilename             ! original file name that the data was read from
       real (kind=T_SGL)    :: rGridCellSize         ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
       real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
@@ -341,52 +349,6 @@ module types
     integer (kind=T_INT) :: iVarNum  ! T_STATS variable number
   end type T_SSF_FILES
 
-!if_defined NETCDF_SUPPORT
-  type T_NETCDF_FILE
-    integer(kind=T_INT) :: iNCID
-    character(len=64)  :: sFilename
-    character(len=24)  :: sVarName = ""
-    character(len=24) :: sUnits
-    integer(kind=T_INT) :: iProjID
-!    integer(kind=T_INT) :: iCRSID
-    integer(kind=T_INT) :: iVarID
-    integer(kind=T_INT) :: iVarType
-!    integer(kind=T_INT) :: iLatVarID
-!    integer(kind=T_INT) :: iLonVarID
-    integer(kind=T_INT) :: iXVarID
-    integer(kind=T_INT) :: iYVarID
-    logical(kind=T_LOGICAL) :: lYVarBeforeXVar = lTRUE
-    integer(kind=T_INT) :: iXDimID
-    integer(kind=T_INT) :: iYDimID
-    integer(kind=T_INT) :: iTimeDimID
-    integer(kind=T_INT) :: iTimeVarID
-    integer(kind=T_INT) :: iOriginMonth
-    integer(kind=T_INT) :: iOriginDay
-    integer(kind=T_INT) :: iOriginYear
-    integer(kind=T_INT) :: iOriginJulianDay
-    integer(kind=T_INT) :: iStartJulianDay
-    integer(kind=T_INT) :: iEndJulianDay
-    real(kind=T_DBL) :: rX_LowerLeft
-    real(kind=T_DBL) :: rY_LowerLeft
-    real(kind=T_DBL) :: rX_UpperRight
-    real(kind=T_DBL) :: rY_UpperRight
-    real(kind=T_SGL) :: rGridCellSize
-    integer(kind=T_INT) :: iX_NumGridCells
-    integer(kind=T_INT) :: iY_NumGridCells
-    logical(kind=T_LOGICAL) :: lInterpolate = lFALSE
-    real (kind=T_DBL) :: rScaleFactor = 1_T_DBL
-    real (kind=T_DBL) :: rAddOffset = 0_T_DBL
-    character(len=24) :: sProjectionName = "wtm"
-    character(len=12) :: sProjectionUnits = "meters"
-    real (kind=T_DBL) :: rFalseEasting = 520000_T_DBL      ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rFalseNorthing = -4480000_T_DBL   ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rLongOrigin = -90_T_DBL     ! defaults for WTM 83/91
-    real (kind=T_DBL) :: rLatOrigin = 0_T_DBL        ! defaults for WTM 83/91
-    integer (kind=T_INT) :: iZoneNumber = 0
-    character(len=48) :: sEllipsoidName = "GRS 1980"
-    integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
-  end type T_NETCDF_FILE
-!end_if
 
   !> Container for calendar lookup information
   type T_MONTH
@@ -798,6 +760,12 @@ module types
       ! PROJ4 string for Flow Direction Grid
       character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
 
+      ! PROJ4 string for PRECIPITATION Grid
+      character (len=256) :: sPrecipitationGrid_PROJ4 = repeat(" ", 256)
+
+      ! PROJ4 string for AIR TEMPERATURE Grid
+      character (len=256) :: sTemperatureGrid_PROJ4 = repeat(" ", 256)
+
       ! Filename for basin mask table
       character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
 
@@ -883,20 +851,6 @@ module types
        ! data structure to hold information about which cells we
        ! want to write our SSF files for
        type (T_SSF_FILES), dimension(:), pointer :: SSF_FILES
-
-#ifdef NETCDF_SUPPORT
-      ! define a pointer to structure holding NETCDF file information
-      type (T_NETCDF_FILE), dimension(:,:), pointer :: NETCDF_FILE  ! NETCDF objects
-      character(len=48) :: sProjectionName = "wtm"
-      real (kind=T_DBL) :: rFalseEasting = 520000_T_DBL      ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rFalseNorthing = -4480000_T_DBL   ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rLongOrigin = -90_T_DBL     ! defaults for WTM 83/91
-      real (kind=T_DBL) :: rLatOrigin = 0_T_DBL        ! defaults for WTM 83/91
-      integer (kind=T_INT) :: iZoneNumber = 0
-      character(len=48) :: sEllipsoidName = "GRS 1980"
-      integer (kind=T_INT) :: iEllipsoidID = 11     ! defaults for WTM 83/91
-      logical (kind=T_LOGICAL) :: lNetCDF_FlipVertical = lFALSE
-#endif
 
 #ifdef STREAM_INTERACTIONS
  	  !! Added by Vic Kelson, February 2008
@@ -1091,6 +1045,7 @@ module types
 
   interface asCharacter
     module procedure int2char
+    module procedure c_size_t2char
     module procedure real2char
     module procedure dbl2char
   end interface asCharacter
@@ -1243,6 +1198,7 @@ end subroutine assert_module_details_sub
 
     call writeMultiLine(sMessage, LU_STD_OUT )
     call writeMultiLine(sMessage, LU_LOG )
+    flush(LU_LOG)
 
   end subroutine echolog
 
@@ -2228,8 +2184,6 @@ function julian_day ( iYear, iMonth, iDay, iOrigin ) result(iJD)
         /12_T_INT - 3_T_INT *((i + 4900_T_INT + (j - 14_T_INT) &
         /12_T_INT)/100_T_INT)/4_T_INT ) - iOffset
 
-  return
-
 end function julian_day
 
 !--------------------------------------------------------------------------
@@ -2334,6 +2288,19 @@ function int2char(iValue)  result(sBuf)
   return
 
 end function int2char
+
+!--------------------------------------------------------------------------
+
+!> Convert an integer value into a formatted character string
+function c_size_t2char(iValue)  result(sBuf)
+
+  integer (kind=c_size_t) :: iValue
+  character (len=256) :: sBuf
+
+  write(UNIT=sBuf,FMT="(i14)") iValue
+  sBuf = ADJUSTL(sBuf)
+
+end function c_size_t2char
 
 !--------------------------------------------------------------------------
 
@@ -2493,10 +2460,107 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
   iMonth = iJ
   iDay = iK
 
-  return
-
 end subroutine gregorian_date
 
   !> @}
+
+function asCSV(sText)  result(sResult)
+
+  character (len=*) :: sText
+  character (len=256) :: sResult
+
+   character (len=256 ) :: sRecord
+  character (len=256) :: sItem
+
+
+  sRecord = trim(adjustl(sText))
+
+  sResult = ""
+  sItem = ""
+
+  do
+
+    call chomp(sRecord, sItem)
+    sResult = trim(sResult)//" "//trim(sItem)
+
+    if(len_trim(sRecord) == 0 ) exit
+
+    sResult = trim(sResult)//", "
+
+  enddo
+
+  sResult = adjustl(sResult)
+
+end function asCSV
+
+function char_ptr_to_fortran_string( cpCharacterPtr )  result(sText)
+
+  use iso_c_binding
+  implicit none
+
+  type(c_ptr) :: cpCharacterPtr
+  character(len=256) :: sText
+  character (kind=c_char), pointer, dimension(:) :: fptr
+  integer (kind=c_int) :: iCount
+
+    sText = repeat(" ", 256)
+
+    call c_f_pointer(cpCharacterPtr, fptr, [256])
+    iCount = 0
+    do
+      iCount = iCount + 1
+      if(index(string=fptr(iCount), substring=c_null_char) /= 0) exit
+      sText(iCount:iCount) = fptr(iCount)
+
+    enddo
+
+end function char_ptr_to_fortran_string
+
+function c_to_fortran_string( cCharacterString )  result(sText)
+
+  use iso_c_binding
+  implicit none
+
+  character (len=*) :: cCharacterString
+  character(len=256) :: sText
+  integer (kind=T_INT) :: iIndex
+
+  sText = repeat(" ", 256)
+
+  iIndex = index(string=cCharacterString, substring=c_null_char)
+
+  if(iIndex == 0) then
+
+    sText = trim(adjustl(cCharacterString))
+
+  else
+
+    sText = cCharacterString(1:iIndex-1)
+
+  endif
+
+end function c_to_fortran_string
+
+function fortran_to_c_string( sText )  result(cCharacterString)
+
+  use iso_c_binding
+  implicit none
+
+  character (len=*) :: sText
+  character(len=:), allocatable :: cCharacterString
+  integer (kind=T_INT) :: iIndex
+
+  iIndex = index(string=sText, substring=c_null_char)
+
+  if (iIndex == 0) then
+    allocate( character (len=len(sText)+1 ):: cCharacterString )
+    cCharacterString = sText//c_null_char
+  else
+    allocate( character (len=iIndex) :: cCharacterString )
+    cCharacterString  = sText(1:iIndex)
+  endif
+
+end function fortran_to_c_string
+
 
 end module types
