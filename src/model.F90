@@ -175,7 +175,13 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
 
   call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
 
-  call DAT(AWC_DATA)%getvalues_real()
+  call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
+
+  pGrd%Cells%rSoilWaterCapInput = pGrd%rData
+
+  write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
+  write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
+
   pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
@@ -321,39 +327,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
 
     iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
 
-    if(.not. pConfig%lFirstDayOfSimulation) then
-
-    ! calculate percent moisture; when landuse changes, it will assume
-    ! the same percent moisture. This implies a discontinuity in
-    ! the mass balance from one year to the next.
-
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-!       do iRow=1,pGrd%iNY
-!         do iCol=1,pGrd%iNX
-!           cel => pGrd%Cells(iCol,iRow)
-!           if(cel%rSoilWaterCap > rZERO) then
-!             cel%rSoilMoisturePct = cel%rSoilMoisture &
-!               / cel%rSoilWaterCap * 100.
-!
-! #ifdef THORNTHWAITE_MATHER_TABLE
-!             ! look up soil moisture in T-M tables
-!             cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-!                 cel%rSM_AccumPotentWatLoss)
-! #else
-!             ! calculate soil moisture w equation SUMMARIZING T-M tables
-!             cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-!                 cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
-! #endif
-!           else
-!             cel%rSoilMoisturePct = rZERO
-!             cel%rSoilMoisture = rZERO
-!           endif
-!
-!         enddo
-!       enddo
-
-    endif
+    if(.not. pConfig%lFirstDayOfSimulation) &
+       ! calculate percent moisture; when landuse changes, it will assume
+       ! the same percent moisture. This implies a discontinuity in
+       ! the mass balance from one year to the next.
+       call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
     if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
       call assert( lFALSE, &
@@ -425,9 +403,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
     end if
   end do
 
-  ! Initialize precipitation value for current day
+!***********************************************************************
+
+!  ! Initialize precipitation value for current day
   call model_GetDailyPrecipValue(pGrd, pConfig, pTS%rPrecip, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear)
+    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
   ! Initialize temperature values for current day
   call model_GetDailyTemperatureValue(pGrd, pConfig, &
@@ -444,6 +424,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
 
   if(pConfig%lWriteToScreen) then
     write(UNIT=LU_STD_OUT,FMT="(t39,a,t53,a,t69,a)") "min","mean","max"
+    call stats_WriteMinMeanMax(LU_STD_OUT,"Gross Precipitation (in)" , pGrd%Cells(:,:)%rGrossPrecip )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Minimum Temp (F)" , pGrd%Cells(:,:)%rTMin )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Mean Temp (F)" , pGrd%Cells(:,:)%rTAvg )
     call stats_WriteMinMeanMax(LU_STD_OUT,"Maximum Temp (F)" , pGrd%Cells(:,:)%rTMax )
@@ -746,7 +727,7 @@ end function if_GetDynamicLanduseValue
 !
 ! SOURCE
 
-subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYear)
+subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYear, iJulianDay)
   !! Populates Gross precipitation value on a cell-by-cell basis
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -756,41 +737,20 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   integer (kind=T_INT), intent(in) :: iMonth
   integer (kind=T_INT), intent(in) :: iDay
   integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=T_INT), intent(in) :: iJulianDay
   ! [ LOCALS ]
   real (kind=T_DBL) :: rMin, rMean, rMax, rSum
   integer (kind=T_INT) :: iCount, iNegCount
   character (len=256) sBuf
 
-  select case( pConfig%iConfigurePrecip )
 
-    case( CONFIG_PRECIP_SINGLE_STATION)
-      pGrd%Cells(:,:)%rGrossPrecip = rPrecip  ! use a single value for entire grid
+  call DAT(PRECIP_DATA)%set_constant(rPrecip)
 
-    case( CONFIG_PRECIP_ARC_GRID )
-      write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-        trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-!      input_grd => grid_Read( sBuf, "ARC_GRID", DATATYPE_REAL )
-      call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
-      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
+  call DAT(PRECIP_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay)
 
-    case( CONFIG_PRECIP_SURFER_GRID )
-      write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-        trim(pConfig%sPrecipFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-      call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
-      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
-
-#ifdef NETCDF_SUPPORT
-    case( CONFIG_PRECIP_NETCDF )
-      call netcdf_read( iGROSS_PRECIP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, &
-        JULIAN_DAY(iYear, iMonth, iDay))
-      pGrd%Cells%rGrossPrecip = pGenericGrd_sgl%rData
-!      call grid_Destroy( input_grd )
-#endif
-
-    case default
-      call Assert ( lFALSE, "Internal error -- unknown precipitation input type", &
-        trim(__FILE__),__LINE__)
-  end select
+  pGrd%Cells%rGrossPrecip = pGrd%rData
 
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
@@ -958,39 +918,6 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
     elsewhere
       pGrd%Cells%rTMax = rMeanTMAX
     endwhere
-
-#ifdef NETCDF_SUPPORT
-  case( CONFIG_TEMPERATURE_NETCDF )
-    call netcdf_read( iMAX_TEMP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-    if (iCount_valid > 0) then
-      rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-                / real(iCount_valid, kind=T_SGL)
-    else
-      rMeanTMAX = 0_T_SGL
-    endif
-    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
-    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMax = rMeanTMAX
-    endwhere
-
-    call netcdf_read( iMIN_TEMP, iNC_INPUT, pConfig, pGrd, pGenericGrd_sgl, JULIAN_DAY(iYear, iMonth, iDay))
-    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-    if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-                / real(iCount_valid, kind=T_SGL)
-    else
-      rMeanTMIN = 0_T_SGL
-    endif
-    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
-    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMin = rMeanTMIN
-    endwhere
-#endif
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
@@ -3215,6 +3142,11 @@ subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
 
   call grid_Destroy(pSoilGroupGrid)
 
+  !********************************************************
+  !*** HACK ALERT !!!
+  !********************************************************
+  where (pGrd%Cells%iSoilGroup <= 0) pGrd%Cells%iSoilGroup = 4
+
   pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
 
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
@@ -3595,43 +3527,6 @@ integer (kind=T_INT), intent(in) :: iOutputType
    end if
 
 end subroutine model_WriteGrids
-
-#ifdef NETCDF_SUPPORT
-
-subroutine model_write_NetCDF_attributes(pConfig, pGrd)
-  ! this code block initializes NetCDF output files for any
-  ! valid SWB variable, as specified in the OUTPUT_OPTIONS
-  ! input block
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
-    ! model options, flags, and other settings
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: k
-  type (T_NETCDF_FILE), pointer :: pNC
-
-  do k=1,iNUM_VARIABLES
-
-    if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
-
-      pNC => pConfig%NETCDF_FILE(k,iNC_OUTPUT)
-      pNC%sVarName = TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-      pNC%sUnits =  TRIM(STAT_INFO(k)%sUNITS)
-      pNC%rScaleFactor = STAT_INFO(k)%rNC_MultFactor
-      pNC%rAddOffset = STAT_INFO(k)%rNC_AddOffset
-      pNC%iNCID = netcdf_create(TRIM(pNC%sVarName)//".nc")
-      call netcdf_write_attributes(k, iNC_OUTPUT, pConfig, pGrd)
-      write(unit=LU_LOG,FMT="('Wrote attributes to NetCDF file--')")
-      write(unit=LU_LOG,FMT="('      k: ',i4,'  (',a,')')") k,TRIM(pNC%sVarName)
-      write(unit=LU_LOG,FMT="('      NDIC: ',i4)") pNC%iNCID
-
-    end if
-
-  end do
-
-end subroutine model_write_NetCDF_attributes
-
-#endif
 
 ! read a single line from the time-series file and return a pointer to the values
 subroutine model_ReadTimeSeriesFile(pTS)

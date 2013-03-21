@@ -200,7 +200,9 @@ module types
   ! Generic grid data type identifier constants
   integer (kind=T_INT), parameter :: CONSTANT_GRID = 0
   integer (kind=T_INT), parameter :: STATIC_GRID = 1
-  integer (kind=T_INT), parameter :: DYNAMIC_GRID = 2
+  integer (kind=T_INT), parameter :: STATIC_NETCDF_GRID = 2
+  integer (kind=T_INT), parameter :: DYNAMIC_GRID = 3
+  integer (kind=T_INT), parameter :: DYNAMIC_NETCDF_GRID = 4
 
   integer (kind=T_INT), parameter :: DATATYPE_INT = 0
   integer (kind=T_INT), parameter :: DATATYPE_REAL = 1
@@ -212,6 +214,11 @@ module types
   integer (kind=T_INT), parameter :: FILETYPE_SURFER = 1
   integer (kind=T_INT), parameter :: FILETYPE_NETCDF = 2
   integer (kind=T_INT), parameter :: FILETYPE_NONE = 3
+
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_INT = 0
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_REAL = 1
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_CELL_GRID = 2
+  integer (kind=T_INT), parameter :: GRID_DATATYPE_ALL = 3
 
 
 
@@ -230,7 +237,7 @@ module types
       integer (kind=T_INT) :: iDataType             ! Data type contained in the grid (integer, real, SWB cell)
       character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
       character (len=256)  :: sFilename             ! original file name that the data was read from
-      real (kind=T_SGL)    :: rGridCellSize         ! size of one side of a grid cell
+      real (kind=T_DBL)    :: rGridCellSize         ! size of one side of a grid cell
       integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
       real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
       real (kind=T_DBL)    :: rY0, rY1              ! World-coordinate range in Y
@@ -240,6 +247,7 @@ module types
       real (kind=T_SGL) :: rNoDataValue
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
+      real (kind=c_float), dimension(:,:), allocatable :: rDist
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
@@ -775,8 +783,8 @@ module types
       character (len=256) :: sImageFilePath = "images"
 
       ! Target prefixes for output files
-      character (len=256) :: sOutputFilePrefix = "swb"
-      character (len=256) :: sFutureFilePrefix = "swb_future"
+      character (len=256) :: sOutputFilePrefix = "swb_"
+      character (len=256) :: sFutureFilePrefix = "swb_future_"
 
       ! Target suffix for output files
       character (len=256) :: sOutputFileSuffix = "asc"

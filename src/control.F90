@@ -40,9 +40,6 @@ subroutine control_setModelOptions(sControlFile)
                                             ! pointer to data structure that
                                                    ! holds parameters for creating
                                                    ! DISLIN plots
-#ifdef NETCDF_SUPPORT
-  type (T_NETCDF_FILE), pointer :: pNC => null            ! pointer to struct containing NetCDF info
-#endif
 
   type (T_TIME_SERIES_FILE), pointer :: pTSt
 
@@ -57,6 +54,10 @@ subroutine control_setModelOptions(sControlFile)
   character (len=256) :: sItem                    ! Key word read from sRecord
   character (len=256) :: sOption                  ! Key word read from sRecord
   character (len=256) :: sArgument                ! Key word read from sRecord
+  character (len=256) :: sArgument2               ! Key word read from sRecord
+  character (len=256) :: sArgument3               ! Key word read from sRecord
+  character (len=256) :: sArgument4               ! Key word read from sRecord
+  character (len=256) :: sArgument5               ! Key word read from sRecord
   character (len=256) :: sDateStr, sDateStrPretty ! hold date and time of initiation of run
   character(len=256) :: sBuf
   integer (kind=T_INT) :: iNX                     ! Number of cells in the x-direction
@@ -78,6 +79,8 @@ subroutine control_setModelOptions(sControlFile)
   character (len=8) :: sDate
   character (len=10) :: sTime
   character (len=5) :: sTZ
+
+
 
   call date_and_time(sDate,sTime,sTZ)
 
@@ -102,11 +105,6 @@ subroutine control_setModelOptions(sControlFile)
   call Assert( iStat == 0, &
      "Could not allocate memory for graph control data structure")
 
-#ifdef NETCDF_SUPPORT
-  ALLOCATE (pConfig%NETCDF_FILE(iNUM_VARIABLES,3), STAT=iStat)
-  call Assert( iStat == 0, &
-     "Could not allocate memory for NETCDF file info data structure")
-#endif
 
   ALLOCATE (pTSt, STAT=iStat)
   call Assert( iStat == 0, &
@@ -115,6 +113,10 @@ subroutine control_setModelOptions(sControlFile)
   write (UNIT=LU_LOG,FMT=*) "Running ",trim(sControlFile)
 
   ! Initialize the module variables - set default program options
+
+  DAT(PRECIP_DATA)%sVariableName_z = "prcp"
+  DAT(TMIN_DATA)%sVariableName_z = "tmin"
+  DAT(TMAX_DATA)%sVariableName_z = "tmax"
 
   pConfig%sTimeSeriesFilename = ""
   pConfig%sLanduseLookupFilename = ""
@@ -203,7 +205,7 @@ subroutine control_setModelOptions(sControlFile)
       if( len_trim(sRecord) == 0 ) then
 
         rGridCellSize = rTemp
-        pGrd => grid_Create(iNX, iNY, rX0, rY0, rGridCellSize, DATATYPE_CELL_GRID)
+        pGrd => grid_Create(iNX, iNY, rX0, rY0, rGridCellSize, GRID_DATATYPE_ALL)
 
       else
 
@@ -218,10 +220,10 @@ subroutine control_setModelOptions(sControlFile)
         call Assert ( iStat == 0, "Failed to read grid cell size" )
         ! Now, build the grid
 
-        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_CELL_GRID)
+        pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_ALL)
         call assert(pGrd%rGridCellSize == rGridCellSize, "Grid cell size entered in the " &
           //"control file ("//trim(asCharacter(rGridCellSize))//")~does not" &
-          //" match calculated grid cell size ("//trim(real2char(pGrd%rGridCellSize)) &
+          //" match calculated grid cell size ("//trim(asCharacter(pGrd%rGridCellSize)) &
           //"). ~Check the control file.", &
           trim(__FILE__), __LINE__)
 
@@ -234,7 +236,7 @@ subroutine control_setModelOptions(sControlFile)
 
       pConfig%iNumGridCells = iNX * iNY
       pConfig%iNX = pGrd%iNX; pConfig%iNY = pGrd%iNY
-      pConfig%rX0 = pGrd%rX0; pCOnfig%rX1 = pGrd%rX1
+      pConfig%rX0 = pGrd%rX0; pConfig%rX1 = pGrd%rX1
       pConfig%rY0 = pGrd%rY0; pConfig%rY1 = pGrd%rY1
       pConfig%rGridCellSize = pGrd%rGridCellSize
 
@@ -286,46 +288,58 @@ subroutine control_setModelOptions(sControlFile)
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
       if ( str_compare(sOption,"SINGLE_STATION") ) then
-        pConfig%iConfigurePrecip = CONFIG_PRECIP_SINGLE_STATION
         write(UNIT=LU_LOG,FMT=*) "  Precip data will be read for a single station"
         pConfig%lGriddedData = lFALSE
-      else
-        if ( str_compare(sOption,"ARC_GRID") ) then
-          pConfig%iConfigurePrecip = CONFIG_PRECIP_ARC_GRID
-          write(UNIT=LU_LOG,FMT=*) "Precip data will be read as a series of ARC grids"
-          pConfig%sPrecipFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
-          TRIM(pConfig%sPrecipFilePrefix)
+        call DAT(PRECIP_DATA)%initialize(sDescription=sItem, &
+           rConstant=0.0 )
+      elseif(str_compare(sOption,"ARC_GRID") &
+             .or. str_compare(sOption,"SURFER") ) then
+        call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilenameTemplate=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
           pConfig%lGriddedData = lTRUE
-        else if ( str_compare(sOption,"SURFER") ) then
-          pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER_GRID
-          write(UNIT=LU_LOG,FMT=*) "Precip data will be read as a series of SURFER grids"
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for PRECIP data: ", &
-          TRIM(pConfig%sPrecipFilePrefix)
-          pConfig%lGriddedData = lTRUE
+
 #ifdef NETCDF_SUPPORT
-        else if( str_compare(sOption,"NETCDF") ) then
-          pConfig%iConfigurePrecip = CONFIG_PRECIP_NETCDF
-          write(UNIT=LU_LOG,FMT=*) &
-            "Precip data will be read from a NetCDF file"
-          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%iNCID = &
-              netcdf_open(TRIM(sArgument))
-          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%sFilename = &
-              TRIM(sArgument)
-          call Chomp ( sRecord, sArgument )
-          call netcdf_info(pConfig, iGROSS_PRECIP,iNC_INPUT, TRIM(sArgument))
-          pConfig%NETCDF_FILE(iGROSS_PRECIP,iNC_INPUT)%sVarName = TRIM(sArgument)
-          call netcdf_chk_extent(pConfig,iGROSS_PRECIP,iNC_INPUT,pGrd)
+      else if( str_compare(sOption,"NETCDF") ) then
+
+          ! initialize DAT object for precip data
+          call DAT(PRECIP_DATA)%initialize_netcdf( &
+            sDescription=trim(sItem), &
+            sFilenameTemplate = trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+!          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%iNCID = &
+!              netcdf_open(TRIM(sArgument))
+!          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%sFilename = &
+!              TRIM(sArgument)
+
+!          call netcdf_info(pConfig, iGROSS_PRECIP,iNC_INPUT, TRIM(sArgument))
+!          pConfig%NETCDF_FILE(iGROSS_PRECIP,iNC_INPUT)%sVarName = TRIM(sArgument)
+!          call netcdf_chk_extent(pConfig,iGROSS_PRECIP,iNC_INPUT,pGrd)
           pConfig%lGriddedData = lTRUE
 #endif
-        else
-          call Assert( .false._T_LOGICAL, "Illegal precipitation input format specified" )
-        end if
+      else
+        call Assert( lFALSE , "Illegal precipitation input format specified" )
       end if
       flush(UNIT=LU_LOG)
 
-    else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
+    else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%sVariableName_x = trim(sArgument)
 
+    else if ( str_compare(sItem,"NETCDF_PRECIP_Y_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%sVariableName_y = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_PRECIP_Z_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%sVariableName_z = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_PRECIP_TIME_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%sVariableName_time = trim(sArgument)
+
+    else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
 
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
@@ -360,14 +374,18 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%lGriddedData = lTRUE
 #ifdef NETCDF_SUPPORT
         else if( trim(sOption) == "NETCDF" ) then
-          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
-          write(UNIT=LU_LOG,FMT=*) &
-            "Temperature data will be read from a NetCDF file"
-          pConfig%NC_TMAX_VarName = TRIM(sArgument)
+
+          ! initialize DAT object for precip data
+
+!          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
+!          write(UNIT=LU_LOG,FMT=*) &
+!            "Temperature data will be read from a NetCDF file"
+!          pConfig%NC_TMAX_VarName = TRIM(sArgument)
 
           ! read in the NetCDF variable that corresponds to TMIN
           call Chomp ( sRecord, sArgument )
-          pConfig%NC_TMIN_VarName = TRIM(sArgument)
+
+!          pConfig%NC_TMIN_VarName = TRIM(sArgument)
 
 #endif
         else
@@ -376,6 +394,38 @@ subroutine control_setModelOptions(sControlFile)
         endif
       end if
       flush(UNIT=LU_LOG)
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%sVariableName_x = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_Y_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%sVariableName_y = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_Z_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%sVariableName_z = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_TIME_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%sVariableName_time = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_X_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%sVariableName_x = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_Y_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%sVariableName_y = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_Z_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%sVariableName_z = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_TIME_VAR") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
 
     else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
       pConfig%sTemperatureGrid_PROJ4 = trim(sRecord)
@@ -533,9 +583,9 @@ subroutine control_setModelOptions(sControlFile)
 #ifdef NETCDF_SUPPORT
 
     else if ( sItem == "GRID_FLIP_VERTICAL" ) then
-      call echolog(dquote("GRID_FLIP_VERTICAL")//" is enabled.")
-      call echolog("SWB will FLIP *NetCDF* CLIMATE GRID VALUES VERTICALLY.")
-      pConfig%lNetCDF_FlipVertical = lTRUE
+!      call echolog(dquote("GRID_FLIP_VERTICAL")//" is enabled.")
+!      call echolog("SWB will FLIP *NetCDF* CLIMATE GRID VALUES VERTICALLY.")
+!      pConfig%lNetCDF_FlipVertical = lTRUE
 
 #endif
 
@@ -972,19 +1022,16 @@ subroutine control_setModelOptions(sControlFile)
 !        pSoilAWCGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
 !          pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 !        pSoilAWCGrid%rData = rValue
-        pArray_sgl => pGrd%Cells%rSoilWaterCapInput
+
         call DAT(AWC_DATA)%initialize(sDescription=sItem, &
-           rConstant=rValue, &
-           pGrdBase=pGrd, &
-           pArray_real=pArray_sgl)
+           rConstant=rValue )
 
       else
 
         call DAT(AWC_DATA)%initialize(sDescription=sItem, &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
-          pGrdBase=pGrd, &
-          pArray_real=pArray_sgl)
+          iDataType=DATATYPE_REAL )
 
       end if
 
