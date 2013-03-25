@@ -1,4 +1,5 @@
 :: cmake -G "Mi:: remove existing Cmake cache and directories
+:: remove existing Cmake cache and directories
 rmdir /S /Q CMake*
 del /S /Q *.txt
 
@@ -63,6 +64,10 @@ set CMAKE_RANLIB=%MINGWBASE%\bin\ranlib.exe
 set INCLUDE=%MINGWBASE%\include
 set LIB=%MINGWBASE%\lib
 set LIBRARY_PATH=%MINGWBASE%\lib
+
+:: set compiler-specific link and compile flags
+set LDFLAGS="-flto"
+set CPPFLAGS="-DgFortran"
 
 set CMAKE_INCLUDE_PATH=%INCLUDE%
 set CMAKE_LIBRARY_PATH=%LIB%
