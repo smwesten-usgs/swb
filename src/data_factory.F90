@@ -136,7 +136,6 @@ contains
 
 subroutine initialize_gridded_data_object_sub( &
    this, &
-   pBaseGrid,
    sDescription, &
    sFileType, &
    iDataType, &
@@ -327,9 +326,17 @@ subroutine getvalues_constant_sub( this, pGrdBase )
       call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
       call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
 
-      call grid_Transform(pGrd=this%pGrdNative, &
+      ! only invoke the transform procedure if the PROJ4 strings are different
+      if (.not. str_compare(this%sSourcePROJ4_string,pGrdBase%sPROJ4_string)) then
+
+        print *, dQuote(this%sSourcePROJ4_string)
+        print *, dQuote(pGrdBase%sPROJ4_string)
+
+        call grid_Transform(pGrd=this%pGrdNative, &
                           sFromPROJ4=this%sSourcePROJ4_string, &
                           sToPROJ4=pGrdBase%sPROJ4_string )
+
+      endif
 
       call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
         "Transformed grid read from file "//dquote(this%sSourceFilename) &
@@ -659,7 +666,7 @@ end subroutine set_constant_value_real
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
     ! [ LOCALS ]
-    integer (kind=T_INT) :: iRetVal
+    integer (kind=T_INT), dimension(4) :: iRetVal
     real (kind=T_SGL) :: rMultiplier = 10.
 
     ! ensure that there is sufficient coverage on all sides of grid
@@ -675,19 +682,19 @@ end subroutine set_constant_value_real
     ! now transform the project coordinates to native coordinates so we can
     ! use the native coordinate boundaries to "cookie-cut" only the data
     ! pertinent to our project area.
-    iRetVal = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
+    iRetVal(1) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
                 this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
                 [this%GRID_BOUNDS%rXll], [this%GRID_BOUNDS%rYll] )
 
-    iRetVal = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
+    iRetVal(2) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
                 this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
                 [this%GRID_BOUNDS%rXur], [this%GRID_BOUNDS%rYur] )
 
-    iRetVal = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
+    iRetVal(3) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
                 this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
                 [this%GRID_BOUNDS%rXul], [this%GRID_BOUNDS%rYul] )
 
-    iRetVal = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
+    iRetVal(4) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
                 this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
                 [this%GRID_BOUNDS%rXlr], [this%GRID_BOUNDS%rYlr] )
 

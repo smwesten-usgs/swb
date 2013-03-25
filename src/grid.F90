@@ -1762,17 +1762,17 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
   integer (kind=T_INT) :: iStartingColNum, iStartingRowNum
   integer (kind=T_INT) :: iStat
 
-!  rXleft = max(pGrd%rX0, rX - 0.5_T_DBL * pGrd%rGridCellSize)
-!  rXright = min(pGrd%rX1, rX + 0.5_T_DBL * pGrd%rGridCellSize)
-!  rYtop = min(pGrd%rY1, rY + 0.5_T_DBL * pGrd%rGridCellSize)
-!  rYbottom = max(pGrd%rY0, rY - 0.5_T_DBL * pGrd%rGridCellSize)
+  rXleft = max(pGrd%rX0, rX - 0.75_T_DBL * pGrd%rGridCellSize)
+  rXright = min(pGrd%rX1, rX + 0.75_T_DBL * pGrd%rGridCellSize)
+  rYtop = min(pGrd%rY1, rY + 0.75_T_DBL * pGrd%rGridCellSize)
+  rYbottom = max(pGrd%rY0, rY - 0.75_T_DBL * pGrd%rGridCellSize)
 
   ! this will get us close to where we need to be; however, since the
   ! transformed grid may contain significant nonlinearity between
   ! adjacent grid coordinates, we need to do a more thorough search
   ! in the neighborhood of the
-  iStartingColNum = grid_GetGridColNum(pGrd,rX)
-  iStartingRowNum = grid_GetGridColNum(pGrd,rX)
+!  iStartingColNum = grid_GetGridColNum(pGrd,rX)
+!  iStartingRowNum = grid_GetGridColNum(pGrd,rX)
 
   if ( .not. allocated(pGrd%rDist) ) then
     ALLOCATE (pGrd%rDist(pGrd%iNX, pGrd%iNY), STAT=iStat)
@@ -1899,42 +1899,69 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   ! [ LOCALS ]
   integer (kind=T_INT) :: iCol, iRow
   integer (kind=T_INT), dimension(2) :: iColRow
-  integer (kind=T_INT) :: iSrc_Col, iSrc_Row
+  integer (kind=T_INT) :: iSrcCol, iSrcRow
 
   ! must ensure that there are coordinates associated with the "to" grid...
   ! by default, these are left unpopulated during a "normal" swb run
   if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
-  do iRow=1,pGrdTo%iNY
-    do iCol=1,pGrdTo%iNX
 
-       iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+
+        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
                    rX=real(pGrdTo%rX(iCol, iRow), kind=T_DBL), &
                    rY=real(pGrdTo%rY(iCol, iRow), kind=T_DBL))
 
-       call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-         "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-         trim(__FILE__), __LINE__)
+        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+          trim(__FILE__), __LINE__)
 
-      call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-        "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-        trim(__FILE__), __LINE__)
+        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+          trim(__FILE__), __LINE__)
 
-      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-         iNX=pGrdFrom%iNX, &
-         iNY=pGrdFrom%iNY, &
-         iTargetCol=iColRow(COLUMN), &
-         iTargetRow=iColRow(ROW), &
-         iKernel=FOUR_CELLS, &
-         iNoDataValue=pGrdFrom%iNoDataValue)
+        iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
+          iNX=pGrdFrom%iNX, &
+          iNY=pGrdFrom%iNY, &
+          iTargetCol=iColRow(COLUMN), &
+          iTargetRow=iColRow(ROW), &
+          iKernel=FOUR_CELLS, &
+          iNoDataValue=pGrdFrom%iNoDataValue)
 
-!      print *, "iArrayFrom(col, row): ",iArrayFrom(iSrc_Col, iSrc_Row)
-
-!      print *, " "
-
+      enddo
     enddo
-  enddo
+
+  else
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+        iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
+        iSrcRow = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+
+        call assert(iSrcCol > 0 .and. iSrcCol <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iSrcCol)), &
+          trim(__FILE__), __LINE__)
+
+        call assert(iSrcRow > 0 .and. iSrcRow <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iSrcRow)), &
+          trim(__FILE__), __LINE__)
+
+        iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
+          iNX=pGrdFrom%iNX, &
+          iNY=pGrdFrom%iNY, &
+          iTargetCol=iSrcCol, &
+          iTargetRow=iSrcRow, &
+          iKernel=FOUR_CELLS, &
+          iNoDataValue=pGrdFrom%iNoDataValue)
+
+      enddo
+    enddo
+
+  endif
 
 end subroutine grid_GridToGrid_int
 
@@ -1998,28 +2025,53 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   ! [ LOCALS ]
   integer (kind=T_INT), dimension(2) :: iColRow
   integer (kind=T_INT) :: iCol, iRow
-  integer (kind=T_INT) :: iSrc_Col, iSrc_Row
+  integer (kind=T_INT) :: iSrcCol, iSrcRow
 
-  do iRow=1,pGrdTo%iNY
-    do iCol=1,pGrdTo%iNX
-!      iSrc_Col = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
-!      iSrc_Row = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
 
-       iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+        print *, dQuote(pGrdFrom%sPROJ4_string)
+        print *, dQuote(pGrdTo%sPROJ4_string)
+
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+
+        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
                    rX=real(pGrdTo%rX(iCol, iRow), kind=T_DBL), &
                    rY=real(pGrdTo%rY(iCol, iRow), kind=T_DBL))
 
-       call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-         "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-         trim(__FILE__), __LINE__)
+        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+          trim(__FILE__), __LINE__)
 
-      call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-        "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-        trim(__FILE__), __LINE__)
+        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+          trim(__FILE__), __LINE__)
 
-      rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+        rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+      enddo
     enddo
-  enddo
+
+  else  ! if we have the same projections as the base, our standard methods work
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+        iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=T_DBL) )
+        iSrcRow = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=T_DBL) )
+
+        call assert(iSrcCol > 0 .and. iSrcCol <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iSrcCol)), &
+          trim(__FILE__), __LINE__)
+
+        call assert(iSrcRow > 0 .and. iSrcRow <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iSrcRow)), &
+          trim(__FILE__), __LINE__)
+
+        rArrayTo(iCol,iRow) = rArrayFrom( iSrcCol, iSrcRow )
+      enddo
+    enddo
+
+  endif
 
 end subroutine grid_GridToGrid_sgl
 
