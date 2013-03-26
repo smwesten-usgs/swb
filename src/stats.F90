@@ -1657,7 +1657,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(UNIT=LU_LOG,fmt="('NX:',i5)") pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=LU_LOG,fmt="('NY:',i5)") pGrd%iNY             ! Number of cells in the y-direction
-      write(UNIT=LU_LOG,fmt="('data type:',i5)") pGrd%iDataType       ! Type of the grid
+      write(UNIT=LU_LOG,fmt="('data type:',i5)") DATATYPE_REAL ! Type of the grid
       write(UNIT=LU_LOG,fmt="('cell size:',f12.3)") pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=LU_LOG,fmt="('length units:',i5)") pGrd%iLengthUnits    ! length units code
       write(UNIT=LU_LOG,fmt="('SI var:',i5)") i                    ! STAT_INFO variable number
@@ -1687,7 +1687,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   integer (kind=T_INT) :: iNX
   integer (kind=T_INT) :: iNY
   integer (kind=T_INT) :: iDataType
-  real (kind=T_SGL)    :: rGridCellSize
+  real (kind=T_DBL)    :: rGridCellSize
   integer (kind=T_INT) :: iLengthUnits
   integer (kind=T_INT) :: iVariableNumber
   integer (kind=T_INT) :: iRLE_MULT

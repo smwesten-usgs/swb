@@ -247,7 +247,6 @@ module types
       real (kind=T_SGL) :: rNoDataValue
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
-      real (kind=c_float), dimension(:,:), allocatable :: rDist
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 

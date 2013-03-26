@@ -1717,7 +1717,7 @@ function grid_GetGridColNum(pGrd,rX)  result(iColumnNumber)
 !  print *, "numerator (RHS): ", rX, pGrd%rX0, ( rX - pGrd%rX0 )
 !  print *, "denominator: ", (pGrd%rX1 - pGrd%rX0)
 
-  if ( iColumnNumber < 0 .or. iColumnNumber > pGrd%iNX ) then
+  if ( iColumnNumber < 1 .or. iColumnNumber > pGrd%iNX ) then
     call grid_DumpGridExtent(pGrd)
     write(*, fmt="(a)") "was attempting to find column associated with X: "//trim(asCharacter(rX))
     call assert(lFALSE,  "INTERNAL PROGRAMMING ERROR: Column number out of bounds (value: " &
@@ -1738,7 +1738,7 @@ function grid_GetGridRowNum(pGrd,rY)  result(iRowNumber)
   iRowNumber = pGrd%iNY - NINT(real(pGrd%iNY, kind=T_DBL) &
                * ( rY - pGrd%rY0 ) / (pGrd%rY1 - pGrd%rY0) - 0.5_T_DBL, kind=T_INT)
 
-  if ( iRowNumber < 0 .or. iRowNumber > pGrd%iNY ) then
+  if ( iRowNumber < 1 .or. iRowNumber > pGrd%iNY ) then
     call grid_DumpGridExtent(pGrd)
     write(*, fmt="(a)") "was attempting to find row associated with Y: "//trim(asCharacter(rY))
     call assert(lFALSE,  "INTERNAL PROGRAMMING ERROR: Row number out of bounds (value: " &
@@ -1758,48 +1758,82 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
 
   ! [ LOCALS ]
   logical (kind=T_LOGICAL), dimension(pGrd%iNX, pGrd%iNY) :: lMask
-  real (kind=T_DBL) :: rXleft, rXright, rYtop, rYbottom
-  integer (kind=T_INT) :: iStartingColNum, iStartingRowNum
-  integer (kind=T_INT) :: iStat
+  real (kind=T_SGL) :: rDist, rMinDistance, rDist2
 
-  rXleft = max(pGrd%rX0, rX - 0.75_T_DBL * pGrd%rGridCellSize)
-  rXright = min(pGrd%rX1, rX + 0.75_T_DBL * pGrd%rGridCellSize)
-  rYtop = min(pGrd%rY1, rY + 0.75_T_DBL * pGrd%rGridCellSize)
-  rYbottom = max(pGrd%rY0, rY - 0.75_T_DBL * pGrd%rGridCellSize)
+  integer (kind=T_INT), save :: iLastColNum, iLastRowNum
+  integer (kind=T_INT) :: iStartingColNum, iStartingRowNum
+  integer (kind=T_INT) :: iRowBoundLower, iRowBoundUpper
+  integer (kind=T_INT) :: iColBoundLower, iColBoundUpper
+  integer (kind=T_INT) :: iCol, iRow
+  integer (kind=T_INT) :: iCandidateRow, iCandidateCol
+  integer (kind=T_INT) :: iStat
+  logical (kind=T_LOGICAL) :: lChanged
 
   ! this will get us close to where we need to be; however, since the
   ! transformed grid may contain significant nonlinearity between
   ! adjacent grid coordinates, we need to do a more thorough search
-  ! in the neighborhood of the
-!  iStartingColNum = grid_GetGridColNum(pGrd,rX)
-!  iStartingRowNum = grid_GetGridColNum(pGrd,rX)
+  ! in the neighborhood of these points
+  iStartingColNum = grid_GetGridColNum(pGrd,rX)
+  iStartingRowNum = grid_GetGridRowNum(pGrd,rY)
 
-  if ( .not. allocated(pGrd%rDist) ) then
-    ALLOCATE (pGrd%rDist(pGrd%iNX, pGrd%iNY), STAT=iStat)
-    call Assert( iStat == 0, &
-       "Could not allocate memory for cartesian distance value within grid data structure", &
-       trim(__FILE__), __LINE__)
+  rDist = hypot(pGrd%rX(iStartingColNum,iStartingRowNum) - rX, &
+              pGrd%rY(iStartingColNum,iStartingRowNum) - rY)
+
+  ! need to ensure that the leftover column and row numbers from
+  ! perhaps an entirely different grid are not used as indices
+  if (iLastColNum <= pGrd%iNX .and. iLastRowNum <= pGrd%iNY) then
+    rDist2 = hypot(pGrd%rX(iLastColNum,iLastRowNum) - rX, &
+              pGrd%rY(iLastColNum,iLastRowNum) - rY)
+  else
+    rDist2 = rBIGVAL
   endif
 
-  ! mask will return the handful of cells that are within reasonable
-  ! range of the target coordinates
-  lMask = pGrd%rX >= rXleft .and. pGrd%rX <= rXright &
-           .and. pGrd%rY >= rYbottom .and. pGrd%rY <= rYtop
+  if (rDist > rDist2) then
+    iCandidateRow = iLastRowNum
+    iCandidateCol = iLastColNum
+  else
+    iCandidateRow = iStartingRowNum
+    iCandidateCol = iStartingColNum
+  endif
 
-  where (lMask)
+  rMinDistance = rBIGVAL
 
-    pGrd%rDist = hypot(pGrd%rX - rX, pGrd%rY - rY)
+  do
 
-!  elsewhere
+    iRowBoundLower = max( 1, iCandidateRow - 1)
+    iRowBoundUpper = min( pGrd%iNY, iCandidateRow + 1)
 
-!    pGrd%rDist = rBIGVAL
+    iColBoundLower = max( 1, iCandidateCol - 1)
+    iColBoundUpper = min( pGrd%iNX, iCandidateCol + 1)
 
-  end where
+    lChanged = lFALSE
 
-  iColRow = minloc( array=pGrd%rDist, mask=lMask )
+    do iRow=iRowBoundLower,iRowBoundUpper
+      do iCol=iColBoundLower,iColBoundUpper
 
-!  iColRow = [2, 2]
+        rDist = hypot(pGrd%rX(iCol,iRow) - rX, pGrd%rY(iCol,iRow) - rY)
 
+        if (rDist < rMinDistance ) then
+
+          rMinDistance = rDist
+          iCandidateCol = iCol
+          iCandidateRow = iRow
+          lChanged = lTRUE
+
+        endif
+
+      enddo
+    enddo
+
+    if (.not. lChanged ) exit
+
+  enddo
+
+  iLastColNum = iCol
+  iLastRowNum = iRow
+
+  iColRow(COLUMN) = iCol
+  iColRow(ROW) = iRow
 
 end function grid_GetGridColRowNum
 
