@@ -66,8 +66,7 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
-   pSoilGroupGrid, pSoilAWCGrid, pFlowDirGrid)
+subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
@@ -78,9 +77,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
     ! pointer to data structure that holds parameters for creating
     ! DISLIN plots
   type ( T_GENERAL_GRID ), pointer :: pLandUseGrid       ! pointer to land use grid
-  type ( T_GENERAL_GRID ), pointer :: pSoilGroupGrid     ! pointer to soil group grid
-  type ( T_GENERAL_GRID ), pointer :: pSoilAWCGrid       ! pointer to soil AWC grid
-  type ( T_GENERAL_GRID ), pointer :: pFlowDirGrid       ! pointer to flow direction grid
 
   ! [ LOCALS ]
   integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
@@ -157,7 +153,14 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   ! Time the run
   call cpu_time(rStartTime)
 
-  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
+  call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iFlowDir = pGrd%iData
+
+  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+!  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
 
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
@@ -173,10 +176,16 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
     call model_InitializeFlowDirection( pGrd , pConfig)
   end if
 
-  call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+!  call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
+  call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iSoilGroup = pGrd%iData
+!  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
+
+  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
   call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
-
   pGrd%Cells%rSoilWaterCapInput = pGrd%rData
 
   write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
@@ -188,43 +197,22 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
 
 !  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
 
-  if(pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
-    .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_DYNAMIC_SURFER) then
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+  pGrd%Cells%iLandUse = pGrd%iData
+  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
-    if (pConfig%iConfigureLanduse /= CONFIG_LANDUSE_CONSTANT) &
-      call model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
+  ! Initialize the model landuse-related parameters
+  call model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
-    ! Initialize the model
-    write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-    flush(unit=LU_LOG)
-    call model_InitializeSM(pGrd, pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-    flush(unit=LU_LOG)
-    call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-    flush(unit=LU_LOG)
-    call model_InitializeMaxInfil(pGrd, pConfig )
-
-  endif
-
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
-  flush(unit=LU_LOG)
+  ! Initialize evapotranspiration
   call model_InitializeET( pGrd, pConfig )
 
   end if FIRST_YEAR
 
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
-
   ! close any existing open time-series files...
   close(LU_TS)
-
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__,pConfig%lGriddedData
-#endif
 
   if(.not. pConfig%lGriddedData) then
   ! Connect to the single-site time-series file
@@ -267,9 +255,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   pTS%lEOF = lFALSE
 
   if(.not. pConfig%lGriddedData) then
-#ifdef DEBUG_PRINT
-    print *, trim(__FILE__)//": ",__LINE__
-#endif
     call model_ReadTimeSeriesFile(pTS)
     if(pTS%lEOF) then
 
@@ -318,45 +303,19 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
 
   ! initialize landuse-associated variables; must be done each year if
   ! dynamic landuse is being used
-  DYNAMIC_LANDUSE: if( ( pConfig%lFirstDayOfSimulation &
-    .or. ( pConfig%iMonth == 1 .and. pConfig%iDay == 1 ) ) &
-    .and.(pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_ARC_GRID &
-    .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_DYNAMIC_SURFER) ) then
+
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+
+  if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
+    pGrd%Cells%iLandUse = pGrd%iData
+    DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
 
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-    iStat = if_GetDynamicLanduseValue( pGrd, pConfig, pConfig%iYear)
+    ! (Re)-initialize the model
+    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
-    if(.not. pConfig%lFirstDayOfSimulation) &
-       ! calculate percent moisture; when landuse changes, it will assume
-       ! the same percent moisture. This implies a discontinuity in
-       ! the mass balance from one year to the next.
-       call sm_thornthwaite_mather_UpdatePctSM( pGrd )
-
-    if(iStat /= 0 .and. pConfig%lFirstDayOfSimulation) &
-      call assert( lFALSE, &
-      "Dynamic landuse option requires that landuse data be provided~" &
-      //"for at least the first year of simulation. No dynamic landuse~" &
-      //"file was found.", trim(__FILE__), __LINE__)
-
-    if(iStat == 0) then
-
-      ! (Re)-initialize the model
-      write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
-      flush(unit=LU_LOG)
-      call model_InitializeSM(pGrd, pConfig)
-
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
-      flush(unit=LU_LOG)
-      call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-      write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-      flush(unit=LU_LOG)
-      call model_InitializeMaxInfil(pGrd, pConfig )
-    endif
-
-  end if DYNAMIC_LANDUSE
-
+  endif
 
   if(pConfig%lFirstDayOfSimulation) then
     ! scan through list of potential output variables; if any
@@ -412,15 +371,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
   ! Initialize temperature values for current day
   call model_GetDailyTemperatureValue(pGrd, pConfig, &
     pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pTS%rRH, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear)
+    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
   write(UNIT=LU_LOG,FMT="(1x,'Beginning calculations for day: '," &
     //"i3,4x,A3,4x,i2,'/',i2,'/',i4)") &
     pConfig%iDayOfYear,sMonthName,pConfig%iMonth,pConfig%iDay,pConfig%iYear
-
-#ifdef DEBUG_PRINT
-  call stats_WriteMinMeanMax (LU_LOG, "Precip: ", pGrd%Cells%rGrossPrecip)
-#endif
 
   if(pConfig%lWriteToScreen) then
     write(UNIT=LU_STD_OUT,FMT="(t39,a,t53,a,t69,a)") "min","mean","max"
@@ -820,7 +775,7 @@ end subroutine model_GetDailyPrecipValue
 ! SOURCE
 
 subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
-  rMaxT, rRH, iMonth, iDay, iYear)
+  rMaxT, rRH, iMonth, iDay, iYear, iJulianDay)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
@@ -833,6 +788,8 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   integer (kind=T_INT), intent(in) :: iMonth
   integer (kind=T_INT), intent(in) :: iDay
   integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=T_INT), intent(in) :: iJulianDay
+
   ! [ LOCALS ]
   real (kind=T_DBL) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal, rMeanTMIN, rMeanTMAX
   integer (kind=T_INT) :: iNumGridCells
@@ -842,86 +799,17 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
   iCount = 0
 
-  select case( pConfig%iConfigureTemperature )
-    case( CONFIG_TEMPERATURE_SINGLE_STATION)
-      pGrd%Cells(:,:)%rTMin = rMinT  ! use a single value for entire grid
-      pGrd%Cells(:,:)%rTMax = rMaxT
-      pGrd%Cells(:,:)%rTAvg = rAvgT
+  call DAT(TMAX_DATA)%set_constant(rMaxT)
+  call DAT(TMIN_DATA)%set_constant(rMinT)
 
-  case( CONFIG_TEMPERATURE_ARC_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
-    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-    if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-                / real(iCount_valid, kind=T_SGL)
-    else
-      rMeanTMIN = 0_T_SGL
-    endif
-    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
-    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMin = rMeanTMIN
-    endwhere
+  call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMax)
 
-  write ( unit=sBuf, fmt='(A,"_",i4,"_",i2.2,"_",i2.2,".",A)' ) &
-    trim(pConfig%sTMAXFilePrefix), iYear,iMonth,iDay,trim(pConfig%sOutputFileSuffix)
-  call grid_Read_sub( sBuf, "ARC_GRID", pGenericGrd_sgl )
-  iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-  if (iCount_valid > 0) then
-    rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-              / real(iCount_valid, kind=T_SGL)
-  else
-    rMeanTMAX = 0_T_SGL
-  endif
-  iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
-  where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-  !! note: this logic assumes that missing values are supplied as "-9999" or the like
-    pGrd%Cells%rTMax = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMax = rMeanTMAX
-  endwhere
+  call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
 
-  case( CONFIG_TEMPERATURE_SURFER_GRID )
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMINFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
-    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-    if (iCount_valid > 0) then
-      rMeanTMIN = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-                / real(iCount_valid, kind=T_SGL)
-    else
-      rMeanTMIN = 0_T_SGL
-    endif
-    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp)
-    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMin = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMin = rMeanTMIN
-    endwhere
-
-    write ( unit=sBuf, fmt='(A,"_",i2.2,"_",i2.2,"_",i4,".",A)' ) &
-      trim(pConfig%sTMAXFilePrefix), iMonth,iDay,iYear,trim(pConfig%sOutputFileSuffix)
-    call grid_Read_sub( sBuf, "SURFER", pGenericGrd_sgl )
-    iCount_valid = count(pGenericGrd_sgl%rData >= pConfig%rMinValidTemp)
-    if (iCount_valid > 0) then
-      rMeanTMAX = SUM(pGenericGrd_sgl%rData, pGenericGrd_sgl%rData >= pConfig%rMinValidTemp) &
-                / real(iCount_valid, kind=T_SGL)
-    else
-      rMeanTMAX = 0_T_SGL
-    endif
-    iCount = count(pGenericGrd_sgl%rData < pConfig%rMinValidTemp) + iCount
-    where(pGenericGrd_sgl%rData > pConfig%rMinValidTemp)
-      pGrd%Cells%rTMax = pGenericGrd_sgl%rData
-    elsewhere
-      pGrd%Cells%rTMax = rMeanTMAX
-    endwhere
-
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown temperature input type" )
-end select
 
 #ifdef STREAM_INTERACTIONS
   !! Adjust cell-by-cell temperature
@@ -3239,6 +3127,29 @@ end function rf_model_GetInterception
 
 !--------------------------------------------------------------------------
 
+subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  write(UNIT=LU_LOG,FMT=*) "model.f95: calling model_InitializeSM"
+  flush(unit=LU_LOG)
+  call model_InitializeSM(pGrd, pConfig)
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: runoff_InitializeCurveNumber"
+  flush(unit=LU_LOG)
+  call runoff_InitializeCurveNumber( pGrd ,pConfig)
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+  flush(unit=LU_LOG)
+  call model_InitializeMaxInfil(pGrd, pConfig )
+
+
+end subroutine model_InitializeLanduseRelatedParams
+
+!--------------------------------------------------------------------------
+
 subroutine model_InitializeET( pGrd, pConfig )
   !! Depending on the ET model in use, initializes the values for ET
   !! calculations.
@@ -3263,7 +3174,7 @@ subroutine model_InitializeET( pGrd, pConfig )
     case ( CONFIG_ET_BLANEY_CRIDDLE )
       call et_bc_initialize ( pGrd, pConfig%sTimeSeriesFilename)
     case ( CONFIG_ET_HARGREAVES )
-      call et_hargreaves_initialize ( pGrd, pConfig%sTimeSeriesFilename)
+
   end select
 
 end subroutine model_InitializeET

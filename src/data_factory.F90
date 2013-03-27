@@ -23,11 +23,14 @@ module data_factory
     character (len=256) :: sDescription
     character (len=256) :: sSourcePROJ4_string
     character (len=256) :: sSourceFileType
-    character (len=256) :: sFilenameTemplate   ! e.g. %Y_%#_prcp.nc
-    character (len=256) :: sSourceFilename     ! e.g. 1980_00_prcp.nc
+    character (len=256) :: sFilenameTemplate    ! e.g. %Y_%#_prcp.nc
+    character (len=256) :: sSourceFilename      ! e.g. 1980_00_prcp.nc
+    character (len=256) :: sOldFilename = "NA"  ! e.g. 1980_00_prcp.nc
     integer (kind=T_INT) :: iFileCount = 0
     integer (kind=T_INT) :: iFileCountYear = -9999
     logical (kind=T_LOGICAL) :: lProjectionDiffersFromBase = lFALSE
+    real (kind=T_SGL) :: rMinAllowedValue = 1.0
+    real (kind=T_SGL) :: rMaxAllowedValue = 1.0e6
 
     ! the following are only used if data are being read from a NetCDF file
     character (len=256) :: sVariableName_x = "x"
@@ -48,6 +51,8 @@ module data_factory
     ! the native coordinate of the data source file and the project coordinates
     ! in use by swb
     type (T_GENERAL_GRID), pointer :: pGrdNative
+    logical (kind=T_LOGICAL) :: lGridIsPersistent = lFALSE
+    logical (kind=T_LOGICAL) :: lGridHasChanged = lFALSE
 
   contains
 
@@ -80,6 +85,9 @@ module data_factory
 
     procedure :: make_filename => make_filename_from_template
     procedure :: definePROJ4 => set_PROJ4_string
+    procedure :: dump_data_structure => dump_data_structure_sub
+
+    procedure :: enforce_limits => data_GridEnforceLimits_int
 
   end type T_DATA_GRID
 
@@ -171,6 +179,7 @@ subroutine initialize_gridded_data_object_sub( &
      this%sFilenameTemplate = sFilenameTemplate
      this%sSourceFilename = ""
      this%iSourceDataForm = DYNAMIC_GRID
+     this%lGridIsPersistent = lTRUE
    else
      this%sFilenameTemplate = ""
    endif
@@ -196,6 +205,8 @@ subroutine initialize_gridded_data_object_sub( &
     this%iSourceDataType == DATATYPE_REAL, "Only integer or " &
     //"real data types are supported as static grid inputs.", &
     trim(__FILE__), __LINE__)
+
+  nullify(this%pGrdNative)
 
 end subroutine initialize_gridded_data_object_sub
 
@@ -227,16 +238,20 @@ subroutine initialize_netcdf_data_object_sub( &
    this%iSourceDataType = iDataType
 
    this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
+   this%lGridIsPersistent = lTRUE
 
 end subroutine initialize_netcdf_data_object_sub
 
 !----------------------------------------------------------------------
 
-  subroutine getvalues_sub( this, pGrdBase, iMonth, iDay, iYear, iJulianDay)
+  subroutine getvalues_sub( this, pGrdBase, iMonth, iDay, iYear, iJulianDay, &
+      rValues, iValues)
 
     class (T_DATA_GRID) :: this
-    type ( T_GENERAL_GRID ), pointer, optional :: pGrdBase
+    type ( T_GENERAL_GRID ), pointer :: pGrdBase
     integer (kind=T_INT), optional :: iMonth, iDay, iYear, iJulianDay
+    real (kind=T_SGL), dimension(:,:), optional :: rValues
+    integer (kind=T_INT), dimension(:,:), optional :: iValues
 
     if ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
@@ -258,6 +273,9 @@ end subroutine initialize_netcdf_data_object_sub
     else
 
     endif
+
+    if (present(rValues)) rValues = pGrdBase%rData
+    if (present(iValues)) iValues = pGrdBase%iData
 
   end subroutine getvalues_sub
 
@@ -290,6 +308,29 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
 !----------------------------------------------------------------------
 
+  subroutine dump_data_structure_sub(this)
+
+  class (T_DATA_GRID) :: this
+
+  call echolog("---------------------------------------------------")
+  call echolog("DATA STRUCTURE DETAILS:")
+  call echolog("---------------------------------------------------")
+
+  call echolog("  source data form: "//trim(asCharacter(this%iSourceDataForm)) )
+  call echolog("  source data type: "//trim(asCharacter(this%iSourceDataType)) )
+  call echolog("  source file type: "//trim(asCharacter(this%iSourceFileType)) )
+  call echolog("  description: "//trim(this%sDescription) )
+  call echolog("  source PROJ4 string: "//trim(this%sSourcePROJ4_string) )
+  call echolog("  source file type: "//trim(this%sSourceFileType) )
+  call echolog("  filename template: "//trim(this%sFilenameTemplate) )
+  call echolog("  source filename: "//trim(this%sSourceFilename) )
+
+  call grid_DumpGridExtent(this%pGrdNative)
+
+  end subroutine dump_data_structure_sub
+
+!----------------------------------------------------------------------
+
   subroutine getvalues_gridded_sub( this, pGrdBase, iMonth, iDay, iYear)
 
     class (T_DATA_GRID) :: this
@@ -297,101 +338,135 @@ subroutine getvalues_constant_sub( this, pGrdBase )
     integer (kind=T_INT), optional :: iMonth
     integer (kind=T_INT), optional :: iDay
     integer (kind=T_INT), optional :: iYear
+    logical (kind=T_LOGICAL) :: lExist
+    logical (kind=T_LOGICAL) :: lOpened
 
-    call assert(this%iSourceFileType == FILETYPE_ARC_ASCII .or. &
-      this%iSourceFileType == FILETYPE_SURFER, "INTERNAL PROGRAMMING ERROR -" &
-      //" improper file type in use for a call to this subroutine", &
-      trim(__FILE__), __LINE__)
+    this%lGridHasChanged = lFALSE
 
-    if ( len_trim(this%sFilenameTemplate) > 0 ) then
-      if(.not. (present(iMonth) .and. present(iDay) .and. present(iYear) ) ) &
-        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - month, day, and year" &
-          //" arguments must be supplied when calling this subroutine in a " &
-          //"dynamic mode.", trim(__FILE__), __LINE__)
-      call this%make_filename(iMonth, iDay, iYear)
-    endif
+    do
 
-    ! create a grid in native coordinates of the source dataset.
-    this%pGrdNative => grid_Read( sFileName=this%sSourceFilename, &
-       sFileType=this%sSourceFileType, &
-       iDataType=this%iSourceDataType )
+      call assert(this%iSourceFileType == FILETYPE_ARC_ASCII .or. &
+        this%iSourceFileType == FILETYPE_SURFER, "INTERNAL PROGRAMMING ERROR -" &
+        //" improper file type in use for a call to this subroutine", &
+        trim(__FILE__), __LINE__)
 
-    ! ensure that PROJ4 string is associated with the native grid
-    this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+      if ( len_trim(this%sFilenameTemplate) > 0 ) then
+        if(.not. (present(iMonth) .and. present(iDay) .and. present(iYear) ) ) &
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - month, day, and year" &
+            //" arguments must be supplied when calling this subroutine in a " &
+            //"dynamic mode.", trim(__FILE__), __LINE__)
+        call this%make_filename(iMonth, iDay, iYear)
+      endif
 
-    if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+      ! if the source filename hasn't changed, we don't need to be here
+      if (str_compare(this%sOldFilename, this%sSourceFilename) ) exit
 
-      call echolog(" ")
-      call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
-      call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
-      call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
+      this%sOldFilename = this%sSourceFilename
 
-      ! only invoke the transform procedure if the PROJ4 strings are different
-      if (.not. str_compare(this%sSourcePROJ4_string,pGrdBase%sPROJ4_string)) then
+      inquire(file=this%sSourceFilename, exist=lExist, opened=lOpened)
+      !!! if the file doesn't exist, EXIT!
+      if (.not. lExist) exit
 
-        print *, dQuote(this%sSourcePROJ4_string)
-        print *, dQuote(pGrdBase%sPROJ4_string)
+      if ( this%lGridIsPersistent .and. associated(this%pGrdNative) ) then
 
-        call grid_Transform(pGrd=this%pGrdNative, &
-                          sFromPROJ4=this%sSourcePROJ4_string, &
-                          sToPROJ4=pGrdBase%sPROJ4_string )
+        call grid_ReadExisting ( sFileName=this%sSourceFilename, &
+          sFileType=this%sSourceFileType, &
+          pGrd=this%pGrdNative )
+
+      else
+
+        ! create a grid in native coordinates of the source dataset.
+        this%pGrdNative => grid_Read( sFileName=this%sSourceFilename, &
+          sFileType=this%sSourceFileType, &
+          iDataType=this%iSourceDataType )
+
+        ! ensure that PROJ4 string is associated with the native grid
+        this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
 
       endif
 
-      call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
-        "Transformed grid read from file "//dquote(this%sSourceFilename) &
-        //" doesn't completely cover your model domain.")
+      write( unit=LU_LOG, fmt="(a)") "Opened file "//dQuote(this%sSourceFilename) &
+        //" for "//trim(this%sDescription)//" data."
 
-      select case (this%iSourceDataType)
+      this%lGridHasChanged = lTRUE
 
-        case ( DATATYPE_REAL )
+      ! TODO *** expand to include limits for real grids as well
+      if (this%iSourceDataType == DATATYPE_INT) call this%enforce_limits()
 
-          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                              rArrayFrom=this%pGrdNative%rData, &
+      if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+
+        ! only invoke the transform procedure if the PROJ4 strings are different
+        if (.not. str_compare(this%pGrdNative%sPROJ4_string, pGrdBase%sPROJ4_string)) then
+
+          call echolog(" ")
+          call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
+          call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
+          call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
+
+          call grid_Transform(pGrd=this%pGrdNative, &
+                            sFromPROJ4=this%sSourcePROJ4_string, &
+                            sToPROJ4=pGrdBase%sPROJ4_string )
+
+        endif
+
+        call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
+          "Transformed grid read from file "//dquote(this%sSourceFilename) &
+          //" doesn't completely cover your model domain.")
+
+        select case (this%iSourceDataType)
+
+          case ( DATATYPE_REAL )
+
+            call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                                rArrayFrom=this%pGrdNative%rData, &
+                                pGrdTo=pGrdBase, &
+                                rArrayTo=pGrdBase%rData )
+
+          case ( DATATYPE_INT)
+
+            call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                              iArrayFrom=this%pGrdNative%iData, &
                               pGrdTo=pGrdBase, &
-                              rArrayTo=pGrdBase%rData )
+                              iArrayTo=pGrdBase%iData )
+          case default
 
-        case ( DATATYPE_INT)
+            call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+              //trim(asCharacter(this%iSourceDataType)), &
+              trim(__FILE__), __LINE__)
 
-          call grid_gridToGrid_int(pGrdFrom=this%pGrdNative,&
-                            iArrayFrom=this%pGrdNative%iData, &
-                            pGrdTo=pGrdBase, &
-                            iArrayTo=pGrdBase%iData )
-        case default
+        end select
 
-          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-            //trim(asCharacter(this%iSourceDataType)), &
-            trim(__FILE__), __LINE__)
+      else
 
-      end select
+        call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
+                          "Non-conforming grid. Filename: " &
+                          //dquote(this%pGrdNative%sFilename) )
 
-    else
+        select case (this%iSourceDataType)
 
-      call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
-                        "Non-conforming grid. Filename: " &
-                        //dquote(this%pGrdNative%sFilename) )
+          case ( DATATYPE_REAL )
 
-      select case (this%iSourceDataType)
+            pGrdBase%rData = this%pGrdNative%rData
 
-        case ( DATATYPE_REAL )
+          case ( DATATYPE_INT)
 
-          pGrdBase%rData = this%pGrdNative%rData
+            pGrdBase%rData = this%pGrdNative%rData
 
-        case ( DATATYPE_INT)
+          case default
 
-          pGrdBase%rData = this%pGrdNative%rData
+            call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+              //trim(asCharacter(this%iSourceDataType)), &
+              trim(__FILE__), __LINE__)
 
-        case default
+        end select
 
-          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-            //trim(asCharacter(this%iSourceDataType)), &
-            trim(__FILE__), __LINE__)
+      endif
 
-      end select
+      if (.not. this%lGridIsPersistent )  call grid_Destroy(this%pGrdNative)
 
-    endif
+      exit
 
-    call grid_Destroy(this%pGrdNative)
+    enddo
 
   end subroutine getvalues_gridded_sub
 
@@ -474,9 +549,11 @@ end subroutine set_constant_value_real
 
     ! [ LOCALS ]
     character (len=256) :: sNewFilename
-    integer (kind=T_INT) :: iPos_Y, iPos_D, iPos_M, iPos, iLen
+    character (len=256) :: sUppercaseFilename
+    integer (kind=T_INT) :: iPos_Y, iPos_D, iPos_M, iPos, iLen, iCount
     logical (kind=T_LOGICAL) :: lMatch
     logical (kind=T_LOGICAL) :: lExist
+    character (len=2) :: sBuf
 
     iPos_Y = 0; iPos_M = 0; iPos_D = 0; iPos = 0
 
@@ -485,6 +562,8 @@ end subroutine set_constant_value_real
     ! prcp_1980_00.nc    template => "prcp_%Y_%m.nc"
 
     sNewFilename = this%sFilenameTemplate
+
+    iCount = 0
 
     do
 
@@ -497,6 +576,7 @@ end subroutine set_constant_value_real
         iLen=len_trim(sNewFilename)
         sNewFilename = sNewFilename(1:iPos_Y - 1)//trim(asCharacter(iYear)) &
                        //sNewFilename(iPos_Y + 2:iLen)
+
       endif
 
       iPos = index(sNewFilename, "%#")
@@ -508,25 +588,35 @@ end subroutine set_constant_value_real
                        //sNewFilename(iPos+2:iLen)
       endif
 
-      if (present(iMonth) ) iPos_M = index(sNewFilename, "%M")
+      if (present(iMonth) ) iPos_M = &
+          max(index(sNewFilename, "%M"), index(sNewFilename, "%m") )
 
       if (iPos_M > 0) then
         lMatch = lTRUE
+        write (unit=sBuf, fmt="(i2.2)") iMonth
+
         iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos_M - 1)//trim(asCharacter(iMonth)) &
+        sNewFilename = sNewFilename(1:iPos_M - 1)//sBuf &
                        //sNewFilename(iPos_M + 2:iLen)
       endif
 
-      if (present(iMonth) ) iPos_M = index(sNewFilename, "%M")
+      if (present(iDay) ) iPos_D = &
+           max(index(sNewFilename, "%D"),index(sNewFilename, "%d") )
 
       if (iPos_D > 0) then
         lMatch = lTRUE
+        write (unit=sBuf, fmt="(i2.2)") iDay
         iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos_D - 1)//trim(asCharacter(iDay)) &
+        sNewFilename = sNewFilename(1:iPos_D - 1)//sBuf &
                        //sNewFilename(iPos_D + 2:iLen)
       endif
 
       if (.not. lMatch) exit
+
+      iCount = iCount + 1
+
+      ! failsafe
+      if (iCount > 4) exit
 
     enddo
 
@@ -699,5 +789,20 @@ end subroutine set_constant_value_real
                 [this%GRID_BOUNDS%rXlr], [this%GRID_BOUNDS%rYlr] )
 
   end subroutine calc_project_boundaries
+
+  subroutine data_GridEnforceLimits_int(this)
+
+    class (T_DATA_GRID) :: this
+
+    ! [ LOCALS ]
+    integer (kind=T_INT) :: iMin, iMax
+
+    iMin = int(this%rMinAllowedValue, kind=T_INT)
+    iMax = int(this%rMaxAllowedValue, kind=T_INT)
+
+    where ( this%pGrdNative%iData < iMin )  this%pGrdNative%iData = iMin
+    where ( this%pGrdNative%iData > iMax )  this%pGrdNative%iData = iMax
+
+  end subroutine data_GridEnforceLimits_int
 
 end module data_factory

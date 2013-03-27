@@ -415,7 +415,9 @@ function grid_Read ( sFilename, sFileType, iDataType ) result ( pGrd )
 
 end function grid_Read
 
-subroutine grid_Read_sub ( sFileName, sFileType, pGrd )
+!--------------------------------------------------------------------------
+
+subroutine grid_ReadExisting ( sFileName, sFileType, pGrd )
 
   ! ARGUMENTS
   character (len=*), intent(in) :: sFilename          ! Name of the grid input file
@@ -432,7 +434,7 @@ subroutine grid_Read_sub ( sFileName, sFileType, pGrd )
 
   pGrd%sFilename = trim(sFilename)
 
-end subroutine grid_Read_sub
+end subroutine grid_ReadExisting
 
 !!***
 !--------------------------------------------------------------------------
@@ -624,6 +626,8 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
   return
 end function grid_ReadArcGrid_fn
 
+!--------------------------------------------------------------------------
+
 subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
 
   ! ARGUMENTS
@@ -701,12 +705,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
           iHdrRecs = iHdrRecs + 1
       else
           ! Found the data -- construct the grid
-          if ( lXLLCenter ) rX0 = rX0 - rHALF*rCellSize
-          if ( lYLLCenter ) rY0 = rY0 - rHALF*rCellSize
-          rX1 = rX0 + real(iNX, kind=T_DBL) * rCellSize
-          rY1 = rY0 + real(iNY, kind=T_DBL) * rCellSize
 
-          pGrd%rGridCellSize = rCellSize
           ! Go back to the top, skip the header...
           rewind ( unit=LU_GRID, iostat=iStat )
           call Assert ( iStat == 0, "Failed to rewind grid file" )
@@ -941,8 +940,6 @@ subroutine grid_ReadSurferGrid_sub ( sFileName, pGrd )
 
   call Assert(LOGICAL(iNX>0,kind=T_LOGICAL),"Must have a non-zero number of grid cells in a surfer grid file...")
   call Assert(LOGICAL(iNY>0,kind=T_LOGICAL),"Must have a non-zero number of grid cells in a surfer grid file...")
-
-  pGrd%rGridCellSize = (rX1-rX0)/iNX
 
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
@@ -1391,7 +1388,7 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
   call grid_PopulateXY(pGrd)
 
   csFromPROJ4 = trim(sFromPROJ4)
-  csToPROJ4 = trim(sToPROJ4                                                         )
+  csToPROJ4 = trim(sToPROJ4)
 
   !lMask = lTRUE
 
@@ -1450,6 +1447,9 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
   pGrd%rX1 = maxval(pGrd%rX) + pGrd%rGridCellSize / 2_T_SGL
   pGrd%rY0 = minval(pGrd%rY) - pGrd%rGridCellSize / 2_T_SGL
   pGrd%rY1 = maxval(pGrd%rY) + pGrd%rGridCellSize / 2_T_SGL
+
+  ! finally, change the projection string to reflect the new coordinate system
+  pGrd%sPROJ4_string = trim(sToPROJ4)
 
 end subroutine grid_Transform
 
@@ -1773,6 +1773,7 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
   ! transformed grid may contain significant nonlinearity between
   ! adjacent grid coordinates, we need to do a more thorough search
   ! in the neighborhood of these points
+
   iStartingColNum = grid_GetGridColNum(pGrd,rX)
   iStartingRowNum = grid_GetGridRowNum(pGrd,rY)
 
@@ -1781,7 +1782,8 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
 
   ! need to ensure that the leftover column and row numbers from
   ! perhaps an entirely different grid are not used as indices
-  if (iLastColNum <= pGrd%iNX .and. iLastRowNum <= pGrd%iNY) then
+  if (iLastColNum > 0 .and. iLastColNum <= pGrd%iNX &
+     .and. iLastRowNum > 0 .and. iLastRowNum <= pGrd%iNY) then
     rDist2 = hypot(pGrd%rX(iLastColNum,iLastRowNum) - rX, &
               pGrd%rY(iLastColNum,iLastRowNum) - rY)
   else
@@ -2062,10 +2064,6 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   integer (kind=T_INT) :: iSrcCol, iSrcRow
 
   if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
-
-        print *, dQuote(pGrdFrom%sPROJ4_string)
-        print *, dQuote(pGrdTo%sPROJ4_string)
-
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX

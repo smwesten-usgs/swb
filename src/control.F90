@@ -30,9 +30,9 @@ subroutine control_setModelOptions(sControlFile)
   type (T_GENERAL_GRID),pointer :: input_grd         ! Temporary grid for I/O
   type (T_GENERAL_GRID),pointer :: pGrd              ! Grid of model cells
   type (T_GENERAL_GRID),pointer :: pLandUseGrid      ! Landuse input grid
-  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
-  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
-  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
+!  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
+!  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
+!  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
   real (kind=T_SGL), dimension(:,:), pointer :: pArray_sgl
 
 
@@ -340,6 +340,7 @@ subroutine control_setModelOptions(sControlFile)
       DAT(PRECIP_DATA)%sVariableName_time = trim(sArgument)
 
     else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
+      call DAT(PRECIP_DATA)%definePROJ4( trim(sRecord) )
 
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
@@ -349,33 +350,54 @@ subroutine control_setModelOptions(sControlFile)
       if ( trim(sOption) == "SINGLE_STATION" ) then
         pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SINGLE_STATION
         write(UNIT=LU_LOG,FMT=*) "  Temperature data will be read for a single station"
+        call DAT(TMIN_DATA)%initialize(sDescription=sItem, &
+           rConstant=65.0 )
+        call DAT(TMAX_DATA)%initialize(sDescription=sItem, &
+           rConstant=65.0 )
       else
-        if ( trim(sOption) == "ARC_GRID" ) then
-          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
-          write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of ARC grids"
-          pConfig%sTMAXFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
-             TRIM(pConfig%sTMAXFilePrefix)
+        if ( trim(sOption) == "ARC_GRID" .or. trim(sOption) == "SURFER" ) then
+
+        call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilenameTemplate=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
+
           call Chomp ( sRecord, sArgument )
-          pConfig%sTMINFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
-             TRIM(pConfig%sTMINFilePrefix)
-          pConfig%lGriddedData = lTRUE
-        else if ( trim(sOption) == "SURFER" ) then
-          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
-          write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of SURFER grids"
-          pConfig%sTMAXFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
-             TRIM(pConfig%sTMAXFilePrefix)
-          call Chomp ( sRecord, sArgument )
-          pConfig%sTMINFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
-             TRIM(pConfig%sTMINFilePrefix)
+
+        call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilenameTemplate=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
+
+!          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
+!           write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of ARC grids"
+!           pConfig%sTMAXFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
+!              TRIM(pConfig%sTMAXFilePrefix)
+!           call Chomp ( sRecord, sArgument )
+!           pConfig%sTMINFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
+!              TRIM(pConfig%sTMINFilePrefix)
+!           pConfig%lGriddedData = lTRUE
+!         else if ( trim(sOption) == "SURFER" ) then
+!           pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
+!           write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of SURFER grids"
+!           pConfig%sTMAXFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
+!              TRIM(pConfig%sTMAXFilePrefix)
+!           call Chomp ( sRecord, sArgument )
+!           pConfig%sTMINFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
+!              TRIM(pConfig%sTMINFilePrefix)
           pConfig%lGriddedData = lTRUE
 #ifdef NETCDF_SUPPORT
         else if( trim(sOption) == "NETCDF" ) then
 
-          ! initialize DAT object for precip data
+          call DAT(TMAX_DATA)%initialize_netcdf( &
+            sDescription=trim(sItem), &
+            sFilenameTemplate = trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
 
 !          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
 !          write(UNIT=LU_LOG,FMT=*) &
@@ -384,6 +406,11 @@ subroutine control_setModelOptions(sControlFile)
 
           ! read in the NetCDF variable that corresponds to TMIN
           call Chomp ( sRecord, sArgument )
+
+          call DAT(TMIN_DATA)%initialize_netcdf( &
+            sDescription=trim(sItem), &
+            sFilenameTemplate = trim(sArgument), &
+            iDataType=DATATYPE_REAL )
 
 !          pConfig%NC_TMIN_VarName = TRIM(sArgument)
 
@@ -428,9 +455,8 @@ subroutine control_setModelOptions(sControlFile)
       DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
 
     else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
-      pConfig%sTemperatureGrid_PROJ4 = trim(sRecord)
-      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
-        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
+      call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
 
     else if ( sItem == "LAND_USE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating land use grid"
@@ -438,42 +464,63 @@ subroutine control_setModelOptions(sControlFile)
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
       if ( trim(sOption) == "CONSTANT" ) then
-        pConfig%iConfigureLanduse = CONFIG_LANDUSE_CONSTANT
+!        pConfig%iConfigureLanduse = CONFIG_LANDUSE_CONSTANT
         read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
         call Assert( iStat == 0, "Cannot read integer data value" )
-        pLandUseGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
-        pLandUseGrid%iData = iValue
-        pLandUseGrid%sFilename = "Constant-value grid"
+!        pLandUseGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+!          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
+!        pLandUseGrid%iData = iValue
+!        pLandUseGrid%sFilename = "Constant-value grid"
+
+        call DAT(LANDUSE_DATA)%initialize(sDescription=sItem, &
+           iConstant=iValue )
+
       elseif(trim(sOption) == "DYNAMIC" ) then
         ! make room for another option and read in the proper value of sArgument
         sOption = sArgument
         call Uppercase( sOption )
         call Chomp ( sRecord, sArgument )
 
-        if ( trim(sOption) == "ARC_GRID" ) then
-          pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_ARC_GRID
-          write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of ARC grids"
-          pConfig%sDynamicLanduseFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
-             TRIM(pConfig%sDynamicLanduseFilePrefix)
-        else if ( trim(sOption) == "SURFER" ) then
-          pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_SURFER
-          write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of SURFER grids"
-          pConfig%sDynamicLanduseFilePrefix = sArgument
-          write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
-             TRIM(pConfig%sDynamicLanduseFilePrefix)
-        endif
+        call DAT(LANDUSE_DATA)%initialize(sDescription=sItem, &
+        sFileType=trim(sOption), &
+        sFilenameTemplate=trim(sArgument), &
+        iDataType=DATATYPE_INT )
+
+!         if ( trim(sOption) == "ARC_GRID" ) then
+!           pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_ARC_GRID
+!           write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of ARC grids"
+!           pConfig%sDynamicLanduseFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
+!              TRIM(pConfig%sDynamicLanduseFilePrefix)
+!         else if ( trim(sOption) == "SURFER" ) then
+!           pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_SURFER
+!           write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of SURFER grids"
+!           pConfig%sDynamicLanduseFilePrefix = sArgument
+!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
+!              TRIM(pConfig%sDynamicLanduseFilePrefix)
+!        endif
+
       elseif( trim(sOption) == "ARC_GRID" &
          .or. trim(sOption) == "SURFER" ) then   ! read in a static gridded landuse file
-        pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
-        pConfig%sDynamicLanduseFilePrefix = "none"
-        pLandUseGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
-        pLandUseGrid%sFilename = trim(sArgument)
+
+        call DAT(LANDUSE_DATA)%initialize(sDescription=sItem, &
+        sFileType=trim(sOption), &
+        sFilename=trim(sArgument), &
+        iDataType=DATATYPE_INT )
+
+
+
+!        pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
+!        pConfig%sDynamicLanduseFilePrefix = "none"
+!        pLandUseGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
+!        pLandUseGrid%sFilename = trim(sArgument)
 !        call Assert( grid_Conform( pGrd, input_grd ),  &
 !                      "Non-conforming grid" )
 !        pGrd%Cells%iLandUse = input_grd%iData
 !        call grid_Destroy( input_grd )
+
+
+
       else
         call Assert( lFALSE, "Illegal landuse input option or format specified", &
           TRIM(__FILE__),__LINE__)
@@ -481,11 +528,7 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
     else if (sItem == "LANDUSE_PROJECTION_DEFINITION") then
-      pConfig%sLandUse_PROJ4 = trim(sRecord)
-      call Assert(associated(pLandUseGrid), "The landuse grid must be specified " &
-        //"before the landuse grid projection information can be specified.")
-      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
-        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
+      call DAT(LANDUSE_DATA)%definePROJ4( trim(sRecord) )
 
     else if ( sItem == "FLOW_DIRECTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating flow direction grid"
@@ -495,23 +538,27 @@ subroutine control_setModelOptions(sControlFile)
       if ( trim(sOption) == "CONSTANT" ) then
         read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
         call Assert( iStat == 0, "Cannot read integer data value" )
-        pFlowDirGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
-        pFlowDirGrid%iData = iValue
-        pFlowDirGrid%sFilename = "Constant-value grid"
+!        pFlowDirGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+!          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
+!        pFlowDirGrid%iData = iValue
+!        pFlowDirGrid%sFilename = "Constant-value grid"
+
+        call DAT(FLOWDIR_DATA)%initialize(sDescription=sItem, &
+           rConstant=rValue )
+
       else
-        pFlowDirGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
-        pFlowDirGrid%sFilename = trim(sArgument)
+!        pFlowDirGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
+!        pFlowDirGrid%sFilename = trim(sArgument)
+        call DAT(FLOWDIR_DATA)%initialize(sDescription=sItem, &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_INT )
+
       end if
       flush(UNIT=LU_LOG)
 
     else if (sItem == "FLOW_DIRECTION_PROJECTION_DEFINITION") then
-      pConfig%sFlowDir_PROJ4 = trim(sRecord)
-      call Assert(associated(pFlowDirGrid), "The flow direction grid must be specified " &
-        //"before the flow direction grid projection information can be specified.")
-      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
-        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
-
+      call DAT(FLOWDIR_DATA)%definePROJ4( trim(sRecord) )
 
     else if ( sItem == "ROUTING_FRACTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating routing fraction grid"
@@ -922,23 +969,31 @@ subroutine control_setModelOptions(sControlFile)
         read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
         call Assert( iStat == 0, &
           "Cannot read integer data value" )
-        pSoilGroupGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
-        pSoilGroupGrid%iData = iValue
-        pSoilGroupGrid%sFilename = "Constant-value grid"
+!        pSoilGroupGrid => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+!          pGrd%rX1, pGrd%rY1, DATATYPE_INT )
+!        pSoilGroupGrid%iData = iValue
+!        pSoilGroupGrid%sFilename = "Constant-value grid"
         !pGrd%Cells%iSoilGroup = iValue
+
+        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=sItem, &
+           rConstant=rValue )
+
       else
-        pSoilGroupGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
-        pSoilGroupGrid%sFilename = trim(sArgument)
+!        pSoilGroupGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
+!        pSoilGroupGrid%sFilename = trim(sArgument)
+
+        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=sItem, &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_INT )
+
       end if
       flush(UNIT=LU_LOG)
 
     else if (sItem == "SOIL_GROUP_PROJECTION_DEFINITION") then
       pConfig%sSoilGroup_PROJ4 = trim(sRecord)
-      call Assert(associated(pSoilGroupGrid), "The soil group grid must be specified " &
-        //"before the soil group grid projection information can be specified.")
-      call assert(len_trim(pConfig%sBase_PROJ4) > 0, "Please specify a projection string for the " &
-        //"base project: ~ use keyword "//dquote("BASE_PROJECTION_DEFINITION") )
+      call DAT(SOILS_GROUP_DATA)%definePROJ4( trim(sRecord) )
+
 
     else if ( sItem == "LAND_USE_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading land-use lookup table"
@@ -1546,10 +1601,10 @@ subroutine control_setModelOptions(sControlFile)
       end if
       pConfig%lGriddedData = lFALSE
       ! actual call to "model_Solve" subroutine
-      call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
-        pSoilGroupGrid, pSoilAWCGrid, pFlowDirGrid)
+      call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     else if ( sItem == "SOLVE_NO_TS_DATA" .or. sItem == "SOLVE_NO_TS_FILE" ) then
+      pConfig%lGriddedData = lTRUE
       write(UNIT=LU_LOG,FMT=*) &
         "Solving the model - no single-station time series data will be read"
       flush(UNIT=LU_LOG)
@@ -1584,8 +1639,7 @@ subroutine control_setModelOptions(sControlFile)
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
         ! actual call to "model_Solve" subroutine
-        call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid, &
-          pSoilGroupGrid, pSoilAWCGrid, pFlowDirGrid)
+        call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
       end do
 
     else if ( trim(sItem) == "CALC_BASIN_STATS" ) then
