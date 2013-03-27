@@ -1709,6 +1709,8 @@ function grid_GetGridColNum(pGrd,rX)  result(iColumnNumber)
   iColumnNumber = NINT(real(pGrd%iNX, kind=T_DBL) &
                * ( rX - pGrd%rX0 ) / (pGrd%rX1 - pGrd%rX0) + 0.5_T_DBL, kind=T_INT)
 
+!               * ( rX - pGrd%rX0 ) / (pGrd%rX1 - pGrd%rX0) + 0.5_T_DBL, kind=T_INT)
+
 !  print *, "iColumnNumber = ", iColumnNumber
 !  print *, "calc: ",  real(pGrd%iNX, kind=T_DBL) &
 !               * ( rX - pGrd%rX0 ) / (pGrd%rX1 - pGrd%rX0) + 0.5_T_DBL
@@ -1943,7 +1945,8 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
 
-  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
+!  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
+  if ( lTRUE ) then
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2063,7 +2066,8 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   integer (kind=T_INT) :: iCol, iRow
   integer (kind=T_INT) :: iSrcCol, iSrcRow
 
-  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
+!  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
+  if ( lTRUE ) then
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX

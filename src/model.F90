@@ -160,6 +160,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
+     sTitleTxt="D8 Flow Direction Grid", &
+     sAxisTxt="Flow Direction" )
+
 !  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
 
   ! Are we solving using the downhill algorithm?
@@ -185,6 +190,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
 
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
+      sTitleTxt="Hydrologic Soils Group", &
+      sAxisTxt="HSG" )
+
   call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%rSoilWaterCapInput = pGrd%rData
 
@@ -195,6 +205,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
 
+  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
+     sTitleTxt="Available Water Capacity", &
+     sAxisTxt="AWC (inches per inch)" )
+
 !  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
 
   call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
@@ -202,6 +217,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   pGenericGrd_int%iData = pGrd%Cells%iLandUse
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
+     sTitleTxt="Landuse / Landcover", &
+     sAxisTxt="LULC Code" )
+
 
   ! Initialize the model landuse-related parameters
   call model_InitializeLanduseRelatedParams( pGrd, pConfig )

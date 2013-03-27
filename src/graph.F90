@@ -355,7 +355,7 @@ module graph
     character (len=256) :: sBuf = ""
     character (len=256) :: sSummaryTxt = ""
     real (kind=T_SGL) :: rH_V_AspectRatio
-    integer (kind=T_INT) :: iPixVRes = 600.
+    integer (kind=T_INT) :: iPixVRes = 1000.
     integer (kind=T_INT) :: iPixHRes
 
     integer (kind=T_INT) :: iPtVRes

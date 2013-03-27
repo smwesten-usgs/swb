@@ -790,7 +790,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   rPad = -9999_T_SGL
   iCount = 0; iDaysInMonthCount = 0; iDaysInYearCount = 0
-  rMonthlySum = 0.0; rAnnualSum = 0.0
+  rMonthlySum = 0.0; rAnnualSum = 0.0; rVal = 0.0
   iNumGridCells = iNX * iNY
 
   if(len_trim(pConfig%sOutputFilePrefix)==0) then
@@ -812,10 +812,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
     if(STAT_INFO(k)%iDailyOutput == iNONE &
      .and. STAT_INFO(k)%iMonthlyOutput == iNONE &
      .and. STAT_INFO(k)%iAnnualOutput == iNONE)  cycle
-
-    ! ensure any remaining data in buffer is written to the binary file before
-    ! rewinding and analyzing
-    flush(STAT_INFO(k)%iLU)
 
     rewind(STAT_INFO(k)%iLU,iostat=iStat)
     call assert(iStat == 0, "Could not rewind binary file containing " &
@@ -840,16 +836,18 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
                      sMonthName,lMonthEnd)
 
+      pGrd%rData = rZERO
+
       ! name "RLE_readByte" is misleading, since the return value (rVal)
       ! is actually a vector of all daily values with dimension (iNY*iNX)
       call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
-        pConfig%rRLE_OFFSET, rVal,iNumGridCells,lEOF)
+        pConfig%rRLE_OFFSET, rVal,iNumGridCells, lEOF)
 
       if(lEOF) exit
 
       if(STAT_INFO(k)%iDailyOutput /= iNONE ) then
 
-        pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad)
+        pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
         write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
           pConfig%sSlash//"daily"//pConfig%sSlash, &
@@ -898,7 +896,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         if (lMonthEnd) then
 
-          pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNY,iNX/),PAD=rPad)
+          pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNX,iNY/),PAD=rPad)
 
           write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2)") &
             pConfig%sSlash//"monthly"//pConfig%sSlash, &
@@ -987,7 +985,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         if (lMonthEnd .and. iMonth == 12) then
 
-          pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNY,iNX/),PAD=rPad)
+          pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNX,iNY/),PAD=rPad)
 
           write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4)") &
             pConfig%sSlash//"annual"//pConfig%sSlash, &
@@ -1625,7 +1623,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
       ! at this point, the file is ready for reading of Day 1 values
 
-	end if
+    end if
 
   end do
 
