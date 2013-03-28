@@ -217,12 +217,14 @@ subroutine initialize_netcdf_data_object_sub( &
    sDescription, &
    sFilenameTemplate, &
    iDataType, &
+   pGrdBase, &
    sPROJ4)
 
    class (T_DATA_GRID) :: this
    character (len=*) :: sDescription
    character (len=*) :: sFilenameTemplate
    integer (kind=T_INT) :: iDataType
+   type ( T_GENERAL_GRID ),pointer :: pGrdBase
    character (len=*), optional :: sPROJ4
 
    if (present(sPROJ4) ) then
@@ -239,6 +241,7 @@ subroutine initialize_netcdf_data_object_sub( &
 
    this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
    this%lGridIsPersistent = lTRUE
+   call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
 end subroutine initialize_netcdf_data_object_sub
 
@@ -569,7 +572,8 @@ end subroutine set_constant_value_real
 
       lMatch = lFALSE
 
-      if (present(iYear) )   iPos_Y = index(sNewFilename, "%Y")
+      if (present(iYear) ) iPos_Y = &
+           max(index(sNewFilename, "%Y"), index(sNewFilename, "%y") )
 
       if (iPos_Y > 0) then
         lMatch = lTRUE
@@ -649,7 +653,7 @@ end subroutine set_constant_value_real
       ! check to see whether currently opened file is within date range
       ! if past date range, close file
 
-      if ( netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay ) ) &
+      if ( .not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay ) ) &
         call netcdf_close_file( NCFILE=this%NCFILE )
 
     endif
@@ -662,9 +666,8 @@ end subroutine set_constant_value_real
 
       call make_filename_from_template( this, &
         iMonth=iMonth, &
-        iYear=iYear )
-
-
+        iYear=iYear, &
+        iDay=iDay)
 
       this%NCFILE = netcdf_open_and_prepare(sFilename=this%sSourceFilename, &
              sVarName_x=this%sVariableName_x, &

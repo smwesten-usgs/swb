@@ -307,7 +307,9 @@ subroutine control_setModelOptions(sControlFile)
           call DAT(PRECIP_DATA)%initialize_netcdf( &
             sDescription=trim(sItem), &
             sFilenameTemplate = trim(sArgument), &
-            iDataType=DATATYPE_REAL )
+            iDataType=DATATYPE_REAL, &
+            pGrdBase=pGrd)
+
 !          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%iNCID = &
 !              netcdf_open(TRIM(sArgument))
 !          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%sFilename = &
@@ -396,7 +398,8 @@ subroutine control_setModelOptions(sControlFile)
           call DAT(TMAX_DATA)%initialize_netcdf( &
             sDescription=trim(sItem), &
             sFilenameTemplate = trim(sArgument), &
-            iDataType=DATATYPE_REAL )
+            iDataType=DATATYPE_REAL, &
+            pGrdBase=pGrd )
 
 
 !          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
@@ -410,7 +413,8 @@ subroutine control_setModelOptions(sControlFile)
           call DAT(TMIN_DATA)%initialize_netcdf( &
             sDescription=trim(sItem), &
             sFilenameTemplate = trim(sArgument), &
-            iDataType=DATATYPE_REAL )
+            iDataType=DATATYPE_REAL, &
+            pGrdBase=pGrd)
 
 !          pConfig%NC_TMIN_VarName = TRIM(sArgument)
 
