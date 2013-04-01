@@ -347,7 +347,7 @@ function netcdf_open_and_prepare(sFilename, sVarName_x, &
     trim(sY_VarName), trim(sZ_VarName), trim(sTime_VarName) )
 
   NCFILE%dpFirstAndLastTimeValues = netcdf_get_first_and_last(NCFILE=NCFILE, &
-      iVarIndex=NCFILE%iVarIndex_time)
+      iVarIndex=NCFILE%iVarIndex(NC_TIME) )
 
   call netcdf_calculate_time_range(NCFILE)
   call netcdf_get_x_and_y(NCFILE)
@@ -360,10 +360,17 @@ subroutine netcdf_get_x_and_y(NCFILE)
 
   type (T_NETCDF4_FILE ) :: NCFILE
 
-  allocate(NCFILE
+!  allocate( NCFILE%rX_Coords(  ) )
+
+!  allocate (NCFILE%rY_Coords(  ) )
+
+! get coords from NCFILE
+
+! need another subroutine that takes the grid bounds and turns them
+! into row, column bounds
 
 
-end subroutine netcdf_get_x_and_y(NCFILE)
+end subroutine netcdf_get_x_and_y
 
 !----------------------------------------------------------------------
 
@@ -909,11 +916,11 @@ subroutine netcdf_get_time_units(NCFILE)
   logical (kind=T_LOGICAL) :: lFound
   integer (kind=T_INT) :: iStat
 
-  call assert(NCFILE%iVarID_time >= 0, "INTERNAL PROGRAMMING ERROR -- " &
+  call assert(NCFILE%iVarID(NC_TIME) >= 0, "INTERNAL PROGRAMMING ERROR -- " &
     //"netcdf_get_time_units must be called only after a call is made to ~" &
     //"netcdf_get_variable_ids", trim(__FILE__), __LINE__)
 
-  pNC_VAR => NCFILE%NC_VAR(NCFILE%iVarID_time)
+  pNC_VAR => NCFILE%NC_VAR(NCFILE%iVarID(NC_TIME) )
 
   lFound = lFALSE
 
@@ -986,19 +993,19 @@ subroutine netcdf_get_variable_id_and_type( NCFILE, sX_VarName, sY_VarName, &
 
    enddo
 
-   call assert(NCFILE%iVarID_x >= 0, &
+   call assert(NCFILE%iVarID(NC_X) >= 0, &
      "Unable to find the variable named "//dquote(sX_VarName)//" in " &
      //"file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
 
-   call assert(NCFILE%iVarID_y >= 0, &
+   call assert(NCFILE%iVarID(NC_Y) >= 0, &
      "Unable to find the variable named "//dquote(sY_VarName)//" in " &
      //"file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
 
-   call assert(NCFILE%iVarID_z >= 0, &
+   call assert(NCFILE%iVarID(NC_Z) >= 0, &
      "Unable to find the variable named "//dquote(sZ_VarName)//" in " &
      //"file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
 
-   call assert(NCFILE%iVarID_time >= 0, &
+   call assert(NCFILE%iVarID(NC_TIME) >= 0, &
      "Unable to find the variable named "//dquote(sTime_VarName)//" in " &
      //"file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
 

@@ -88,6 +88,7 @@ module data_factory
     procedure :: dump_data_structure => dump_data_structure_sub
 
     procedure :: enforce_limits => data_GridEnforceLimits_int
+    procedure :: calc_project_boundaries => calc_project_boundaries
 
   end type T_DATA_GRID
 
