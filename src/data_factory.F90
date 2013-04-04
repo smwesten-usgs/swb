@@ -7,15 +7,6 @@ module data_factory
   implicit none
   private
 
-
-  type T_GRID_BOUNDS
-    real (kind=c_double) :: rXll, rYll
-    real (kind=c_double) :: rXul, rYul
-    real (kind=c_double) :: rXlr, rYlr
-    real (kind=c_double) :: rXur, rYur
-    character (len=256) :: sPROJ4_string
-  end type T_GRID_BOUNDS
-
   type, public :: T_DATA_GRID
     integer (kind=T_INT) :: iSourceDataForm  ! constant, static grid, dynamic grid
     integer (kind=T_INT) :: iSourceDataType        ! real, short, integer, etc.
@@ -43,7 +34,7 @@ module data_factory
     ! conversion factor?
 
     integer (kind=T_INT) :: iNC_FILE_STATUS
-    type (T_NETCDF4_FILE) :: NCFILE
+    type (T_NETCDF4_FILE), pointer :: NCFILE
     integer (kind=T_INT) :: iConstantValue
     real (kind=T_SGL) :: rConstantValue
 
@@ -53,6 +44,7 @@ module data_factory
     type (T_GENERAL_GRID), pointer :: pGrdNative
     logical (kind=T_LOGICAL) :: lGridIsPersistent = lFALSE
     logical (kind=T_LOGICAL) :: lGridHasChanged = lFALSE
+    logical (kind=T_LOGICAL) :: lPerformFullInitialization = lTRUE
 
   contains
 
@@ -216,16 +208,18 @@ end subroutine initialize_gridded_data_object_sub
 subroutine initialize_netcdf_data_object_sub( &
    this, &
    sDescription, &
-   sFilenameTemplate, &
    iDataType, &
    pGrdBase, &
+   sFilename, &
+   sFilenameTemplate, &
    sPROJ4)
 
    class (T_DATA_GRID) :: this
    character (len=*) :: sDescription
-   character (len=*) :: sFilenameTemplate
    integer (kind=T_INT) :: iDataType
    type ( T_GENERAL_GRID ),pointer :: pGrdBase
+   character (len=*), optional :: sFilename
+   character (len=*), optional :: sFilenameTemplate
    character (len=*), optional :: sPROJ4
 
    if (present(sPROJ4) ) then
@@ -234,15 +228,34 @@ subroutine initialize_netcdf_data_object_sub( &
      this%sSourcePROJ4_string =  ""
    endif
 
+   if (present(sFilename)) then
+     this%sSourceFilename = sFilename
+     this%iSourceDataForm = STATIC_NETCDF_GRID
+     this%lGridIsPersistent = lFALSE
+   else
+     this%sSourceFilename = ""
+   endif
+
+   if (present(sFilenameTemplate)) then
+     this%sFilenameTemplate = sFilenameTemplate
+     this%sSourceFilename = ""
+     this%lGridIsPersistent = lTRUE
+     this%iSourceDataForm = DYNAMIC_NETCDF_GRID
+   else
+     this%sFilenameTemplate = ""
+   endif
+
+   call assert(.not. (len_trim(this%sSourceFilename) > 0 &
+      .and. len_trim(this%sFilenameTemplate) > 0), &
+      "INTERNAL PROGRAMMING ERROR - values may be assigned to either " &
+      //dquote("Filename")//" or the "//dquote("sFilenameTemplate") &
+      //" -- NOT BOTH!", trim(__FILE__), __LINE__)
+
    this%sSourceFileType = "NETCDF"
    this%iSourceFileType = this%get_filetype()
 
-   this%iSourceDataForm = DYNAMIC_NETCDF_GRID
    this%iSourceDataType = iDataType
-
    this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
-   this%lGridIsPersistent = lTRUE
-   call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
 end subroutine initialize_netcdf_data_object_sub
 
@@ -554,16 +567,24 @@ end subroutine set_constant_value_real
     ! [ LOCALS ]
     character (len=256) :: sNewFilename
     character (len=256) :: sUppercaseFilename
+    character (len=256) :: sCWD
     integer (kind=T_INT) :: iPos_Y, iPos_D, iPos_M, iPos, iLen, iCount
     logical (kind=T_LOGICAL) :: lMatch
     logical (kind=T_LOGICAL) :: lExist
     character (len=2) :: sBuf
+    character (len=1) :: sDelimiter
+    integer (kind=T_INT) :: iStatus
 
     iPos_Y = 0; iPos_M = 0; iPos_D = 0; iPos = 0
 
     ! EXAMPLES of the kinds of templates that we need to be able to understand:
     ! tars1980\prcp.nc   template => "tars%Y\prcp.nc"
     ! prcp_1980_00.nc    template => "prcp_%Y_%m.nc"
+
+    iStatus = getcwd(sCWD )
+
+    call assert(iStatus==0, "Problem detemining what the current working" &
+      //" directory is", trim(__FILE__), __LINE__)
 
     sNewFilename = this%sFilenameTemplate
 
@@ -625,7 +646,13 @@ end subroutine set_constant_value_real
 
     enddo
 
-    this%sSourceFilename = trim(sNewFilename)
+    if( index(string=sCWD, substring="/") > 0 ) then
+      sDelimiter = "/"
+    else
+      sDelimiter = "\"
+    endif
+
+    this%sSourceFilename = trim(sCWD)//trim(sDelimiter)//trim(sNewFilename)
 
     ! does this file actually exist?
     inquire( file=this%sSourceFilename, exist=lExist )
@@ -665,22 +692,39 @@ end subroutine set_constant_value_real
       call this%increment_filecount()
       call this%reset_at_yearend_filecount(iYear)
 
-      call make_filename_from_template( this, &
-        iMonth=iMonth, &
-        iYear=iYear, &
-        iDay=iDay)
+      call this%make_filename( iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-      this%NCFILE = netcdf_open_and_prepare(sFilename=this%sSourceFilename, &
+      if (this%lPerformFullInitialization) then
+
+        print *, trim(__FILE__), __LINE__
+
+        call this%calc_project_boundaries(pGrdBase=pGrdBase)
+
+        this%NCFILE => netcdf_open_and_prepare(sFilename=this%sSourceFilename, &
              sVarName_x=this%sVariableName_x, &
              sVarName_y=this%sVariableName_y, &
              sVarName_z=this%sVariableName_z, &
              sVarName_time=this%sVariableName_time, &
+             tGridBounds=this%GRID_BOUNDS, &
              iLU=LU_LOG)
+
+        this%lPerformFullInitialization = lFALSE
+
+      else
+
+        call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
+
+        call assert (netcdf_date_within_range(NCFILE=this%NCFILE, &
+             iJulianDay=iJulianDay ), "Date range for currently open NetCDF file" &
+             //" does not include the present simulation date", &
+             trim(__FILE__), __LINE__)
+
+      endif
 
     endif
 
-    iTimeIndex = netcdf_date_to_index( NCFILE=this%NCFILE, &
-                                       iJulianDay=iJulianDay )
+!    iTimeIndex = netcdf_date_to_index( NCFILE=this%NCFILE, &
+!                                       iJulianDay=iJulianDay )
 
     if ( this%iSourceDataType == DATATYPE_INT) then
 
@@ -760,39 +804,42 @@ end subroutine set_constant_value_real
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
     ! [ LOCALS ]
-    integer (kind=T_INT), dimension(4) :: iRetVal
+    integer (kind=T_INT) :: iRetVal
     real (kind=T_SGL) :: rMultiplier = 10.
+    real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid
-    this%GRID_BOUNDS%rXll = pGrdBase%rX0 - pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rYll = pGrdBase%rY0 - pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rXur = pGrdBase%rX1 + pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rYur = pGrdBase%rY1 + pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rXlr = pGrdBase%rX1 + pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rYlr = pGrdBase%rY0 - pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rXul = pGrdBase%rX0 - pGrdBase%rGridCellSize * rMultiplier
-    this%GRID_BOUNDS%rYul = pGrdBase%rY1 + pGrdBase%rGridCellSize * rMultiplier
+    rX(1) = pGrdBase%rX0 - pGrdBase%rGridCellSize * rMultiplier ! Xll
+    rY(1) = pGrdBase%rY0 - pGrdBase%rGridCellSize * rMultiplier ! Yll
+    rX(2) = pGrdBase%rX1 + pGrdBase%rGridCellSize * rMultiplier ! Xlr
+    rY(2) = pGrdBase%rY0 - pGrdBase%rGridCellSize * rMultiplier ! Ylr
+    rX(3) = pGrdBase%rX0 - pGrdBase%rGridCellSize * rMultiplier ! Xul
+    rY(3) = pGrdBase%rY1 + pGrdBase%rGridCellSize * rMultiplier ! Yul
+    rX(4) = pGrdBase%rX1 + pGrdBase%rGridCellSize * rMultiplier ! Xur
+    rY(4) = pGrdBase%rY1 + pGrdBase%rGridCellSize * rMultiplier ! Yur
 
     ! now transform the project coordinates to native coordinates so we can
     ! use the native coordinate boundaries to "cookie-cut" only the data
     ! pertinent to our project area.
-    iRetVal(1) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
-                this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
-                [this%GRID_BOUNDS%rXll], [this%GRID_BOUNDS%rYll] )
+    iRetVal = pj_init_and_transform(trim(pGrdBase%sPROJ4_string)//C_NULL_CHAR, &
+                trim(this%sSourcePROJ4_string)//C_NULL_CHAR, 4, &
+                rX, rY )
 
-    iRetVal(2) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
-                this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
-                [this%GRID_BOUNDS%rXur], [this%GRID_BOUNDS%rYur] )
+   this%GRID_BOUNDS%rXll = rX(1); this%GRID_BOUNDS%rXlr = rX(2)
+   this%GRID_BOUNDS%rYll = rY(1); this%GRID_BOUNDS%rYlr = rY(2)
+   this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
+   this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
 
-    iRetVal(3) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
-                this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
-                [this%GRID_BOUNDS%rXul], [this%GRID_BOUNDS%rYul] )
-
-    iRetVal(4) = pj_init_and_transform(pGrdBase%sPROJ4_string//C_NULL_CHAR, &
-                this%sSourcePROJ4_string//C_NULL_CHAR, 1, &
-                [this%GRID_BOUNDS%rXlr], [this%GRID_BOUNDS%rYlr] )
+   print *, "--"
+   print *, "            X                            Y"
+   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
+   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
+   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
+   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
 
   end subroutine calc_project_boundaries
+
+!----------------------------------------------------------------------
 
   subroutine data_GridEnforceLimits_int(this)
 

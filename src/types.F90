@@ -254,6 +254,14 @@ module types
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
   integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
 
+  type T_GRID_BOUNDS
+    real (kind=c_double) :: rXll, rYll
+    real (kind=c_double) :: rXul, rYul
+    real (kind=c_double) :: rXlr, rYlr
+    real (kind=c_double) :: rXur, rYur
+    character (len=256) :: sPROJ4_string
+  end type T_GRID_BOUNDS
+
 !> @brief Type that contains pointers to one or more grid data structures.
 !>
 !> Type that contains pointers to one or more grid data structures.
