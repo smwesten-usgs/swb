@@ -31,16 +31,16 @@ module netcdf_c_api_interfaces
   end interface
 
   interface
-    function nc_get_var_real(ncid, varid, rp) bind(c)
+    function nc_get_var_float(ncid, varid, rp) bind(c)
 
       import :: c_int, c_float
 
       integer(kind=c_int), value       :: ncid, varid
       real (kind=c_float), intent(out) :: rp(*)
 
-      integer(kind=c_int)              :: nc_get_var_real
+      integer(kind=c_int)              :: nc_get_var_float
 
-    end function nc_get_var_real
+    end function nc_get_var_float
   end interface
 
   interface
@@ -70,6 +70,22 @@ module netcdf_c_api_interfaces
       integer (kind=c_int)                             :: nc_get_vars_short
 
     end function nc_get_vars_short
+  end interface
+
+  interface
+    function nc_get_vars_float(ncid, varid, startp, countp, stridep, vars) bind(c)
+
+      import :: c_int, c_ptr, c_float
+
+      integer (kind=c_int), value             :: ncid, varid
+      type (c_ptr), value                     :: startp
+      type (c_ptr), value                     :: countp
+      type (c_ptr), value                     :: stridep
+      real (kind=c_float), intent(out)       :: vars(*)
+
+      integer (kind=c_int)                             :: nc_get_vars_float
+
+    end function nc_get_vars_float
   end interface
 
   interface

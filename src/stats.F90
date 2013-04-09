@@ -612,11 +612,12 @@ subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
 
   ! [ ARGUMENTS ]
   integer (kind=T_INT), intent(in) :: iLU       ! Fortran logical file unit
-  real (kind=T_SGL), dimension(:,:) :: rData   ! Real data
   character (len=*) :: sText
+  real (kind=T_SGL), dimension(:,:) :: rData   ! Real data
+  integer (kind=T_INT), optional :: iCount
+
   ! [ LOCALS ]
   integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT), optional :: iCount
 
   if(present(iCount)) then
     ! establish number of cells in model grid

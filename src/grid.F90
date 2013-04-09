@@ -160,8 +160,18 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   allocate ( pGrd, stat=iStat )
   call Assert ( iStat == 0, &
      "Could not allocate pointer to T_GRID object", trim(__FILE__),__LINE__ )
-  call Assert ( iNX > 0 .and. iNY > 0, &
-     "Illegal grid dimensions specified", trim(__FILE__),__LINE__)
+
+  if (iNX <= 0 .or. iNY <= 0) then
+    call echolog("Illegal grid dimensions: ")
+    call echolog("iNX: "//trim(asCharacter(iNX) ) )
+    call echolog("iNY: "//trim(asCharacter(iNY) ) )
+    call echolog("rX0: "//trim(asCharacter(rX0) ) )
+    call echolog("rY0: "//trim(asCharacter(rY0) ) )
+    call echolog("rX1: "//trim(asCharacter(rX1) ) )
+    call echolog("rY1: "//trim(asCharacter(rY1) ) )
+    call Assert ( lFALSE, &
+       "INTERNAL PROGRAMMING ERROR? - Illegal grid dimensions specified", trim(__FILE__),__LINE__)
+  endif
 
   select case (iDataType)
       case ( GRID_DATATYPE_INT )
@@ -1759,7 +1769,6 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
   integer (kind=T_INT), dimension(2) :: iColRow
 
   ! [ LOCALS ]
-  logical (kind=T_LOGICAL), dimension(pGrd%iNX, pGrd%iNY) :: lMask
   real (kind=T_SGL) :: rDist, rMinDistance, rDist2
 
   integer (kind=T_INT), save :: iLastColNum, iLastRowNum

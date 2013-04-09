@@ -723,9 +723,12 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
 
   call DAT(PRECIP_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
-      iJulianDay=iJulianDay)
+      iJulianDay=iJulianDay, &
+      rValues=pGrd%Cells%rGrossPrecip)
 
-  pGrd%Cells%rGrossPrecip = pGrd%rData
+  write(sBuf, fmt="(i4.4,'_',i2.2,'_',i2.2)") iYear, iMonth, iDay
+
+!  pGrd%Cells%rGrossPrecip = pGrd%rData
 
   iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
 
@@ -733,6 +736,13 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
     pGrd%Cells%rGrossPrecip = rZERO
   end where
+
+!  pGenericGrd_sgl%rData = pGrd%Cells%rGrossPrecip
+!
+!  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "Precip_"//trim(sBuf)//".png", &
+!     sTitleTxt="Precip: "//trim(sBuf), &
+!     sAxisTxt="mm per day" )
 
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= rZERO,"Precipitation values less than " &

@@ -2,6 +2,7 @@ module data_factory
 
   use types
   use swb_grid
+  use stats
   use netcdf4_support
   use iso_c_binding
   implicit none
@@ -9,8 +10,9 @@ module data_factory
 
   type, public :: T_DATA_GRID
     integer (kind=T_INT) :: iSourceDataForm  ! constant, static grid, dynamic grid
-    integer (kind=T_INT) :: iSourceDataType        ! real, short, integer, etc.
-    integer (kind=T_INT) :: iSourceFileType
+    integer (kind=T_INT) :: iSourceDataType  ! real, short, integer, etc.
+    integer (kind=T_INT) :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF
+    integer (kind=T_INT) :: iTargetDataType  ! Fortran real, integer, etc.
     character (len=256) :: sDescription
     character (len=256) :: sSourcePROJ4_string
     character (len=256) :: sSourceFileType
@@ -111,6 +113,7 @@ contains
      this%rConstantValue = rConstant
      this%iSourceDataForm = CONSTANT_GRID
      this%iSourceDataType = DATATYPE_REAL
+     this%iTargetDataType = DATATYPE_REAL
      this%iSourceFileType = FILETYPE_NONE
 
   end subroutine initialize_constant_real_data_object_sub
@@ -129,6 +132,7 @@ contains
      this%iConstantValue = iConstant
      this%iSourceDataForm = CONSTANT_GRID
      this%iSourceDataType = DATATYPE_INT
+     this%iTargetDataType = DATATYPE_INT
      this%iSourceFileType = FILETYPE_NONE
 
   end subroutine initialize_constant_int_data_object_sub
@@ -183,11 +187,11 @@ subroutine initialize_gridded_data_object_sub( &
       //dquote("Filename")//" or the "//dquote("sFilenameTemplate") &
       //" -- NOT BOTH!", trim(__FILE__), __LINE__)
 
-
    this%sSourceFileType = sFileType
    this%iSourceFileType = this%get_filetype()
 
    this%iSourceDataType = iDataType
+   this%iTargetDataType = iDataType
 
   call assert(this%iSourceFileType == FILETYPE_ARC_ASCII .or. &
     this%iSourceFileType == FILETYPE_SURFER, "Only Arc ASCII or " &
@@ -254,7 +258,7 @@ subroutine initialize_netcdf_data_object_sub( &
    this%sSourceFileType = "NETCDF"
    this%iSourceFileType = this%get_filetype()
 
-   this%iSourceDataType = iDataType
+   this%iTargetDataType = iDataType
    this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
 
 end subroutine initialize_netcdf_data_object_sub
@@ -696,8 +700,6 @@ end subroutine set_constant_value_real
 
       if (this%lPerformFullInitialization) then
 
-        print *, trim(__FILE__), __LINE__
-
         call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
         this%NCFILE => netcdf_open_and_prepare(sFilename=this%sSourceFilename, &
@@ -708,7 +710,29 @@ end subroutine set_constant_value_real
              tGridBounds=this%GRID_BOUNDS, &
              iLU=LU_LOG)
 
+        this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
+
+        this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
+
+        this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
+                    iNY=this%NCFILE%iNY, &
+                    rX0=this%NCFILE%rX(LEFT), &
+                    rY0=this%NCFILE%rY(BOTTOM), &
+                    rX1=this%NCFILE%rX(RIGHT), &
+                    rY1=this%NCFILE%rY(TOP), &
+!                    rX0=this%GRID_BOUNDS%rXll, &
+!                    rY0=this%GRID_BOUNDS%rYll, &
+!                    rX1=this%GRID_BOUNDS%rXur, &
+!                    rY1=this%GRID_BOUNDS%rYur, &
+                    iDataType=this%iTargetDataType )
+
+        ! ensure that PROJ4 string is associated with the native grid
+        this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+        this%pGrdNative%sFilename = this%sSourceFilename
+
         this%lPerformFullInitialization = lFALSE
+
+        call this%dump_data_structure()
 
       else
 
@@ -723,34 +747,85 @@ end subroutine set_constant_value_real
 
     endif
 
-!    iTimeIndex = netcdf_date_to_index( NCFILE=this%NCFILE, &
-!                                       iJulianDay=iJulianDay )
+    call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
+                                           iJulianDay=iJulianDay)
 
-    if ( this%iSourceDataType == DATATYPE_INT) then
+    call netcdf_get_3d_variable(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
 
-!      pGrdBase%iData=netcdf_get_variable_short(NCFILE=this%NCFILE, &
-!         iNC_VarID=this%NCFILE%iVarID_z, &
-!         iNC_Start= &,
-!         iNC_Count= &,
-!         iNC_Stride )
+    if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 
-      pGrdBase%iData = 1
+      ! only invoke the transform procedure if the PROJ4 strings are different
+      if (.not. str_compare(this%pGrdNative%sPROJ4_string, pGrdBase%sPROJ4_string)) then
 
-    elseif ( this%iSourceDataType == DATATYPE_REAL) then
+        call echolog(" ")
+        call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
+        call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
+        call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
 
-!      pGrdBase%rData=netcdf_get_variable_double(NCFILE=this%NCFILE, &
-!         iNC_VarID=, &
-!         iNC_Start= &,
-!         iNC_Count= &,
-!         iNC_Stride )
+        call grid_Transform(pGrd=this%pGrdNative, &
+                          sFromPROJ4=this%sSourcePROJ4_string, &
+                          sToPROJ4=pGrdBase%sPROJ4_string )
 
-      pGrdBase%rData = 0.1
+      endif
+
+      call this%dump_data_structure()
+
+      call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
+        "Transformed grid read from file "//dquote(this%sSourceFilename) &
+        //" doesn't completely cover your model domain.")
+
+      select case (this%iTargetDataType)
+
+        case ( DATATYPE_REAL )
+
+          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                              rArrayFrom=this%pGrdNative%rData, &
+                              pGrdTo=pGrdBase, &
+                              rArrayTo=pGrdBase%rData )
+
+        case ( DATATYPE_INT)
+
+          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                            iArrayFrom=this%pGrdNative%iData, &
+                            pGrdTo=pGrdBase, &
+                            iArrayTo=pGrdBase%iData )
+        case default
+
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+            //trim(asCharacter(this%iSourceDataType)), &
+            trim(__FILE__), __LINE__)
+
+      end select
+
+    else
+
+      call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
+                      "Non-conforming grid. Filename: " &
+                      //dquote(this%pGrdNative%sFilename) )
+
+      select case (this%iSourceDataType)
+
+        case ( DATATYPE_REAL )
+
+          pGrdBase%rData = this%pGrdNative%rData
+
+        case ( DATATYPE_INT)
+
+          pGrdBase%rData = this%pGrdNative%rData
+
+        case default
+
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+            //trim(asCharacter(this%iSourceDataType)), &
+            trim(__FILE__), __LINE__)
+
+      end select
 
     endif
 
-
-
-
+    call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
+          sText="Precip: ", &
+          rData=pGrdBase%rData )
 
 
   end subroutine getvalues_dynamic_netcdf_sub
@@ -805,7 +880,7 @@ end subroutine set_constant_value_real
 
     ! [ LOCALS ]
     integer (kind=T_INT) :: iRetVal
-    real (kind=T_SGL) :: rMultiplier = 10.
+    real (kind=T_SGL) :: rMultiplier = 1.
     real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid
@@ -830,12 +905,12 @@ end subroutine set_constant_value_real
    this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
    this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
 
-   print *, "--"
-   print *, "            X                            Y"
-   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
-   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
-   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
-   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
+!   print *, "--"
+!   print *, "            X                            Y"
+!   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
+!   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
+!   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
+!   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
 
   end subroutine calc_project_boundaries
 
