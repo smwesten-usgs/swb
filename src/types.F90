@@ -2393,9 +2393,19 @@ function day_of_year(iJD) result(iDOY)
 
   iDOY = iJD - iFirstDay + 1
 
-  return
-
 end function day_of_year
+
+!--------------------------------------------------------------------------
+
+function isLeap(iYear)   result(lResult)
+
+  integer (kind=T_INT), intent(in)     :: iYear
+  logical (kind=T_LOGICAL) :: lResult
+
+  lResult = ( mod(iYear, 4) == 0 .and. mod(iYear, 100) /= 0 ) .or. &
+                 ( mod(iYear, 400) == 0 .and. iYear /= 0 )
+
+end function isLeap
 
 !--------------------------------------------------------------------------
 ! NAME

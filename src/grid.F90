@@ -2074,6 +2074,10 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   integer (kind=T_INT), dimension(2) :: iColRow
   integer (kind=T_INT) :: iCol, iRow
   integer (kind=T_INT) :: iSrcCol, iSrcRow
+  real (kind=T_SGL), dimension(3,3) :: rKernel
+
+  rKernel = 1.
+  rKernel(2,2) = 8.
 
 !  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
   if ( lTRUE ) then
@@ -2093,7 +2097,13 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
           "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
           trim(__FILE__), __LINE__)
 
-        rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+!        rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+
+         rArrayTo(iCol,iRow) = grid_Convolve_sgl(rValues=rArrayFrom, &
+           iTargetCol=iColRow(COLUMN), &
+           iTargetRow=iColRow(ROW), &
+           rKernel=rKernel)
+
       enddo
     enddo
 
@@ -2202,34 +2212,44 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
 
 end function grid_majorityFilter_int
 
-function grid_Convolve_sgl(rValues, iNX, iNY, iTargetCol, &
+function grid_Convolve_sgl(rValues, iTargetCol, &
    iTargetRow, rKernel, rNoDataValue)  result(rRetVal)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), dimension(iNX, iNY) :: rValues
+  real (kind=T_SGL), dimension(:,:) :: rValues
   integer (kind=T_INT) :: iNX
   integer (kind=T_INT) :: iNY
   integer (kind=T_INT) :: iTargetCol          ! column number of target cell
   integer (kind=T_INT) :: iTargetRow          ! row number of target cell
   real (kind=T_INT), dimension(:,:) :: rKernel
-  real (kind=T_SGL) :: rNoDataValue
+  real (kind=T_SGL), optional :: rNoDataValue
   real (kind=T_SGL) :: rRetVal
 
   ! [ LOCALS ]
   integer (kind=T_INT) :: iRowMin, iRowMax
   integer (kind=T_INT) :: iColMin, iColMax
   integer (kind=T_INT) :: iKernelSize         ! i.e. 3, 5, 7, 9, 11, etc.
+  integer (kind=T_INT) :: iIncValue
+  integer (kind=T_INT) :: iCol, iRow
+  real (kind=T_SGL) :: rKernelSum
 
-  iKernelSize = ( size(rKernel, dim=1) -1 ) / 2
+  rKernelSum = rZERO
+  rRetVal = rZERO
 
-  iRowMin = max(1,iTargetRow - iKernelSize)
-  iRowMax = min(iNY, iTargetRow + iKernelSize)
+  iKernelSize = size(rKernel, dim=1)
+  iIncValue = (iKernelSize - 1) / 2
 
-  iColMin = max(1,iTargetRow - iKernelSize)
-  iColMax = min(iNY, iTargetRow + iKernelSize)
+  iNX = ubound(rValues,1)
+  iNY = ubound(rValues,2)
 
-  if( (iRowMax - iRowMin + 1)  /= size(rKernel,  dim=1) &
-    .or. (iColMax - iColMin + 1)  /= size(rKernel,  dim=1) ) then
+  iRowMin = max(1,iTargetRow - iIncValue)
+  iRowMax = min(iNY, iTargetRow + iIncValue)
+
+  iColMin = max(1,iTargetCol - iIncValue)
+  iColMax = min(iNY, iTargetCol + iIncValue)
+
+  if( (iRowMax - iRowMin + 1)  /= iKernelsize &
+    .or. (iColMax - iColMin + 1)  /= iKernelsize ) then
 
     ! This is a simple, but less than desirable way to treat cells that
     ! fall near the edge of the source grid. Ideally, the source grid will
@@ -2239,7 +2259,18 @@ function grid_Convolve_sgl(rValues, iNX, iNY, iTargetCol, &
 
   else
 
-    rRetVal = sum(rValues(iColMin:iColMax, iRowMin:iRowMax) * rKernel) / sum( rKernel )
+!    rRetVal = sum(rValues(iColMin:iColMax, iRowMin:iRowMax) * rKernel ) / sum( rKernel )
+
+    do iCol=0,iKernelSize-1
+      do iRow=0,iKernelSize-1
+        if(rValues(iCol+iColMin,iRow+iRowMin) >= 0. ) then
+          rRetVal = rRetVal + rValues(iCol+iColMin,iRow+iRowMin) * rKernel(iCol+1, iRow+1)
+          rKernelSum = rKernelSum + rKernel(iCol+1, iRow+1)
+        endif
+      enddo
+    enddo
+
+    if (rKernelSum > 0.) rRetVal = rRetVal / rKernelSum
 
   endif
 

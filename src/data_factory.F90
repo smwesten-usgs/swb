@@ -24,6 +24,15 @@ module data_factory
     logical (kind=T_LOGICAL) :: lProjectionDiffersFromBase = lFALSE
     real (kind=T_SGL) :: rMinAllowedValue = 1.0
     real (kind=T_SGL) :: rMaxAllowedValue = 1.0e6
+    real (kind=T_SGL) :: rScale = rONE
+    real (kind=T_SGL) :: rOffset = rZERO
+    real (kind=T_SGL) :: rConversionFactor = rONE
+
+    logical (kind=T_LOGICAL) :: lApplyScaleAndOffset = lFALSE
+    logical (kind=T_LOGICAL) :: lApplyConversionFactor = lFALSE
+
+    integer (kind=T_INT) :: iDaysToPadAtYearsEnd = 0
+    integer (kind=T_INT) :: iDaysToPadIfLeapYear = 1
 
     ! the following are only used if data are being read from a NetCDF file
     character (len=256) :: sVariableName_x = "x"
@@ -80,13 +89,14 @@ module data_factory
     procedure :: make_filename => make_filename_from_template
     procedure :: definePROJ4 => set_PROJ4_string
     procedure :: dump_data_structure => dump_data_structure_sub
+    procedure :: transfer_from_native => transform_grid_to_grid
 
     procedure :: enforce_limits => data_GridEnforceLimits_int
     procedure :: calc_project_boundaries => calc_project_boundaries
 
   end type T_DATA_GRID
 
-  type (T_DATA_GRID), dimension(7), public, target :: DAT
+  type (T_DATA_GRID), dimension(9), public, target :: DAT
 
   integer (kind=T_INT), parameter, public :: LANDUSE_DATA = 1
   integer (kind=T_INT), parameter, public :: AWC_DATA = 2
@@ -95,9 +105,12 @@ module data_factory
   integer (kind=T_INT), parameter, public :: PRECIP_DATA = 5
   integer (kind=T_INT), parameter, public :: TMIN_DATA = 6
   integer (kind=T_INT), parameter, public :: TMAX_DATA = 7
+  integer (kind=T_INT), parameter, public :: REL_HUM_DATA = 8
+  integer (kind=T_INT), parameter, public :: SOL_RAD_DATA = 9
 
-  integer (kind=T_INT), parameter :: NETCDF_FILE_OPEN = 0
-  integer (kind=T_INT), parameter :: NETCDF_FILE_CLOSED = 1
+
+  integer (kind=T_INT), parameter :: NETCDF_FILE_OPEN = 27
+  integer (kind=T_INT), parameter :: NETCDF_FILE_CLOSED = 42
 
 contains
 
@@ -270,14 +283,44 @@ end subroutine initialize_netcdf_data_object_sub
 
     class (T_DATA_GRID) :: this
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
-    integer (kind=T_INT), optional :: iMonth, iDay, iYear, iJulianDay
+    integer (kind=T_INT), intent(in), optional :: iMonth, iDay, iYear, iJulianDay
     real (kind=T_SGL), dimension(:,:), optional :: rValues
     integer (kind=T_INT), dimension(:,:), optional :: iValues
 
+    ! [ LOCALS ]
+    integer (kind=c_int) :: iNumDaysToPad
+    integer (kind=c_int) :: iPadDays
+    integer (kind=T_INT) :: iLocalJulianDay
+
     if ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
+      iLocalJulianDay = iJulianDay
+
+      if (this%iNC_FILE_STATUS == NETCDF_FILE_OPEN) then
+!      if (lFALSE) then
+
+        iNumDaysToPad = this%iDaysToPadAtYearsEnd
+
+        if(isLeap(iYear)) iNumDaysToPad = iNumDaysToPad + this%iDaysToPadIfLeapYear
+
+        iPadDays = max(iJulianDay - this%NCFILE%iLastDayJD, 0)
+
+        ! if the dataset is missing whole days of data at the end of the
+        ! year, return the values found on the last day; repeat until
+        ! we are legitimately into the next year
+        if (iPadDays <= iNumDaysToPad &
+            .and. iJulianDay > this%NCFILE%iLastDayJD) then
+
+            iLocalJulianDay = this%NCFILE%iLastDayJD
+            call echolog("NetCDF file ends before the calendar year is out:" &
+              //" padding data with values from the last day of valid data")
+
+        endif
+
+      endif
+
       call getvalues_dynamic_netcdf_sub( this, &
-                           pGrdBase,  iMonth, iDay, iYear, iJulianDay)
+                           pGrdBase,  iMonth, iDay, iYear, iLocalJulianDay)
 
     elseif(this%iSourceDataForm == DYNAMIC_GRID ) then
 
@@ -295,8 +338,12 @@ end subroutine initialize_netcdf_data_object_sub
 
     endif
 
-    if (present(rValues)) rValues = pGrdBase%rData
-    if (present(iValues)) iValues = pGrdBase%iData
+    if (present(rValues)) &
+       rValues = ( pGrdBase%rData * this%rScale + this%rOffset ) * this%rConversionFactor
+
+    if (present(iValues)) &
+       iValues = ( pGrdBase%iData * int(this%rScale, kind=T_INT)  &
+                                  + int(this%rOffset,kind=T_INT) ) * this%rConversionFactor
 
   end subroutine getvalues_sub
 
@@ -414,74 +461,7 @@ subroutine getvalues_constant_sub( this, pGrdBase )
       ! TODO *** expand to include limits for real grids as well
       if (this%iSourceDataType == DATATYPE_INT) call this%enforce_limits()
 
-      if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
-
-        ! only invoke the transform procedure if the PROJ4 strings are different
-        if (.not. str_compare(this%pGrdNative%sPROJ4_string, pGrdBase%sPROJ4_string)) then
-
-          call echolog(" ")
-          call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
-          call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
-          call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
-
-          call grid_Transform(pGrd=this%pGrdNative, &
-                            sFromPROJ4=this%sSourcePROJ4_string, &
-                            sToPROJ4=pGrdBase%sPROJ4_string )
-
-        endif
-
-        call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
-          "Transformed grid read from file "//dquote(this%sSourceFilename) &
-          //" doesn't completely cover your model domain.")
-
-        select case (this%iSourceDataType)
-
-          case ( DATATYPE_REAL )
-
-            call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                                rArrayFrom=this%pGrdNative%rData, &
-                                pGrdTo=pGrdBase, &
-                                rArrayTo=pGrdBase%rData )
-
-          case ( DATATYPE_INT)
-
-            call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                              iArrayFrom=this%pGrdNative%iData, &
-                              pGrdTo=pGrdBase, &
-                              iArrayTo=pGrdBase%iData )
-          case default
-
-            call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-              //trim(asCharacter(this%iSourceDataType)), &
-              trim(__FILE__), __LINE__)
-
-        end select
-
-      else
-
-        call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
-                          "Non-conforming grid. Filename: " &
-                          //dquote(this%pGrdNative%sFilename) )
-
-        select case (this%iSourceDataType)
-
-          case ( DATATYPE_REAL )
-
-            pGrdBase%rData = this%pGrdNative%rData
-
-          case ( DATATYPE_INT)
-
-            pGrdBase%rData = this%pGrdNative%rData
-
-          case default
-
-            call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-              //trim(asCharacter(this%iSourceDataType)), &
-              trim(__FILE__), __LINE__)
-
-        end select
-
-      endif
+      call this%transfer_from_native( pGrdBase )
 
       if (.not. this%lGridIsPersistent )  call grid_Destroy(this%pGrdNative)
 
@@ -490,6 +470,84 @@ subroutine getvalues_constant_sub( this, pGrdBase )
     enddo
 
   end subroutine getvalues_gridded_sub
+
+!----------------------------------------------------------------------
+
+subroutine transform_grid_to_grid(this, pGrdBase)
+
+    class (T_DATA_GRID) :: this
+    type ( T_GENERAL_GRID ), pointer :: pGrdBase
+
+    if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+
+      ! only invoke the transform procedure if the PROJ4 strings are different
+      if (.not. str_compare(this%pGrdNative%sPROJ4_string, pGrdBase%sPROJ4_string)) then
+
+        call echolog(" ")
+        call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
+        call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
+        call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
+
+        call grid_Transform(pGrd=this%pGrdNative, &
+                          sFromPROJ4=this%sSourcePROJ4_string, &
+                          sToPROJ4=pGrdBase%sPROJ4_string )
+
+      endif
+
+      call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
+        "Transformed grid read from file "//dquote(this%sSourceFilename) &
+        //" doesn't completely cover your model domain.")
+
+      select case (this%iTargetDataType)
+
+        case ( DATATYPE_REAL )
+
+          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                              rArrayFrom=this%pGrdNative%rData, &
+                              pGrdTo=pGrdBase, &
+                              rArrayTo=pGrdBase%rData )
+
+        case ( DATATYPE_INT)
+
+          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
+                            iArrayFrom=this%pGrdNative%iData, &
+                            pGrdTo=pGrdBase, &
+                            iArrayTo=pGrdBase%iData )
+        case default
+
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+            //trim(asCharacter(this%iSourceDataType)), &
+            trim(__FILE__), __LINE__)
+
+      end select
+
+    else
+
+      call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
+                        "Non-conforming grid. Filename: " &
+                        //dquote(this%pGrdNative%sFilename) )
+
+      select case (this%iSourceDataType)
+
+        case ( DATATYPE_REAL )
+
+          pGrdBase%rData = this%pGrdNative%rData
+
+        case ( DATATYPE_INT)
+
+          pGrdBase%rData = this%pGrdNative%rData
+
+        case default
+
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+              //trim(asCharacter(this%iSourceDataType)), &
+            trim(__FILE__), __LINE__)
+
+      end select
+
+    endif
+
+end subroutine transform_grid_to_grid
 
 !----------------------------------------------------------------------
 
@@ -675,6 +733,8 @@ end subroutine set_constant_value_real
     class (T_DATA_GRID) :: this
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
     integer (kind=T_INT) :: iMonth, iDay, iYear, iJulianDay
+
+    ! [ LOCALS ]
     integer (kind=c_int) :: iTimeIndex
 
     ! call once at start of run...
@@ -685,24 +745,31 @@ end subroutine set_constant_value_real
       ! check to see whether currently opened file is within date range
       ! if past date range, close file
 
-      if ( .not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay ) ) &
+      if ( .not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay ) ) then
         call netcdf_close_file( NCFILE=this%NCFILE )
+        this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
+      endif
 
     endif
 
     if ( this%iNC_FILE_STATUS == NETCDF_FILE_CLOSED ) then
 
       ! increment or reset file counter based on current year value
+
       call this%increment_filecount()
+
       call this%reset_at_yearend_filecount(iYear)
 
       call this%make_filename( iMonth=iMonth, iYear=iYear, iDay=iDay)
 
       if (this%lPerformFullInitialization) then
 
+        allocate(this%NCFILE)
+
         call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
-        this%NCFILE => netcdf_open_and_prepare(sFilename=this%sSourceFilename, &
+        call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+             sFilename=this%sSourceFilename, &
              sVarName_x=this%sVariableName_x, &
              sVarName_y=this%sVariableName_y, &
              sVarName_z=this%sVariableName_z, &
@@ -732,16 +799,25 @@ end subroutine set_constant_value_real
 
         this%lPerformFullInitialization = lFALSE
 
-        call this%dump_data_structure()
-
       else
 
         call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
 
-        call assert (netcdf_date_within_range(NCFILE=this%NCFILE, &
-             iJulianDay=iJulianDay ), "Date range for currently open NetCDF file" &
-             //" does not include the present simulation date", &
+        this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
+
+        call netcdf_update_time_range(NCFILE=this%NCFILE)
+
+        if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
+
+          call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
+            //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
+          call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
+
+          call assert (lFALSE, "Date range for currently open NetCDF file" &
+             //" does not include the present simulation date.", &
              trim(__FILE__), __LINE__)
+
+        endif
 
       endif
 
@@ -750,82 +826,13 @@ end subroutine set_constant_value_real
     call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
                                            iJulianDay=iJulianDay)
 
-    call netcdf_get_3d_variable(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+    call netcdf_get_variable_time_y_x(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
 
-    if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+    call this%transfer_from_native( pGrdBase )
 
-      ! only invoke the transform procedure if the PROJ4 strings are different
-      if (.not. str_compare(this%pGrdNative%sPROJ4_string, pGrdBase%sPROJ4_string)) then
-
-        call echolog(" ")
-        call echolog("Transforming gridded data in file: "//dquote(this%sSourceFilename) )
-        call echolog("  FROM: "//squote(this%sSourcePROJ4_string) )
-        call echolog("  TO:   "//squote(pGrdBase%sPROJ4_string) )
-
-        call grid_Transform(pGrd=this%pGrdNative, &
-                          sFromPROJ4=this%sSourcePROJ4_string, &
-                          sToPROJ4=pGrdBase%sPROJ4_string )
-
-      endif
-
-      call this%dump_data_structure()
-
-      call Assert( grid_CompletelyCover( pGrdBase, this%pGrdNative ), &
-        "Transformed grid read from file "//dquote(this%sSourceFilename) &
-        //" doesn't completely cover your model domain.")
-
-      select case (this%iTargetDataType)
-
-        case ( DATATYPE_REAL )
-
-          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                              rArrayFrom=this%pGrdNative%rData, &
-                              pGrdTo=pGrdBase, &
-                              rArrayTo=pGrdBase%rData )
-
-        case ( DATATYPE_INT)
-
-          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                            iArrayFrom=this%pGrdNative%iData, &
-                            pGrdTo=pGrdBase, &
-                            iArrayTo=pGrdBase%iData )
-        case default
-
-          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-            //trim(asCharacter(this%iSourceDataType)), &
-            trim(__FILE__), __LINE__)
-
-      end select
-
-    else
-
-      call Assert( grid_Conform( pGrdBase, this%pGrdNative ), &
-                      "Non-conforming grid. Filename: " &
-                      //dquote(this%pGrdNative%sFilename) )
-
-      select case (this%iSourceDataType)
-
-        case ( DATATYPE_REAL )
-
-          pGrdBase%rData = this%pGrdNative%rData
-
-        case ( DATATYPE_INT)
-
-          pGrdBase%rData = this%pGrdNative%rData
-
-        case default
-
-          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-            //trim(asCharacter(this%iSourceDataType)), &
-            trim(__FILE__), __LINE__)
-
-      end select
-
-    endif
-
-    call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
-          sText="Precip: ", &
-          rData=pGrdBase%rData )
+!    call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
+!          sText="Precip: ", &
+!          rData=pGrdBase%rData )
 
 
   end subroutine getvalues_dynamic_netcdf_sub
