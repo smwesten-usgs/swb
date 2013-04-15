@@ -297,7 +297,6 @@ end subroutine initialize_netcdf_data_object_sub
       iLocalJulianDay = iJulianDay
 
       if (this%iNC_FILE_STATUS == NETCDF_FILE_OPEN) then
-!      if (lFALSE) then
 
         iNumDaysToPad = this%iDaysToPadAtYearsEnd
 
