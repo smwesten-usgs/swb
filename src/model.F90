@@ -12,14 +12,18 @@ module model
   use swb_grid
   use stats
   use runoff_curve_number
+  use et_crop_coefficients
   use et_thornthwaite_mather
   use et_turc
   use et_hargreaves
   use et_jensen_haise
   use et_blaney_criddle
+  use irrigation
+  use netcdf4_support
   use sm_thornthwaite_mather
   use snow
-  use irrigation
+  use water_balance
+
 
 #ifdef NETCDF_SUPPORT
   use netcdf4_support
@@ -98,146 +102,18 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     "Could not allocate memory for time-series data structure", &
     TRIM(__FILE__),__LINE__)
 
-!  call stats_OpenBinaryFiles(pConfig)
-
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
-  pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-     pGrd%rX1, pGrd%rY1, DATATYPE_INT )
-
-  pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-     pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
-
-  call stats_OpenBinaryFiles(pConfig, pGrd)
+  call model_CheckConfigurationSettings( pGrd, pConfig )
 
   call stats_InitializeVolumeConversion(pGrd)
 
-#ifdef DEBUG_PRINT
-  call grid_WriteArcGrid("SSF_Grid_Cells."//trim(pConfig%sOutputFileSuffix), &
-    pGrd%rX0, pGrd%rX1,pGrd%rY0,pGrd%rY1,REAL(pGrd%Cells(:,:)%iNumFilesSSF) )
-#endif
-
-  ! open file into which daily summaries of variables will be written
-  if ( pConfig%lReportDaily ) call stats_OpenMSBReport()
-
-  ! open CSV file for daily stats summary
-  if ( pConfig%lReportDaily ) then
-    open(LU_CSV_MIN, file='SWB_daily_MINIMUM_values.csv',iostat=iStat,&
-      status='REPLACE')
-    open(LU_CSV_MEAN, file='SWB_daily_MEAN_values.csv',iostat=iStat,&
-      status='REPLACE')
-    open(LU_CSV_MAX, file='SWB_daily_MAXIMUM_values.csv',iostat=iStat,&
-      status='REPLACE')
-
-    call Assert(iStat == 0, &
-      "Problem opening CSV files for summary statistics output.")
-
-    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MIN,iMIN)
-    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MEAN,iMEAN)
-    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MAX,iMAX)
-  end if
-
-  ! open CSV file for annual stats summary
-  open(LU_CSV_ANNUAL, file='SWB_annual_statistics.csv',iostat=iStat,&
-    status='REPLACE')
-  call Assert(iStat == 0, &
-    "Problem opening CSV file for summary annual statistics output.")
-  call stats_WriteAnnualAccumulatorHeaderCSV(LU_CSV_ANNUAL)
-
-  iNumGridCells = pGrd%iNX * pGrd%iNY
-
-  ! Time the run
-  call cpu_time(rStartTime)
-
-  call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
-  pGrd%Cells%iFlowDir = pGrd%iData
-
-  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
-
-  call make_shaded_contour(pGrd=pGenericGrd_int, &
-     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
-     sTitleTxt="D8 Flow Direction Grid", &
-     sAxisTxt="Flow Direction" )
-
-!  call model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
-
-  ! Are we solving using the downhill algorithm?
-  if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
-    ! if a routing table exists, read it in; else initialize and
-    ! save the routing table for future use
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_ConfigureRunoffDownhill"
-    call model_ConfigureRunoffDownhill( pGrd, pConfig)
-  end if
-
-  ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
-  if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
-    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeFlowDirection"
-    call model_InitializeFlowDirection( pGrd , pConfig)
-  end if
-
-!  call model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
-  call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
-  pGrd%Cells%iSoilGroup = pGrd%iData
-!  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
-
-  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
-
-  call make_shaded_contour(pGrd=pGenericGrd_int, &
-      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
-      sTitleTxt="Hydrologic Soils Group", &
-      sAxisTxt="HSG" )
-
-  call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
-  pGrd%Cells%rSoilWaterCapInput = pGrd%rData
-
-  write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
-  write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
-
-  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
-
-  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
-     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
-     sTitleTxt="Available Water Capacity", &
-     sAxisTxt="AWC (inches per inch)" )
-
-!  call model_PopulateAvailableWaterCapacityArray(pConfig, pGrd, pSoilAWCGrid)
-
-  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
-  pGrd%Cells%iLandUse = pGrd%iData
-  pGenericGrd_int%iData = pGrd%Cells%iLandUse
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
-  call make_shaded_contour(pGrd=pGenericGrd_int, &
-     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
-     sTitleTxt="Landuse / Landcover", &
-     sAxisTxt="LULC Code" )
-
+  call model_InitializeDataStructures( pGrd, pConfig )
 
   ! Initialize the model landuse-related parameters
   call model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
-  ! Initialize evapotranspiration
-  call model_InitializeET( pGrd, pConfig )
-
-    if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
-      call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
-        //"coefficient submodels enabled. These can be enabled by adding one of the following~" &
-        //"to your control file:~"//sTAB//"~" &
-        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_STANDARD~" &
-        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_STANDARD~" &
-        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD~" &
-        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
-    endif
-
-    ! call subroutine that handles much of the model initialization,
-    ! opens *.csv files, etc.
-    call model_Initialize(pGrd, pConfig)
+  call model_InitializeProcesses( pGrd, pConfig )
 
     if (pConfig%lEnableIrrigation .and. &
        ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
@@ -246,14 +122,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     endif
     ! calculate number of gridcells here.
     iNumGridCells = pGrd%iNX * pGrd%iNY
-
-    ! time the run; start the clock.
-    call cpu_time(rStartTime)
-
-    ! create the single, temporary grid to use for temperature and precip
-    ! data input
-    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID )
 
   end if FIRST_YEAR
 
@@ -300,47 +168,15 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   pTS%rSunPct = iNO_DATA_NCDC
   pTS%lEOF = lFALSE
 
+  ! if we are not using gridded climate data, here is where we read in
+  ! the current days' values from the single-site time series file.
   if(.not. pConfig%lGriddedData) then
-    call model_ReadTimeSeriesFile(pTS)
-    if(pTS%lEOF) then
 
-#ifdef STRICT_DATE_CHECKING
-      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
-        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
-        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
-        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
-           //TRIM(pConfig%sTimeSeriesFilename)
-        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
-      end if
-#endif
+    call model_ReadTimeSeriesFile(pConfig, pTS)
+    if(pTS%lEOF) then
       close(unit=LU_TS)
       exit MAIN_LOOP
     end if
-
-    ! check to ensure that we have not skipped a day
-    if(.not. (pConfig%iYear == pTS%iYear &
-      .and. pConfig%iMonth == pTS%iMonth &
-      .and. pConfig%iDay == pTS%iDay)) then
-      write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
-      write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
-      write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
-        //TRIM(int2char(pTS%iDay))//"/" &
-        //TRIM(int2char(pTS%iYear))
-      write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
-        //TRIM(int2char(pConfig%iDay))//"/" &
-        //TRIM(int2char(pConfig%iYear))
-#ifdef STRICT_DATE_CHECKING
-      call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
-#else
-      ! reset date to that of the input time-series data
-      pConfig%iYear = pTS%iYear
-      pConfig%iMonth = pTS%iMonth
-      pConfig%iDay = pTS%iDay
-      pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
-#endif
-    end if
-
-    pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
   end if
 
@@ -643,63 +479,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   return
 end subroutine model_EndOfRun
-
-!------------------------------------------------------------------------------
-
-function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
-  !! Populates annual dynamic landuse value on a cell-by-cell basis
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-  integer (kind=T_INT), intent(in) :: iYear
-  integer (kind=T_INT) :: iStat
-  ! [ LOCALS ]
-  type (T_GENERAL_GRID),pointer :: input_grd      ! Pointer to temporary grid for I/O
-  character (len=256) sBuf
-  integer (kind=T_INT) :: iRow, iCol
-  logical (kind=T_LOGICAL) :: lExists, lFound
-
-  ! set to a nonzero value
-  iStat = iEOF
-
-  input_grd=>null()
-
-  write(unit=LU_LOG,fmt="('Reading dynamic landuse data from file: '," &
-    //"A,'_',i4,'.',A)") trim(pConfig%sDynamicLanduseFilePrefix), &
-    iYear,trim(pConfig%sOutputFileSuffix)
-
-  select case( pConfig%iConfigureLanduse )
-    case( CONFIG_LANDUSE_DYNAMIC_ARC_GRID )
-      write ( unit=sBuf, fmt='(A,"_",i4,".",A)' ) &
-        trim(pConfig%sDynamicLanduseFilePrefix), iYear,trim(pConfig%sOutputFileSuffix)
-          ! check to see if an existing downhill flow routing table exists
-      inquire( file=trim(sBuf), EXIST=lExists)
-      if(lExists) then
-        input_grd => grid_Read( sBuf, "ARC_GRID", DATATYPE_INT )
-
-        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
-
-        iStat = 0
-      endif
-    case( CONFIG_LANDUSE_DYNAMIC_SURFER )
-      write ( unit=sBuf, fmt='(A,"_",i4,".",A)' ) &
-        trim(pConfig%sDynamicLanduseFilePrefix), iYear,trim(pConfig%sOutputFileSuffix)
-      inquire( file=trim(sBuf), EXIST=lExists)
-      if(lExists) then
-        input_grd => grid_Read( sBuf, "SURFER", DATATYPE_INT )
-
-        call model_PopulateLandUseArray(pConfig, pGrd, input_grd)
-
-        iStat = 0
-      endif
-
-  case default
-    call Assert ( lFALSE, "Internal error -- unknown landuse input type" )
-  end select
-
-end function if_GetDynamicLanduseValue
-
 
 !--------------------------------------------------------------------------
 !!****s* model/model_GetDailyPrecipValue
@@ -3319,6 +3098,165 @@ end function rf_model_GetInterception
 
 !--------------------------------------------------------------------------
 
+subroutine model_CheckConfigurationSettings( pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+
+  if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
+    call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
+      //"coefficient submodels enabled. These can be enabled by adding one of the following~" &
+      //"to your control file:~"//sTAB//"~" &
+      //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_STANDARD~" &
+      //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_STANDARD~" &
+      //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD~" &
+      //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
+  endif
+
+end subroutine model_CheckConfigurationSettings
+
+!--------------------------------------------------------------------------
+
+subroutine model_InitializeDataStructures( pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+  call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iFlowDir = pGrd%iData
+
+!  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+!  call make_shaded_contour(pGrd=pGenericGrd_int, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
+!     sTitleTxt="D8 Flow Direction Grid", &
+!     sAxisTxt="Flow Direction" )
+
+  call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%iSoilGroup = pGrd%iData
+!!  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
+
+!  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+!  call make_shaded_contour(pGrd=pGenericGrd_int, &
+!      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
+!      sTitleTxt="Hydrologic Soils Group", &
+!      sAxisTxt="HSG" )
+
+  call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
+  pGrd%Cells%rSoilWaterCapInput = pGrd%rData
+
+  write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
+  write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
+
+!  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
+
+!  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
+!     sTitleTxt="Available Water Capacity", &
+!     sAxisTxt="AWC (inches per inch)" )
+
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+  pGrd%Cells%iLandUse = pGrd%iData
+  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+
+!  call make_shaded_contour(pGrd=pGenericGrd_int, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
+!     sTitleTxt="Landuse / Landcover", &
+!     sAxisTxt="LULC Code" )
+
+end subroutine model_InitializeDataStructures
+
+!--------------------------------------------------------------------------
+
+subroutine model_InitializeInputAndOutput( pGrd, pConfig )
+
+    ! [ ARGUMENTS ]
+    type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+    type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+   ! [ LOCALS ]
+   integer (kind=T_INT) :: iStat
+
+  call stats_OpenBinaryFiles(pConfig, pGrd)
+
+  call stats_InitializeVolumeConversion(pGrd)
+
+#ifdef DEBUG_PRINT
+  call grid_WriteArcGrid("SSF_Grid_Cells."//trim(pConfig%sOutputFileSuffix), &
+    pGrd%rX0, pGrd%rX1,pGrd%rY0,pGrd%rY1,REAL(pGrd%Cells(:,:)%iNumFilesSSF) )
+#endif
+
+  ! open file into which daily summaries of variables will be written
+  if ( pConfig%lReportDaily ) call stats_OpenMSBReport()
+
+  ! open CSV file for daily stats summary
+  if ( pConfig%lReportDaily ) then
+    open(LU_CSV_MIN, file='SWB_daily_MINIMUM_values.csv',iostat=iStat,&
+      status='REPLACE')
+    open(LU_CSV_MEAN, file='SWB_daily_MEAN_values.csv',iostat=iStat,&
+      status='REPLACE')
+    open(LU_CSV_MAX, file='SWB_daily_MAXIMUM_values.csv',iostat=iStat,&
+      status='REPLACE')
+
+    call Assert(iStat == 0, &
+      "Problem opening CSV files for summary statistics output.")
+
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MIN,iMIN)
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MEAN,iMEAN)
+    call stats_WriteDailyAccumulatorHeaderCSV(LU_CSV_MAX,iMAX)
+  end if
+
+  ! open CSV file for annual stats summary
+  open(LU_CSV_ANNUAL, file='SWB_annual_statistics.csv',iostat=iStat,&
+    status='REPLACE')
+  call Assert(iStat == 0, &
+    "Problem opening CSV file for summary annual statistics output.")
+  call stats_WriteAnnualAccumulatorHeaderCSV(LU_CSV_ANNUAL)
+
+end subroutine model_InitializeInputAndOutput
+
+!----------------------------------------------------------------------
+
+subroutine model_InitializeProcesses( pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+  ! Are we solving using the downhill algorithm?
+  if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
+    ! if a routing table exists, read it in; else initialize and
+    ! save the routing table for future use
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_ConfigureRunoffDownhill"
+    call model_ConfigureRunoffDownhill( pGrd, pConfig)
+  end if
+
+  ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
+  if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
+    write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeFlowDirection"
+    call model_InitializeFlowDirection( pGrd , pConfig)
+  end if
+
+  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitializeET"
+  flush(unit=LU_LOG)
+  call model_InitializeET( pGrd, pConfig )
+
+end subroutine model_InitializeProcesses
+
+!----------------------------------------------------------------------
+
 subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
   type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
@@ -3333,10 +3271,9 @@ subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
   flush(unit=LU_LOG)
   call runoff_InitializeCurveNumber( pGrd ,pConfig)
 
-  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
-  flush(unit=LU_LOG)
-  call model_InitializeMaxInfil(pGrd, pConfig )
-
+!  write(UNIT=LU_LOG,FMT=*)  "model.f95: model_InitialMaxInfil"
+!  flush(unit=LU_LOG)
+!  call model_InitializeMaxInfil(pGrd, pConfig )
 
 end subroutine model_InitializeLanduseRelatedParams
 
@@ -3440,34 +3377,6 @@ end subroutine model_ProcessET
 
 !--------------------------------------------------------------------------
 
-subroutine model_ProcessSM( pGrd, pConfig, iDayOfYear, iDay, iMonth, iYear)
-  !! Depending on the SM model in use, computes the change in soil moisture
-  !! and also the recharge (if any) for each cell in the grid, given the
-  !! precipitation rPrecip and the snow melt rSnowMelt
-  !!
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  integer (kind=T_INT),intent(in) :: iDayOfYear
-  integer (kind=T_INT),intent(in) :: iDay
-  integer (kind=T_INT),intent(in) :: iMonth
-  integer (kind=T_INT),intent(in) :: iYear
-
-  select case ( pConfig%iConfigureSM )
-    case ( CONFIG_SM_NONE )
-      call Assert( .false._T_LOGICAL, "No soil moisture calculation method was specified" )
-    case ( CONFIG_SM_THORNTHWAITE_MATHER )
-      call sm_thornthwaite_mather_UpdateSM (pGrd, pConfig, &
-        iDayOfYear, iDay, iMonth,iYear)
-  end select
-
-  return
-end subroutine model_ProcessSM
-
-!--------------------------------------------------------------------------
-
 subroutine model_InitializeSM(pGrd, pConfig )
   !! Depending on the SM model in use, computes the change in soil moisture
   !! and also the recharge (if any) for each cell in the grid, given the
@@ -3526,8 +3435,8 @@ end subroutine model_InitializeSM
 
 !--------------------------------------------------------------------------
 
-subroutine model_InitializeMaxInfil(pGrd, pConfig )
-  !!
+subroutine model_CreateLanduseIndex(pGrd, pConfig )
+
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -3539,23 +3448,25 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
   logical ( kind=T_LOGICAL ) :: lMatch
 
-  ! Update the MAXIMUM RECHARGE RATE based on land-cover and soil type
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
+
+!      if ( cel%iActive == iINACTIVE_CELL ) cycle
+
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
         if ( pLU%iLandUseType == cel%iLandUse ) then
           ! save index of matching landuse for ease of processing land use properties later
           cel%iLandUseIndex = k
-          ! need to ensure that the soil type doesn't exceed
-          ! the max number of soil types or we get a core dump
-          call Assert(INT(cel%iSoilGroup, kind=T_INT) &
-            <= size(pConfig%MAX_RECHARGE,2), &
-            "Value in soil type grid exceeds the maximum " &
-            // "number of soil types in the land use lookup table.")
-          cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
+ !         ! need to ensure that the soil type doesn't exceed
+ !         ! the max number of soil types or we get a core dump
+          call Assert(cel%iSoilGroup <= size(pConfig%MAX_RECHARGE,2), &
+             "Value in soil type grid exceeds the maximum " &
+             // "number of soil types in the land use lookup table.", &
+             trim(__FILE__),__LINE__)
+ !         cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=T_INT))
           lMatch=lTRUE
           exit
         end if
@@ -3563,12 +3474,13 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
       if(.not. lMATCH) then
         write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
         call Assert(lFALSE,&
-          "Failed to match landuse grid with landuse table during maximum infiltration initialization")
+          "Failed to match landuse grid with landuse table during creation of landuse indices", &
+          trim(__FILE__),__LINE__)
       endif
     end do
   end do
 
-end subroutine model_InitializeMaxInfil
+end subroutine model_CreateLanduseIndex
 
 !--------------------------------------------------------------------------------------------
 
@@ -3666,75 +3578,119 @@ integer (kind=T_INT), intent(in) :: iOutputType
 
 end subroutine model_WriteGrids
 
-! read a single line from the time-series file and return a pointer to the values
+!> @brief This subroutine reads a single line from a single-station
+!> climate data file, parses the values, and returns a pointer to a
+!> time-series data object.
+!> @todo Make logic at end of routine more robust; currently the logic
+!> to test for the presence of a header could mask errors reading in
+!> values from the data file.
 subroutine model_ReadTimeSeriesFile(pConfig, pTS)
 
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains model configuration info
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
   type (T_TIME_SERIES_FILE), pointer :: pTS
 
   ! [ LOCALS ]
   character(len=256) :: sBuf
   integer (kind=T_INT) :: iStat
-  real (kind=T_SGL) :: rTemp
+  real (kind=T_SGL) :: rMaxRH
 
   do
 
+    ! read line from the time series file
     read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
-#ifdef DEBUG_PRINT
-    print *, trim(sBuf)
-#endif
+
+    ! check for end-of-file condition
     if ( iStat<0 ) then
       pTS%lEOF = lTRUE
-      exit ! END OF FILE
+      ! if we have enabled STRICT_DATE_CHECKING, terminate the run
+#ifdef STRICT_DATE_CHECKING
+      if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
+        write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
+        write(unit=LU_LOG,FMT=*) "  file = "//TRIM(pConfig%sTimeSeriesFilename)
+        write(unit=sBuf,FMT=*) "Time series file ends prematurely: " &
+           //TRIM(pConfig%sTimeSeriesFilename)
+        call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
+      end if
+#endif
+      exit ! END OF FILE; exit main do loop
     end if
 
-    call Assert ( iStat == 0, &
-      "Cannot read record from time-series file", TRIM(__FILE__),__LINE__)
+    ! check for errors
+    call Assert ( iStat == 0, "Problems reading time series file: " &
+           //TRIM(pConfig%sTimeSeriesFilename), TRIM(__FILE__),__LINE__)
 
-    if ( sBuf(1:1) == '#' ) cycle      ! Ignore comment statements
+    ! Ignore comment statements
+    if ( sBuf(1:1) == '#' ) cycle
 
+    ! eliminate punctuation
     call CleanUpCsv ( sBuf )
-
     read ( unit=sBuf, fmt=*, iostat=iStat ) pTS%iMonth, pTS%iDay, &
       pTS%iYear, pTS%rAvgT, pTS%rPrecip, pTS%rRH, pTS%rMaxT, pTS%rMinT, &
       pTS%rWindSpd, pTS%rMinRH, pTS%rSunPct
-
-    ! on read error, skip onto the next line
-    if (iStat/=0) then
+    if (iStat /= 0) then  ! this is a sloppy way of getting past the header
       write(UNIT=LU_LOG,FMT=*) "Skipping: ",trim(sBuf)
       write(UNIT=LU_LOG,FMT=*)
       cycle
     end if
 
-    ! check for ridiculous PRECIP values; halt if such values are found
-    if( pTS%rPrecip < 0.) then
-      call echolog("Missing or corrupt precipitation data in climate file. " &
-        //"~Offending line: "//TRIM(sBuf) )
-      call Assert(lFALSE, "")
+    if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
+      .or. pTS%rPrecip < 0.) then
+      write(UNIT=LU_LOG,fmt=*) "Missing or corrupt data in climate file"
+      call Assert(lFALSE, &
+        "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
     end if
 
-    ! check for ridiculous TMAX values; halt if such values are found
-    if(pTS%rMaxT < -100 .or. pTS%rMaxT > 150. ) then
-      call echolog("Missing or corrupt maximum air value (TMAX) in climate file. " &
-        //"~Offending line: "//TRIM(sBuf) )
-      call Assert(lFALSE, "")
-    end if
+    if(.not. pConfig%lHaltIfMissingClimateData) then
+      if(pTS%rMinRH < 0.0 .or. pTS%rMinRH > 100.0) then
+        pTS%rMinRH = minimum_rel_hum(pTS%rMinT, pTS%rMaxT)
+      endif
 
-    ! check for ridiculous values; halt if such values are found
-    if(pTS%rMinT > 120. .or. pTS%rMinT < -100. ) then
-        call echolog("Missing or corrupt minimum air value (TMIN) in climate file. " &
-          //"~Offending line: "//TRIM(sBuf) )
-      call Assert(lFALSE, "")
-    end if
+      if(pTS%rRH < 0.0 .or. pTS%rRH > 100.0) then
+        rMaxRH = maximum_rel_hum(pTS%rMinT)
+        pTS%rRH = ( rMaxRH + pTS%rMinRH ) / 2_T_SGL
+      endif
 
-    ! if MAXIMUM temperature is less than the MINIMUM, assume that they
-    ! were inadvertently swapped; swap them back and keep running
-    if(pTS%rMaxT < pTS%rMinT) then
-      rTemp = pTS%rMinT
-      pTS%rMinT = pTS%rMaxT
-      pTS%rMaxT = rTemp
-      call echolog(repeat("*", 40)//"~ALERT: TMAX value is less than TMIN. Swapping values. " &
-        //"~Offending line: "//TRIM(sBuf)//"~"//repeat("*", 40) )
+     if(pTS%rSunPct < 0.0 .or. pTS%rSunPct > 100.0) then
+        pTS%rSunPct = estimate_percent_of_possible_sunshine(pTS%rMaxT, pTS%rMinT)
+     endif
+
+     if(pTS%rWindSpd < 0.0 .or. pTS%rWindSpd > 50.) then
+       pTS%rWindSpd = 2_T_SGL
+     endif
+
+    endif
+
+    ! Check to ensure that we have not skipped a day
+    ! we have to ignore the very first day because when running while using
+    ! a single-site file, the pConfig values are populated with the
+    ! values read from the time series file. Thus, this test will always
+    ! be true on the first day of the simulation when reading from a
+    ! single-site file.
+
+    if (.not. pConfig%lFirstDayOfSimulation) then
+
+      if(.not. ( (pConfig%iYear == pTS%iYear) &
+         .and.   (pConfig%iMonth == pTS%iMonth) &
+         .and.   (pConfig%iDay == pTS%iDay) ) ) then
+        write(unit=LU_LOG,FMT=*) "Missing or out-of-order data in time-series file:"
+        write(unit=LU_STD_OUT,FMT=*) "Missing or out-of-order data in time-series file"
+        write(unit=LU_LOG,FMT=*) "  date (TS file)= "//TRIM(int2char(pTS%iMonth))//"/" &
+          //TRIM(int2char(pTS%iDay))//"/" &
+          //TRIM(int2char(pTS%iYear))
+        write(unit=LU_LOG,FMT=*) "  date (SWB)= "//TRIM(int2char(pConfig%iMonth))//"/" &
+          //TRIM(int2char(pConfig%iDay))//"/" &
+          //TRIM(int2char(pConfig%iYear))
+#ifdef STRICT_DATE_CHECKING
+        call Assert(lFALSE,"",TRIM(__FILE__),__LINE__)
+#else
+        ! reset date to that of the input time-series data
+        pConfig%iYear = pTS%iYear
+        pConfig%iMonth = pTS%iMonth
+        pConfig%iDay = pTS%iDay
+        pConfig%iCurrentJulianDay = julian_day ( pConfig%iYear, pConfig%iMonth, pConfig%iDay )
+#endif
+      endif
+
     endif
 
     exit

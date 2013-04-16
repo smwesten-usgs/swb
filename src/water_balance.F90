@@ -360,12 +360,12 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       !  for each grid cell we must make a call to RLE_writeByte if
       !  we expect to have graphical or gridded output at a later stage
 
-#ifdef NETCDF_SUPPORT
-      call output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
-        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
-        rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-        rChangeInStorage,rDailyRecharge)
-#endif
+!#ifdef NETCDF_SUPPORT
+!      call output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
+!        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+!        rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
+!        rChangeInStorage,rDailyRecharge)
+!#endif
 
       call output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
         rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &

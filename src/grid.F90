@@ -176,39 +176,39 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   select case (iDataType)
       case ( GRID_DATATYPE_INT )
 
-          allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%iData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate integer data", &
               TRIM(__FILE__),__LINE__)
           pGrd%iData = 0
 
       case ( GRID_DATATYPE_REAL )
-          allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%rData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
           pGrd%rData = rZERO
 
       case ( GRID_DATATYPE_CELL_GRID )
-          allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%Cells( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
              TRIM(__FILE__),__LINE__)
 
       case ( GRID_DATATYPE_ALL )
-          allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%iData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate integer data", &
               TRIM(__FILE__),__LINE__)
               pGrd%iData = 0
 
-          allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%rData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
               pGrd%rData = 0.0
 
-          allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%Cells( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
              TRIM(__FILE__),__LINE__)
@@ -252,39 +252,39 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
   select case (iDataType)
       case ( GRID_DATATYPE_INT )
 
-          allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%iData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate integer data", &
               TRIM(__FILE__),__LINE__)
           pGrd%iData = 0
 
       case ( GRID_DATATYPE_REAL )
-          allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%rData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
           pGrd%rData = rZERO
 
       case ( GRID_DATATYPE_CELL_GRID )
-          allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%Cells( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
              TRIM(__FILE__),__LINE__)
 
       case ( GRID_DATATYPE_ALL )
-          allocate ( pGrd%iData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%iData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate integer data", &
               TRIM(__FILE__),__LINE__)
               pGrd%iData = 0
 
-          allocate ( pGrd%rData( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%rData( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate real data", &
               TRIM(__FILE__),__LINE__)
               pGrd%rData = 0.0
 
-          allocate ( pGrd%Cells( iNX,iNY ), stat=iStat )
+          allocate ( pGrd%Cells( iNX, iNY ), stat=iStat )
           call Assert (iStat == 0, &
              "Could not allocate cell-by-cell data", &
              TRIM(__FILE__),__LINE__)
