@@ -156,7 +156,6 @@ module types
       integer (kind=T_INT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
       integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
       integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
-      real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
       integer (kind=T_INT) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
       real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
@@ -194,6 +193,7 @@ module types
       real (kind=T_SGL) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=T_SGL) :: rGrossPrecip = rZERO    ! Precip - no interception applied
+      real (kind=T_SGL) :: rNetPrecip
       real (kind=T_SGL) :: rInterception = rZERO   ! Interception term
       real (kind=T_SGL) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
       real (kind=T_SGL) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception

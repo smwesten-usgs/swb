@@ -43,7 +43,6 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
         ! now we run the gauntlet of tests to ensure that we really need
         ! to perform all of the irrigation calculations
-        if ( cel%iActive == iINACTIVE_CELL ) cycle
 
         pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
         if(pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation &

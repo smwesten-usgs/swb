@@ -1533,7 +1533,7 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   call Assert (ib>0 .and. ia>0 .and. ib <= ubound(pGrd%rData,1) &
      .and. ia <= ubound(pGrd%rData,1), &
     "Internal programming error: illegal bounds caught~requested column value " &
-    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //trim(real2char(rValue=rXval, sFmt="F12.3")) &
     //" out of range", trim(__FILE__), __LINE__)
 
   ! In some cases, when things really dry out, the y value
@@ -1555,7 +1555,7 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   call Assert (jb>0 .and. ja>0 .and. jb <= ubound(pGrd%rData,2) &
      .and. ja <= ubound(pGrd%rData,2), &
     "Internal programming error: illegal bounds caught~requested row value " &
-    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //trim(real2char(rValue=rXval, sFmt="F12.3")) &
     //" out of range", trim(__FILE__), __LINE__)
 
   rValue = (rONE-u) * (rONE-v) * pGrd%rData(ib,jb)   + &
@@ -1636,7 +1636,7 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   call Assert (ib>0 .and. ia>0 .and. ib <= ubound(pGrd%rData,1) &
      .and. ia <= ubound(pGrd%rData,1), &
     "Internal programming error: requested X value " &
-    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //trim(real2char(rValue=rXval, sFmt="F12.3")) &
     //" out of range", trim(__FILE__), __LINE__)
 
   call assert(ubound(rCol,1) == ubound(pGrd%rData,2), &

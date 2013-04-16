@@ -101,8 +101,6 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
     do iCol=1,pGrd%iNX
 
 
-      if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
-
       pGrd%Cells(iCol,iRow)%rReferenceET0 = ET0_hargreaves( &
                                            pConfig, &
                                            equivalent_evaporation(rRa), &

@@ -21,10 +21,6 @@ module model
   use snow
   use irrigation
 
-#ifdef _OPENMP
-  use omp_lib
-#endif
-
 #ifdef NETCDF_SUPPORT
   use netcdf4_support
 #endif
@@ -228,39 +224,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
   ! Initialize evapotranspiration
   call model_InitializeET( pGrd, pConfig )
-
-
-  ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
-!  integer (kind=T_INT) :: iDay, iYear, tj, ti
-  integer (kind=T_INT) :: tj, ti
-  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=T_INT) :: iPos
-  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
-  integer (kind=T_INT) :: iCol, iRow
-  character(len=3) :: sMonthName
-  logical (kind=T_LOGICAL) :: lMonthEnd
-!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
-  integer (kind=T_INT),save :: iNumGridCells
-!  integer (kind=T_INT) :: iNumDaysInYear
-!  integer (kind=T_INT) :: iEndOfYearJulianDay
-
-  real (kind=T_SGL) :: rmin,ravg,rmax
-
-  type (T_CELL),pointer :: cel
-  character (len=256) :: sBuf
-
-  type (T_TIME_SERIES_FILE), pointer :: pTS
-
-  ! allocate memory for the time-series data pointer
-  ALLOCATE (pTS, STAT=iStat)
-  call Assert( iStat == 0, &
-    "Could not allocate memory for time-series data structure", &
-    TRIM(__FILE__),__LINE__)
-
-!  call stats_OpenBinaryFiles(pConfig)
-
-  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
     if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
       call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
