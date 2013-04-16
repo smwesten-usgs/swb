@@ -6,6 +6,8 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
 set MINGWBASE=c:\MinGW64
+set MINGW_VERSION=4.8.0
+set COMPILER_TRIPLET=x86_64-w64-mingw32
 set R_HOME=C:\Program Files\R\R-2.15.2\bin
 
 :: define where 'make copy' will place executables
@@ -27,7 +29,6 @@ set OPTION__GRAPHICS_SUPPORT="TRUE"
 set OPTION__STREAM_INTERACTIONS="FALSE"
 set OPTION__NETCDF_SUPPORT="TRUE"
 set OPTION__THORNTHWAITE_MATHER_TABLES="TRUE"
-set OPTION__IRRIGATION_MODULE="FALSE"
 set OPTION__STRICT_DATE_CHECKING="FALSE"
 set OPTION__DEBUG_PRINT="FALSE"
 
@@ -62,8 +63,8 @@ set STRIP=%MINGWBASE%\bin\strip.exe
 set CMAKE_RANLIB=%MINGWBASE%\bin\ranlib.exe
 
 set INCLUDE=%MINGWBASE%\include
-set LIB=%MINGWBASE%\lib
-set LIBRARY_PATH=%MINGWBASE%\lib
+set LIB=%MINGWBASE%\lib;%MINGWBASE%\lib\gcc\%COMPILER_TRIPLET%\%MINGW_VERSION%
+set LIBRARY_PATH=%MINGWBASE%\lib;%MINGWBASE%\lib\gcc\%COMPILER_TRIPLET%\%MINGW_VERSION%
 
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
@@ -75,7 +76,6 @@ set CTEST_OUTPUT_ON_FAILURE=1
 
 :: add --trace to see copious details re: CMAKE
 
-<<<<<<< HEAD
 cmake ..\..\.. -G "MinGW Makefiles" ^
 -DMINGWBASE=%MINGWBASE% ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^
