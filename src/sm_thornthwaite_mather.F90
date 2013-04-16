@@ -57,7 +57,7 @@ subroutine sm_thornthwaite_mather_Configure ( sRecord )
      "No Soil-moisture retention table file was specified", &
      TRIM(__FILE__), __LINE__)
   write(UNIT=LU_LOG,FMT=*)"Reading ",trim(sOption)," for soil-moisture retention information"
-  gWLT => grid_Read( sOption, "SURFER", T_SGL_GRID )
+  gWLT => grid_Read( sOption, "SURFER", DATATYPE_REAL )
 
   write(UNIT=LU_LOG,FMT=*)"Read in the soil-moisture retention file with the following dimensions:"
   write(UNIT=LU_LOG,FMT=*)"iNX = ",gWLT%iNX
@@ -499,9 +499,8 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
       end if
 
       !
-      ! *** NEXT CODE CHUNK MAKES CALL TO NETCDF OUTPUT ROUTINE.... ****
-      !
-      !  for each grid cell we must make a call to netcdf_write_variable if
+     !
+     !  for each grid cell we must make a call to netcdf_write_variable if
       !  we expect to have graphical or gridded output at a later stage
       !                                                                      !
 
@@ -509,112 +508,7 @@ MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
 
         if(.not. STAT_INFO(k)%lActive) cycle
 
-#ifdef NETCDF_SUPPORT
-
-        if(STAT_INFO(k)%iNetCDFOutput > iNONE ) then
-
-          select case(k)
-            case(iGROSS_PRECIP)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rGrossPrecip, pGrd, iRow, iCol, iTime)
-            case(iSNOWFALL_SWE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowFall_SWE, pGrd, iRow, iCol, iTime)
-            case(iSNOWCOVER)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowCover, pGrd, iRow, iCol, iTime)
-            case(iCFGI)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rCFGI, pGrd, iRow, iCol, iTime)
-            case(iMIN_TEMP)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rTMin, pGrd, iRow, iCol, iTime)
-            case(iMAX_TEMP)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rTMax, pGrd, iRow, iCol, iTime)
-            case(iAVG_TEMP)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rTAvg, pGrd, iRow, iCol, iTime)
-            case(iCHG_IN_SNOW_COV)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowFall_SWE - cel%rSnowmelt, pGrd, iRow, iCol, iTime)
-            case(iSNOWMELT)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSnowmelt, pGrd, iRow, iCol, iTime)
-            case(iINTERCEPTION)
-!
-!           ==> STAT_INFO(iINTERCEPTION) is updated at the time
-!               interception is calculated in subroutine model_ProcessRain
-!
-            case(iNET_PRECIP)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rNetPrecip, pGrd, iRow, iCol, iTime)
-            case(iINFLOW)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rInflow, pGrd, iRow, iCol, iTime)
-            case(iOUTFLOW)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rOutflow, pGrd, iRow, iCol, iTime)
-            case(iRUNOFF_OUTSIDE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rFlowOutofGrid, pGrd, iRow, iCol, iTime)
-            case(iREJECTED_RECHARGE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpDailyRejectedRecharge, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iNET_INFLOW)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpNetInflow, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iNET_INFIL)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpNetInfil, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iPOT_ET)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSM_PotentialET, pGrd, iRow, iCol, iTime)
-            case(iACT_ET)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpSM_ActualET, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iP_MINUS_PET)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpPrecipMinusPotentET, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iSM_DEFICIT)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpMoistureDeficit, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iSM_SURPLUS)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpMoistureSurplus, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iSM_APWL)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSM_AccumPotentWatLoss, pGrd, iRow, iCol, iTime)
-            case(iSOIL_MOISTURE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rSoilMoisture, pGrd, iRow, iCol, iTime)
-            case(iCHG_IN_SOIL_MOIST)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpChangeInStorage, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iRECHARGE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                real(dpDailyRecharge, kind=T_SGL), pGrd, iRow, iCol, iTime)
-            case(iGDD)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rGDD, pGrd, iRow, iCol, iTime)
-            case(iIRRIGATION)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rIrrigationAmount, pGrd, iRow, iCol, iTime)
-            case(iSTREAM_CAPTURE)
-              call netcdf_write_variable_byte(k, iNC_OUTPUT, pConfig, &
-                cel%rStreamCapture, pGrd, iRow, iCol, iTime)
-
-            case default
-              call Assert(lFALSE, "Internal programming error in " &
-                //"select case structure",TRIM(__FILE__),__LINE__)
-
-          end select
-        end if
-
-#endif
-! end if NETCDF_SUPPORT
-
-        if(STAT_INFO(k)%iDailyOutput > iNONE &
+          if(STAT_INFO(k)%iDailyOutput > iNONE &
           .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
           .or. STAT_INFO(k)%iAnnualOutput > iNONE )  then
 

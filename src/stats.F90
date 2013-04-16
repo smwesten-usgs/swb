@@ -612,11 +612,12 @@ subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
 
   ! [ ARGUMENTS ]
   integer (kind=T_INT), intent(in) :: iLU       ! Fortran logical file unit
-  real (kind=T_SGL), dimension(:,:) :: rData   ! Real data
   character (len=*) :: sText
+  real (kind=T_SGL), dimension(:,:) :: rData   ! Real data
+  integer (kind=T_INT), optional :: iCount
+
   ! [ LOCALS ]
   integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT), optional :: iCount
 
   if(present(iCount)) then
     ! establish number of cells in model grid
@@ -776,48 +777,36 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
   integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=T_INT) :: iDay, iYear, iVar, iVal, iRep, iTemp
   integer (kind=T_INT) :: iStartYear, iEndYear
-  integer (kind=T_INT) :: iJulianDay, iNumGridCells, iCount
+  integer (kind=T_INT) :: iNumGridCells
+  integer (kind=T_INT) :: iJulianDay, iCount, iDaysInMonthCount, iDaysInYearCount
   character(len=3) :: sMonthName
-  real(kind=T_SGL),dimension(iNX*iNY) :: rVal,rValSum,rPad
+  real(kind=T_SGL),dimension(iNX*iNY) :: rVal, rAnnualSum, rMonthlySum, rPad
   real(kind=T_SGL) :: rZA, rZE, rZOR, rZSTEP
   real(kind=T_SGL) :: rZA_TEMP, rZE_TEMP, rZOR_TEMP, rZSTEP_TEMP
   character(len=256) :: sBuf
+  character (len=256) :: sFilePrefix
   character(len=1) sDelimiter
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lEOF
 
-  iNumGridCells = iNY * iNX
   rPad = -9999_T_SGL
-
-#ifdef DEBUG_PRINT
-  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
-#endif
+  iCount = 0; iDaysInMonthCount = 0; iDaysInYearCount = 0
+  rMonthlySum = 0.0; rAnnualSum = 0.0; rVal = 0.0
+  iNumGridCells = iNX * iNY
 
   if(len_trim(pConfig%sOutputFilePrefix)==0) then
-
     sDelimiter = ""
-
   else
-
     sDelimiter = "_"
-
   end if
-
 
   ! we need a grid data structure in order that we might call
   ! the grid-writing subroutines elsewhere in code
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-
-#ifdef DEBUG_PRINT
-  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
-#endif
-
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_REAL)
 
   call stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
   do k=1,iNUM_VARIABLES
-
-!  call CHDIR( 'output')
 
     ! if we don't have any output requested for the current variable,
     ! skip the remainder of the loop and go on to the next variable.
@@ -825,148 +814,11 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
      .and. STAT_INFO(k)%iMonthlyOutput == iNONE &
      .and. STAT_INFO(k)%iAnnualOutput == iNONE)  cycle
 
-    ! ensure any remaining data in buffer is written to the binary file before
-    ! rewinding and analyzing
-    flush(STAT_INFO(k)%iLU)
-
-
-!**************************************************************************
-! DAILY GRID and PLOT GENERATION
-!**************************************************************************
-
-    if(STAT_INFO(k)%iDailyOutput>iNONE) then
-
-      rewind(STAT_INFO(k)%iLU,iostat=iStat)
-      call assert(iStat == 0, "Could not rewind binary file containing " &
-        //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
-        trim(__FILE__), __LINE__)
-      write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
-      call assert(iStat == 0, &
-        "Could not advance to first data value in binary file containing " &
-        //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
-        trim(__FILE__), __LINE__)
-
-
-      write(LU_LOG, &
-         fmt='("CALCULATING DAILY STATS for ",A)') &
-           TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-      flush(LU_LOG)
-
-      ! we are presuming that the binary files are already open.  SHould
-      ! improve error trapping here.  If we fail to read in the header info,
-      ! the app should die violently!@!
-
-      do
-        read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
-        if(iStat /= 0) then
-
-#ifdef DEBUG_PRINT
-        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
-        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
-#endif
-          exit
-        end if
-
-#ifdef DEBUG_PRINT
-      write(LU_LOG, &
-        fmt='("CALCULATING DAILY STATS for ",A,": ",i2.2,"/",i2.2,"/",i4,"  (day ",i3,")")') &
-        TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iDay,iYear,iDayOfYear
-        write(UNIT=LU_LOG,FMT=*) 'CALCULATING DAILY STATS for ',TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-         ": ",iMonth,'/',iDay,'/',iYear,'  (day',iDayOfYear,')'
-#endif
-
-        call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
-                       sMonthName,lMonthEnd)
-
-        pGrd%rData(:,:)= rZERO
-
-#ifdef DEBUG_PRINT
-  write(LU_LOG, fmt="(a,i6)") trim(__FILE__)//", line number:", __LINE__
-#endif
-
-       ! name "RLE_readByte" is misleading, since the return value (rVal)
-       ! is actually a vector of all daily values with dimension (iNY*iNX)
-       call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
-          pConfig%rRLE_OFFSET, rVal,iNumGridCells,lEOF)
-       if(lEOF) exit
-
-       pGrd%rData(:,:)=RESHAPE(rVal,(/iNY,iNX/),PAD=rPad)
-
-#ifdef DEBUG_PRINT
-       call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-          pGrd%rData(:,:))
-#endif
-
-       if(STAT_INFO(k)%iDailyOutput==iGRID &
-          .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
-
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
-           "output"//pConfig%sSlash//"daily"//pConfig%sSlash, &
-           trim(pConfig%sOutputFilePrefix), &
-           trim(sDelimiter), &
-           TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-           iYear,iMonth,iDay, &
-           trim(pConfig%sOutputFileSuffix)
-
-          if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-            call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-          else
-
-            call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-          end if
-
-       end if
-
-#ifdef GRAPHICS_SUPPORT
-
-       if(STAT_INFO(k)%iDailyOutput==iGRAPH &
-          .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
-
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
-           "images"//pConfig%sSlash//"daily"//pConfig%sSlash, &
-           trim(pConfig%sOutputFilePrefix), &
-           trim(sDelimiter), &
-           TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-           iYear,iMonth,iDay, &
-           TRIM(pGraph(k)%cCDEV)
-
-          pGraph(k)%cSETFIL = TRIM(sBuf)
-
-          write(sBuf,FMT="(A,' ',i2.2,' ',i2.2,' ',i4.4)") &
-            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iDay,iYear
-          pGraph(k)%cTITLE = TRIM(sBuf)
-
-          if( pGraph(k)%rZE(iDAILY) > pGraph(k)%rZA(iDAILY) .and. &
-                pGraph(k)%rZSTEP(iDAILY) > rZERO) then
-
-            pGraph(k)%iTimeFrame = iDAILY
-
-            call makegraph(pGraph,pGrd,k)
-
-          end if
-
-       end if
-#endif
-
-      end do
-
-    end if
-!**************************************************************************
-! MONTHLY GRID and PLOT GENERATION
-!**************************************************************************
-! now do it again, only this time sum values by month
-
-  if(STAT_INFO(k)%iMonthlyOutput>iNONE) then
-
     rewind(STAT_INFO(k)%iLU,iostat=iStat)
     call assert(iStat == 0, "Could not rewind binary file containing " &
       //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
       trim(__FILE__), __LINE__)
+
     write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
     call assert(iStat == 0, &
       "Could not advance to first data value in binary file containing " &
@@ -974,239 +826,249 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       trim(__FILE__), __LINE__)
 
     write(LU_LOG, &
-       fmt="('CALCULATING MONTHLY SUMS for: ',A)") &
-       TRIM(STAT_INFO(k)%sVARIABLE_NAME)
-    flush(LU_LOG)
-
-
-    rValSum = rZERO
-
-    do
-      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
-      if(iStat /= 0) then
-!        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
-!        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
-        exit
-      end if
-
-      call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
-                       sMonthName,lMonthEnd)
-!
-! Must read in a byte from each data set that has been written to disk for
-! this timestep
-!
-     call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
-        pConfig%rRLE_OFFSET,rVal,iNumGridCells,lEOF)
-     if(lEOF) exit
-
-     rValSum = rValSum + rVal
-
-     if(lMonthEnd) then
-
-#ifdef DEBUG_PRINT
-      write(LU_LOG, &
-        fmt="('CALCULATING MONTHLY SUMS for ',A,': ',A,' ',i4)") &
-        TRIM(STAT_INFO(k)%sVARIABLE_NAME),YEAR_INFO(iMonth)%sFullName,iYear
-
-       write(UNIT=LU_LOG,FMT=*) 'CALCULATING MONTHLY SUMS for ',TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-          ": ",sMonthName,' ',iYear
-#endif
-
-       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNX,iNY/),PAD=rPad)
-
-#ifdef DEBUG_PRINT
-       call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-          pGrd%rData(:,:))
-#endif
-
-       if(STAT_INFO(k)%iMonthlyOutput == iGRID &
-        .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
-
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'.',a)") &
-           "output"//pConfig%sSlash//"monthly"//pConfig%sSlash, &
-           TRIM(pConfig%sOutputFilePrefix), &
-           trim(sDelimiter), &
-           TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear,iMonth, &
-           TRIM(pConfig%sOutputFileSuffix)
-
-         if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-           call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         else
-
-           call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         end if
-
-       end if
-
-#ifdef GRAPHICS_SUPPORT
-
-       if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
-          .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
-
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'.',a)") &
-           "images"//pConfig%sSlash//"monthly"//pConfig%sSlash, &
-           TRIM(pConfig%sOutputFilePrefix), &
-           trim(sDelimiter), &
-           TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear,iMonth, &
-           TRIM(pGraph(k)%cCDEV)
-         pGraph(k)%cSETFIL = TRIM(sBuf)
-
-         write(sBuf,FMT="(A,' ',A,' ',i4.4)") &
-            TRIM(STAT_INFO(k)%sVARIABLE_NAME),TRIM(YEAR_INFO(iMonth)%sFullName),&
-              iYear
-         pGraph(k)%cTITLE = TRIM(sBuf)
-
-         if( pGraph(k)%rZE(iMONTHLY) > pGraph(k)%rZA(iMONTHLY) &
-            .and. pGraph(k)%rZSTEP(iMONTHLY) > rZERO) then
-
-           pGraph(k)%iTimeFrame = iMONTHLY
-
-           call makegraph(pGraph,pGrd,k)
-
-         end if
-
-       end if
-#endif
-
-       rValSum = rZERO
-     end if
-
-    end do
-
-  endif
-!
-!**************************************************************************
-! ANNUAL GRID and PLOT GENERATION
-!**************************************************************************
-! now do it again, only this time sum values by YEAR
-
-  if(STAT_INFO(k)%iAnnualOutput>iNONE) then
-
-    rewind(STAT_INFO(k)%iLU,iostat=iStat)
-    call assert(iStat == 0, "Could not rewind binary file containing " &
-      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
-      trim(__FILE__), __LINE__)
-    write(STAT_INFO(k)%iLU,POS=iENDHEADER_POS,iostat=iStat)
-    call assert(iStat == 0, &
-      "Could not advance to first data value in binary file containing " &
-      //trim(STAT_INFO(k)%sVARIABLE_NAME)//" data" ,&
-      trim(__FILE__), __LINE__)
-
-    rValSum(:) = rZERO
-
-    write(LU_LOG,fmt="('CALCULATING ANNUAL SUMS for ',A)") &
-         TRIM(STAT_INFO(k)%sVARIABLE_NAME)
+       fmt='("CALCULATING STATS for ",A)') TRIM(STAT_INFO(k)%sVARIABLE_NAME)
     flush(LU_LOG)
 
     do
-      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay,iMonth, iYear, iDayOfYear
-      if(iStat /= 0) then
-!        write(UNIT=LU_LOG,FMT=*) 'exiting loop in stats.f95 '
-!        write(UNIT=LU_LOG,FMT=*) 'iStat = ',iStat
-        exit
-      end if
+      read(UNIT=STAT_INFO(k)%iLU,iostat=iStat) iDay, iMonth, iYear, iDayOfYear
+
+      if(iStat /= 0)   exit
 
       call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
-                       sMonthName,lMonthEnd)
+                     sMonthName,lMonthEnd)
 
-      iStartYear = iYear
+      pGrd%rData = rZERO
 
-! Must read in a byte from each data set that has been written to disk for
-! this timestep
-!
-     call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
-         pConfig%rRLE_OFFSET,rVal,iNumGridCells,lEOF)
-     if(lEOF) exit
+      ! name "RLE_readByte" is misleading, since the return value (rVal)
+      ! is actually a vector of all daily values with dimension (iNY*iNX)
+      call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
+        pConfig%rRLE_OFFSET, rVal,iNumGridCells, lEOF)
 
-     rValSum = rValSum + rVal
+      if(lEOF) exit
 
-!     call stats_WriteMinMeanMax(LU_LOG, TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
-!        RESHAPE(rValSum,(/iNY,iNX/),PAD=rPad,ORDER=(/2,1/)))
+      if(STAT_INFO(k)%iDailyOutput /= iNONE ) then
 
-!     if(lMonthEnd) then
-!     write(LU_LOG, &
-!       fmt="('CALCULATING ANNUAL SUMS for ',A,': ',A,' ',i4)") &
-!         TRIM(STAT_INFO(k)%sVARIABLE_NAME),YEAR_INFO(iMonth)%sFullName,iYear
-!     end if
+        pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
-     if(lMonthEnd .and. iMonth == 12) then
+        write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
+          pConfig%sSlash//"daily"//pConfig%sSlash, &
+          trim(pConfig%sOutputFilePrefix), &
+          trim(sDelimiter), &
+          TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
+          iYear,iMonth,iDay
 
-       pGrd%rData(:,:)=RESHAPE(rValSum,(/iNX,iNY/),PAD=rPad)
+        if(STAT_INFO(k)%iDailyOutput==iGRID &
+          .or. STAT_INFO(k)%iDailyOutput==iBOTH) &
 
-       call stats_WriteMinMeanMax(LU_LOG, STAT_INFO(k)%sVARIABLE_NAME, &
-          pGrd%rData(:,:))
-
-       if(STAT_INFO(k)%iAnnualOutput == iGRID &
-        .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
-
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'.',a)") &
-           "output"//pConfig%sSlash//"annual"//pConfig%sSlash, &
-            TRIM(pConfig%sOutputFilePrefix), &
-            trim(sDelimiter), &
-            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear, &
-            TRIM(pConfig%sOutputFileSuffix)
-
-         if ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
-
-           call grid_WriteSurferGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         else
-
-           call grid_WriteArcGrid(TRIM(sBuf), &
-              rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-
-         end if
-
-       end if
+          call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix) &
+            //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
 
-       if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
-          .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
+        if(STAT_INFO(k)%iDailyOutput==iGRAPH &
+          .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
 
-         write(sBuf,FMT="(A,A,A,A,'_',i4.4,'.',A)") &
-            "images"//pConfig%sSlash//"annual"//pConfig%sSlash, &
+          pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//TRIM(pGraph(k)%cCDEV)
+
+          write(sBuf,FMT="(A,' ',i2.2,' ',i2.2,' ',i4.4)") &
+            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iDay,iYear
+
+          pGraph(k)%cTITLE = TRIM(sBuf)
+
+          if( pGraph(k)%rZE(iDAILY) > pGraph(k)%rZA(iDAILY) .and. &
+            pGraph(k)%rZSTEP(iDAILY) > rZERO) then
+
+            pGraph(k)%iTimeFrame = iDAILY
+
+            call makegraph(pGraph,pGrd,k)
+
+          end if
+
+        end if
+
+#endif
+
+      endif ! produce daily output
+
+      if ( STAT_INFO(k)%iMonthlyOutput /= iNONE ) then
+
+        rMonthlySum = rMonthlySum + rVal
+        iDaysInMonthCount = iDaysInMonthCount + 1
+
+        if (lMonthEnd) then
+
+          pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNX,iNY/),PAD=rPad)
+
+          write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2)") &
+            pConfig%sSlash//"monthly"//pConfig%sSlash, &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
-            TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear, &
-            TRIM(pGraph(k)%cCDEV)
-         pGraph(k)%cSETFIL = TRIM(sBuf)
+            TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
+            iYear,iMonth
 
-         write(sBuf,FMT="(A,' ',i4.4)") &
-            TRIM(STAT_INFO(k)%sVARIABLE_NAME), iYear
-         pGraph(k)%cTITLE = TRIM(sBuf)
+          if(STAT_INFO(k)%iMonthlyOutput==iGRID &
+            .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
 
-         if( pGraph(k)%rZE(iANNUAL) > pGraph(k)%rZA(iANNUAL) &
-            .and. pGraph(k)%rZSTEP(iANNUAL) > rZERO) then
+            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_SUM." &
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
-           pGraph(k)%iTimeFrame = iANNUAL
+#ifdef GRAPHICS_SUPPORT
 
-           call makegraph(pGraph,pGrd,k)
+          if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
+            .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
-         end if
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
 
-       end if
+            write(sBuf,FMT="(A,' ',i2.2,' ',i4.4)") &
+              "Sum: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iYear
+
+            pGraph(k)%cTITLE = TRIM(sBuf)
+
+            if( pGraph(k)%rZE(iMONTHLY) > pGraph(k)%rZA(iMONTHLY) .and. &
+              pGraph(k)%rZSTEP(iMONTHLY) > rZERO) then
+
+              pGraph(k)%iTimeFrame = iMONTHLY
+
+              call makegraph(pGraph,pGrd,k)
+
+            end if
+
+          end if
 
 #endif
 
-       pGrd%rData(:,:)= rZERO
-       rValSum = rZERO
+          pGrd%rData(:,:) = pGrd%rData(:,:) &
+             / real(iDaysInMonthCount, kind=T_SGL)
 
-     end if
+          if(STAT_INFO(k)%iMonthlyOutput==iGRID &
+            .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
+
+            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_MEAN." &
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+
+#ifdef GRAPHICS_SUPPORT
+
+          if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
+            .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
+
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
+
+            write(sBuf,FMT="(A,' ',i2.2,' ',i4.4)") &
+              "Mean: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iYear
+
+            pGraph(k)%cTITLE = TRIM(sBuf)
+
+            if( pGraph(k)%rZE(iMONTHLY) > pGraph(k)%rZA(iMONTHLY) .and. &
+              pGraph(k)%rZSTEP(iMONTHLY) > rZERO) then
+
+              pGraph(k)%iTimeFrame = iMONTHLY
+
+              call makegraph(pGraph,pGrd,k)
+
+            end if
+
+          end if
+
+#endif
+
+          rMonthlySum = 0.0; iDaysInMonthCount = 0
+
+        endif  ! end of block executed at end of month
+
+      endif  ! end of code block relating to monthly output
+
+
+
+      if(STAT_INFO(k)%iAnnualOutput /= iNONE ) then
+
+        rAnnualSum = rAnnualSum + rVal
+        iDaysInYearCount = iDaysInYearCount + 1
+
+        if (lMonthEnd .and. iMonth == 12) then
+
+          pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNX,iNY/),PAD=rPad)
+
+          write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4)") &
+            pConfig%sSlash//"annual"//pConfig%sSlash, &
+            trim(pConfig%sOutputFilePrefix), &
+            trim(sDelimiter), &
+            TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
+            iYear
+
+          if(STAT_INFO(k)%iAnnualOutput==iGRID &
+            .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
+
+            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_SUM." &
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+
+#ifdef GRAPHICS_SUPPORT
+
+          if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
+            .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
+
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
+
+            write(sBuf,FMT="(A,' ',i4.4)") &
+              "Sum: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear
+
+            pGraph(k)%cTITLE = TRIM(sBuf)
+
+            if( pGraph(k)%rZE(iANNUAL) > pGraph(k)%rZA(iANNUAL) .and. &
+              pGraph(k)%rZSTEP(iANNUAL) > rZERO) then
+
+              pGraph(k)%iTimeFrame = iANNUAL
+
+              call makegraph(pGraph,pGrd,k)
+
+            end if
+
+          end if
+
+#endif
+
+          pGrd%rData(:,:) = pGrd%rData(:,:) &
+             / real(iDaysInYearCount, kind=T_SGL)
+
+          if(STAT_INFO(k)%iAnnualOutput==iGRID &
+            .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
+
+            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_MEAN." &
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+
+#ifdef GRAPHICS_SUPPORT
+
+          if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
+            .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
+
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
+
+            write(sBuf,FMT="(A,' ',i4.4)") &
+              "Mean: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear
+
+            pGraph(k)%cTITLE = TRIM(sBuf)
+
+            if( pGraph(k)%rZE(iANNUAL) > pGraph(k)%rZA(iANNUAL) .and. &
+              pGraph(k)%rZSTEP(iANNUAL) > rZERO) then
+
+              pGraph(k)%iTimeFrame = iANNUAL
+
+              call makegraph(pGraph,pGrd,k)
+
+            end if
+
+          end if
+
+#endif
+
+          rAnnualSum = 0.0; iDaysInYearCount = 0
+
+        endif  ! end of block executed at end of year
+
+      endif  ! end of code block relating to annual output
 
     end do
 
-  endif
-
-  end do
-
-  return
+  enddo
 
 end subroutine stats_RewriteGrids
 
@@ -1239,7 +1101,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
     trim(__FILE__),__LINE__)
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+      pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   open(LU_MASK_STATS_CSV,FILE="SWB_BASIN_STATS.txt",iostat=iStat,STATUS='REPLACE')
   call Assert ( iStat == 0, &
@@ -1283,7 +1145,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
     write(UNIT=LU_LOG,FMT=*) k," : Attempting to read mask file: ", &
        TRIM(pConfig%BMASK(k)%sBasinMaskFilename)
     input_grd => grid_Read(TRIM(pConfig%BMASK(k)%sBasinMaskFilename), &
-       "ARC_GRID", T_SGL_GRID )
+       "ARC_GRID", DATATYPE_REAL )
     call Assert( grid_Conform( pGrd, input_grd ), &
               "Non-conforming grid - filename: " &
               // TRIM(pConfig%BMASK(k)%sBasinMaskFilename))
@@ -1395,7 +1257,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   type (T_GENERAL_GRID),pointer :: input_grd    ! Pointer to temporary grid for I/O
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-      pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+      pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   if(pConfig%iStartYearforCalculation<pConfig%iStartYear) &
     pConfig%iStartYearforCalculation = pConfig%iStartYear
@@ -1424,8 +1286,8 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
     TRIM(pConfig%sSlash), &
     "RECHARGE",pConfig%iStartYearforCalculation, &
     pConfig%iEndYearforCalculation
-  call grid_WriteArcGrid(sBuf,pGrd%rX0,pGrd%rX1,pGrd%rY0,pGrd%rY1, &
-      pTmpGrd%rData)
+
+  call grid_WriteGrid(TRIM(sBuf), pTmpGrd, pConfig)
 
   write(sBuf,FMT="('images',a,'MEAN_',a,i4.4,'_'i4.4,a)") &
             TRIM(pConfig%sSlash), &
@@ -1482,7 +1344,7 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       pConfig%iEndYearforCalculation
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
-    pGrd%rX1, pGrd%rY1, T_SGL_GRID)
+    pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
 
   if(pConfig%iStartYearforCalculation<0) &
     pConfig%iStartYearforCalculation = pConfig%iStartYear
@@ -1654,14 +1516,14 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
-        TRIM(pConfig%sOutputFilePrefix) //"_" &
+      open(nextunit(STAT_INFO(i)%iLU), FILE= TRIM(pConfig%sOutputFilePath) &
+        //pConfig%sSlash//TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')
 
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNY             ! Number of cells in the y-direction
-      write(UNIT=STAT_INFO(i)%iLU) T_SGL_GRID           ! Type of the grid
+      write(UNIT=STAT_INFO(i)%iLU) DATATYPE_REAL           ! Type of the grid
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iLengthUnits    ! length units code
       write(UNIT=STAT_INFO(i)%iLU) i                    ! STAT_INFO variable number
@@ -1687,7 +1549,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(UNIT=LU_LOG,fmt="('NX:',i5)") pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=LU_LOG,fmt="('NY:',i5)") pGrd%iNY             ! Number of cells in the y-direction
-      write(UNIT=LU_LOG,fmt="('data type:',i5)") pGrd%iDataType       ! Type of the grid
+      write(UNIT=LU_LOG,fmt="('data type:',i5)") DATATYPE_REAL ! Type of the grid
       write(UNIT=LU_LOG,fmt="('cell size:',f12.3)") pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=LU_LOG,fmt="('length units:',i5)") pGrd%iLengthUnits    ! length units code
       write(UNIT=LU_LOG,fmt="('SI var:',i5)") i                    ! STAT_INFO variable number
@@ -1717,7 +1579,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   integer (kind=T_INT) :: iNX
   integer (kind=T_INT) :: iNY
   integer (kind=T_INT) :: iDataType
-  real (kind=T_SGL)    :: rGridCellSize
+  real (kind=T_DBL)    :: rGridCellSize
   integer (kind=T_INT) :: iLengthUnits
   integer (kind=T_INT) :: iVariableNumber
   integer (kind=T_INT) :: iRLE_MULT
@@ -1733,8 +1595,9 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE='output'//pConfig%sSlash// &
-        TRIM(pConfig%sOutputFilePrefix) //"_" &
+      open(nextunit(STAT_INFO(i)%iLU), FILE= &
+        trim(pConfig%sOutputFilePath)//pConfig%sSLASH &
+        //TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='OLD',ACCESS='STREAM', ACTION='READWRITE')
 
@@ -1761,7 +1624,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
       ! at this point, the file is ready for reading of Day 1 values
 
-	end if
+    end if
 
   end do
 

@@ -66,21 +66,21 @@ module graph
 
     select case(pGrd%iDataType)
 
-      case(T_INT_GRID)
+      case(DATATYPE_INT)
         do iCol=1,iX
           do iRow=1,iY
             ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)))
           end do
         end do
 
-      case(T_SGL_GRID)
+      case(DATATYPE_REAL)
         do iCol=1,iX
           do iRow=1,iY
             ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
           end do
         end do
 
-      case(T_CELL_GRID)
+      case(DATATYPE_CELL_GRID)
 
         call Assert(lFALSE,"Unsupported grid type (T_GRID_CELL) was used in call", &
           TRIM(__FILE__), __LINE__)
@@ -355,7 +355,7 @@ module graph
     character (len=256) :: sBuf = ""
     character (len=256) :: sSummaryTxt = ""
     real (kind=T_SGL) :: rH_V_AspectRatio
-    integer (kind=T_INT) :: iPixVRes = 600.
+    integer (kind=T_INT) :: iPixVRes = 1000.
     integer (kind=T_INT) :: iPixHRes
 
     integer (kind=T_INT) :: iPtVRes
@@ -417,7 +417,7 @@ module graph
 
     select case(pGrd%iDataType)
 
-      case(T_INT_GRID)
+      case(DATATYPE_INT)
 
         if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
           ZA = maxval(pGrd%iData)
@@ -436,7 +436,7 @@ module graph
           end do
         end do
 
-      case(T_SGL_GRID)
+      case(DATATYPE_REAL)
 
         if(minval(pGrd%rData) <= 0. .and. maxval(pGrd%rData) <= 0.) then
           ZA = maxval(pGrd%rData)
@@ -456,7 +456,7 @@ module graph
           end do
         end do
 
-      case(T_CELL_GRID)
+      case(DATATYPE_CELL_GRID)
 
         call Assert(lFALSE,"Unsupported grid type (T_GRID_CELL) was used in call", &
           TRIM(__FILE__), __LINE__)

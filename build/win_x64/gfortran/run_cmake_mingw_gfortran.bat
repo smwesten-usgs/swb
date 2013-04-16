@@ -1,3 +1,4 @@
+:: cmake -G "Mi:: remove existing Cmake cache and directories
 :: remove existing Cmake cache and directories
 rmdir /S /Q CMake*
 del /S /Q *.txt
@@ -21,7 +22,7 @@ set TARGET__SWB_EXECUTABLE="TRUE"
 set TARGET__SWB_LIBRARY="FALSE"
 set TARGET__SWBSTATS="FALSE"
 
-:: define which conditional compilation statements to include 
+:: define which conditional compilation statements to include
 set OPTION__GRAPHICS_SUPPORT="TRUE"
 set OPTION__STREAM_INTERACTIONS="FALSE"
 set OPTION__NETCDF_SUPPORT="TRUE"
@@ -29,6 +30,11 @@ set OPTION__THORNTHWAITE_MATHER_TABLES="TRUE"
 set OPTION__IRRIGATION_MODULE="FALSE"
 set OPTION__STRICT_DATE_CHECKING="FALSE"
 set OPTION__DEBUG_PRINT="FALSE"
+
+:: define platform and compiler specific compilation flags
+set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
+::set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -ftree-parallelize-loops=8 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 
 :: IMPORTANT!! Make sure a valid TEMP directory exists!!
 set TEMP=d:\TEMP
@@ -87,4 +93,6 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DOPTION__THORNTHWAITE_MATHER_TABLES=%OPTION__THORNTHWAITE_MATHER_TABLES% ^
 -DOPTION__IRRIGATION_MODULE=%OPTION__IRRIGATION_MODULE% ^
 -DOPTION__STRICT_DATE_CHECKING=%OPTION__STRICT_DATE_CHECKING% ^
--DOPTION__DEBUG_PRINT=%OPTION__DEBUG_PRINT%
+-DOPTION__DEBUG_PRINT=%OPTION__DEBUG_PRINT% ^
+-DCMAKE_Fortran_FLAGS_DEBUG=%CMAKE_Fortran_FLAGS_DEBUG% ^
+-DCMAKE_Fortran_FLAGS_RELEASE=%CMAKE_Fortran_FLAGS_RELEASE%

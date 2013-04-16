@@ -1,27 +1,39 @@
 rm(list=ls())
 
-#setwd("D:/SMWData/Active_Projects/LakeMI_Recharge/monthly_A1Fi_results")
-setwd("D:\\SMWData\\Westenbroek\\swb\\Hostetler_test")
-#setwd("D:/SMWData/Source_Code/SWB/test_cases/bec")
+myfilters <- matrix(data=c("CSV file (*.csv)", "*.csv", "All files (*.*)", "*.*"), nrow=2, ncol=2,
+                    byrow=TRUE)
 
+msb_filename <- choose.files(default="SWB_daily_mass_balance_report.csv", 
+                             caption="Choose the daily mass balance report file you wish to plot",
+                             multi=FALSE,
+                             filters=myfilters,
+                             index=1)
+
+setwd( dirname(msb_filename) )
+
+titleTxt <- winDialogString(message="Enter the title you wish to use in the plots",
+                            default="Mass Balance Plot")
 cex.main=1.0
 
-#file<-file("recharge_daily_report.csv","r")
-
-mb.in<-read.csv("SWB_daily_mass_balance_report.csv",header=TRUE, as.is=TRUE, row.names=NULL)
+mb_in<-read.csv(msb_filename, header=TRUE, as.is=TRUE, row.names=NULL)
 
 # appears to be an error in read.csv regarding row names...kludge to get around this
-colnames(mb.in)<-colnames(mb.in)[-1]
-mb.in<-mb.in[-ncol(mb.in)]
+colnames(mb_in)<-colnames(mb_in)[-1]
+mb_in<-mb_in[-ncol(mb_in)]
 
-mb.in$Date<-as.Date(mb.in$Date,format="%m/%d/%Y")
+mb_in$Date<-as.Date(mb_in$Date,format="%m/%d/%Y")
 
 pdf(file = "SWB_mass_balance_plot.pdf",width = 11, height = 8.5)
-layout(matrix(c(1,2,3,4,5),5 , 1, byrow = TRUE))
+layout(matrix(c(1,2,2,2,3,3,3,4,4,4,5,5,5,6,6,6), nrow=16 , ncol=1, byrow = TRUE))
 
-for (i in sort(unique(mb.in$Year))) {
+for (i in sort(unique(mb_in$Year))) {
 
-mb<-subset(mb.in,mb.in$Year==i)
+mb<-subset(mb_in,mb_in$Year==i)
+
+par(mar = c(0,0,2,0)) 
+plot(1,1,type = "n",frame.plot = FALSE,axes = FALSE)
+u <- par("usr")
+text(1,u[4],labels = paste(titleTxt, ": ",i, sep=""),col = "blue",pos = 1, cex=2)
 
 y<-as.vector(c(mb$Mean.Max.Temp,rev(mb$Mean.Min.Temp)))
 x<-as.vector(c(mb$Date,rev(mb$Date)))
