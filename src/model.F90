@@ -102,6 +102,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     "Could not allocate memory for time-series data structure", &
     TRIM(__FILE__),__LINE__)
 
+  call grid_DumpGridExtent(pGrd)
+
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
   call model_CheckConfigurationSettings( pGrd, pConfig )

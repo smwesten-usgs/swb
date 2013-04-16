@@ -1978,6 +1978,8 @@ subroutine grid_DumpGridExtent(pGrd)
   call echolog("Y0: "//trim(asCharacter(pGrd%rY0) ) )
   call echolog("X1: "//trim(asCharacter(pGrd%rX1) ) )
   call echolog("Y1: "//trim(asCharacter(pGrd%rY1) ) )
+  call echolog("Type: "//trim(asCharacter(pGrd%iDataType) ) )
+  call echolog("PROJ4 string: "//dquote(pGrd%sPROJ4_string) )
   call echolog("---------------------------------------------------")
 
 end subroutine grid_DumpGridExtent

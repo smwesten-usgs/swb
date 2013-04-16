@@ -239,12 +239,16 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%rX0 = pGrd%rX0; pConfig%rX1 = pGrd%rX1
       pConfig%rY0 = pGrd%rY0; pConfig%rY1 = pGrd%rY1
       pConfig%rGridCellSize = pGrd%rGridCellSize
+      pGrd%sFilename = "[none: base grid]"
+      pGrd%sPROJ4_string = "undefined"
+      DAT(:)%sSourcePROJ4_string = "undefined"
 
     else if (sItem == "BASE_PROJECTION_DEFINITION") then
       pConfig%sBase_PROJ4 = trim(sRecord)
       call Assert(associated(pGrd), "The project grid must be specified " &
         //"before the base grid projection information can be specified.")
       pGrd%sPROJ4_string = trim(sRecord)
+      DAT(:)%sSourcePROJ4_string=trim(sRecord)
 
 #ifdef DEBUG_PRINT
     elseif ( str_compare(sItem,"MEM_TEST") ) then

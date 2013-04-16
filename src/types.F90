@@ -251,8 +251,6 @@ module types
   integer (kind=T_INT), parameter :: GRID_DATATYPE_CELL_GRID = 2
   integer (kind=T_INT), parameter :: GRID_DATATYPE_ALL = 3
 
-
-
 !> @brief Type that contains the data for a grid.
 !>
 !>   Type that contains the data for a grid. Depending on the need of the

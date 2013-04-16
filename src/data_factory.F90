@@ -499,14 +499,14 @@ subroutine transform_grid_to_grid(this, pGrdBase)
 
       select case (this%iTargetDataType)
 
-        case ( DATATYPE_REAL )
+        case ( GRID_DATATYPE_REAL )
 
           call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
                               rArrayFrom=this%pGrdNative%rData, &
                               pGrdTo=pGrdBase, &
                               rArrayTo=pGrdBase%rData )
 
-        case ( DATATYPE_INT)
+        case ( GRID_DATATYPE_INT )
 
           call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
                             iArrayFrom=this%pGrdNative%iData, &
@@ -534,7 +534,7 @@ subroutine transform_grid_to_grid(this, pGrdBase)
 
         case ( DATATYPE_INT)
 
-          pGrdBase%rData = this%pGrdNative%rData
+          pGrdBase%iData = this%pGrdNative%iData
 
         case default
 
