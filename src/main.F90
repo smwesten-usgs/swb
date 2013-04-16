@@ -129,12 +129,6 @@ program main
     write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT               no"
 #endif
 
-#ifdef IRRIGATION_MODULE
-    write(UNIT=*,FMT="(a)") " IRRIGATION calculations     yes"
-#else
-    write(UNIT=*,FMT="(a)") " IRRIGATION calculations      no"
-#endif
-
 #ifdef STRICT_DATE_CHECKING
     write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING        yes"
 #else

@@ -341,9 +341,8 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
 
   rTempArray = rDaily
 
-  rMassBalance = SUM(rTempArray(iSUM,:) &
-                    * real(STAT_INFO(:)%iMassBalanceConst, kind=T_DBL) ) &
-                    * dpVolConvert
+  rMassBalance = SUM((rTempArray(iSUM,:) * dpVolConvert ) &
+                    * real(STAT_INFO(:)%iMassBalanceConst, kind=T_DBL) )
 
   rTempArray(iSUM,:) = rTempArray(iSUM,:) * dpVolConvert
 
@@ -525,7 +524,7 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
     rAnnual(iSUM,iVarNum) = rAnnual(iSUM,iVarNum) + rDaily(iSUM,iVarNum)
 
     call Assert &
-     (LOGICAL(INT(rDaily(iLENGTH,iVarNum),kind=T_INT)==iNumGridCells,kind=T_LOGICAL), &
+     (INT(rDaily(iLENGTH,iVarNum),kind=T_INT) == iNumGridCells, &
       "stats.f95: call to UpdateAllAccumulators failed; number of calls" &
       // " must be equal to the number of grid cells.")
 
@@ -669,9 +668,8 @@ subroutine stats_OpenMSBReport()
       // 'TOTAL Surface Storage (snow),' &
       // 'Change in Surface Storage (snow),' &
       // 'Snowmelt,' &
-#ifdef IRRIGATION_MODULE
-      // 'Irrigation,' &
-#endif
+      // 'Irrigation from Surface Water,' &
+      // 'Irrigation from Groundwater,' &
       // 'TOTAL Soil Moisture Storage,' &
       // 'Change in Soil Moisture Storage, Surface Flow Out of Grid,' &
       // 'Rejected Recharge,' &
@@ -707,9 +705,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
                   + rDaily(iSUM,iNET_PRECIP) &
                   + rDaily(iSUM,iINFLOW) &
-#ifdef IRRIGATION_MODULE
-                  + rDaily(iSUM,iIRRIGATION) &
-#endif
+                  + rDaily(iSUM,iIRRIGATION_FROM_SW) &
+                  + rDaily(iSUM,iIRRIGATION_FROM_GW) &
                   - rDaily(iSUM,iOUTFLOW) &
                   - rDaily(iSUM,iRUNOFF_OUTSIDE) &
                   - rDaily(iSUM,iREJECTED_RECHARGE) &
@@ -721,7 +718,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   - rDaily(iSUM,iRECHARGE)
 
       write( unit=LU_MSB_REPORT, &
-           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",22(F14.2,","),F14.2)' ) &
+           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",23(F14.2,","),F14.2)' ) &
                          iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
                          SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
                          SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
@@ -738,9 +735,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iSNOWCOVER)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*dpVolConvert, &
                          rDaily(iSUM,iSNOWMELT)*dpVolConvert, &
-#ifdef IRRIGATION_MODULE
-                         rDaily(iSUM, iIRRIGATION)*dpVolConvert, &
-#endif
+                         rDaily(iSUM, iIRRIGATION_FROM_SW)*dpVolConvert, &
+                         rDaily(iSUM, iIRRIGATION_FROM_GW)*dpVolConvert, &
                          rDaily(iSUM,iSOIL_MOISTURE)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SOIL_MOIST)*dpVolConvert, &
                          rDaily(iSUM,iRUNOFF_OUTSIDE)*dpVolConvert, &
@@ -1498,6 +1494,62 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
   return
 
 end subroutine stats_write_to_SSF_file
+
+!--------------------------------------------------------------------------
+
+subroutine stats_SetBinaryFilePosition(pConfig, pGrd)
+
+  ![ARGUMENTS]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+  type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: k
+  integer (kind=T_INT) :: iPos
+
+  if(pConfig%lFirstDayOfSimulation) then
+    ! scan through list of potential output variables; if any
+    ! output is desired for a variable, note the current position
+    ! within the file, move to the position reserved for the first day's
+    ! date, write the date, and return to the position where the data
+    ! for the first day will be written
+    do k=1,iNUM_VARIABLES
+      if(STAT_INFO(k)%iDailyOutput > iNONE &
+        .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+        .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+        inquire(UNIT=STAT_INFO(k)%iLU,POS=iPos)  ! establish location to return to
+        write(UNIT=STAT_INFO(k)%iLU,POS=iSTARTDATE_POS) &
+          pConfig%iMonth,pConfig%iDay, pConfig%iYear
+        write(UNIT=STAT_INFO(k)%iLU,POS=iPos ) ! return to prior location in bin file
+      end if
+      pConfig%lFirstDayOfSimulation = lFALSE
+    end do
+
+  endif
+
+end subroutine stats_SetBinaryFilePosition
+
+!------------------------------------------------------------------------------
+
+subroutine stats_TimestampBinaryFile(pConfig)
+
+  ![ARGUMENTS]
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: k
+
+  ! write timestamp to the unformatted fortran file(s)
+  do k=1,iNUM_VARIABLES
+    if(STAT_INFO(k)%iDailyOutput > iNONE &
+      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
+    write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
+      pConfig%iYear, pConfig%iDayOfYear
+    end if
+  end do
+
+end subroutine stats_TimestampBinaryFile
 
 !--------------------------------------------------------------------------
 

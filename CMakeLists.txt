@@ -5,11 +5,28 @@
 
 message("Processing top-level CMakelists.txt for project swb")
 
+#------------------------------------------------------------------------------------#
+#                           Build directory check                                    #
+#------------------------------------------------------------------------------------#
+if(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
+  message(FATAL_ERROR "Cannot be built in the source directory. Use
+  out-of-source build instead.")
+  message(FATAL_ERROR "  cd /some/work/dir/build")
+  message(FATAL_ERROR "  cmake -i /path/to/source")
+endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
+
 #------------------------------------------------------------------------
 # Set basic project settings
 #------------------------------------------------------------------------
-project (swb)
-enable_language (Fortran)
+#
+# NOTE: must enable CXX as a language in order to use the GNU compiler
+#       toolchain
+#
+project (swb Fortran CXX)
+enable_language (Fortran CXX)
+
+SET(CPACK_GENERATOR "TGZ")
+include(CPack)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
@@ -19,6 +36,7 @@ set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
+
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
 #------------------------------------------------------------------------
@@ -26,7 +44,7 @@ cmake_minimum_required(VERSION 2.8)
 set_property(CACHE CMAKE_BUILD_TYPE
         PROPERTY STRINGS "Release" "Debug")
 
-set( CMAKE_BUILD_TYPE "Release" CACHE STRING
+set( CMAKE_BUILD_TYPE "Debug" CACHE STRING
        "Compile in DEBUG or RELEASE mode" )
 
 set_property(CACHE PLATFORM_TYPE
@@ -46,7 +64,8 @@ option (TARGET__SWB_EXECUTABLE
       "Compile the main SWB executable?" OFF)
 
 option (TARGET__SWB_LIBRARY
-      "Compile SWB as a library?" ON)
+      "Compile SWB as a library?" OFF)
+
 
 option (TARGET__SWBSTATS
       "Compile the swbstats application?" OFF)
@@ -80,13 +99,6 @@ if(OPTION__THORNTHWAITE_MATHER_TABLES)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "THORNTHWAITE_MATHER_TABLE")
 endif()
 
-option (OPTION__IRRIGATION_MODULE
-      "Compile the code with irrigation module support?" OFF)
-if(OPTION__IRRIGATION_MODULE)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "IRRIGATION_MODULE")
-  set(IRRIGATION_MODULE_VARS 3)
-endif()
-
 option (OPTION__STRICT_DATE_CHECKING
       "Compile the code with strict enforcement of dates?" OFF)
 if(OPTION__STRICT_DATE_CHECKING)
@@ -104,7 +116,7 @@ endif()
 #------------------------------------------------------------------------
 if(CMAKE_HOST_WIN32)
 
-   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+  if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
 
      message(" <-- setting options for gfortran on MinGW (32-bit/64-bit) -->")
 
@@ -141,7 +153,6 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
@@ -168,7 +179,8 @@ if(CMAKE_HOST_WIN32)
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -rc libswb.a *.o
          COMMAND ${CMAKE_COMMAND} -E chdir ${PROJECT_SOURCE_DIR}/build/temp ar -q libswb.a *.obj
          COMMAND ${CMAKE_COMMAND} -E copy ${PROJECT_SOURCE_DIR}/build/temp/libswb.a ${PROJECT_SOURCE_DIR}/build/win/src/libswb.a
-         VERBATIM)
+         VERBATIM
+     )
 
     elseif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
       #------------------------------------------------------------------------
@@ -373,11 +385,13 @@ message("--------------------------------------------------------------------")
 message("   Summary of CMAKE environment variables")
 message("--------------------------------------------------------------------")
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-message("Linker:   " ${CMAKE_Fortran_LINK_EXECUTABLE})
+message( " ")
 message("CMAKE_AR: " ${CMAKE_AR})
 message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
+message("CMAKE Fortran flags (Profile):      " ${CMAKE_Fortran_FLAGS_PROFILE})
 message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
-MESSAGE("Install to directory:       " ${CMAKE_INSTALL_PREFIX})
+message( " ")
+MESSAGE("Install to directory: " ${CMAKE_INSTALL_PREFIX})
 message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
 message("Using Module include directory: " ${MODULE_DIR})
 message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
@@ -385,6 +399,7 @@ message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
+message("CMAKE_LINK_FLAGS: " ${CMAKE_LINK_FLAGS})
 message( " ")
 message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
 message("CMAKE_HOST_APPLE: " ${CMAKE_HOST_APPLE})

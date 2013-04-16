@@ -879,15 +879,14 @@ function grid_ReadSurferGrid_fn ( sFileName, iDataType ) result ( pGrd )
           call Assert ( lFALSE, "Internal error -- illegal SURFER grid data type" )
   end select
 
-  call Assert(LOGICAL(iNX>0,kind=T_LOGICAL),"Must have a non-zero number of grid cells in a surfer grid file...")
-  call Assert(LOGICAL(iNY>0,kind=T_LOGICAL),"Must have a non-zero number of grid cells in a surfer grid file...")
+  call Assert(LOGICAL(iNX>0,kind=T_LOGICAL),"Must have a non-zero number of columns surfer grid file...")
+  call Assert(LOGICAL(iNY>0,kind=T_LOGICAL),"Must have a non-zero number of rows in a surfer grid file...")
 
   pGrd%rGridCellSize = (rX1-rX0)/iNX
 
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
 
-  return
 end function grid_ReadSurferGrid_fn
 
 
@@ -1162,7 +1161,7 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
   logical (kind=T_LOGICAL) :: lConform
   ! LOCALS
   real (kind=T_SGL) :: rTol
-  real (kind=T_SGL), parameter :: rDEFAULT_TOLERANCE = 1.0e-2_T_SGL
+  real (kind=T_SGL), parameter :: rDEFAULT_TOLERANCE = 0.5_T_SGL
 
   if ( present ( rTolerance ) ) then
       rTol = rTolerance * ( pGrd1%rX1 - pGrd1%rX0 )
@@ -1170,18 +1169,46 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
       rTol = rDEFAULT_TOLERANCE * ( pGrd1%rX1 - pGrd1%rX0 )
   end if
 
-  if ( pGrd1%iNX /= pGrd2%iNX .or. &
-       pGrd1%iNY /= pGrd2%iNY .or. &
-       abs ( pGrd1%rX0 - pGrd2%rX0 ) > rTol .or. &
-       abs ( pGrd1%rY0 - pGrd2%rY0 ) > rTol .or. &
-       abs ( pGrd1%rX1 - pGrd2%rX1 ) > rTol .or. &
-       abs ( pGrd1%rY1 - pGrd2%rY1 ) > rTol ) then
-      lConform = lFALSE
-  else
-      lConform = lTRUE
-  end if
+  lConform = lTRUE
 
-  return
+  if ( pGrd1%iNX /= pGrd2%iNX ) then
+    lConform = lFALSE
+    write(LU_LOG,fmt="(a)") "Unequal number of columns between grids"
+  endif
+
+  if ( pGrd1%iNY /= pGrd2%iNY ) then
+    lConform = lFALSE
+    write(LU_LOG,fmt="(a)") "Unequal number of rows between grids"
+  endif
+
+  if( abs ( pGrd1%rX0 - pGrd2%rX0 ) > rTol ) then
+     write(LU_LOG,fmt="(a)") "Lower left-hand side X coordinates don't match:"
+     write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+       pGrd1%rX0, pGrd2%rX0
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rY0 - pGrd2%rY0 ) > rTol ) then
+    write(LU_LOG,fmt="(a)") "Lower left-hand side Y coordinates don't match:"
+    write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+      pGrd1%rY0, pGrd2%rY0
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rX1 - pGrd2%rX1 ) > rTol ) then
+     write(LU_LOG,fmt="(a)") "Upper right-hand side X coordinates don't match:"
+     write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+       pGrd1%rX1, pGrd2%rX1
+    lConform = lFALSE
+  endif
+
+  if( abs ( pGrd1%rY1 - pGrd2%rY1 ) > rTol ) then
+    write(LU_LOG,fmt="(a)") "Upper right-hand side X coordinates don't match:"
+    write(LU_LOG,fmt="('Grid 1 value: ',f12.3,'; grid 2 value: ',f12.3)") &
+      pGrd1%rY1, pGrd2%rY1
+    lConform = lFALSE
+  endif
+
 end function grid_Conform
 
 function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompletelyCover )
@@ -1296,7 +1323,6 @@ subroutine grid_LookupColumn(pGrd,rXval,iBefore,iAfter,rFrac)
     rFrac = mod(rRowPosition,rONE)
   end if
 
-  return
 end subroutine grid_LookupColumn
 !!***
 !--------------------------------------------------------------------------
@@ -1503,12 +1529,15 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   real (kind=T_SGL) :: ylocal,u,v
 
   call grid_LookupColumn(pGrd,rXval,ib,ia,u)
-  call Assert ( LOGICAL(ib>0 .and. ia>0,kind=T_LOGICAL), &
-               "Requested column value out of range~" &
-               //"rXval: "//trim(real2char(rXval)), &
-               TRIM(__FILE__),__LINE__)
 
-  ! In some cases, when things really dry out, the y value gets out of range. - truncate.
+  call Assert (ib>0 .and. ia>0 .and. ib <= ubound(pGrd%rData,1) &
+     .and. ia <= ubound(pGrd%rData,1), &
+    "Internal programming error: illegal bounds caught~requested column value " &
+    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //" out of range", trim(__FILE__), __LINE__)
+
+  ! In some cases, when things really dry out, the y value
+  ! goes out of range - enforce bounds.
   if ( rYval < pGrd%rY0 ) then
     ylocal = pGrd%rY0
   else if ( rYval > pGrd%rY1 ) then
@@ -1516,17 +1545,23 @@ function grid_Interpolate(pGrd,rXval,rYval) result ( rValue )
   else
     ylocal = rYval
   end if
-  call grid_LookupRow(pGrd,ylocal,jb,ja,v)
 
-  call Assert ( LOGICAL(jb>0 .and. ja>0,kind=T_LOGICAL) , &
-               "Requested row value out of range~" &
-               //"rYval: "//trim(real2char(rXval)), &
-               TRIM(__FILE__),__LINE__)
+  call grid_LookupRow(pGrd=pGrd, &
+                      rYval=ylocal, &
+                      iBefore=jb, &
+                      iAfter=ja, &
+                      rFrac=v)
 
-  rValue = (rONE-u) * (rONE-v) * pGrd%rData(jb,ib)   + &
-              u  * (rONE-v) * pGrd%rData(jb,ia)   + &
-           (rONE-u) *       v  * pGrd%rData(ja,ib)   + &
-              u  *       v  * pGrd%rData(ja,ia)
+  call Assert (jb>0 .and. ja>0 .and. jb <= ubound(pGrd%rData,2) &
+     .and. ja <= ubound(pGrd%rData,2), &
+    "Internal programming error: illegal bounds caught~requested row value " &
+    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //" out of range", trim(__FILE__), __LINE__)
+
+  rValue = (rONE-u) * (rONE-v) * pGrd%rData(ib,jb)   + &
+              u  * (rONE-v) * pGrd%rData(ib,ja)   + &
+           (rONE-u) *       v  * pGrd%rData(ia,jb)   + &
+              u  *       v  * pGrd%rData(ia,ja)
 
 end function grid_Interpolate
 !!***
@@ -1562,11 +1597,11 @@ end function grid_Interpolate
 !
 !                 X=Max SM Capacity
 !
-!                0.50  1.00  1.50
-!               _________________
-!          0.0 | 0.50  1.00  1.50
-!  Y=APWL  0.1 | 0.45  0.90  1.40
-!          0.2 | 0.40  0.80  1.30
+!                 0.50  1.00  1.50
+!                _________________
+!         0.0 | 0.50  1.00  1.50
+!  Y=APWL 0.1 | 0.45  0.90  1.40
+!         0.2 | 0.40  0.80  1.30
 !
 ! SOURCE
 
@@ -1587,29 +1622,44 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   real (kind=T_SGL),dimension(:),allocatable :: rCol
   character (len=128) :: buf
 
+  ! allocate space for all ROWS of data that come from a single COLUMN
   allocate ( rCol(pGrd%iNY), stat=istat )
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), &
      "Couldn't allocate temporary array" )
 
   call grid_LookupColumn(pGrd,rXval,ib,ia,u)
-!  write(UNIT=LU_LOG,FMT=*)'lookup ',rXval,ib,ia
 
+#ifdef DEBUG_PRINT
+  write(UNIT=LU_LOG,FMT=*)'lookup ',rXval,ib,ia
+#endif
 
-  write (unit=buf,fmt=*) "Requested X value ", rXval, " out of range"
-  call Assert (LOGICAL(ib>0 .and. ia>0,kind=T_LOGICAL), buf )
+  call Assert (ib>0 .and. ia>0 .and. ib <= ubound(pGrd%rData,1) &
+     .and. ia <= ubound(pGrd%rData,1), &
+    "Internal programming error: requested X value " &
+    //trim(real2char(rValue=rXval, iDec=3, iWidth=12)) &
+    //" out of range", trim(__FILE__), __LINE__)
+
+  call assert(ubound(rCol,1) == ubound(pGrd%rData,2), &
+    "Internal programming error: upper bound of rCol /= upper " &
+    //"bound of first array element of pGrd%rData~" &
+    //"ubound(rCol)="//trim(int2char(ubound(rCol,1))) &
+    //"~ubound(pGrd%rData)="//trim(int2char(ubound(pGrd%rData,1))), &
+    trim(__FILE__), __LINE__)
 
   ! interpolate the column of values based on the columns of values
   ! that bracket the real value rXval
-  rCol = u*pGrd%rData(:,ia) + (rONE-u)*pGrd%rData(:,ib)
+!  rCol = u*pGrd%rData(:,ia) + (rONE-u)*pGrd%rData(:,ib)
+  rCol = u * pGrd%rData(ia,:) + (rONE-u)*pGrd%rData(ib,:)
   ! Fix missing values
+
   do iRow=1,pGrd%iNY
-    if ( pGrd%rData(iRow,ia) == rNoData .and. pGrd%rData(iRow,ib) == rNoData ) then
+    if ( pGrd%rData(ia, iRow) == rNoData .and. pGrd%rData(ib, iRow) == rNoData ) then
       rCol(iRow) = rNoData
-    else if ( pGrd%rData(iRow,ib) == rNoData .and. u>0.9_T_SGL ) then
-      rCol(iRow) = pGrd%rData(iRow,ia)
-    else if ( pGrd%rData(iRow,ia) == rNoData .and. u<0.1_T_SGL ) then
-      rCol(iRow) = pGrd%rData(iRow,ib)
-    else if ( pGrd%rData(iRow,ia) == rNoData .or. pGrd%rData(iRow,ib) == rNoData ) then
+    else if ( pGrd%rData(ib,iRow) == rNoData .and. u>0.9_T_SGL ) then
+      rCol(iRow) = pGrd%rData(ia,iRow)
+    else if ( pGrd%rData(ia,iRow) == rNoData .and. u<0.1_T_SGL ) then
+      rCol(iRow) = pGrd%rData(ib,iRow)
+    else if ( pGrd%rData(ia,iRow) == rNoData .or. pGrd%rData(ib,iRow) == rNoData ) then
       rCol(iRow) = rNoData
     end if
   end do

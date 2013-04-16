@@ -7,8 +7,6 @@
 !> for specific crop types.
 module irrigation
 
-#ifdef IRRIGATION_MODULE
-
   use types
   implicit none
 
@@ -16,95 +14,69 @@ module irrigation
 
 !> @brief This subroutine estimates the amount of water required
 !> to keep soil moisture values above the maximum allowable depletion (MAD)
-!> for each landuse and soil type. If the mean soil moisture for a given
-!> landuse/soil type falls below the MAD, the routine assumes that irrigation
-!> is used to bring the soil up to field capacity.
-!> \note If the irrigation module is enabled, potential evapotranspiration is calculated
-!> differently: potential ET is considered reference ET (i.e. potential ET for grass),
-!> and is modified by means of crop coefficients. This calculation affects irrigated
-!> as well as non-irrigated landuses.
-subroutine update_irrigation_amounts(pGrd, pConfig)
-
-  ! [ ARGUMENTS ]
+!> for each gridcell.
+subroutine irrigation_UpdateAmounts(pGrd, pConfig)
+!
+!  ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j
+  integer (kind=T_INT) :: iRow, iCol
   integer (kind=T_INT) :: iNumCells
-  real (kind=T_SGL) :: rPercentDepletion
-  real (kind=T_SGL) :: rIrrigationAmount
-  real (kind=T_SGL) :: rMeanSoilMoisturePct
-  real (kind=T_SGL) :: rMeanSoilMoisture
-  real (kind=T_SGL) :: rMeanSoilWaterCap
-  real (kind=T_SGL) :: rMeanGDD
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  type ( T_CELL ),pointer :: cel
+  real (kind=T_SGL) :: rDepletionFraction
+  real (kind=T_DBL) :: rDepletionAmount
 
-  ! zero out Irrigation term
-  pGrd%Cells%rIrrigationAmount = rZERO
-  rIrrigationAMount = rZERO
+    ! zero out Irrigation term
+    pGrd%Cells%rIrrigationFromGW = rZERO
+    pGrd%Cells%rIrrigationFromSW = rZERO
+    pGrd%Cells%rIrrigationAmount = rZERO
 
-  ! iterate over each landuse
-  do i = 1,size(pConfig%IRRIGATION)
+    ! iterate over cells; add water if soil storage zone is below the
+    ! maximum allowable depletion
+    do iRow=1,pGrd%iNY
+      do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+        cel => pGrd%Cells(iCol,iRow)
 
-    ! isolate the relevant IRRIGATION record for this landuse
-    pIRRIGATION => pConfig%IRRIGATION(i)
-    if( pIRRIGATION%rMAD > 99.9 ) cycle
+        ! now we run the gauntlet of tests to ensure that we really need
+        ! to perform all of the irrigation calculations
+        if ( cel%iActive == iINACTIVE_CELL ) cycle
 
-    if(pConfig%iDayOfYear >= pIRRIGATION%iBeginIrrigation &
-      .and. pConfig%iDayOfYear <= pIRRIGATION%iEndIrrigation ) then
+        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
+        if(pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation &
+          .or. pConfig%iDayOfYear > pIRRIGATION%iEndIrrigation ) cycle
 
-      ! iterate over each soil type
-      do j=1,size(pConfig%ROOTING_DEPTH,2)
+        if( pIRRIGATION%rMAD > 0.99 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
 
-        iNumCells = count(pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-           .and. pGrd%Cells%iSoilGroup == j)
+        ! cell is active and irrigation enabled and in season
+        rDepletionFraction = min((cel%rSoilWaterCap - cel%rSoilMoisture) &
+                               / cel%rTotalAvailableWater, 1.0)
 
-        if(iNumCells > 0) then
+        if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
+          rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+          cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW, &
+                                      kind=T_DBL ) &
+                                  * rDepletionAmount &
+                                  * REAL(pIRRIGATION%rIrrigationEfficiency_GW, &
+                                  kind=T_DBL )
+          cel%rIrrigationFromSW = real(1.0 - pIRRIGATION%rFractionOfIrrigationFromGW, &
+                                      kind=T_DBL ) &
+                                  * rDepletionAmount &
+                                  * real(pIRRIGATION%rIrrigationEfficiency_SW, &
+                                      kind=T_DBL )
+          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
+        else
+          cel%rIrrigationAmount = rZERO
+          cel%rIrrigationFromGW = rZERO
+          cel%rIrrigationFromSW = rZERO
+        endif
 
-          rMeanGDD =  sum(pGrd%Cells%rGDD, &
-             pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-             .and. pGrd%Cells%iSoilGroup == j) / real(iNumCells, kind=T_SGL)
+      enddo  ! loop over columns
+    enddo  ! loop over rows
 
-          rMeanSoilMoisturePct = sum(pGrd%Cells%rSoilMoisturePct, &
-             pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-             .and. pGrd%Cells%iSoilGroup == j) / real(iNumCells, kind=T_SGL)
-
-          rMeanSoilMoisture =  sum(pGrd%Cells%rSoilMoisture, &
-             pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-             .and. pGrd%Cells%iSoilGroup == j) / real(iNumCells, kind=T_SGL)
-
-          rMeanSoilWaterCap =  sum(pGrd%Cells%rSoilWaterCap, &
-             pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-             .and. pGrd%Cells%iSoilGroup == j) / real(iNumCells, kind=T_SGL)
-
-          rPercentDepletion = 100_T_SGL - rMeanSoilMoisturePct
-
-          if(rPercentDepletion > pIRRIGATION%rMAD .and. rMeanGDD > 50 ) then
-
-            rIrrigationAmount = (rMeanSoilWaterCap - rMeanSoilMoisture)
-
-            where (pGrd%Cells%iLandUse == pIRRIGATION%iLandUseType &
-             .and. pGrd%Cells%iSoilGroup == j)
-
-              pGrd%Cells%rIrrigationAmount = rIrrigationAmount
-
-            endwhere
-
-          endif  ! percent soil moisture depletion > MAD
-
-        endif  ! iNumCells > 0
-
-      enddo  ! loop over soil types
-
-    endif  ! we're within the envelope of dates in which irrigation could occur
-
-  enddo  ! loop over landuses
-
-
-end subroutine update_irrigation_amounts
-
-#endif
+end subroutine irrigation_UpdateAmounts
 
 end module irrigation

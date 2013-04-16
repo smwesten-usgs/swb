@@ -54,8 +54,6 @@ function snow_depth_Hedstrom(rTAvg, pConfig)   result(rSnowDepth)
 
   rSnowDepth = rRhoW / rRhoS
 
-  return
-
 end function snow_depth_Hedstrom
 
 !!***
@@ -74,7 +72,7 @@ end function snow_depth_Hedstrom
 ! NOTES
 
 subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
-   rSnowcover, rNetPrecip, rSnowTemperature, rMeltAmount, i, j)
+   rSnowcover, rNetRainfall, rSnowTemperature, rMeltAmount, i, j)
 
   real (kind=T_SGL)::  rTMin
   real (kind=T_SGL) :: rTMax
@@ -83,7 +81,7 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
   real (kind=T_SGL) :: rRso
   real (kind=T_SGL) :: rAlbedo
   real (kind=T_SGL) :: rSnowcover
-  real (kind=T_SGL) :: rNetPrecip
+  real (kind=T_SGL) :: rNetRainfall
   real (kind=T_SGL) :: rSnowTemperature
   real (kind=T_SGL) :: rMeltAmount
   real (kind=T_SGL) :: rMeltPotential
@@ -123,7 +121,7 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
   rLn = net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso) * 1000_T_DBL
   rH = sensible_heat_exchange_h(rSnowTemperature, rTAvg)
   rE = convective_heat_exchange_e(rSnowTemperature, rTAvg)
-  rP = precipitation_heat_p(rNetPrecip, rTAvg)
+  rP = precipitation_heat_p(rNetRainfall, rTAvg)
 
   if(i==3 .and. j==3) then
     write(*,fmt="(' rSnowTemperature (input): ',F14.4)") rSnowTemperature
@@ -179,8 +177,6 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
 
   rSnowTemperature = CtoF(rSnowTemp_degC)
 
-  return
-
 end subroutine snow_energy_balance
 
 !--------------------------------------------------------------------------
@@ -228,10 +224,6 @@ function snow_albedo(rAlbedoInit, iNumDaysLastSnow, rZenithAngle)  result(rAlbed
   rAlbedo = rAlbedoInit - (0.083_T_SGL + 0.23_T_SGL * sqrt(rSnowGrainSize)) &
                             * sqrt(cos(rZenithAngle))
 
-  return
-
 end function snow_albedo
-
-
 
 end module snow

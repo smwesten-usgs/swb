@@ -229,6 +229,69 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   ! Initialize evapotranspiration
   call model_InitializeET( pGrd, pConfig )
 
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i, j, k, iStat, iDayOfYear, iMonth
+!  integer (kind=T_INT) :: iDay, iYear, tj, ti
+  integer (kind=T_INT) :: tj, ti
+  integer (kind=T_INT) :: iTempDay, iTempMonth, iTempYear
+  integer (kind=T_INT) :: iPos
+  integer (kind=T_INT) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
+  integer (kind=T_INT) :: iCol, iRow
+  character(len=3) :: sMonthName
+  logical (kind=T_LOGICAL) :: lMonthEnd
+!  real (kind=T_SGL) :: rAvgT,rMinT,rMaxT,rPrecip,rRH,rMinRH,rWindSpd,rSunPct
+  integer (kind=T_INT),save :: iNumGridCells
+!  integer (kind=T_INT) :: iNumDaysInYear
+!  integer (kind=T_INT) :: iEndOfYearJulianDay
+
+  real (kind=T_SGL) :: rmin,ravg,rmax
+
+  type (T_CELL),pointer :: cel
+  character (len=256) :: sBuf
+
+  type (T_TIME_SERIES_FILE), pointer :: pTS
+
+  ! allocate memory for the time-series data pointer
+  ALLOCATE (pTS, STAT=iStat)
+  call Assert( iStat == 0, &
+    "Could not allocate memory for time-series data structure", &
+    TRIM(__FILE__),__LINE__)
+
+!  call stats_OpenBinaryFiles(pConfig)
+
+  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+
+    if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
+      call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
+        //"coefficient submodels enabled. These can be enabled by adding one of the following~" &
+        //"to your control file:~"//sTAB//"~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_STANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_STANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD~" &
+        //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
+    endif
+
+    ! call subroutine that handles much of the model initialization,
+    ! opens *.csv files, etc.
+    call model_Initialize(pGrd, pConfig)
+
+    if (pConfig%lEnableIrrigation .and. &
+       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+      call model_CreateIrrigationTableIndex(pGrd, pConfig )
+    endif
+    ! calculate number of gridcells here.
+    iNumGridCells = pGrd%iNX * pGrd%iNY
+
+    ! time the run; start the clock.
+    call cpu_time(rStartTime)
+
+    ! create the single, temporary grid to use for temperature and precip
+    ! data input
+    pDataGrd => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+      pGrd%rX1, pGrd%rY1, T_SGL_GRID )
+
   end if FIRST_YEAR
 
   ! close any existing open time-series files...
@@ -425,9 +488,7 @@ end if
       TRIM(__FILE__),__LINE__)
   end if
 
-#ifdef IRRIGATION_MODULE
-  call update_irrigation_amounts(pGrd, pConfig)
-#endif
+  if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
 
   call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
 
@@ -435,7 +496,10 @@ end if
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
 
-  call model_ProcessSM( pGrd, pConfig, pConfig%iDayOfYear, &
+  if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) &
+    call et_kc_ApplyCropCoefficients(pGrd, pConfig)
+
+  call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
 
   ! if desired, output daily mass balance file and daily model grids
@@ -630,7 +694,8 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
   ! [ LOCALS ]
   type (T_GENERAL_GRID),pointer :: input_grd      ! Pointer to temporary grid for I/O
   character (len=256) sBuf
-  logical (kind=T_LOGICAL) :: lExists
+  integer (kind=T_INT) :: iRow, iCol
+  logical (kind=T_LOGICAL) :: lExists, lFound
 
   ! set to a nonzero value
   iStat = iEOF
@@ -668,7 +733,7 @@ function if_GetDynamicLanduseValue( pGrd, pConfig, iYear)  result(iStat)
 
   case default
     call Assert ( lFALSE, "Internal error -- unknown landuse input type" )
-end select
+  end select
 
 end function if_GetDynamicLanduseValue
 
@@ -2704,6 +2769,33 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   call Assert ( iStat == 0, &
     "Could not allocate space for landuse data structure" )
 
+  ! now allocate memory for IRRIGATION, TEW, and REW subtables
+  ! even if irrigation is not actively being used, this must be in place so that
+  ! the default growing-degree day baseline temps are available elsewhere in the code
+  allocate ( pConfig%IRRIGATION( pConfig%iNumberOfLanduses ), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for IRRIGATION data structure", trim(__FILE__), __LINE__ )
+
+  ! now allocate memory for READILY_EVAPORABLE_WATER subtable
+  allocate ( pConfig%READILY_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
+    pConfig%iNumberOfSoilTypes), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for READILY_EVAPORABLE_WATER  data structure", &
+    trim(__FILE__), __LINE__ )
+
+   ! assign a reasonable default value
+   pConfig%READILY_EVAPORABLE_WATER = 0.3
+
+  ! now allocate memory for TOTAL_EVAPORABLE_WATER subtable
+  allocate ( pConfig%TOTAL_EVAPORABLE_WATER( pConfig%iNumberOfLanduses, &
+    pConfig%iNumberOfSoilTypes), stat=iStat )
+  call Assert ( iStat == 0, &
+    "Could not allocate space for TOTAL_EVAPORABLE_WATER  data structure", &
+    trim(__FILE__), __LINE__ )
+
+  ! assign another reasonable default value
+  pConfig%TOTAL_EVAPORABLE_WATER = 0.6
+
   iSize = size(pConfig%LU,1)
 
   ! now allocate memory for SOILS subtable within landuse table
@@ -2817,19 +2909,21 @@ end subroutine model_ReadLanduseLookupTable
 
 !--------------------------------------------------------------------------
 
-#ifdef IRRIGATION_MODULE
-
-subroutine model_ReadIrrigationLookupTable( pConfig )
+subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
   !! Reads the irrigation data from pConfig%sIrrigationLookupFilename
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
+  type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
+
   ! [ LOCALS ]
   integer (kind=T_INT) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
   integer (kind=T_INT) :: iLandUseType
   integer (kind=T_INT) :: iNumSoilTypes
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
+	integer (kind=T_INT) :: iCol,iRow
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
 
   ! open landuse file
   open ( LU_LOOKUP, file=pConfig%sIrrigationLookupFilename, &
@@ -2863,36 +2957,6 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
 
   iSize = size(pConfig%LU,1)
 
-  iRecNum = 1
-
-  LU_READ: do
-
-  read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
-  if ( iStat < 0 ) exit     ! EOF mark
-  if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
-
-  if(iRecNum > iSize) then
-    write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of irrigation lookup table elements has"
-    write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
-    write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for IRRIGATION table: ",iSize
-    write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
-    exit
-  end if
-
-  write(UNIT=LU_LOG,FMT=*) ""
-  write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-  write(UNIT=LU_LOG,FMT=*)  "Reading irrigation table record number ",iRecNum, " of ",iNumLandUses
-  write(UNIT=LU_LOG,FMT=*) ""
-
-  call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) iLandUseType
-  call Assert( iStat == 0, "Error reading land use type in irrigation lookup table" )
-  call Assert(iLandUseType == pConfig%LU(iRecNum)%iLandUseType, &
-    "Landuse types in the irrigation lookup table must match those in the landuse lookup table", &
-      trim(__FILE__), __LINE__)
-  pConfig%IRRIGATION(iRecNum)%iLandUseType = iLandUseType
 
   call chomp(sRecord, sItem, sTAB)
   read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iRecNum)%rKc_Max
@@ -2969,26 +3033,75 @@ subroutine model_ReadIrrigationLookupTable( pConfig )
 
   return
 end subroutine model_ReadIrrigationLookupTable
+      ! initialize rKcb to the minimum value
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb = pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
 
-#endif
+    call chomp(sRecord, sItem, sTAB)
+      if ( scan(sItem, "/") /= 0 ) then
+        pConfig%IRRIGATION(iLandUseIndex)%iL_plant = mmdd2doy(sItem)
+      else
+        read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+        call Assert( iStat == 0, &
+          "Error reading day of year (or GDD) of initial planting from " &
+            //"irrigation lookup table" , trim(__FILE__), __LINE__ )
+        pConfig%IRRIGATION(iLandUseIndex)%iL_plant = int(rTempValue)
+      endif
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) of initial planting ", &
+      pConfig%IRRIGATION(iLandUseIndex)%iL_plant
 
-!--------------------------------------------------------------------------
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading number of days (or GDD) until end of initial plant growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iLandUseIndex)%iL_ini = int(rTempValue) &
+		  + pConfig%IRRIGATION(iLandUseIndex)%iL_plant
+    write(UNIT=LU_LOG,FMT=*)  "  length (in days or GDD) until end of " &
+	    //"initial plant growth phase ", int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"initial plant growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_ini
 
-subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading length (days or GDD) until end of plant development " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iLandUseIndex)%iL_dev = int(rTempValue) &
+				  + pConfig%IRRIGATION(iLandUseIndex)%iL_ini
+    write(UNIT=LU_LOG,FMT=*)  "  length (in days or GDD) until end of " &
+	    //"plant development phase ", int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"plant development ", pConfig%IRRIGATION(iLandUseIndex)%iL_dev
 
-  ! [ ARGUMENTS ]
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pLandUseGrid     ! pointer to model grid
-
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading length (days or GDD) until end of mid-season growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iLandUseIndex)%iL_mid = int(rTempValue) &
+		      + pConfig%IRRIGATION(iLandUseIndex)%iL_dev
+    write(UNIT=LU_LOG,FMT=*)  "  length (in days or GDD) until end of " &
+	    //"mid-season growth phase ", int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"mid-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_mid
   if( len_trim( pConfig%sLandUse_PROJ4 ) > 0 ) then
 
     call echolog(" ")
     call echolog("Transforming gridded data in file: "//dquote(pLandUseGrid%sFilename) )
     call echolog("  FROM: "//squote(pConfig%sLandUse_PROJ4) )
     call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    call Assert( iStat == 0, &
+      "Error reading length (days or GDD) until end of late-season growth " &
+        //"phase from irrigation lookup table" , trim(__FILE__), __LINE__ )
+    pConfig%IRRIGATION(iLandUseIndex)%iL_late = int(rTempValue) &
+		      + pConfig%IRRIGATION(iLandUseIndex)%iL_mid
+    write(UNIT=LU_LOG,FMT=*)  "  length (in days or GDD) until end of " &
+	    //"late-season growth phase ", int(rTempValue)
+    write(UNIT=LU_LOG,FMT=*)  "  day of year (or GDD) for end of " &
+      //"late-season growth phase ", pConfig%IRRIGATION(iLandUseIndex)%iL_late
 
     call grid_Transform(pGrd=pLandUseGrid, &
                         sFromPROJ4=pConfig%sLandUse_PROJ4, &
@@ -3013,9 +3126,15 @@ subroutine model_PopulateLandUseArray(pConfig, pGrd, pLandUseGrid)
 
   call grid_Destroy(pLandUseGrid)
 
-  pGenericGrd_int%iData = pGrd%Cells%iLandUse
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Land_Use_Land_Cover" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation = mmdd2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation starts on or after day ", &
+      pConfig%IRRIGATION(iLandUseIndex)%iBeginIrrigation
+
+    call chomp(sRecord, sItem, sTAB)
+    pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation = mmdd2doy(sItem)
+    write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
+      pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
 
 end subroutine model_PopulateLandUseArray
 
@@ -3040,6 +3159,29 @@ subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
     call grid_Transform(pGrd=pSoilGroupGrid, &
                         sFromPROJ4=pConfig%sSoilGroup_PROJ4, &
                         sToPROJ4=pConfig%sBase_PROJ4 )
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+
+      cel => pGrd%Cells(iCol,iRow)
+
+      lFound = lFALSE
+      do j=1,size(pConfig%IRRIGATION,1)
+        if(cel%iLanduse == pConfig%IRRIGATION(j)%iLandUseType) then
+          cel%iIrrigationTableIndex = j
+          lFound = lTRUE
+          exit
+        endif
+      enddo
+
+      call assert(lFound, "Unknown landuse code found while reading from the " &
+        //"crop coefficient and irrigation parameters table.~Landuse specified "&
+        //"in the landuse grid but not found in the irrigation table.~ " &
+        //"  Landuse grid value: "//trim(int2char(cel%iLanduse)),trim(__FILE__), __LINE__)
+
+		enddo
+	enddo
+
+end subroutine model_ReadIrrigationLookupTable
 
     call Assert( grid_CompletelyCover( pGrd, pSoilGroupGrid ), &
       "Transformed grid doesn't completely cover your model domain.")
@@ -3227,9 +3369,7 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel                      ! pointer to a particular cell
   integer (kind=T_INT) :: iCol, iRow
-#ifdef IRRIGATION_MODULE
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-#endif
 
   select case ( pConfig%iConfigureET )
     case ( CONFIG_ET_NONE )
@@ -3268,14 +3408,14 @@ enddo
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
-where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-  pGrd%Cells%rSM_PotentialET = rZERO
-endwhere
+!where (pGrd%Cells%rCFGI > rNEAR_ZERO)
+!  pGrd%Cells%rReferenceET0 = rZERO
+!endwhere
 
+! in order to integrate Thornthwaite-Mather approach with FAO56 approach,
+! an adjusted reference ET0 is now defined... must populate this
+pGrd%Cells%rReferenceET0_adj = pGrd%Cells%rReferenceET0
 
-!  call stats_WriteMinMeanMax( LU_STD_OUT, "POTENTIAL ET", pGrd%Cells%rSM_PotentialET )
-
-  return
 end subroutine model_ProcessET
 
 !--------------------------------------------------------------------------
@@ -3375,13 +3515,13 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   ! [ LOCALS ]
   integer (kind=T_INT) :: iCol,iRow,k
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
   logical ( kind=T_LOGICAL ) :: lMatch
 
   ! Update the MAXIMUM RECHARGE RATE based on land-cover and soil type
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
-
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
       do k=1,size(pConfig%LU,1)
@@ -3409,6 +3549,43 @@ subroutine model_InitializeMaxInfil(pGrd, pConfig )
   end do
 
 end subroutine model_InitializeMaxInfil
+
+!--------------------------------------------------------------------------------------------
+
+subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iCol,iRow,j
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+  logical ( kind=T_LOGICAL ) :: lMatch
+
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+
+      cel => pGrd%Cells(iCol,iRow)
+
+      lMatch = lFALSE
+      do j=1,size(pConfig%IRRIGATION,1)
+        if(cel%iLanduse == pConfig%IRRIGATION(j)%iLandUseType) then
+          cel%iIrrigationTableIndex = j
+          lMatch = lTRUE
+          exit
+        endif
+      enddo
+
+      call assert(lMatch, "Unknown landuse code found while reading from the " &
+        //"crop coefficient and irrigation parameters table.~Landuse specified "&
+        //"in the landuse grid but not found in the irrigation table.~ " &
+        //"  Landuse grid value: "//trim(int2char(cel%iLanduse)),trim(__FILE__), __LINE__)
+
+		enddo
+	enddo
+
+end subroutine model_CreateIrrigationTableIndex
 
 !--------------------------------------------------------------------------
 
@@ -3472,6 +3649,10 @@ end subroutine model_WriteGrids
 ! read a single line from the time-series file and return a pointer to the values
 subroutine model_ReadTimeSeriesFile(pTS)
 
+
+subroutine model_ReadTimeSeriesFile(pConfig, pTS)
+
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains model configuration info
   type (T_TIME_SERIES_FILE), pointer :: pTS
 
   ! [ LOCALS ]

@@ -17,7 +17,7 @@ module control
 !>         parameters and flags.
 !>
 !> Reads model control file and initializes model configuration
-!>         parameters and flags. Multiple calls to model_Solve are accomodated
+!>         parameters and flags. Multiple calls to model_Main are accomodated
 !>         for multiple-year model runs.
 !>
 !> @param[in]  sControlFile  Name of the control file to use for the current simulation.
@@ -87,8 +87,8 @@ subroutine control_setModelOptions(sControlFile)
   write(sBuf,FMT=*) "SWB_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
   ! open up the log file
-  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat,&
-      status='REPLACE')
+  open(LU_LOG, file=TRIM(ADJUSTL(sBuf)),iostat=iStat, &
+      status = "REPLACE")
   call Assert(iStat == 0, &
       "Problem opening log file file for output.")
 
@@ -122,7 +122,7 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%sLanduseLookupFilename = ""
   pConfig%iOutputFormat = OUTPUT_ARC
   iDayCtr = 0
-  pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
+  pConfig%iConfigureLanduse = CONFIG_NONE
   pConfig%iConfigureET = CONFIG_ET_NONE
   pConfig%iConfigureRunoff = CONFIG_RUNOFF_CURVE_NUMBER
   pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_DOWNHILL
@@ -239,8 +239,6 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%rX0 = pGrd%rX0; pConfig%rX1 = pGrd%rX1
       pConfig%rY0 = pGrd%rY0; pConfig%rY1 = pGrd%rY1
       pConfig%rGridCellSize = pGrd%rGridCellSize
-
-      flush(UNIT=LU_LOG)
 
     else if (sItem == "BASE_PROJECTION_DEFINITION") then
       pConfig%sBase_PROJ4 = trim(sRecord)
@@ -1008,18 +1006,16 @@ subroutine control_setModelOptions(sControlFile)
       call model_ReadLanduseLookupTable( pConfig )
       flush(UNIT=LU_LOG)
 
-#ifdef IRRIGATION_MODULE
-
     else if ( sItem == "IRRIGATION_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading irrigation lookup table"
       call Chomp ( sRecord, pConfig%sIrrigationLookupFilename )
-      if ( len_trim(pConfig%sIrrigationLookupFilename) == 0 ) then
-        call Assert( .false._T_LOGICAL, "No irrigation lookup table specified" )
-      end if
-      call model_ReadIrrigationLookupTable( pConfig )
+      call assert(len_trim(pConfig%sIrrigationLookupFilename) > 0, &
+        "No irrigation lookup table specified", trim(__FILE__), __LINE__ )
+      call assert(len_trim(pConfig%sLandUseLookupFilename) > 0, &
+         "The irrigation module cannot be activated before specifying " &
+         //"a land use lookup table", trim(__FILE__), __LINE__ )
+      call model_ReadIrrigationLookupTable( pConfig, pGrd )
       flush(UNIT=LU_LOG)
-
-#endif
 
     else if ( sItem == "BASIN_MASK_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask lookup table"
@@ -1036,7 +1032,7 @@ subroutine control_setModelOptions(sControlFile)
       call Uppercase ( sOption )
       call Chomp ( sRecord, sArgument )
       if ( trim(sOption) == "CONSTANT" ) then
-        pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_FM_TABLE
+        pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_CONSTANT
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
         call Assert( iStat == 0, "Cannot read real data value" )
         pGrd%Cells%rSoilWaterCap = rValue
@@ -1516,8 +1512,10 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureET = CONFIG_ET_JENSEN_HAISE
         call et_jh_configure( sRecord )
       else if ( trim(sOption) == "B-C" ) then
-        pConfig%iConfigureET = CONFIG_ET_BLANEY_CRIDDLE
-        call et_bc_configure( sRecord )
+!        pConfig%iConfigureET = CONFIG_ET_BLANEY_CRIDDLE
+        call assert(lFALSE, "The Blaney-Criddle method has been removed from this " &
+         //"version of swb.", trim(__FILE__),__LINE__)
+!        call et_bc_configure( sRecord )
       else if ( trim(sOption) == "HARGREAVES" ) then
         pConfig%iConfigureET = CONFIG_ET_HARGREAVES
         call et_hargreaves_configure( pConfig, sRecord )
@@ -1530,13 +1528,35 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Configuring soil-moisture options"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
-      if ( trim(sOption) == "T-M" ) then
+      if ( trim(sOption) == "T-M" .or. trim(sOption) == "THORNTHWAITE-MATHER") then
         pConfig%iConfigureSM = CONFIG_SM_THORNTHWAITE_MATHER
         call sm_thornthwaite_mather_Configure( sRecord )
       else
-        call Assert( .false._T_LOGICAL, "Illegal soil-moisture option specified" )
+        call Assert( lFALSE, "Illegal soil-moisture option specified" )
       end if
       flush(UNIT=LU_LOG)
+
+    else if ( sItem == "FAO56" ) then
+      write(UNIT=LU_LOG,FMT=*) "Configuring swb to use FAO56 crop coefficients"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      if ( trim(sOption) == "CROP_COEFFICIENTS_ONE_FACTOR_STANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_ONE_FACTOR_STANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_ONE_FACTOR_NONSTANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_TWO_FACTOR_STANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_TWO_FACTOR_STANDARD
+      elseif ( trim(sOption) == "CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD") then
+        pConfig%iConfigureFAO56 = CONFIG_FAO56_TWO_FACTOR_NONSTANDARD
+
+      else
+        call Assert( lFALSE, "Illegal FAO56 option specified" )
+      end if
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "ENABLE_IRRIGATION" ) then
+      write(UNIT=LU_LOG,FMT=*) "Allowing swb to supplement soil moisture by means of irrigation"
+      pConfig%lEnableIrrigation = lTRUE
 
     else if ( sItem == "OUTPUT_FORMAT" ) then
       call Chomp ( sRecord, sOption )
@@ -1596,10 +1616,10 @@ subroutine control_setModelOptions(sControlFile)
         open ( LU_TS, file=pConfig%sTimeSeriesFilename, status="OLD", iostat=iStat )
         call Assert ( iStat == 0, &
          "Can't open time-series data file" )
-        call model_ReadTimeSeriesFile(pTSt)
+        call model_ReadTimeSeriesFile(pConfig, pTSt)
         pConfig%iStartYear = pTSt%iYear
         pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
-        ! current julian day will be incremented in model_Solve
+        ! current julian day will be incremented in model_Main
         pConfig%iCurrentJulianDay = pConfig%iStartJulianDay - 1
         close( unit=LU_TS )
       end if
@@ -1639,7 +1659,7 @@ subroutine control_setModelOptions(sControlFile)
       call gregorian_date(pConfig%iCurrentJulianDay, pConfig%iYear, &
          pConfig%iMonth, pConfig%iDay)
         pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
-        write(UNIT=LU_LOG,FMT="(a,i4.4)") "Calling model_Solve." &
+        write(UNIT=LU_LOG,FMT="(a,i4.4)") "Calling model_Main." &
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
         ! actual call to "model_Solve" subroutine

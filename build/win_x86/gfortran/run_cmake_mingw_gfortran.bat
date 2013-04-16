@@ -20,7 +20,7 @@ set STRIP=%MinGWbase%/bin/strip.exe
 set CMAKE_RANLIB=%MinGWbase%/bin/ranlib.exe
 set LIBRARY_PATH=%MinGWbase%/lib
 set CPPFLAGS=-DgFortran
- 
+
 set CMAKE_INCLUDE_PATH=%INCLUDE%
 set CMAKE_LIBRARY_PATH=%LIB%
 

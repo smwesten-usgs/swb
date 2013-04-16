@@ -33,6 +33,7 @@ module et_blaney_criddle
 !!***
 
   use types
+  use meteorological_functions
 
   implicit none
 
@@ -78,7 +79,6 @@ subroutine et_bc_initialize( grd, sFileName )
     rSunAnnual = rSunAnnual + 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI
   end do
 
-  return
 end subroutine et_bc_initialize
 
 !------------------------------------------------------------------------------
@@ -102,7 +102,9 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   call Assert( LOGICAL(rSunPct>=rZERO,kind=T_LOGICAL), "Missing data for percent sunshine" )
   call Assert( LOGICAL(rMinRH>=rZERO,kind=T_LOGICAL),"Missing data for relative humidity" )
 
-  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+!  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+  rDelta = solar_declination(iDayOfYear, 365)
+
   rPRatio = ( 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI ) / rSunAnnual
 
   rSunFrac = rSunPct / rHUNDRED
@@ -111,33 +113,38 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
 !
 ! The following is what was originally coded by WES and Vic.  Origin unclear.
 ! Possibly (probably) the source is Doorenbos and Pruitt (1977)?
+! More like likely source is Allen and Pruitt (1986) "Rational Use of the FAO BC Formula"
 !
-!  rBbc = 0.81917_T_SGL - 0.0040922_T_SGL*rMinRH +1.0705_T_SGL*rSunFrac + &
-!         0.065649*rWindSpd - 0.0059684*rMinRH*rSunFrac - &
-!         0.0005967*rMinRH*rWindSpd
+  rBbc = 0.81917_T_SGL - 0.0040922_T_SGL*rMinRH +1.0705_T_SGL*rSunFrac + &
+         0.065649*rWindSpd - 0.0059684*rMinRH*rSunFrac - &
+         0.0005967*rMinRH*rWindSpd
 
 ! Formulation for rBbc as given below is from Jensen et al (1990):
 
-  rBbc = 0.908 - (0.00483*rMinRH) + (0.7949*rSunFrac) &
-         + (0.768*(LOG(rWindSpd+1.)**2)) &
-         - (0.0038*rMinRH*rSunFrac) &
-         - (0.000443*rMinRH*rWindSpd) &
-         + (0.281*LOG(rSunFrac+1.)) &
-         - (0.00975*LOG(rWindSpd+1.)*(LOG(rMinRH+1.)**2)*LOG(rSunFrac+1.))
+!  rBbc = 0.908 - (0.00483*rMinRH) + (0.7949*rSunFrac) &
+!         + (0.768*(LOG(rWindSpd+1.)**2)) &
+!         - (0.0038*rMinRH*rSunFrac) &
+!         - (0.000443*rMinRH*rWindSpd) &
+!         + (0.281*LOG(rSunFrac+1.)) &
+!         - (0.00975*LOG(rWindSpd+1.)*(LOG(rMinRH+1.)**2)*LOG(rSunFrac+1.))
 
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
+
+      if ( pGrd%Cells(iCol,iRow)%iActive == iINACTIVE_CELL ) cycle
 
       rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
 
       rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)
 
       if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = rZERO
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = rZERO
       else
-      !write(UNIT=LU_LOG,FMT=*)'TEST',iDayOfYear,rPratio,rAbc,rBbc
-        pGrd%Cells(iCol,iRow)%rSM_PotentialET = (rAbc + rF * rBbc) / rMM_PER_INCH
+        pGrd%Cells(iCol,iRow)%rReferenceET0 = (rAbc + rF * rBbc) / rMM_PER_INCH
+        write(UNIT=LU_LOG,FMT=*)'TEST',iDayOfYear, "rMinRH: ", rMinRH, &
+          "Sunfrac: ", rSunFrac, "rPratio: ",rPratio, &
+          "rAbc: ", rAbc, "rF: ", rF, "rBbc: ", rBbc, "ET0: ", pGrd%Cells(iCol,iRow)%rReferenceET0
       end if
 
     end do

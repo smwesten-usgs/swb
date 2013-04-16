@@ -79,12 +79,16 @@ module types
   real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
   real (kind=T_DBL), parameter :: dpC_PER_F = 5.0_T_DBL / 9.0_T_DBL
   real (kind=T_DBL), parameter :: dpF_PER_C = 9.0_T_DBL / 5.0_T_DBL
+  real (kind=T_SGL), parameter :: rM_PER_FOOT = 0.3048_T_SGL
   real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
   real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
   real (kind=T_DBL), parameter :: dpPI = 3.141592653589793_T_DBL
   real (kind=T_DBL), parameter :: dpPI_OVER_180 = dpPI / 180_T_DBL
   real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
   real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
+  real (kind=T_SGL), parameter :: rMINIMUM_SOIL_MOISTURE = 0.51_T_SGL
+  integer (kind=T_SHORT), parameter :: iACTIVE_CELL = 1
+  integer (kind=T_SHORT), parameter :: iINACTIVE_CELL = 0
   integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
   integer (kind=T_INT), parameter :: iROUTE_CELL_MARKED = -1
   integer (kind=T_INT), parameter :: iROUTE_DEPRESSION = -999
@@ -102,6 +106,21 @@ module types
   character (len=1), parameter :: sBACKSLASH = achar(92)
   character (len=1), parameter :: sFORWARDSLASH = achar(47)
   character (len=1), parameter :: sRETURN = achar(13)
+  !> @}
+
+  !> @name Constants (flow direction): General conversion factors and flags
+  !> Some useful and common conversion factors, defined here
+  !> to ensure consistency throughout the code
+  !> @{
+  integer (kind=T_SHORT),parameter :: iDIR_DEPRESSION=0
+  integer (kind=T_SHORT),parameter :: iDIR_RIGHT=1
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN_RIGHT=2
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN=4
+  integer (kind=T_SHORT),parameter :: iDIR_DOWN_LEFT=8
+  integer (kind=T_SHORT),parameter :: iDIR_LEFT=16
+  integer (kind=T_SHORT),parameter :: iDIR_UP_LEFT=32
+  integer (kind=T_SHORT),parameter :: iDIR_UP=64
+  integer (kind=T_SHORT),parameter :: iDIR_UP_RIGHT=128
   !> @}
 
   !> @name Globals: Variables for run-length encoding operation
@@ -138,17 +157,26 @@ module types
       integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
       integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
       real (kind=T_SGL) :: rElevation =rZERO        ! Ground elevation
+      integer (kind=T_INT) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
+      real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
       real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
-      real (kind=T_SGL) :: rSoilWaterCap =rZERO     ! Soil water capacity adjusted for LU/LC
-      real (kind=T_SGL) :: rSoilMoisture = rZERO    ! Soil moisture in inches of water
+      real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
+      real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
+			real (kind=T_SGL) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
+			real (kind=T_SGL) :: rKcb                         ! crop coefficient for this cell
+			real (kind=T_SGL) :: rTotalAvailableWater = rZERO
+			real (kind=T_SGL) :: rReadilyAvailableWater = rZERO
 
-      real (kind=T_SGL) :: rSoilMoisturePct         ! Soil moisture as percentage of water capacity
-      real (kind=T_SGL) :: rSM_AccumPotentWatLoss   ! Accumulated potential water loss
+      real (kind=T_SGL) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
+      real (kind=T_SGL) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
 
-      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
+!      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
-      real (kind=T_SGL) :: rSM_PotentialET          ! Potential ET
-!      real (kind=T_SGL) :: rSM_ActualET            ! Actual Evapotranspiration
+      real (kind=T_SGL) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
+      real (kind=T_SGL) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
+      real (kind=T_SGL) :: rCropETc = rZERO            ! unadjusted crop ET
+      real (kind=T_SGL) :: rBareSoilEvap = rZERO
+      real (kind=T_SGL) :: rActualET = rZERO           ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
       integer (kind=T_INT) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
@@ -159,42 +187,45 @@ module types
       integer (kind=T_INT) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
 
       real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
-      real (kind=T_SGL) :: rAdjCN                  ! Curve number from landuse/soil group
-      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
-      real (kind=T_SGL) :: rInFlow                 ! flow in from uphill
-      real (kind=T_SGL) :: rOutFlow                ! flow out downhill
-      real (kind=T_SGL) :: rFlowOutOfGrid          ! flow that leaves the grid
+      real (kind=T_SGL) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
+!      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
+      real (kind=T_SGL) :: rInFlow = rZERO         ! flow in from uphill
+      real (kind=T_SGL) :: rOutFlow = rZERO        ! flow out downhill
+      real (kind=T_SGL) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
       real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
-      real (kind=T_SGL) :: rGrossPrecip            ! Precip - no interception applied
-!      real (kind=T_SGL) :: rInterception           ! Interception term
-      real (kind=T_SGL) :: rNetPrecip              ! Net precipitation - precip minus interception
-      real (kind=T_SGL) :: rSnowFall_SWE           ! precipitation that falls as snow (in SWE)
-      real (kind=T_SGL) :: rSnowFall               ! snowfall in inches as SNOW
-      real (kind=T_SGL) :: rSnowCover              ! snowcover expressed as inches of water
+      real (kind=T_SGL) :: rGrossPrecip = rZERO    ! Precip - no interception applied
+      real (kind=T_SGL) :: rInterception = rZERO   ! Interception term
+      real (kind=T_SGL) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
+      real (kind=T_SGL) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception
+      real (kind=T_SGL) :: rSnowFall_SWE = rZERO   ! precipitation that falls as snow (in SWE)
+      real (kind=T_SGL) :: rSnowFall = rZERO       ! snowfall in inches as SNOW
+      real (kind=T_SGL) :: rSnowCover = rZERO      ! snowcover expressed as inches of water
       real (kind=T_SGL) :: rSnowTemperature = 23. ! snow temperature
 !      real (kind=T_SGL) :: rPrevious_SnowCover     ! Previous day's snow cover
-      real (kind=T_SGL) :: rSnowMelt               ! snowmelt in inches of water
-      real (kind=T_SGL) :: rTMin                   ! Minimum daily temperature
-      real (kind=T_SGL) :: rTMax                   ! Maximum daily temperature
-      real (kind=T_SGL) :: rTAvg                   ! Average daily temperature
+      real (kind=T_SGL) :: rSnowMelt = rZERO       ! snowmelt in inches of water
+      real (kind=T_SGL) :: rTMin = rZERO           ! Minimum daily temperature
+      real (kind=T_SGL) :: rTMax = rZERO           ! Maximum daily temperature
+      real (kind=T_SGL) :: rTAvg = rZERO           ! Average daily temperature
       real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
-!if_defined IRRIGATION_MODULE
-      real (kind=T_SGL) :: rGDD_TBase = 50.        !
-      real (kind=T_SGL) :: rGDD_TMax = 150.        !
+
       real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
-      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! term to hold irrigation term, if any
-!end_if
+      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! total amount of any irrigation
+      real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
+      real (kind=T_SGL) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
+!      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
+                                                                  ! will be performed
+
       real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
-      integer (kind=T_INT) :: iDaysSinceLastSnow = 0  ! Number of days since last snowfall
+      integer (kind=T_INT) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
 !      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
       real (kind=T_SGL),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
-      real (kind=T_SGL) :: rDailyRecharge          ! Daily recharge
+      real (kind=T_SGL) :: rDailyRecharge = rZERO  ! Daily recharge
       real (kind=T_SGL) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
       real (kind=T_SGL) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
-      real (kind=T_SGL) :: rMSB                    ! cellular mass balance
+      real (kind=T_SGL) :: rMSB = rZERO            ! cellular mass balance
       integer(kind=T_SHORT) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
 
-      logical (kind=T_LOGICAL) :: lDownhillMarked   ! Has been marked for downhill solution
+      logical (kind=T_LOGICAL) :: lDownhillMarked = lFALSE  ! Has been marked for downhill solution
   end type T_CELL
 
   ! Generic grid data type identifier constants
@@ -269,29 +300,29 @@ module types
     type (T_GENERAL_GRID), dimension(:), pointer :: Grids
   end type T_GRID_COLLECTION
 
-
   !> @brief Container for land-use related data
   !>
   !> Container for land-use related data. Includes curve number
   !> and rooting-depth generalizations.
   type T_LANDUSE_LOOKUP
+
     !> Land use type; values are expected to correspond to those provided
     !> by the user in the input landuse grid.
 	integer (kind=T_INT) :: iLandUseType
+
     !> Land use description
     character (len=256) :: sLandUseDescription
+
     !> Assumed percent imperviousness (not used in any calculations)
 	character (len=256) :: sAssumedPercentImperviousness
+
     !> Interception value (inches per day) during growing season
 	real (kind=T_SGL) :: rIntercept_GrowingSeason
+
     !> Interception value (inches per day) outside of growing season
 	real (kind=T_SGL) :: rIntercept_NonGrowingSeason
-!	logical (kind=T_LOGICAL) :: lCONSTANT_ROOT_ZONE_DEPTH
-!    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rX_ROOT_ZONE
-!    real (kind=T_SGL), dimension(iNUM_ROOT_ZONE_PAIRS) :: rY_ROOT_ZONE
-  end type T_LANDUSE_LOOKUP
 
-#ifdef IRRIGATION_MODULE
+  end type T_LANDUSE_LOOKUP
 
   !> @brief Type that contains information needed to calculate irrigation for
   !> each land use.
@@ -303,38 +334,77 @@ module types
     !> Landuse code corresponding to the codes specified in landuse grid
  	integer (kind=T_INT) :: iLandUseType
 
-    !> Maximum crop coefficient
-    real (kind=T_SGL) :: rKc_Max        = 1.3
+    !> Land use description
+    character (len=256) :: sLandUseDescription
 
-    !> Crop coefficient for first phenological stage
-    real (kind=T_SGL) :: rK0            = 0.2
+    !> Plant or crop description
+    character (len=256) :: sCropDescription
 
-    !> GDD corresponding to Kc_Max
-    real (kind=T_SGL) :: rGDD_Kc_Max = 1400
+    !> Mean plant or crop height, feet
+    real (kind=T_SGL) :: rMeanPlantHeight = 3.0
 
-    !> GDD corresponding to plant death (alpha0)
-    real (kind=T_SGL) :: rGDD_Death  = 2000
+    !> Crop coefficient, basal, for a given day (calculated in code)
+    real (kind=T_SGL) :: rKcb
 
-    !> Spread of error function around GDD_Kc_MAx
-    !> range 0-1; 0 ~= Dirac delta; 1 ~= maximum spread
-    real (kind=T_SGL) :: rAlpha1        = 0.65  ! range 0-1; spread of error function around GDD_Kc_MAx
-                                               ! 0 ~= Dirac delta; 1 ~= maximum spread
+    !> Crop coefficient, basal, initial growth phase (Kcb_ini)
+    real (kind=T_SGL) :: rKcb_ini = 0.25
+
+    !> Crop coefficient, basal, mid-growth phase (Kcb_mid)
+    real (kind=T_SGL) :: rKcb_mid = 1.3
+
+    !> Crop coefficient, basal, end-growth phase (Kcb_end)
+    real (kind=T_SGL) :: rKcb_end = 0.7
+
+    !> Crop coefficient, MINIMUM allowed value (Kc_min)
+    real (kind=T_SGL) :: rKcb_min = 0.1
+
+    !> Day of year (or GDD) for initial planting
+    integer (kind=T_INT) :: iL_plant = 50
+
+    !> Day of year (or GDD) for end of initial growth phase
+    integer (kind=T_INT) :: iL_ini = 300
+
+    !> Day of year (or GDD) for end of development phase
+    integer (kind=T_INT) :: iL_dev = 650
+
+    !> Day of year (or GDD) for end of mid-season growth phase
+    integer (kind=T_INT) :: iL_mid = 1300
+
+    !> Day of year (or GDD) for end of late season growth phase
+    integer (kind=T_INT) :: iL_late = 1800
+
+    !> How should the growth phase identifiers be treated (DOY or GDD)
+    logical (kind=T_LOGICAL) :: lUnitsAreDOY = lFALSE
+
     !> Growing degree-day base temperature (10 degrees C for corn)
     real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
 
     !> Growing degree-day maximum temperature (cutoff; 30 degrees C for corn)
     real (kind=T_SGL) :: rGDD_MaxTemp   = 130.
 
-    ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (in percent)
-    real (kind=T_SGL) :: rMAD           = 100.
+    ! Depletion fraction: fraction of soil moisture depletion beyond which
+    ! significant plant stress results
+    real (kind=T_SGL) :: rDepletionFraction = 0.2
+
+    ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (as fraction)
+    real (kind=T_SGL) :: rMAD           = 1.
 
     !> Day of year before which no irrigation is assumed to take place
     integer (kind=T_INT) :: iBeginIrrigation = 120
 
     !> Day of year after which no irrigation is assumed to take place
     integer (kind=T_INT) :: iEndIrrigation = 240
+
+    !> Fraction of irrigation water obtained from GW rather than surface water
+    real (kind=T_SGL) :: rFractionOfIrrigationFromGW = rONE
+
+    !> Irrigation efficiency, surface-water sources
+    real (kind=T_SGL) :: rIrrigationEfficiency_SW = 1.0 / 0.8
+
+    !> Irrigation efficiency, groundwater sources
+    real (kind=T_SGL) :: rIrrigationEfficiency_GW = 1.0 / 0.8
+
   end type T_IRRIGATION_LOOKUP
-#endif
 
   !> container for basin mask table data
   type T_BASIN_MASK
@@ -367,12 +437,12 @@ module types
 
   !> Container for calendar lookup information
   type T_MONTH
-      ! Container for calendar lookup information
+    ! Container for calendar lookup information
     character (len=3) :: sName          ! Abbreviated name
-	 character (len=9) :: sFullName      ! Full month name
+	character (len=9) :: sFullName      ! Full month name
     integer (kind=T_INT) :: iStart      ! Starting (Julian) date
     integer (kind=T_INT) :: iEnd        ! Ending (Julian) date
-	 integer (kind=T_INT) :: iMonth      ! Month number (1-12)
+	integer (kind=T_INT) :: iMonth      ! Month number (1-12)
     integer (kind=T_INT) :: iNumDays    ! Max number of days in month
   end type T_MONTH
 
@@ -440,7 +510,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 29
+  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 36
 
   ! constants defining T_STATS output types
   integer(kind=T_INT), parameter :: iNONE = 0
@@ -466,12 +536,7 @@ module types
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
-#ifdef IRRIGATION_MODULE
-      lTRUE, &
-#else
-      lFALSE, &
-#endif
-       'inches','daily estimated irrigation amount', &
+      lTRUE, 'inches','daily estimated irrigation amount', &
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
@@ -554,8 +619,20 @@ module types
       'inches','precip and inflow minus outflow', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('POT_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','potential evapotranspiration', &
+    T_STATS ('REFERENCE_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','reference evapotranspiration (ET0)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('REFERENCE_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','adjusted reference evapotranspiration (ET0_adj)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('CROP_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','crop evapotranspiration (ETc)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','evaporation from bare soil', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE, &
@@ -578,14 +655,26 @@ module types
       'inches','daily soil moisture', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('GDD',0,2,0,lFALSE,lFALSE, &
-#ifdef IRRIGATION_MODULE
-      lTRUE, &
-#else
-      lFALSE, &
-#endif
+    T_STATS ('GDD',0,2,0,lFALSE,lFALSE,lTRUE, &
       'degree-day','growing degree day', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) ]
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('ROOTING_DEPTH',0,2,0,lFALSE,lFALSE,lTRUE, &
+      'feet','current rooting depth', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('CROP_COEFFICIENT',0,2,0,lFALSE,lFALSE,lTRUE, &
+      'unitless','crop coefficient (Kcb)', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'inches','amount of water required from groundwater for irrigation', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'inches','amount of water required from surface water for irrigation', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) &
+    ]
 
   !> @anchor const_stat
   !> @name Constants: Statistics that SWB knows how to calculate and store
@@ -631,18 +720,29 @@ module types
   integer (kind=T_INT), parameter :: iNET_PRECIP = 20
   integer (kind=T_INT), parameter :: iNET_INFLOW = 21
   integer (kind=T_INT), parameter :: iNET_INFIL = 22
-  integer (kind=T_INT), parameter :: iPOT_ET = 23
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 24
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 25
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 26
-  integer (kind=T_INT), parameter :: iSM_APWL = 27
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 28
-  integer (kind=T_INT), parameter :: iGDD = 29
+  integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
+  integer (kind=T_INT), parameter :: iREFERENCE_ET_ADJ = 24
+  integer (kind=T_INT), parameter :: iCROP_ET = 25
+  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 26
+  integer (kind=T_INT), parameter :: iP_MINUS_PET = 27
+  integer (kind=T_INT), parameter :: iSM_DEFICIT = 28
+  integer (kind=T_INT), parameter :: iSM_SURPLUS = 29
+  integer (kind=T_INT), parameter :: iSM_APWL = 30
+  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 31
+  integer (kind=T_INT), parameter :: iGDD = 32
+  integer (kind=T_INT), parameter :: iROOTING_DEPTH = 33
+  integer (kind=T_INT), parameter :: iCROP_COEFFICIENT = 34
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 35
+  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 36
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
   integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
+
+  !> generic configuration
+  integer (kind=T_INT), parameter :: CONFIG_NONE = 0
+
   !> @}
 
   !> @brief Type that contains model configuration data.
@@ -653,25 +753,41 @@ module types
   type T_MODEL_CONFIGURATION
 
       !> Runoff calculation method @ref const_runoffCalc "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoff
+      integer (kind=T_INT) :: iConfigureRunoff = CONFIG_NONE
+
       !> Runoff routing solution mode @ref const_runoffSoln "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoffMode
+      integer (kind=T_INT) :: iConfigureRunoffMode = CONFIG_NONE
+
       !> Reference evapotranspiration calculation method
-      integer (kind=T_INT) :: iConfigureET
+      integer (kind=T_INT) :: iConfigureET = CONFIG_NONE
+
       !> Precipitation input option
-      integer (kind=T_INT) :: iConfigurePrecip
+      integer (kind=T_INT) :: iConfigurePrecip = CONFIG_NONE
+
       !> Temperature data input option
-      integer (kind=T_INT) :: iConfigureTemperature
+      integer (kind=T_INT) :: iConfigureTemperature = CONFIG_NONE
+
       !> Landuse data input option
-      integer (kind=T_INT) :: iConfigureLanduse
+      integer (kind=T_INT) :: iConfigureLanduse = CONFIG_NONE
+
       !> Soil moisture calculation option
-      integer (kind=T_INT) :: iConfigureSM
+      integer (kind=T_INT) :: iConfigureSM = CONFIG_NONE
+
       !> Snowfall and snowmelt option
-      integer (kind=T_INT) :: iConfigureSnow
+      integer (kind=T_INT) :: iConfigureSnow = CONFIG_NONE
+
       !> Maximum soil water capacity option
-      integer (kind=T_INT) :: iConfigureSMCapacity
+      integer (kind=T_INT) :: iConfigureSMCapacity = CONFIG_NONE
+
+      !> FAO56 module options calculation option
+      integer (kind=T_INT) :: iConfigureFAO56 = CONFIG_NONE
+
       !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
-      integer (kind=T_INT) :: iConfigureInitialAbstraction
+      integer (kind=T_INT) :: iConfigureInitialAbstraction = CONFIG_NONE
+
+			!> Enable irrigation calculations?
+			logical (kind=T_LOGICAL) ::lEnableIrrigation = lFALSE
+
       !> Option to write extra files when using PEST
       logical (kind=T_LOGICAL) :: lWriteExtraPestFiles = lFALSE
 
@@ -702,6 +818,8 @@ module types
       integer (kind=T_INT) :: iEndJulianDay
       integer (kind=T_INT) :: iStartYearforCalculation = -99999
       integer (kind=T_INT) :: iEndYearforCalculation = 99999
+      integer (kind=T_INT) :: iNumberOfLanduses
+      integer (kind=T_INT) :: iNumberOfSoilTypes
       logical (kind=T_LOGICAL) :: lGriddedData = lFALSE
       logical (kind=T_LOGICAL) :: lUseSWBRead = lFALSE
       logical (kind=T_LOGICAL) :: lHaltIfMissingClimateData = lTRUE
@@ -747,10 +865,8 @@ module types
       ! Filename for land use lookup table
       character (len=256) :: sLanduseLookupFilename = repeat(" ", 256)
 
-#ifdef IRRIGATION_MODULE
       ! Filename for irrigation lookup table
       character (len=256) :: sIrrigationLookupFilename = repeat(" ", 256)
-#endif
 
       ! PROJ4 string for BASE Grid
       character (len=256) :: sBASE_PROJ4 = repeat(" ", 256)
@@ -825,10 +941,8 @@ module types
       ! define a pointer to the landuse lookup table
       type (T_LANDUSE_LOOKUP), dimension(:), pointer :: LU  ! T_LANDUSE_LOOKUP objects
 
-#ifdef IRRIGATION_MODULE
       ! define a pointer to the IRRIGATION lookup table
-      type (T_IRRIGATION_LOOKUP), dimension(:),pointer :: IRRIGATION
-#endif
+      type (T_IRRIGATION_LOOKUP), dimension(:), pointer :: IRRIGATION
 
       ! define a pointer to the BASIN MASK lookup table
       type (T_BASIN_MASK), dimension(:), pointer :: BMASK  ! T_BASIN_MASK objects
@@ -841,6 +955,12 @@ module types
 
       ! define a pointer to the ROOTING DEPTH lookup table
       real (kind=T_SGL), dimension(:,:),pointer :: ROOTING_DEPTH
+
+      ! define a pointer to the READILY_EVAPORABLE_WATER lookup table
+      real (kind=T_SGL), dimension(:,:),pointer :: READILY_EVAPORABLE_WATER
+
+      ! define a pointer to the TOTAL_EVAPORABLE_WATER lookup table
+      real (kind=T_SGL), dimension(:,:),pointer :: TOTAL_EVAPORABLE_WATER
 
       ! define threshold value for CFGI below which ground is considered unfrozen
       real (kind=T_SGL) :: rLL_CFGI = 9999.0
@@ -1005,37 +1125,66 @@ module types
   integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
   !> @}
 
-  !> Configuration information for landuse input {
+  !> @name Constants: Landuse input data format
+  !> Options for specifying the method of input for temperature data
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
   integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
+  !> @}
 
-  ! Configuration information for snowfall and snowmelt option
+  !> @name Constants: Snow module
+  !> Configuration for selection of snowfall and snowmelt modules
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
   integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
+  !> @}
 
-  ! Configuration information for soil-moisture capacity calculations
+  !> @name Constants: Soil-moisture input data format
+  !> Configuration information for soil-moisture capacity calculations
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
   integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
+  !> @}
 
-  ! Configuration information for soil-moisture calculations
+  !> @name Constants: Soil-moisture calculation
+  !> Configuration information for soil-moisture retention calculations
+  !> @{
   integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
   integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
+  !> @}
 
-  ! Configuration information for initial abstraction assumptions
+  !> @name Constants: FAO56 module
+  !> Configuration information for FAO56 calculations
+  !> @{
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
+
+  !> @}
+
+  !> @name Constants: SCS curve number
+  !> Configuration information for initial abstraction assumptions
+  !> @{
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
   integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  !> @}
 
-  ! Define behavior in the case of missing data
+  ! Define behavior in the case of missing data [UNIMPLEMENTED]
   integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
   integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
 
-  ! Options for output formats
+  !> @name Constants: Output grid format
+  !> Options for output formats
+  !> @{
   integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
   integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
+  !> @}
 
   ! Options for ASCII grid output
   integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
@@ -1541,6 +1690,46 @@ function mmddyyyy2julian(sMMDDYYYY)  result(iJD)
   return
 
 end function mmddyyyy2julian
+
+!--------------------------------------------------------------------------
+
+function mmdd2doy(sMMDD)  result(iDOY)
+
+  character (len=*) :: sMMDD
+  integer (kind=T_INT) :: iDOY
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: iMonth
+  integer (kind=T_INT) :: iDay
+  integer (kind=T_INT) :: iYear
+  character (len=256) :: sItem, sBuf
+  integer (kind=T_INT) :: iStat
+  integer (kind=T_INT) :: iJD
+  integer (kind=T_INT) :: iStartingJD
+
+  sItem = sMMDD
+
+  ! parse month value
+  call Chomp_slash(sItem, sBuf)
+  read(sBuf,*,iostat = iStat) iMonth
+  call Assert(iStat==0, "Problem reading month value from string "//TRIM(sMMDD), &
+    TRIM(__FILE__),__LINE__)
+
+  ! parse day value
+  call Chomp_slash(sItem, sBuf)
+  read(sBuf,*,iostat=iStat) iDay
+  call Assert(iStat==0, "Problem reading day value from string "//TRIM(sMMDD), &
+    TRIM(__FILE__),__LINE__)
+
+
+  iStartingJD = julian_day ( 1999, 1, 1)
+  iJD = julian_day ( 1999, iMonth, iDay)
+
+  iDOY = iJD - iStartingJD + 1
+
+  return
+
+end function mmdd2doy
 
 !--------------------------------------------------------------------------
 
