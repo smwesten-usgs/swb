@@ -33,7 +33,7 @@ set OPTION__STRICT_DATE_CHECKING="FALSE"
 set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
-set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -Wall -Wextra -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -ftree-parallelize-loops=8 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 

@@ -292,7 +292,7 @@ subroutine control_setModelOptions(sControlFile)
       if ( str_compare(sOption,"SINGLE_STATION") ) then
         write(UNIT=LU_LOG,FMT=*) "  Precip data will be read for a single station"
         pConfig%lGriddedData = lFALSE
-        call DAT(PRECIP_DATA)%initialize(sDescription=sItem, &
+        call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=0.0 )
       elseif(str_compare(sOption,"ARC_GRID") &
              .or. str_compare(sOption,"SURFER") ) then
@@ -354,9 +354,9 @@ subroutine control_setModelOptions(sControlFile)
       if ( trim(sOption) == "SINGLE_STATION" ) then
         pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SINGLE_STATION
         write(UNIT=LU_LOG,FMT=*) "  Temperature data will be read for a single station"
-        call DAT(TMIN_DATA)%initialize(sDescription=sItem, &
+        call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=65.0 )
-        call DAT(TMAX_DATA)%initialize(sDescription=sItem, &
+        call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=65.0 )
       else
         if ( trim(sOption) == "ARC_GRID" .or. trim(sOption) == "SURFER" ) then
@@ -549,13 +549,13 @@ subroutine control_setModelOptions(sControlFile)
 !        pFlowDirGrid%iData = iValue
 !        pFlowDirGrid%sFilename = "Constant-value grid"
 
-        call DAT(FLOWDIR_DATA)%initialize(sDescription=sItem, &
+        call DAT(FLOWDIR_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=rValue )
 
       else
 !        pFlowDirGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
 !        pFlowDirGrid%sFilename = trim(sArgument)
-        call DAT(FLOWDIR_DATA)%initialize(sDescription=sItem, &
+        call DAT(FLOWDIR_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
           iDataType=DATATYPE_INT )
@@ -981,14 +981,14 @@ subroutine control_setModelOptions(sControlFile)
 !        pSoilGroupGrid%sFilename = "Constant-value grid"
         !pGrd%Cells%iSoilGroup = iValue
 
-        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=sItem, &
+        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=rValue )
 
       else
 !        pSoilGroupGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
 !        pSoilGroupGrid%sFilename = trim(sArgument)
 
-        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=sItem, &
+        call DAT(SOILS_GROUP_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
           iDataType=DATATYPE_INT )
@@ -1082,12 +1082,12 @@ subroutine control_setModelOptions(sControlFile)
 !          pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 !        pSoilAWCGrid%rData = rValue
 
-        call DAT(AWC_DATA)%initialize(sDescription=sItem, &
+        call DAT(AWC_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=rValue )
 
       else
 
-        call DAT(AWC_DATA)%initialize(sDescription=sItem, &
+        call DAT(AWC_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
           iDataType=DATATYPE_REAL )

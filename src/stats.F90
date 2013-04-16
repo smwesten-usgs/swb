@@ -525,9 +525,9 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
 
     call Assert &
      (INT(rDaily(iLENGTH,iVarNum),kind=T_INT) == iNumGridCells, &
-      "stats.f95: call to UpdateAllAccumulators failed; number of calls" &
-      // " must be equal to the number of grid cells.")
-
+      "INTERNAL PROGRAMMING ERROR: call to UpdateAllAccumulators failed; number of calls" &
+      // " must be equal to the number of grid cells.", &
+      trim(__FILE__), __LINE__)
 
   else ! continue to accumulate
 
