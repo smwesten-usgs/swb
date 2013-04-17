@@ -495,6 +495,7 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
   logical (kind=T_LOGICAL) :: lXLLCenter, lYLLCenter  ! Flags XLLCENTER / XLLCORNER
   logical (kind=T_LOGICAL) :: lFileExists
 
+
   ! Pre-scan for the number of header records and read the header
   inquire(file=trim(sFileName), EXIST=lFileExists)
   call assert( lFileExists, "The Arc ASCII grid file "//dquote(sFilename)// &
@@ -662,6 +663,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
   logical (kind=T_LOGICAL) :: lFileExists
 
   ! Pre-scan for the number of header records and read the header
+
   inquire(file=trim(sFileName), EXIST=lFileExists)
   call assert( lFileExists, "The Arc ASCII grid file "//dquote(sFilename)// &
     " could not be found.",trim(__FILE__),__LINE__)

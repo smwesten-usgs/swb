@@ -627,20 +627,101 @@ subroutine control_setModelOptions(sControlFile)
         //TRIM(pConfig%sSlash)//"'"
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "OUTPUT_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting output pathname"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sOutputFilePath = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Output pathname set to: '" &
+        //TRIM(pConfig%sOutputFilePath)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "OUTPUT_DAILY_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting output pathname for daily output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sOutputFilePathDaily = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Output pathname for daily output set to: '" &
+        //TRIM(pConfig%sOutputFilePathDaily)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "OUTPUT_MONTHLY_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting output pathname for monthly output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sOutputFilePathMonthly = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Output pathname for monthly output set to: '" &
+        //TRIM(pConfig%sOutputFilePathMonthly)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "OUTPUT_ANNUAL_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting output pathname for annual output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sOutputFilePathAnnual = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Output pathname for annual output set to: '" &
+        //TRIM(pConfig%sOutputFilePathAnnual)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "OUTPUT_FUTURE_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting pathname for future output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sFutureFilePath = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Pathname for future output set to: '" &
+        //TRIM(pConfig%sFutureFilePath)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "IMAGE_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting image pathname"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sImageFilePath = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Image pathname set to: '" &
+        //TRIM(pConfig%sImageFilePath)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "IMAGE_DAILY_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting pathname for daily image output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sImageFilePathDaily = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Pathname for daily image output set to: '" &
+        //TRIM(pConfig%sImageFilePathDaily)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "IMAGE_MONTHLY_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting pathname for monthly image output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sImageFilePathMonthly = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Pathname for monthly image output set to: '" &
+        //TRIM(pConfig%sImageFilePathMonthly)//"'"
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "IMAGE_ANNUAL_PATH" ) then
+      write(UNIT=LU_LOG,FMT=*) &
+        "Setting pathname for annual image output"
+      call Chomp ( sRecord, sArgument )
+      pConfig%sImageFilePathAnnual = TRIM(ADJUSTL(sArgument))
+      write(UNIT=LU_LOG,FMT=*)  &
+        "Pathname for annual image output set to: '" &
+        //TRIM(pConfig%sImageFilePathAnnual)//"'"
+      flush(UNIT=LU_LOG)
+
     else if ( sItem == "WRITE_EXTRA_PEST_FILES" ) then
       write(UNIT=LU_LOG,FMT=*) &
         "SWB will write an observations snippet and a *.ins file"
       pConfig%lWriteExtraPestFiles = lTRUE
       flush(UNIT=LU_LOG)
-
-#ifdef NETCDF_SUPPORT
-
-    else if ( sItem == "GRID_FLIP_VERTICAL" ) then
-!      call echolog(dquote("GRID_FLIP_VERTICAL")//" is enabled.")
-!      call echolog("SWB will FLIP *NetCDF* CLIMATE GRID VALUES VERTICALLY.")
-!      pConfig%lNetCDF_FlipVertical = lTRUE
-
-#endif
 
     else if ( sItem == "IGNORE_MISSING_CLIMATE_DATA" ) then
       write(UNIT=LU_LOG,FMT=*) &

@@ -899,9 +899,17 @@ module types
       character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
 
       ! Target prefixes for output files
-      character (len=256) :: sOutputFilePath = "output"
-      character (len=256) :: sFutureFilePath = "future"
-      character (len=256) :: sImageFilePath = "images"
+      character (len=256) :: sOutputFilePath = "output/"
+      character (len=256) :: sOutputFilePathDaily = "output/daily/"
+      character (len=256) :: sOutputFilePathMonthly = "output/monthly/"
+      character (len=256) :: sOutputFilePathAnnual = "output/annual/"
+
+      character (len=256) :: sFutureFilePath = "output/future/"
+
+      character (len=256) :: sImageFilePath = "images/"
+      character (len=256) :: sImageFilePathDaily = "images/daily/"
+      character (len=256) :: sImageFilePathMonthly = "images/monthly/"
+      character (len=256) :: sImageFilePathAnnual = "images/annual/"
 
       ! Target prefixes for output files
       character (len=256) :: sOutputFilePrefix = "swb_"

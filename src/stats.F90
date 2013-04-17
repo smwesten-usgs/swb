@@ -846,8 +846,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
-        write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
-          pConfig%sSlash//"daily"//pConfig%sSlash, &
+        write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
           trim(pConfig%sOutputFilePrefix), &
           trim(sDelimiter), &
           TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -856,7 +855,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
         if(STAT_INFO(k)%iDailyOutput==iGRID &
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) &
 
-          call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix) &
+          call grid_WriteGrid(trim(pConfig%sOutputFilePathDaily)//trim(sFilePrefix) &
             //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
@@ -864,7 +863,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
         if(STAT_INFO(k)%iDailyOutput==iGRAPH &
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
 
-          pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//TRIM(pGraph(k)%cCDEV)
+          pGraph(k)%cSETFIL = trim(pConfig%sImageFilePathDaily)//TRIM(sFilePrefix)//TRIM(pGraph(k)%cCDEV)
 
           write(sBuf,FMT="(A,' ',i2.2,' ',i2.2,' ',i4.4)") &
             TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iDay,iYear
@@ -895,8 +894,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNX,iNY/),PAD=rPad)
 
-          write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4,'_',i2.2)") &
-            pConfig%sSlash//"monthly"//pConfig%sSlash, &
+          write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2)") &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
             TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -905,7 +903,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iMonthlyOutput==iGRID &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
 
-            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_SUM." &
+            call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly)//trim(sFilePrefix)//"_SUM." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
@@ -913,7 +911,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
-            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePathMonthly) &
+              //TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
 
             write(sBuf,FMT="(A,' ',i2.2,' ',i4.4)") &
               "Sum: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iYear
@@ -939,7 +938,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iMonthlyOutput==iGRID &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
 
-            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_MEAN." &
+            call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly) &
+              //trim(sFilePrefix)//"_MEAN." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
@@ -947,7 +947,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
-            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePathMonthly) &
+              //TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
 
             write(sBuf,FMT="(A,' ',i2.2,' ',i4.4)") &
               "Mean: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iMonth,iYear
@@ -984,8 +985,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNX,iNY/),PAD=rPad)
 
-          write(sFilePrefix,FMT="(A,A,A,A,'_',i4.4)") &
-            pConfig%sSlash//"annual"//pConfig%sSlash, &
+          write(sFilePrefix,FMT="(A,A,A,'_',i4.4)") &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
             TRIM(STAT_INFO(k)%sVARIABLE_NAME), &
@@ -994,7 +994,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iAnnualOutput==iGRID &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
 
-            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_SUM." &
+            call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual) &
+              //trim(sFilePrefix)//"_SUM." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
@@ -1002,7 +1003,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
 
-            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePathAnnual) &
+              //TRIM(sFilePrefix)//"_SUM."//TRIM(pGraph(k)%cCDEV)
 
             write(sBuf,FMT="(A,' ',i4.4)") &
               "Sum: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear
@@ -1028,7 +1030,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iAnnualOutput==iGRID &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
 
-            call grid_WriteGrid(trim(pConfig%sOutputFilePath)//trim(sFilePrefix)//"_MEAN." &
+            call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual)//trim(sFilePrefix)//"_MEAN." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
 
 #ifdef GRAPHICS_SUPPORT
@@ -1036,7 +1038,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
 
-            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePath)//TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
+            pGraph(k)%cSETFIL = trim(pConfig%sImageFilePathAnnual)//TRIM(sFilePrefix)//"_MEAN."//TRIM(pGraph(k)%cCDEV)
 
             write(sBuf,FMT="(A,' ',i4.4)") &
               "Mean: "//TRIM(STAT_INFO(k)%sVARIABLE_NAME),iYear
@@ -1278,15 +1280,15 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
     COUNT(pGrd%Cells%rSoilWaterCap > rNear_ZERO &
             .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU)
 
-  write(sBuf,FMT="('output',a,'MEAN_',a,'_',i4.4,'_',i4.4,'.asc')") &
-    TRIM(pConfig%sSlash), &
+  write(sBuf,FMT="(a,'MEAN_',a,'_',i4.4,'_',i4.4,'.asc')") &
+    TRIM(pConfig%sOutputFilepath), &
     "RECHARGE",pConfig%iStartYearforCalculation, &
     pConfig%iEndYearforCalculation
 
   call grid_WriteGrid(TRIM(sBuf), pTmpGrd, pConfig)
 
-  write(sBuf,FMT="('images',a,'MEAN_',a,i4.4,'_'i4.4,a)") &
-            TRIM(pConfig%sSlash), &
+  write(sBuf,FMT="(a,'MEAN_',a,i4.4,'_'i4.4,a)") &
+            TRIM(pConfig%sImageFilepath), &
             "RECHARGE",pConfig%iStartYearforCalculation, &
             pConfig%iEndYearforCalculation, &
             "."//TRIM(pGraph(iRECHARGE)%cCDEV)
@@ -1561,6 +1563,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
   ! [ LOCALS ]
   integer(kind=T_INT) :: i
+  character (len=256) :: sFilename
 
   do i=1,iNUM_VARIABLES
 
@@ -1568,9 +1571,11 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         .or. STAT_INFO(i)%iMonthlyOutput > iNONE &
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
-      open(nextunit(STAT_INFO(i)%iLU), FILE= TRIM(pConfig%sOutputFilePath) &
-        //pConfig%sSlash//TRIM(pConfig%sOutputFilePrefix) //"_" &
-        //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
+      sFilename = TRIM(pConfig%sOutputFilePath) &
+        //TRIM(pConfig%sOutputFilePrefix) //"_" &
+        //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin'
+
+      open(nextunit(STAT_INFO(i)%iLU), FILE=trim(sFilename),FORM='UNFORMATTED', &
         status='REPLACE',ACCESS='STREAM')
 
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iNX             ! Number of cells in the x-direction
@@ -1595,6 +1600,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
         //TRIM(int2char(STAT_INFO(i)%iLU))
 
+      write(unit=LU_LOG,fmt=*) "filename: "//dquote(sFIlename)
       write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(int2char(iSTARTDATE_POS))
       write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(int2char(iENDDATE_POS))
       write(unit=LU_LOG,fmt=*) "end-of-header offset: "//TRIM(int2char(iENDHEADER_POS))
@@ -1648,7 +1654,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
         .or. STAT_INFO(i)%iAnnualOutput > iNONE)  then
 
       open(nextunit(STAT_INFO(i)%iLU), FILE= &
-        trim(pConfig%sOutputFilePath)//pConfig%sSLASH &
+        trim(pConfig%sOutputFilePath) &
         //TRIM(pConfig%sOutputFilePrefix) //"_" &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME) // '.bin',FORM='UNFORMATTED', &
         status='OLD',ACCESS='STREAM', ACTION='READWRITE')

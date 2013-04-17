@@ -102,8 +102,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     "Could not allocate memory for time-series data structure", &
     TRIM(__FILE__),__LINE__)
 
-  call grid_DumpGridExtent(pGrd)
-
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
     pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
@@ -118,15 +116,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     call model_InitializeInputAndOutput( pGrd, pConfig )
 
-    print *, trim(__FILE__), __LINE__
-
     call model_InitializeDataStructures( pGrd, pConfig )
 
-    print *, trim(__FILE__), __LINE__
     ! Initialize the model landuse-related parameters
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
-
-    print *, trim(__FILE__), __LINE__
 
     call model_InitializeProcesses( pGrd, pConfig )
 
@@ -3221,6 +3214,10 @@ subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
 
+  write(UNIT=LU_LOG,FMT=*)  "model.F90: model_CreateLanduseIndex"
+  flush(unit=LU_LOG)
+  call model_CreateLanduseIndex(pGrd, pConfig )
+
   write(UNIT=LU_LOG,FMT=*) "model.F90: calling model_InitializeSM"
   flush(unit=LU_LOG)
   call model_InitializeSM(pGrd, pConfig)
@@ -3228,10 +3225,6 @@ subroutine model_InitializeLanduseRelatedParams( pGrd, pConfig )
   write(UNIT=LU_LOG,FMT=*)  "model.F90: runoff_InitializeCurveNumber"
   flush(unit=LU_LOG)
   call runoff_InitializeCurveNumber( pGrd ,pConfig)
-
-  write(UNIT=LU_LOG,FMT=*)  "model.F90: model_CreateLanduseIndex"
-  flush(unit=LU_LOG)
-  call model_CreateLanduseIndex(pGrd, pConfig )
 
 end subroutine model_InitializeLanduseRelatedParams
 
@@ -3492,8 +3485,9 @@ integer (kind=T_INT), intent(in) :: iOutputType
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
     sYearText
 
-  sBufOut = trim(pConfig%sOutputFilePrefix)//trim( YEAR_INFO(pConfig%iMonth)%sName )
-  sBufFuture = trim(pConfig%sFutureFilePrefix)
+  sBufOut = trim(pConfig%sOutputFilePath)//trim(pConfig%sOutputFilePrefix) &
+       //trim( YEAR_INFO(pConfig%iMonth)%sName )
+  sBufFuture = trim(pConfig%sFutureFilePath)//trim(pConfig%sFutureFilePrefix)
   sBufSuffix = trim(pConfig%sOutputFileSuffix)
 
   write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iDay,"_",pConfig%iYear

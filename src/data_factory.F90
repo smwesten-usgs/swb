@@ -30,6 +30,7 @@ module data_factory
 
     logical (kind=T_LOGICAL) :: lApplyScaleAndOffset = lFALSE
     logical (kind=T_LOGICAL) :: lApplyConversionFactor = lFALSE
+    logical (kind=T_LOGICAL) :: lMissingFilesAreAllowed = lFALSE
 
     integer (kind=T_INT) :: iDaysToPadAtYearsEnd = 0
     integer (kind=T_INT) :: iDaysToPadIfLeapYear = 1
@@ -124,6 +125,7 @@ contains
      real (kind=T_SGL), intent(in) :: rConstant
 
      this%rConstantValue = rConstant
+     this%sDescription = trim(sDescription)
      this%iSourceDataForm = CONSTANT_GRID
      this%iSourceDataType = DATATYPE_REAL
      this%iTargetDataType = DATATYPE_REAL
@@ -143,6 +145,7 @@ contains
      integer (kind=T_INT), intent(in) :: iConstant
 
      this%iConstantValue = iConstant
+     this%sDescription = trim(sDescription)
      this%iSourceDataForm = CONSTANT_GRID
      this%iSourceDataType = DATATYPE_INT
      this%iTargetDataType = DATATYPE_INT
@@ -205,6 +208,8 @@ subroutine initialize_gridded_data_object_sub( &
 
    this%iSourceDataType = iDataType
    this%iTargetDataType = iDataType
+
+   this%sDescription = trim(sDescription)
 
   call assert(this%iSourceFileType == FILETYPE_ARC_ASCII .or. &
     this%iSourceFileType == FILETYPE_SURFER, "Only Arc ASCII or " &
@@ -432,7 +437,15 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
       inquire(file=this%sSourceFilename, exist=lExist, opened=lOpened)
       !!! if the file doesn't exist, EXIT!
-      if (.not. lExist) exit
+      if (.not. lExist ) then
+        if ( this%lMissingFilesAreAllowed ) then
+         exit
+        else
+          call assert( lFALSE, &
+            "Could not find input data file~filename:"//dquote(this%sSourceFilename) &
+            //"~data description: "//trim(this%sDescription))
+        endif
+      endif
 
       if ( this%lGridIsPersistent .and. associated(this%pGrdNative) ) then
 
