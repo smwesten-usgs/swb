@@ -195,15 +195,19 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 L1b: if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_ONE_FACTOR_NONSTANDARD &
                 .and. pConfig%iConfigureFAO56 /= CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
 
-#ifdef TM_TABLE
+                  if (pConfig%iSoilMoistureRetentionMethod == CONFIG_TM_LOOKUP_TABLE) then
+
                   ! look up soil moisture in T-M tables
-                cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
-                  cel%rSM_AccumPotentWatLoss)
-#else
-                  ! calculate soil moisture w equation SUMMARIZING T-M tables
-                cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
-                cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
-#endif
+                    cel%rSoilMoisture = grid_Interpolate(gWLT,cel%rSoilWaterCap, &
+                      cel%rSM_AccumPotentWatLoss)
+
+                  else
+
+                    ! calculate soil moisture w equation SUMMARIZING T-M tables
+                    cel%rSoilMoisture = sm_thornthwaite_mather_soil_storage( &
+                      cel%rSoilWaterCap, cel%rSM_AccumPotentWatLoss)
+
+                  endif
 
                   L1c: if(ABS(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
                      > ABS(rPrecipMinusPotentET)) then
@@ -261,16 +265,21 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                L1e: if(pConfig%iConfigureSM == CONFIG_SM_THORNTHWAITE_MATHER ) then
 
-#ifdef TM_TABLE
-                ! look up APWL in T-M tables
-                cel%rSM_AccumPotentWatLoss = &
-                   grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
-#else
-                ! detemine APWL from an equation
-                cel%rSM_AccumPotentWatLoss = &
-                  sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,REAL(cel%rSoilMoisture, kind=T_DBL) )
-#endif
-               else  ! L1e: we are *NOT* using T-M soil moisture retention tables
+
+                if (pConfig%iSoilMoistureRetentionMethod == CONFIG_TM_LOOKUP_TABLE) then
+
+                  ! look up APWL in T-M tables
+                  cel%rSM_AccumPotentWatLoss = &
+                     grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
+
+                else
+
+                  ! detemine APWL from an equation
+                  cel%rSM_AccumPotentWatLoss = &
+                    sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,REAL(cel%rSoilMoisture, kind=T_DBL) )
+                endif
+
+               else  ! L1e: we are *NOT* using T-M soil moisture retention tables or equations
 
                  cel%rSM_AccumPotentWatLoss = MIN(rZERO, &
                     cel%rSM_AccumPotentWatLoss + cel%rSoilMoisture &
@@ -290,9 +299,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
          L2: if(rPrecipMinusPotentET <= rZERO) then  ! Precip - Potential ET <= 0
 
               !! cap actual ET at the estimate for potential ET
-              cel%rActualET = MIN(rNetInfil &
-                                  + ABS(rChangeInStorage), &
-                                 cel%rReferenceET0_adj)
+              cel%rActualET = MIN( rNetInfil + ABS(rChangeInStorage), &
+                                     cel%rReferenceET0_adj)
 
         else  ! code block L2: Precip - Potential ET > 0
 

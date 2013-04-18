@@ -135,13 +135,6 @@ program main
     write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING         no"
 #endif
 
-#ifdef THORNTHWAITE_MATHER_TABLE
-    write(UNIT=*,FMT="(a)") " THORNTHWAITE_MATHER_TABLE   yes"
-#else
-    write(UNIT=*,FMT="(a)") " THORNTHWAITE_MATHER_TABLE    no"
-#endif
-
-
 #ifdef DEBUG_PRINT
     write(UNIT=*,FMT="(a)") " DEBUG_PRINT                 yes"
 #else

@@ -1310,11 +1310,11 @@ subroutine grid_LookupColumn(pGrd,rXval,iBefore,iAfter,rFrac)
   integer (kind=T_INT),intent(out) :: iBefore,iAfter
   real (kind=T_SGL),intent(out) :: rFrac
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRowPosition
+  real (kind=T_SGL) :: rColPosition
 
-  rRowPosition = (pGrd%iNX - 1) * (rXval - pGrd%rX0) / (pGrd%rX1 - pGrd%rX0)
+  rColPosition = (pGrd%iNX - 1) * (rXval - pGrd%rX0) / (pGrd%rX1 - pGrd%rX0)
   rFrac = rZERO
-  iBefore = floor(rRowPosition) + 1
+  iBefore = floor(rColPosition) + 1
   iAfter = iBefore + 1
   if ( iBefore > pGrd%iNX .or. iBefore < 1) then
     iBefore = -1
@@ -1322,7 +1322,7 @@ subroutine grid_LookupColumn(pGrd,rXval,iBefore,iAfter,rFrac)
   else if ( iAfter > pGrd%iNX ) then
     iAfter = -1
   else
-    rFrac = mod(rRowPosition,rONE)
+    rFrac = mod(rColPosition,rONE)
   end if
 
 end subroutine grid_LookupColumn
@@ -1629,7 +1629,11 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
   call Assert( LOGICAL(istat==0,kind=T_LOGICAL), &
      "Couldn't allocate temporary array" )
 
-  call grid_LookupColumn(pGrd,rXval,ib,ia,u)
+  call grid_LookupColumn(pGrd=pGrd, &
+                         rXval=rXval, &
+                         iBefore=ib, &
+                         iAfter=ia, &
+                         rFrac=u)
 
 #ifdef DEBUG_PRINT
   write(UNIT=LU_LOG,FMT=*)'lookup ',rXval,ib,ia

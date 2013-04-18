@@ -276,7 +276,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
 
-       ! Deficit is defined in the sense of Thornthwait and Mather
+       ! Deficit is defined in the sense of Thornthwaite and Mather
        rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
        ! following call updates the total available water (TAW) and
        ! readily available water (RAW) on the basis of the current

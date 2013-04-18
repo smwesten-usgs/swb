@@ -738,6 +738,128 @@ module types
   integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
 
+  !> @name Constants: Runoff calculation
+  !> Options controlling the selection of a runoff calculation algorithm
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_CURVE_NUMBER = 0
+  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_GREEN_AMPT = 1
+  !> @}
+
+  !> @anchor const_runoffSoln
+  !> @name Constants: Runoff routing calculation
+  !> Options for routing mechanism selection
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
+  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
+  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
+  !> @}
+
+
+  !> @name Constants: Evapotranspiration algorithm
+  !> Options for specifying the choice of evapotranspiration algorithm
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_ET_NONE = 0
+  integer (kind=T_INT),parameter :: CONFIG_ET_THORNTHWAITE_MATHER = 1
+  integer (kind=T_INT),parameter :: CONFIG_ET_TURC = 2
+  integer (kind=T_INT),parameter :: CONFIG_ET_JENSEN_HAISE = 3
+  integer (kind=T_INT),parameter :: CONFIG_ET_BLANEY_CRIDDLE = 4
+  integer (kind=T_INT),parameter :: CONFIG_ET_HARGREAVES = 5
+  !> @}
+
+  !> @name Constants: Precipitation data format
+  !> Options for specifying the method of input for precipitation data
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SINGLE_STATION = 0
+  integer (kind=T_INT),parameter :: CONFIG_PRECIP_ARC_GRID = 1
+  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SURFER_GRID = 2
+  integer (kind=T_INT),parameter :: CONFIG_PRECIP_NETCDF = 3
+  !> @}
+
+  !> @name Constants: Temperature data format
+  !> Options for specifying the method of input for temperature data
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SINGLE_STATION = 0
+  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_ARC_GRID = 1
+  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SURFER_GRID = 2
+  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
+  !> @}
+
+  !> @name Constants: Landuse input data format
+  !> Options for specifying the method of input for temperature data
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
+  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
+  !> @}
+
+  !> @name Constants: Snow module
+  !> Configuration for selection of snowfall and snowmelt modules
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
+  integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
+  !> @}
+
+  !> @name Constants: Soil-moisture input data format
+  !> Configuration information for soil-moisture capacity calculations
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
+  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
+  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
+  !> @}
+
+  !> @name Constants: Soil-moisture calculation
+  !> Configuration information for soil-moisture retention calculations
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
+  integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
+  !> @}
+
+  !> @name Constants: Thornthwaite-Mather implementation method
+  !> Configuration information for Thornthwaite-Mather SM retention
+  !> @{
+  integer (kind=T_INT),parameter :: CONFIG_TM_NONE = 0
+  integer (kind=T_INT),parameter :: CONFIG_TM_LOOKUP_TABLE = 1
+  integer (kind=T_INT),parameter :: CONFIG_TM_EQUATIONS = 2
+  !> @}
+
+  !> @name Constants: FAO56 module
+  !> Configuration information for FAO56 calculations
+  !> @{
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
+  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
+
+  !> @}
+
+  !> @name Constants: SCS curve number
+  !> Configuration information for initial abstraction assumptions
+  !> @{
+  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
+  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  !> @}
+
+  ! Define behavior in the case of missing data [UNIMPLEMENTED]
+  integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
+  integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
+
+  !> @name Constants: Output grid format
+  !> Options for output formats
+  !> @{
+  integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
+  integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
+  !> @}
+
+  ! Options for ASCII grid output
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DEBUG = 3
+  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
+
   !> generic configuration
   integer (kind=T_INT), parameter :: CONFIG_NONE = 0
 
@@ -770,6 +892,9 @@ module types
 
       !> Soil moisture calculation option
       integer (kind=T_INT) :: iConfigureSM = CONFIG_NONE
+
+      !> Thornthwaite-Mather soil moisture retention method
+      integer (kind=T_INT) :: iSoilMoistureRetentionMethod = CONFIG_TM_EQUATIONS
 
       !> Snowfall and snowmelt option
       integer (kind=T_INT) :: iConfigureSnow = CONFIG_NONE
@@ -1083,121 +1208,6 @@ module types
   integer(kind=T_INT),parameter :: iDAILY = 1
   integer(kind=T_INT),parameter :: iMONTHLY = 2
   integer(kind=T_INT),parameter :: iANNUAL = 3
-
-  !> @anchor const_runoffCalc
-  !> @name Constants: Runoff calculation
-  !> Options controlling the selection of a runoff calculation algorithm
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_CURVE_NUMBER = 0
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_GREEN_AMPT = 1
-  !> @}
-
-  !> @anchor const_runoffSoln
-  !> @name Constants: Runoff routing calculation
-  !> Options for routing mechanism selection
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
-  !> @}
-
-
-  !> @name Constants: Evapotranspiration algorithm
-  !> Options for specifying the choice of evapotranspiration algorithm
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_ET_NONE = 0
-  integer (kind=T_INT),parameter :: CONFIG_ET_THORNTHWAITE_MATHER = 1
-  integer (kind=T_INT),parameter :: CONFIG_ET_TURC = 2
-  integer (kind=T_INT),parameter :: CONFIG_ET_JENSEN_HAISE = 3
-  integer (kind=T_INT),parameter :: CONFIG_ET_BLANEY_CRIDDLE = 4
-  integer (kind=T_INT),parameter :: CONFIG_ET_HARGREAVES = 5
-  !> @}
-
-  !> @name Constants: Precipitation data format
-  !> Options for specifying the method of input for precipitation data
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SINGLE_STATION = 0
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SURFER_GRID = 2
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_NETCDF = 3
-  !> @}
-
-  !> @name Constants: Temperature data format
-  !> Options for specifying the method of input for temperature data
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SINGLE_STATION = 0
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SURFER_GRID = 2
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
-  !> @}
-
-  !> @name Constants: Landuse input data format
-  !> Options for specifying the method of input for temperature data
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
-  !> @}
-
-  !> @name Constants: Snow module
-  !> Configuration for selection of snowfall and snowmelt modules
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
-  integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
-  !> @}
-
-  !> @name Constants: Soil-moisture input data format
-  !> Configuration information for soil-moisture capacity calculations
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
-  !> @}
-
-  !> @name Constants: Soil-moisture calculation
-  !> Configuration information for soil-moisture retention calculations
-  !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
-  integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
-  !> @}
-
-  !> @name Constants: FAO56 module
-  !> Configuration information for FAO56 calculations
-  !> @{
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
-
-  !> @}
-
-  !> @name Constants: SCS curve number
-  !> Configuration information for initial abstraction assumptions
-  !> @{
-  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
-  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
-  !> @}
-
-  ! Define behavior in the case of missing data [UNIMPLEMENTED]
-  integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
-  integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
-
-  !> @name Constants: Output grid format
-  !> Options for output formats
-  !> @{
-  integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
-  integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
-  !> @}
-
-  ! Options for ASCII grid output
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DEBUG = 3
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
 
 !**********************************************************************
 !! GENERIC interfaces

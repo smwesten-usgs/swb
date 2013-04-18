@@ -280,10 +280,6 @@ end if
 
   call model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
 
-#ifdef IRRIGATION_MODULE
-  call model_UpdateGrowingDegreeDay( pGrd , pConfig)
-#endif
-
   ! Handle all the processes in turn
 
   if(pConfig%iConfigureSnow == CONFIG_SNOW_ORIGINAL_SWB) then
@@ -304,8 +300,10 @@ end if
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
 
-  if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) &
+  if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
+    call model_UpdateGrowingDegreeDay( pGrd , pConfig)
     call et_kc_ApplyCropCoefficients(pGrd, pConfig)
+  endif
 
   call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
@@ -3297,28 +3295,12 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
       call et_hargreaves_ComputeET ( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   end select
 
-#ifdef IRRIGATION_MODULE
-
-  ! modify potential ET by the crop coefficient
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-      cel => pGrd%Cells(iCol,iRow)
-      pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
-
-  cel%rSM_PotentialET = cel%rSM_PotentialET &
-    * calc_crop_coefficient(pIRRIGATION%rKc_Max, pIRRIGATION%rK0, &
-      pIRRIGATION%rGDD_Kc_Max, pIRRIGATION%rGDD_Death, pIRRIGATION%rAlpha1, cel%rGDD)
-
-  enddo
-enddo
-
-#endif
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
-!where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-!  pGrd%Cells%rReferenceET0 = rZERO
-!endwhere
+where (pGrd%Cells%rCFGI > rNEAR_ZERO)
+  pGrd%Cells%rReferenceET0 = rZERO
+endwhere
 
 ! in order to integrate Thornthwaite-Mather approach with FAO56 approach,
 ! an adjusted reference ET0 is now defined... must populate this
@@ -3483,13 +3465,14 @@ integer (kind=T_INT), intent(in) :: iOutputType
   ! [ LOCALS ]
   real (kind=T_DBL) :: xmin,xmax,ymin,ymax
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
-    sYearText
+    sYearText, sDateText
 
   sBufOut = trim(pConfig%sOutputFilePath)//trim(pConfig%sOutputFilePrefix) &
        //trim( YEAR_INFO(pConfig%iMonth)%sName )
   sBufFuture = trim(pConfig%sFutureFilePath)//trim(pConfig%sFutureFilePrefix)
   sBufSuffix = trim(pConfig%sOutputFileSuffix)
 
+  write(sDateText,fmt="(i4,'/',i2.2,'/',i2.2)") pConfig%iYear,pConfig%iMonth,pConfig%iDay
   write(sDayText,fmt="(a1,i2.2,a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iDay,"_",pConfig%iYear
   write(sMonthText,fmt="(a1,i2.2,a1,i4)") "_",pConfig%iMonth,"_",pConfig%iYear
   write(sYearText,fmt="(a1,i4)") "_",pConfig%iYear
@@ -3505,6 +3488,11 @@ integer (kind=T_INT), intent(in) :: iOutputType
      call grid_WriteGrid( &
        sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
        pGrd=pGenericGrd_sgl, pConfig=pConfig)
+     call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+           sOutputFilename="MASS_BALANCE"//trim(sDayText)//".png", &
+           sTitleTxt="MASS BALANCE ERROR AMOUNTS: "//trim(sDateText), &
+           sAxisTxt="INCHES" )
+
 
    elseif ( iOutputType == WRITE_ASCII_GRID_ANNUAL ) then
 
