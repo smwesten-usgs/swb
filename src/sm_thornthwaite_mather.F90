@@ -39,8 +39,8 @@ module sm_thornthwaite_mather
 
   ! parameters that allow the Thornthwaite-Mather tables (1957) to be
   ! represented by a single equation
-  real (kind=T_DBL), parameter :: rTM_slope_term = 0.4787691
-  real (kind=T_DBL), parameter :: rTM_exp_term = -1.036784
+  real (kind=T_DBL), parameter :: rTM_slope_term = 0.478769194198665
+  real (kind=T_DBL), parameter :: rTM_exp_term = -1.03678439421169
 
 contains
 

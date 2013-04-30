@@ -550,7 +550,7 @@ subroutine control_setModelOptions(sControlFile)
 !        pFlowDirGrid%sFilename = "Constant-value grid"
 
         call DAT(FLOWDIR_DATA)%initialize(sDescription=trim(sItem), &
-           rConstant=rValue )
+           iConstant=iValue )
 
       else
 !        pFlowDirGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
@@ -1063,7 +1063,7 @@ subroutine control_setModelOptions(sControlFile)
         !pGrd%Cells%iSoilGroup = iValue
 
         call DAT(SOILS_GROUP_DATA)%initialize(sDescription=trim(sItem), &
-           rConstant=rValue )
+           iConstant=iValue )
 
       else
 !        pSoilGroupGrid => grid_Read( sArgument, sOption, DATATYPE_INT )

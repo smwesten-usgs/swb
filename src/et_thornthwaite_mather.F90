@@ -31,6 +31,7 @@ module et_thornthwaite_mather
 
   use types
   use stats
+  use meteorological_functions
 
   implicit none
 
@@ -88,7 +89,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   ! [ LOCAL CONSTANTS ]
   real (kind=T_SGL),parameter :: rExp=1.514_T_SGL
   real (kind=T_SGL),dimension(4),parameter :: rAPoly = &
-      (/ 6.75E-07_T_SGL, -7.71E-05_T_SGL, 1.792E-02_T_SGL, 0.49239E+00_T_SGL /)
+      (/ 6.75E-07_T_SGL, -7.71E-05_T_SGL, 1.7921E-02_T_SGL, 0.49239E+00_T_SGL /)
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
@@ -157,31 +158,39 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
                                                    ! model options, flags, and other settings
   integer (kind=T_INT),intent(in) :: iDayOfYear
   real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
-  real (kind=T_SGL) :: rDecl,rLCF,rPotET, rTempET
+  real (kind=T_SGL) :: rDecl,rLCF,rPotET, rTempET, rOmega_s, rN
 
   ! [ locals ]
   integer (kind=T_SGL) :: iAvgT, iCol, iRow
   real (kind=T_SGL),dimension(3),parameter :: rHighTPoly = &
     (/ -5.25625072726565D-03, 1.04170341298537D+00, - 44.3259754866234D+00 /)
+  type (T_CELL), pointer :: cel
+  real (kind=T_SGL) :: rTempC
 
 
-  rDecl = 0.4093_T_SGL * sin((dpTWOPI * iDayOfYear/365.0_T_SGL) - 1.405_T_SGL )
-
-  rLCF = (24.0_T_SGL / dpPI) * acos(-rTanLatitude * tan(rDecl)) / 12.0_T_SGL
+!  rDecl = 0.4093_T_DBL * sin((dpTWOPI * real(iDayOfYear, kind=T_DBL)/365.0_T_DBL) - 1.405_T_DBL )
+  rDecl = solar_declination(iDayOfYear, pConfig%iNumDaysInYear)
+  rOmega_s = sunset_angle(real(rLatitude * dpPI_OVER_180, kind=T_SGL), rDecl)
+  rN = daylight_hours(rOmega_s)
+  rLCF = rN / 12.0_T_DBL
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
+      cel => pGrd%Cells(iCol,iRow)
 
       if (pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
         rPotET = rZERO
-      else if ( pGrd%Cells(iCol,iRow)%rTAvg <= 79.7_T_SGL ) then
+      else if ( cel%rTAvg <= 79.7_T_SGL ) then
 !      rPotET = ( 50.0_T_SGL*(rAvgT-rFREEZING) / (9.0_T_SGL * rAnnualIndex) ) ** rExponentA * &
 !         rLCF * 0.63_T_SGL / 30.0_T_SGL
-         rPotET = ((0.63_T_SGL * rLCF) * ((50.0_T_SGL *  &
-                     (pGrd%Cells(iCol,iRow)%rTAvg - rFREEZING) &
+         rPotET = ((0.6299213_T_SGL * rLCF) * ((50.0_T_SGL *  &
+                     (cel%rTAvg - rFREEZING) &
                       / (9_T_SGL * rAnnualIndex)) ** rExponentA)) / 30_T_SGL
       else
-        rPotET = rLCF * polynomial( pGrd%Cells(iCol,iRow)%rTAvg, rHighTPoly ) / 30.0_T_SGL
+!        rPotET = rLCF * polynomial( pGrd%Cells(iCol,iRow)%rTAvg, rHighTPoly ) / 30.0_T_SGL
+        rTempC = FtoC(cel%rTAvg)
+        rPotET = rLCF * (-415.85 + 32.24*rTempC -0.43*rTempC**2)/25.4/30.0
+
       end if
 
       pGrd%Cells(iCol,iRow)%rReferenceET0 = rPotET

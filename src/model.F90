@@ -102,6 +102,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     "Could not allocate memory for time-series data structure", &
     TRIM(__FILE__),__LINE__)
 
+  pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
+
   FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
 
     pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
@@ -1035,7 +1037,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         REAL(dpChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
-        dpNetRainfall,iNET_PRECIP,iMonth,iZERO)
+        dpNetRainfall,iNET_RAINFALL,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
         REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
@@ -1057,7 +1059,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
   ! as the final argument triggers the routine to update monthly and annual stats
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_PRECIP,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_RAINFALL,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
@@ -1251,7 +1253,7 @@ end if
   call stats_UpdateAllAccumulatorsByCell( &
     REAL(rChgInSnowCover,kind=T_DBL), iCHG_IN_SNOW_COV,iMonth,iZERO)
   call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rNetPrecip,kind=T_DBL),iNET_PRECIP,iMonth,iZERO)
+    REAL(cel%rNetPrecip,kind=T_DBL),iNET_RAINFALL,iMonth,iZERO)
   call stats_UpdateAllAccumulatorsByCell( &
     REAL(cel%rSnowMelt,kind=T_DBL),iSNOWMELT,iMonth,iZERO)
   call stats_UpdateAllAccumulatorsByCell( &
@@ -1270,7 +1272,7 @@ end if
   ! as the final argument triggers the routine to update monthly and annual stats
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_PRECIP,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_RAINFALL,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
@@ -3298,9 +3300,9 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
-where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-  pGrd%Cells%rReferenceET0 = rZERO
-endwhere
+!where (pGrd%Cells%rCFGI > rNEAR_ZERO)
+!  pGrd%Cells%rReferenceET0 = rZERO
+!endwhere
 
 ! in order to integrate Thornthwaite-Mather approach with FAO56 approach,
 ! an adjusted reference ET0 is now defined... must populate this

@@ -90,6 +90,8 @@
     <Folder name="Resource Files" sorted="Yes" />
     <Folder name="Source Files" sorted="Yes">
         <File>..\src\control.F90</File>
+        <File>..\src\data_factory.F90</File>
+        <File>..\src\datetime.F90</File>
         <File>..\src\et_blaney_criddle.F90</File>
         <File>..\src\et_FAO56_crop_coefficients.F90</File>
         <File>..\src\et_hargreaves.F90</File>

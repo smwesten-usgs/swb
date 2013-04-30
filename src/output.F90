@@ -102,10 +102,10 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
             cel%rInterception, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iINTERCEPTION)
 
-        case(iNET_PRECIP)
-          call RLE_writeByte(STAT_INFO(iNET_PRECIP)%iLU, &
+        case(iNET_RAINFALL)
+          call RLE_writeByte(STAT_INFO(iNET_RAINFALL)%iLU, &
             cel%rNetRainfall, pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iNET_PRECIP)
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iNET_RAINFALL)
 
         case(iINFLOW)
           call RLE_writeByte(STAT_INFO(iINFLOW)%iLU, &
@@ -332,7 +332,7 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
 !           ==> STAT_INFO(iINTERCEPTION) is updated at the time
 !               interception is calculated in subroutine model_ProcessRain
 !
-          case(iNET_PRECIP)
+          case(iNET_RAINFALL)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rNetRainfall)
           case(iINFLOW)

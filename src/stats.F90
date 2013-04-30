@@ -703,7 +703,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 !                   - rDaily(iSUM,iRECHARGE)
 
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
-                  + rDaily(iSUM,iNET_PRECIP) &
+                  + rDaily(iSUM,iNET_RAINFALL) &
                   + rDaily(iSUM,iINFLOW) &
                   + rDaily(iSUM,iIRRIGATION_FROM_SW) &
                   + rDaily(iSUM,iIRRIGATION_FROM_GW) &
@@ -730,7 +730,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
  						 MAXVAL(pGrd%Cells(:,:)%rAdjCN), &
                          rDaily(iSUM,iGROSS_PRECIP)*dpVolConvert, &
                          rDaily(iSUM,iINTERCEPTION)*dpVolConvert, &
-                         rDaily(iSUM,iNET_PRECIP) *dpVolConvert, &
+                         rDaily(iSUM,iNET_RAINFALL) *dpVolConvert, &
                          rDaily(iSUM,iSNOWFALL_SWE)*dpVolConvert, &
                          rDaily(iSUM,iSNOWCOVER)*dpVolConvert, &
                          rDaily(iSUM,iCHG_IN_SNOW_COV)*dpVolConvert, &

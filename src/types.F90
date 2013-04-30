@@ -605,8 +605,8 @@ module types
       'inches','snowfall minus snowmelt', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
-    T_STATS ('NET_PRECIP',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','gross precipitation minus interception', &
+    T_STATS ('NET_RAINFALL',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','gross precipitation minus interception and snowfall', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
 
     T_STATS ('NET_INFLOW',0,2,0,lTRUE,lTRUE, lTRUE, &
@@ -715,7 +715,7 @@ module types
   integer (kind=T_INT), parameter :: iMAX_TEMP = 17
   integer (kind=T_INT), parameter :: iAVG_TEMP = 18
   integer (kind=T_INT), parameter :: iCHG_IN_SNOW_COV = 19
-  integer (kind=T_INT), parameter :: iNET_PRECIP = 20
+  integer (kind=T_INT), parameter :: iNET_RAINFALL = 20
   integer (kind=T_INT), parameter :: iNET_INFLOW = 21
   integer (kind=T_INT), parameter :: iNET_INFIL = 22
   integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
@@ -1896,6 +1896,40 @@ subroutine CleanUpCsv ( s )
   return
 end subroutine CleanUpCsv
 
+function clean(sRecord,sDelimiters)                       result(sItem)
+
+  ! ARGUMENTS
+  character (len=*), intent(inout)           :: sRecord
+  character (len=*), intent(in), optional    :: sDelimiters
+
+  ! LOCALS
+  character (len=256) :: sItem
+  integer (kind=T_INT) :: iR                 ! Index in sRecord
+  integer (kind=T_INT) :: i, j
+
+  ! eliminate any leading spaces
+  sRecord = adjustl(sRecord)
+  sItem = ""
+  j = 0
+
+  do i = 1,len_trim(sRecord)
+
+    if(present(sDelimiters)) then
+      iR = SCAN(sRecord(i:i),sDelimiters)
+    else
+      iR = SCAN(sRecord(i:i),":/;,")
+    endif
+
+    if(iR==0) then
+      j = j + 1
+      sItem(j:j) = sRecord(i:i)
+    end if
+
+  enddo
+
+end function clean
+
+
 !--------------------------------------------------------------------------
 !****s* types/CleanUpSlash
 ! NAME
@@ -1929,9 +1963,33 @@ subroutine CleanUpSlash ( s )
     end do
   end do
 
-  return
 end subroutine CleanUpSlash
 
+
+
+! This is a simple function to search for an available unit.
+! LUN_MIN and LUN_MAX define the range of possible LUNs to check.
+! The UNIT value is returned by the function, and also by the optional
+! argument. This allows the function to be used directly in an OPEN
+! statement, and optionally save the result in a local variable.
+! If no units are available, -1 is returned.
+integer function newunit(unit)
+  integer, intent(out), optional :: unit
+! local
+  integer, parameter :: LUN_MIN=10, LUN_MAX=1000
+  logical :: opened
+  integer :: lun
+! begin
+  newunit=-1
+  do lun=LUN_MIN,LUN_MAX
+    inquire(unit=lun,opened=opened)
+    if (.not. opened) then
+      newunit=lun
+      exit
+    end if
+  end do
+  if (present(unit)) unit=newunit
+end function newunit
 
 !--------------------------------------------------------------------------
 !****f* types/polynomial

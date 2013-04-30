@@ -1,0 +1,5 @@
+NUM_LANDUSE_TYPES	1						Depth of
+NUM_SOIL_TYPES	1		Curve	Max			Root
+#			Number	Infil	Interception	Interception	Zone
+#LU code	LU Description	Assumed impervious	A	A	GROWING	DORMANT	A
+1	GENERIC SOIL		0	10.2	0.05	0	2

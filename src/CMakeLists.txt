@@ -4,6 +4,7 @@ if(TARGET__SWB_EXECUTABLE)
   add_executable(swb
             control.F90
             data_factory.F90
+			datetime.F90
             et_FAO56_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
@@ -40,6 +41,7 @@ if(TARGET__SWB_LIBRARY)
   add_library(swblib STATIC
             control.F90
             data_factory.F90
+			datetime.F90
             et_FAO56_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90

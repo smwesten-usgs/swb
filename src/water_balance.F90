@@ -235,12 +235,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
             endif L1a
 
-      		  ! 'rMoistureDeficit' represents the DEFICIT term in the
-						! original Thornthwaite-Mather calculations. DEFICIT is supposed
-						! to capture the amount of water demand that *cannot* be met
-						! by precipitation and the soil reservoir
-            rMoistureDeficit = cel%rReferenceET0_adj - cel%rActualET
-
           else  ! code block L1: Precip *EXCEEDS* Potential ET
 
           !! **precipitation EXCEEDS ET demands, recharging soil column**
@@ -301,6 +295,13 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               !! cap actual ET at the estimate for potential ET
               cel%rActualET = MIN( rNetInfil + ABS(rChangeInStorage), &
                                      cel%rReferenceET0_adj)
+
+      		  ! 'rMoistureDeficit' represents the DEFICIT term in the
+						! original Thornthwaite-Mather calculations. DEFICIT is supposed
+						! to capture the amount of water demand that *cannot* be met
+						! by precipitation and the soil reservoir
+            rMoistureDeficit = cel%rReferenceET0_adj - cel%rActualET
+
 
         else  ! code block L2: Precip - Potential ET > 0
 

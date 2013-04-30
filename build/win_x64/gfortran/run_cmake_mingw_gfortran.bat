@@ -6,7 +6,7 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
 set MINGWBASE=c:\MinGW64
-set MINGW_VERSION=4.8.0
+set MINGW_VERSION=4.9.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 set R_HOME=C:\Program Files\R\R-2.15.2\bin
 
