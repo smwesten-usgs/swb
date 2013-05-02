@@ -1,6 +1,8 @@
 module swbstats_support
 
   use types
+
+
   implicit none
 
   logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE

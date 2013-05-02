@@ -10,6 +10,7 @@ module graph
 
   use dislin
   use types
+
   implicit none
   save
 

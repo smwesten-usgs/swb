@@ -9,6 +9,7 @@ module netcdf4_support
 #ifdef NETCDF_SUPPORT
 
   use types
+
   use swb_grid
   use typesizes
   use netcdf_c_api_interfaces

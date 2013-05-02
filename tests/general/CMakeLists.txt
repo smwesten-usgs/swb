@@ -11,7 +11,7 @@ message("SWB LOCATION: " ${SWB_EXECUTABLE} )
 # Need input files over in build environment
 file(GLOB infiles
      RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-     *.ssf *.inp *.R *.dat *.csv)
+     *.ssf *.inp *.R *.dat *.csv *.txt)
 
 foreach(infilename ${infiles})
     set(infile  ${CMAKE_CURRENT_SOURCE_DIR}/${infilename})
@@ -20,8 +20,7 @@ foreach(infilename ${infiles})
 endforeach()
 
 set(R_script_tests
-
-
+    GENERAL_COMPARISON_Thornthwaite-Mather_calcs.r
    )
 
 if(DEFINED R_SCRIPT)
@@ -29,7 +28,8 @@ if(DEFINED R_SCRIPT)
   foreach(test_filename ${R_script_tests})
      get_filename_component(basename ${test_filename} NAME_WE)
 
-   message("Test string: " ${basename})
+   message(" ")
+   message("  CREATING TEST - Test string: " ${basename})
    message("   COMMAND " ${R_SCRIPT} " --vanilla "
               ${CMAKE_CURRENT_SOURCE_DIR}/${test_filename} " " ${SWB_EXECUTABLE} )
    message(" ")

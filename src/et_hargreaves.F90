@@ -26,6 +26,7 @@ module et_hargreaves
 !!***
 
   use types
+
   use stats
   use meteorological_functions
 
@@ -75,8 +76,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   integer (kind=T_INT),intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDelta,rOmega_s,rD_r, rRa
-  real (kind=T_SGL) :: rLatitude
+  real (kind=T_DBL) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
   integer (kind=T_INT) :: iCol, iRow
 
 !  write(UNIT=LU_LOG,FMT=*) iDayOfYear, iNumDaysInYear
@@ -142,7 +142,7 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
 
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  real (kind=T_SGL),intent(in) :: rRa
+  real (kind=T_DBL),intent(in) :: rRa
   real (kind=T_SGL),intent(in) :: rTMinF
   real (kind=T_SGL),intent(in) :: rTMaxF
 
@@ -150,10 +150,10 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
   real (kind=T_SGL) :: rET_0
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rTDelta
-  real (kind=T_SGL) :: rTAvg
+  real (kind=T_DBL) :: rTDelta
+  real (kind=T_DBL) :: rTAvg
 
-  rTAvg = (rTMinF + rTMaxF) / 2_T_SGL
+  rTAvg = (rTMinF + rTMaxF) / 2_T_DBL
 
   rTDelta = FtoK(rTMaxF) - FtoK(rTMinF)
 

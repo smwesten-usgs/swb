@@ -71,6 +71,7 @@
 program main
 
   use types
+
   use control
   use ISO_FORTRAN_ENV
 

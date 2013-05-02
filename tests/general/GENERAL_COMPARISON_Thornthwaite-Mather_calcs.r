@@ -1,10 +1,11 @@
-#myargs <- commandArgs(trailingOnly = TRUE)
+myargs <- commandArgs(trailingOnly = TRUE)
 
-setwd("d:/SMWData/Source_Code/swb/tests/general")
+#setwd("d:/SMWData/Source_Code/swb/tests/general")
 source("Thornthwaite_Mather_cell_class.R")
 
-#swb_exe <- myargs[1]
-swb_exe <- "D:/DOS/swb.exe"
+TOLERANCE <- 0.01
+
+swb_exe <- myargs[1]
 
 swb_ctl <- "recharge_single_cell.ctl"
 
@@ -13,6 +14,8 @@ my_control_file <- c(
   "GRID_LENGTH_UNITS FEET",
   "GROWING_SEASON 133 268 T",
   "SUPPRESS_SCREEN_OUTPUT",
+  "OUTPUT_FUTURE_PATH ",
+  "OUTPUT_PATH ",
   "INITIAL_ABSTRACTION_METHOD HAWKINS",
   "PRECIPITATION SINGLE_STATION",
   "TEMPERATURE SINGLE_STATION",
@@ -105,20 +108,32 @@ lTEST <- TRUE
 
 for (i in sort(unique(v_in$Year))) {
 
-  vb <- subset(v_in,v_in$Year==i)
-  vbb <- subset(v_base,v_base$Year==i)  
+  vb <- subset(v_in,v_in$Year==i)  # swb results
+  vbb <- subset(v_base,v_base$Year==i)  # R script results
   
   if (nrow(vbb) < nrow(vb)) next
   
   for (j in 2:(ncol(vb)-1)) {
     
-    y<-vb[ ,j ]
+    y<-vb[ ,j ]  # swb results
     
     if ( any(colnames(vbb)==colnames(vb)[j] ) ) {
       x<-as.vector( unlist( vbb[which(colnames(vbb)==colnames(vb)[j] ) ]  ) )
-      cat(paste(colnames(vb)[j]),":", signif(max(abs(y-x)), digits=3), "\n", sep="")      
       
-      if (any(abs(y - x) > 1.0E-7) ) lTEST <- FALSE
+      diffvals <- abs(y) - abs(x)
+      
+      cat(paste(colnames(vb)[j]),":", signif(max(diffvals), digits=3), "\n", sep="")      
+      
+      if (any(diffvals > TOLERANCE ) ) {
+      
+        indices <- which(diffvals > TOLERANCE)
+        for (index in indices) {
+          cat(colnames(vb)[j],":", format(vb[index,"Date"], "%m-%d-%Y"),
+              y[index], x[index],"  rpd: ",rpd(y[index],x[index]),"\n")
+        }
+        
+        lTEST <- FALSE
+      }
       
     }
     

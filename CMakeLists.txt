@@ -36,6 +36,19 @@ set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
+#------------------------------------------------------------------------
+# Locate utility programs
+#------------------------------------------------------------------------
+
+find_program( R_SCRIPT Rscript.exe Rscript
+			  HINTS
+			  ENV R_HOME
+              PATHS
+			  "c:/Program Files/R"
+			  "c:/Program Files (x86)/R"
+)
+
+message("Rscript.exe is defined as: " ${R_SCRIPT})
 
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
@@ -137,10 +150,10 @@ if(CMAKE_HOST_WIN32)
          CACHE FILEPATH "Location of PROJ4 C library")
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
-       set(USER32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libuser32.a)
-       set(GDI32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libgdi32.a)
-       set(OPENGL32_LIB ${MINGWBASE}/x86_64-w64-mingw32/lib/libopengl32.a)
-       set(GCC_LIB ${MINGWBASE}/lib/gcc/x86_64-w64-mingw32/4.9.0/libgcc.a)
+       set(USER32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libuser32.a)
+       set(GDI32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libgdi32.a)
+       set(OPENGL32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libopengl32.a)
+       set(GCC_LIB ${MINGWBASE}/lib/gcc/${COMPILER_TRIPLET}/${MINGW_VERSION}/libgcc.a)
      endif()
 
      set(GFORTRAN_LIB ${MINGWBASE}/lib/libgfortran.a)
@@ -401,4 +414,6 @@ message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
 message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("--------------------------------------------------------------------")
 
+enable_testing()
 add_subdirectory(src)
+add_subdirectory(tests/general)

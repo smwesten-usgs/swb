@@ -158,7 +158,7 @@ cellclass <- function(RootingDepth, AWC, latitude, grow_start, grow_stop) {
   
   cel$dumpdaily <- function(currentdate) {
     
-    SIGDIGITS <- 3
+    SIGDIGITS <- 5
     
     outputtext <- paste(format(currentdate, "%m/%d/%Y"),
           signif(cel$tmin, digits=SIGDIGITS),                        

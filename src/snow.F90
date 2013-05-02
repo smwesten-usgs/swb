@@ -10,6 +10,7 @@
 module snow
 
   use types
+
   use meteorological_functions
   implicit none
 
@@ -77,8 +78,8 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
   real (kind=T_SGL)::  rTMin
   real (kind=T_SGL) :: rTMax
   real (kind=T_SGL) :: rTAvg
-  real (kind=T_SGL) :: rRs
-  real (kind=T_SGL) :: rRso
+  real (kind=T_DBL) :: rRs
+  real (kind=T_DBL) :: rRso
   real (kind=T_SGL) :: rAlbedo
   real (kind=T_SGL) :: rSnowcover
   real (kind=T_SGL) :: rNetRainfall
@@ -117,7 +118,7 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
   ! all component energy values must be in kJ per square meter per day
   ! radiation components must be multiplied by 1000 since they are returned
   ! in MJ per square meters per day
-  rSn = net_shortwave_radiation_Rns(rRs, rAlbedo) * 1000_T_DBL
+  rSn = net_shortwave_radiation_Rns(rRs, real(rAlbedo, kind=T_DBL)) * 1000_T_DBL
   rLn = net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso) * 1000_T_DBL
   rH = sensible_heat_exchange_h(rSnowTemperature, rTAvg)
   rE = convective_heat_exchange_e(rSnowTemperature, rTAvg)

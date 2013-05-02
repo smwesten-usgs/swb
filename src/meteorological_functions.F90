@@ -21,8 +21,10 @@ module meteorological_functions
 !
 !!***
 
-use types
-implicit none
+  use types
+
+
+  implicit none
 
 contains
 
@@ -70,14 +72,12 @@ contains
  function daylight_hours(rOmega_s) result(rN)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rOmega_s
+  real (kind=T_DBL), intent(in) :: rOmega_s
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rN
+  real (kind=T_DBL) :: rN
 
-  rN = 24_T_SGL / dpPI * rOmega_s
-
-  return
+  rN = 24_T_DBL / dpPI * rOmega_s
 
 end function daylight_hours
 
@@ -117,23 +117,21 @@ end function daylight_hours
 function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(rRa)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rLatitude
-  real (kind=T_SGL), intent(in) :: rDelta
-  real (kind=T_SGL), intent(in) :: rOmega_s
-  real (kind=T_SGL), intent(in) :: rDsubR
+  real (kind=T_DBL), intent(in) :: rLatitude
+  real (kind=T_DBL), intent(in) :: rDelta
+  real (kind=T_DBL), intent(in) :: rOmega_s
+  real (kind=T_DBL), intent(in) :: rDsubR
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRa
-  real (kind=T_SGL) :: rPartA, rPartB
-  real (kind=T_SGL), parameter :: rGsc = 0.0820  ! MJ / m**2 / min
+  real (kind=T_DBL) :: rRa
+  real (kind=T_DBL) :: rPartA, rPartB
+  real (kind=T_DBL), parameter :: rGsc = 0.0820_T_DBL  ! MJ / m**2 / min
 
   rPartA = rOmega_s * sin(rLatitude) * sin(rDelta)
   rPartB = cos(rLatitude) * cos(rDelta) * sin(rOmega_s)
 
 
-  rRa = 24_T_SGL * 60_T_SGL * rGsc * rDsubR * (rPartA + rPartB) / dpPI
-
-  return
+  rRa = 24_T_DBL * 60_T_DBL * rGsc * rDsubR * (rPartA + rPartB) / dpPI
 
 end function extraterrestrial_radiation_Ra
 
@@ -156,14 +154,12 @@ end function extraterrestrial_radiation_Ra
 function deg2rad(rDeg) result(rRad)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rDeg
+  real (kind=T_DBL), intent(in) :: rDeg
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRad
+  real (kind=T_DBL) :: rRad
 
-  rRad = dpPI / 180_T_SGL * rDeg
-
-  return
+  rRad = dpPI / 180_T_DBL * rDeg
 
 end function deg2rad
 
@@ -189,14 +185,12 @@ end function deg2rad
 function equivalent_evaporation(rR) result(rR_ET)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rR
+  real (kind=T_DBL), intent(in) :: rR
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rR_ET
+  real (kind=T_DBL) :: rR_ET
 
-    rR_ET = rR * 0.408_T_SGL
-
-  return
+    rR_ET = rR * 0.408_T_DBL
 
 end function equivalent_evaporation
 
@@ -230,14 +224,13 @@ end function equivalent_evaporation
   integer (kind=T_INT), intent(in) :: iCurrRow
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRowLat
+  real (kind=T_DBL) :: rRowLat
 
 !  print *, rNorthLat,rSouthLat,iCurrRow,iNumRows
 
-  rRowLat = rNorthLat - ((rNorthLat - rSouthLat) &
-      * (REAL(iCurrRow,kind=T_SGL) / REAL(iNumRows,kind=T_SGL)))
-
-  return
+  rRowLat = real(rNorthLat, kind=T_DBL) &
+      - ((real(rNorthLat, kind=T_DBL) - real(rSouthLat, kind=T_DBL)) &
+      * (REAL(iCurrRow,kind=T_DBL) / REAL(iNumRows,kind=T_DBL)))
 
 end function row_latitude
 
@@ -430,15 +423,13 @@ function net_shortwave_radiation_Rns(rRs, rAlbedo)  result(rRns)
 !
 ! SOURCE
 
-  real(kind=T_SGL), intent(in) :: rRs
-  real(kind=T_SGL), intent(in) :: rAlbedo
+  real(kind=T_DBL), intent(in) :: rRs
+  real(kind=T_DBL), intent(in) :: rAlbedo
 
   ! [ LOCALS ]
-  real(kind=T_SGL) :: rRns
+  real(kind=T_DBL) :: rRns
 
-  rRns = (rONE - rAlbedo) * rRs
-
-  return
+  rRns = (dpONE - rAlbedo) * rRs
 
 end function net_shortwave_radiation_Rns
 
@@ -509,11 +500,12 @@ function solar_declination(iDayOfYear, iNumDaysInYear) result(rDelta)
   integer (kind=T_INT), intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDelta
+  real (kind=T_DBL) :: rDelta
 
-  rDelta = 0.409_T_SGL &
-           * sin ( (2_T_SGL * dpPI * iDayOfYear / iNumDaysInYear) &
-		          - 1.39_T_SGL)
+  rDelta = 0.409_T_DBL &
+           * sin ( (2_T_DBL * dpPI &
+           * real(iDayOfYear, kind=T_DBL) / real(iNumDaysInYear, kind=T_DBL)) &
+		          - 1.39_T_DBL)
 
 end function solar_declination
 
@@ -589,11 +581,11 @@ end function rel_Earth_Sun_dist
  function sunset_angle(rLatitude, rDelta) result(rOmega_s)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rLatitude
-  real (kind=T_SGL), intent(in) :: rDelta
+  real (kind=T_DBL), intent(in) :: rLatitude
+  real (kind=T_DBL), intent(in) :: rDelta
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rOmega_s
+  real (kind=T_DBL) :: rOmega_s
 
   call Assert(rLatitude <1.58 .and. rLatitude > -1.58, &
     "Internal programming error: Latitude must be expressed in RADIANS", &
@@ -637,13 +629,13 @@ end function sunset_angle
 function solar_radiation_Hargreaves_Rs(rRa, rTMIN, rTMAX) result(rRs)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rRa
+  real (kind=T_DBL), intent(in) :: rRa
   real (kind=T_SGL), intent(in) :: rTMIN
   real (kind=T_SGL), intent(in) :: rTMAX
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRs
-  real (kind=T_SGL), parameter :: rKRs = 0.175
+  real (kind=T_DBL) :: rRs
+  real (kind=T_DBL), parameter :: rKRs = 0.175
 
   rRs = rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) * rRa
 
@@ -717,20 +709,20 @@ end function estimate_percent_of_possible_sunshine
 function clear_sky_solar_radiation_Rso(rRa, rAs_in, rBs_in) result(rRso)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rRa
-  real (kind=T_SGL), intent(in), optional :: rAs_in
-  real (kind=T_SGL), intent(in),optional :: rBs_in
+  real (kind=T_DBL), intent(in) :: rRa
+  real (kind=T_DBL), intent(in), optional :: rAs_in
+  real (kind=T_DBL), intent(in),optional :: rBs_in
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRso
-  real (kind=T_SGL) :: rAs
-  real (kind=T_SGL) :: rBs
+  real (kind=T_DBL) :: rRso
+  real (kind=T_DBL) :: rAs
+  real (kind=T_DBL) :: rBs
 
   ! assign default value to As if none is provided
   if(present(rAs_in)) then
     rAs = rAs_in
   else
-    rAs = 0.25
+    rAs = 0.25_T_DBL
 
   end if
 
@@ -738,12 +730,10 @@ function clear_sky_solar_radiation_Rso(rRa, rAs_in, rBs_in) result(rRso)
   if(present(rBs_in)) then
     rBs = rBs_in
   else
-    rBs = 0.5
+    rBs = 0.5_T_DBL
   end if
 
   rRso = (rAs + rBs) * rRa
-
-  return
 
 end function clear_sky_solar_radiation_Rso
 
@@ -779,15 +769,13 @@ end function clear_sky_solar_radiation_Rso
 function clear_sky_solar_radiation_noAB_Rso(rRa, rElevation) result(rRso)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rRa
-  real (kind=T_SGL), intent(in) :: rElevation
+  real (kind=T_DBL), intent(in) :: rRa
+  real (kind=T_DBL), intent(in) :: rElevation
 
   ! [ LOCALS ]
   real (kind=T_SGL) :: rRso
 
-  rRso = (0.75_T_SGL + 1.0E-5*rElevation) * rRa
-
-  return
+  rRso = (0.75_T_DBL + 1.0E-5_T_DBL * rElevation) * rRa
 
 end function clear_sky_solar_radiation_noAB_Rso
 
@@ -826,13 +814,13 @@ end function clear_sky_solar_radiation_noAB_Rso
 function solar_radiation_Rs(rRa, rAs, rBs, rPctSun) result(rRs)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rRa
-  real (kind=T_SGL), intent(in) :: rAs
-  real (kind=T_SGL), intent(in) :: rBs
-  real (kind=T_SGL), intent(in) :: rPctSun
+  real (kind=T_DBL), intent(in) :: rRa
+  real (kind=T_DBL), intent(in) :: rAs
+  real (kind=T_DBL), intent(in) :: rBs
+  real (kind=T_DBL), intent(in) :: rPctSun
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRs
+  real (kind=T_DBL) :: rRs
 
   rRs = ( rAs + (rBs * rPctSun / 100_T_SGL)) * rRa
 
@@ -876,10 +864,8 @@ function sat_vapor_pressure_es(rT) result (re_0)
   ! [ LOCALS ]
   real (kind=T_SGL) :: re_0
 
-  re_0 = 0.6108_T_SGL * exp (17.27_T_SGL * FtoC(rT) &
-             / (FtoC(rT) + 237.3_T_SGL))
-
-  return
+  re_0 = 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rT) &
+             / (FtoC(rT) + 237.3_T_DBL))
 
 end function sat_vapor_pressure_es
 
@@ -890,11 +876,11 @@ function sat_vapor_density(rT) result(rRho)
   real(kind=T_SGL), intent(in):: rT
 
   ! [ LOCALS ]
-  real(kind=T_SGL) :: rRho
-  real (kind=T_DBL), parameter :: rR = 0.4615     ! kJ per kg per deg K
+  real(kind=T_DBL) :: rRho
+  real (kind=T_DBL), parameter :: rR = 0.4615_T_DBL     ! kJ per kg per deg K
 
 
-  rRho = exp((16.78 * FtoC(rT) - 116.8) / (FtoK(rT))) &
+  rRho = exp((16.78_T_DBL * FtoC(rT) - 116.8_T_DBL) / (FtoK(rT))) &
          * (1. / ((FtoK(rT)) * rR))
 
 end function sat_vapor_density
@@ -932,12 +918,10 @@ function dewpoint_vapor_pressure_ea(rTMIN) result (re_a)
   real (kind=T_SGL), intent(in) :: rTMIN
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: re_a
+  real (kind=T_DBL) :: re_a
 
-  re_a = 0.6108_T_SGL * exp (17.27_T_SGL * FtoC(rTMIN) &
-             / (FtoC(rTMIN) + 237.3_T_SGL))
-
-  return
+  re_a = 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rTMIN) &
+             / (FtoC(rTMIN) + 237.3_T_DBL))
 
 end function dewpoint_vapor_pressure_ea
 !!***
@@ -973,14 +957,12 @@ function minimum_rel_hum(rTMin, rTMax) result (rMinRH)
   real (kind=T_SGL), intent(in) :: rTMin, rTMax
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rMinRH, re_a, re_x
+  real (kind=T_DBL) :: rMinRH, re_a, re_x
 
   re_a = dewpoint_vapor_pressure_ea(rTMin)
   re_x = sat_vapor_pressure_es(rTMax)
 
-  rMinRH = 100_T_SGL * re_a / re_x
-
-  return
+  rMinRH = 100_T_DBL * re_a / re_x
 
 end function minimum_rel_hum
 
@@ -1017,14 +999,12 @@ function maximum_rel_hum(rTMin) result (rMaxRH)
   real (kind=T_SGL), intent(in) :: rTMin
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rMaxRH, re_a, re_n
+  real (kind=T_DBL) :: rMaxRH, re_a, re_n
 
   re_a = dewpoint_vapor_pressure_ea(rTMin)
   re_n = sat_vapor_pressure_es(rTMin)
 
   rMaxRH = 100_T_SGL * re_a / re_n
-
-  return
 
 end function maximum_rel_hum
 
@@ -1061,11 +1041,11 @@ function net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso)  result(rRnl)
 
   real(kind=T_SGL), intent(in) :: rTMin
   real(kind=T_SGL), intent(in) :: rTMax
-  real(kind=T_SGL), intent(in) :: rRs
-  real(kind=T_SGL), intent(in) :: rRso
+  real(kind=T_DBL), intent(in) :: rRs
+  real(kind=T_DBL), intent(in) :: rRso
 
   ! [ LOCALS ]
-  real(kind=T_SGL) :: rRnl
+  real(kind=T_DBL) :: rRnl
   real(kind=T_DBL) :: rTAvg_K
   real(kind=T_DBL) :: rTAvg_4
 
@@ -1075,7 +1055,7 @@ function net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso)  result(rRnl)
 
   rTAvg_K = FtoK((rTMin + rTMax )/ 2.)
 
-  rTAvg_4 = rTAvg_K * rTAvg_K * rTAvg_K * rTAvg_K * rSigma
+  rTAvg_4 = rTAvg_K * rTAvg_K * rTAvg_K * rTAvg_K * rSIGMA
   r_ea = dewpoint_vapor_pressure_ea(rTMin)
 
   rCloudFrac = min(rRs / rRso, 1.0)
@@ -1116,11 +1096,11 @@ end function net_longwave_radiation_Rnl
 
 function zenith_angle(rLatitude, rDelta) result(rZenithAngle)
 
-  real (kind=T_SGL), intent(in) :: rLatitude
-  real (kind=T_SGL), intent(in) :: rDelta
+  real (kind=T_DBL), intent(in) :: rLatitude
+  real (kind=T_DBL), intent(in) :: rDelta
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rZenithAngle
+  real (kind=T_DBL) :: rZenithAngle
 
   call Assert(rLatitude <1.58 .and. rLatitude > -1.58, &
     "Internal programming error: Latitude must be expressed in RADIANS", &
@@ -1165,16 +1145,14 @@ end function zenith_angle
 function slope_sat_vapor_pressure_curve(rT) result (rSlope)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rT
+  real (kind=T_DBL), intent(in) :: rT
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rSlope
+  real (kind=T_DBL) :: rSlope
 
-  rSlope = 4098_T_SGL * 0.6108_T_SGL * exp (17.27_T_SGL * FtoC(rT) &
-                                       / (FtoC(rT) + 237.3_T_SGL)) &
-			 / ((FtoC(rT) + 237.3_T_SGL)**2)
-
-  return
+  rSlope = 4098_T_DBL * 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rT) &
+                                       / (FtoC(rT) + 237.3_T_DBL)) &
+			 / ((FtoC(rT) + 237.3_T_DBL)**2)
 
 end function slope_sat_vapor_pressure_curve
 

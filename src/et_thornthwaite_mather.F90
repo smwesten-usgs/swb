@@ -30,20 +30,22 @@ module et_thornthwaite_mather
 !!***
 
   use types
+
   use stats
   use meteorological_functions
+  use datetime
 
   implicit none
 
   !! Module data
 
   !! Configuration -- input data
-  real (kind=T_SGL) :: rLatitude
-  real (kind=T_SGL) :: rTanLatitude
+  real (kind=T_DBL) :: rLatitude
+  real (kind=T_DBL) :: rTanLatitude
 
   !! Parameters from pre-scan of annual data
-  real (kind=T_SGL) :: rAnnualIndex        ! Annual thermal index
-  real (kind=T_SGL) :: rExponentA        ! Exponent 'a'
+  real (kind=T_DBL) :: rAnnualIndex        ! Annual thermal index
+  real (kind=T_DBL) :: rExponentA        ! Exponent 'a'
 
 contains
 
@@ -78,19 +80,18 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   integer (kind=T_INT) :: iJulianDay, iStat, iMonth, iDay, iYear,i
   integer (kind=T_INT) :: iDayOfYear
   real(kind=T_SGL) :: rPrecip, rAvgT, rMinT, rMaxT, rRH, rMinRH, rWindSpd, rSunPct
-  real(kind=T_SGL) :: rMonthAvg,rMonthIndex
+  real(kind=T_DBL) :: rMonthAvg,rMonthIndex
   character (len=256) :: sBuf
   character (len=3) :: sMonthName
   logical (kind=T_LOGICAL) :: lMonthEnd
   logical (kind=T_LOGICAL) :: lOpened
   integer (kind=T_INT) :: iLU
-  integer (kind=T_INT),dimension(12) :: iMonthlyCount
-  real (kind=T_INT),dimension(12) :: rMonthlySum
+  integer (kind=T_INT), dimension(12) :: iMonthlyCount
+  real (kind=T_DBL), dimension(12) :: rMonthlySum
   ! [ LOCAL CONSTANTS ]
-  real (kind=T_SGL),parameter :: rExp=1.514_T_SGL
-  real (kind=T_SGL),dimension(4),parameter :: rAPoly = &
-      (/ 6.75E-07_T_SGL, -7.71E-05_T_SGL, 1.7921E-02_T_SGL, 0.49239E+00_T_SGL /)
 
+  !> exponent value is from Thornthwaite (1948), p 89.
+  real (kind=T_DBL),parameter :: rExp=1.514_T_DBL
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
   open ( LU_TEMP, file=trim(sFileName), iostat=iStat )
@@ -120,7 +121,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
     call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
                        sMonthName,lMonthEnd)
 
-    rMonthlySum(iMonth) = rMonthlySum(iMonth) + rAvgT
+    rMonthlySum(iMonth) = rMonthlySum(iMonth) + real(rAvgT, kind=T_DBL)
     iMonthlyCount(iMonth) = iMonthlyCount(iMonth) + 1
   end do
 
@@ -130,15 +131,20 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   rAnnualIndex = rZERO
   do i=1,12
     if ( iMonthlyCount(i) > 0 ) then
-      rMonthAvg = rMonthlySum(i)/iMonthlyCount(i)
-      if ( rMonthAvg > rFREEZING ) then
-        rMonthIndex = (( rMonthAvg - rFREEZING )/9.0_T_SGL ) ** rExp
+      rMonthAvg = rMonthlySum(i) / real(iMonthlyCount(i), kind=T_DBL)
+      if ( rMonthAvg > dpFREEZING ) then
+        !> calculate monthly index as per Thornthwaite (1948), p89.
+        rMonthIndex = (FtoC(rMonthAvg) / 5_T_DBL) ** 1.514_T_DBL
         rAnnualIndex = rAnnualIndex + rMonthIndex
       end if
     end if
   end do
 
-  rExponentA = polynomial( rAnnualIndex, rAPoly )
+  !> equation 9, Thornthwaite (1948), p. 89
+  rExponentA = 6.75E-7 * rAnnualIndex**3 &
+               - 7.71E-5 * rAnnualIndex**2 &
+               + 1.7921E-2 * rAnnualIndex &
+               + 0.49239
 
   close (unit=LU_TEMP)
 
@@ -147,7 +153,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
 
 end subroutine et_tm_initialize
 
-subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rSunPct )
+subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear)
   !! Computes the potential ET for each cell, based on the meteorological
   !! data given. Stores cell-by-cell PET values in the model grid.
   !! Note: for the T-M model, it's constant scross the grid
@@ -157,56 +163,56 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear, rRH, rMinRH, rWindSpd, rS
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   integer (kind=T_INT),intent(in) :: iDayOfYear
-  real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
-  real (kind=T_SGL) :: rDecl,rLCF,rPotET, rTempET, rOmega_s, rN
+  real (kind=T_DBL) :: rPotET, rDecl, rOmega_s, rN, rPotET_adj
 
   ! [ locals ]
-  integer (kind=T_SGL) :: iAvgT, iCol, iRow
-  real (kind=T_SGL),dimension(3),parameter :: rHighTPoly = &
-    (/ -5.25625072726565D-03, 1.04170341298537D+00, - 44.3259754866234D+00 /)
+  integer (kind=T_INT) :: iCol, iRow
+!  real (kind=T_SGL),dimension(3),parameter :: rHighTPoly = &
+!    (/ -5.25625072726565D-03, 1.04170341298537D+00, - 44.3259754866234D+00 /)
   type (T_CELL), pointer :: cel
-  real (kind=T_SGL) :: rTempC
+  real (kind=T_DBL) :: rTempC
 
 
-!  rDecl = 0.4093_T_DBL * sin((dpTWOPI * real(iDayOfYear, kind=T_DBL)/365.0_T_DBL) - 1.405_T_DBL )
-  rDecl = solar_declination(iDayOfYear, pConfig%iNumDaysInYear)
-  rOmega_s = sunset_angle(real(rLatitude * dpPI_OVER_180, kind=T_SGL), rDecl)
+  rDecl = 0.4093_T_DBL * sin((dpTWOPI * real(iDayOfYear, kind=T_DBL)/365.0_T_DBL) - 1.405_T_DBL )
+!  rDecl = solar_declination(iDayOfYear, MODEL_SIM%daysperyear())
+  rOmega_s = sunset_angle(real(rLatitude * dpPI_OVER_180, kind=T_DBL), rDecl)
   rN = daylight_hours(rOmega_s)
-  rLCF = rN / 12.0_T_DBL
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
       cel => pGrd%Cells(iCol,iRow)
 
+      rTempC = FtoC(real(cel%rTAvg, kind=T_DBL))
+
       if (pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
-        rPotET = rZERO
+        rPotET = dpZERO
       else if ( cel%rTAvg <= 79.7_T_SGL ) then
-!      rPotET = ( 50.0_T_SGL*(rAvgT-rFREEZING) / (9.0_T_SGL * rAnnualIndex) ) ** rExponentA * &
-!         rLCF * 0.63_T_SGL / 30.0_T_SGL
-         rPotET = ((0.6299213_T_SGL * rLCF) * ((50.0_T_SGL *  &
-                     (cel%rTAvg - rFREEZING) &
-                      / (9_T_SGL * rAnnualIndex)) ** rExponentA)) / 30_T_SGL
+
+        !> this is based on equation 10, Thornthwaite (1948), divided by the
+        !> number of days in the month and converted to inches from mm
+        rPotET = (16_T_DBL * (10_T_DBL*rTempC / rAnnualIndex)**rExponentA) &
+                 / 25.4_T_DBL / 30_T_DBL
+
       else
-!        rPotET = rLCF * polynomial( pGrd%Cells(iCol,iRow)%rTAvg, rHighTPoly ) / 30.0_T_SGL
-        rTempC = FtoC(cel%rTAvg)
-        rPotET = rLCF * (-415.85 + 32.24*rTempC -0.43*rTempC**2)/25.4/30.0
+
+        !> high temperature equation is equation 4 in Willmott, C.J., Rowe, C.M.
+        !> and Mintz, Y., 1985, Climatology of the terrestrial seasonal
+        !> water cycle: Journal of Climatology, v. 5, no. 6, p. 589–606.
+        rPotET = (-415.85_T_DBL + 32.24_T_DBL*rTempC -0.43_T_DBL*rTempC**2) &
+           / 25.4_T_DBL &
+           / 30_T_DBL
 
       end if
 
-      pGrd%Cells(iCol,iRow)%rReferenceET0 = rPotET
+      !> "adjusted" potential ET is arrived at by scaling according to the number of
+      !> daylight hours on a particular day at given latitude
+      rPotET_adj = rPotET * rN / 12.0_T_DBL
+
+      pGrd%Cells(iCol,iRow)%rReferenceET0 = rPotET_adj
 
     end do
 
   end do
-
-!  write(UNIT=LU_LOG,FMT=*) "=========POTET CALCULATION==========="
-!  write(UNIT=LU_STD_OUT,FMT="(A)") &
-!      "                                 min          mean           max"
-!  call stats_WriteMinMeanMax(LU_STD_OUT,"Potet ET (in)" , pGrd%Cells(:,:)%rReferenceET0 )
-!
-!  write(UNIT=LU_LOG,FMT=*) "=========POTET CALCULATION==========="
-
-  return
 
 end subroutine et_tm_ComputeET
 

@@ -24,10 +24,6 @@ module sm_thornthwaite_mather
   use stats
   use RLE
 
-#ifdef NETCDF_SUPPORT
-  use netcdf_support
-#endif
-
   implicit none
 
   real (kind=T_SGL), parameter :: APWL_Cap = -40.69_T_SGL
@@ -39,8 +35,8 @@ module sm_thornthwaite_mather
 
   ! parameters that allow the Thornthwaite-Mather tables (1957) to be
   ! represented by a single equation
-  real (kind=T_DBL), parameter :: rTM_slope_term = 0.478769194198665
-  real (kind=T_DBL), parameter :: rTM_exp_term = -1.03678439421169
+  real (kind=T_DBL), parameter :: rTM_slope_term = 0.478769194198665_T_DBL
+  real (kind=T_DBL), parameter :: rTM_exp_term = -1.03678439421169_T_DBL
 
 contains
 

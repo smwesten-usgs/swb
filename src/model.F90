@@ -8,7 +8,9 @@
 module model
 
   use types
+
   use data_factory
+  use datetime
   use swb_grid
   use stats
   use runoff_curve_number
@@ -24,12 +26,7 @@ module model
   use snow
   use water_balance
 
-
-#ifdef NETCDF_SUPPORT
-  use netcdf4_support
-#endif
-
-  implicit none
+   implicit none
 
   !! Counter for moving average water inputs
   integer (kind=T_INT) :: iDayCtr
@@ -148,7 +145,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     flush(LU_LOG)
     call Assert ( iStat == 0, &
       "Can't open time-series data file" )
-    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
+!    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
     call gregorian_date(pConfig%iCurrentJulianDay, &
       iTempYear, iTempMonth, iTempDay)
     pConfig%iYear = iTempYear
@@ -374,6 +371,8 @@ end if
   !-------------------------------------------------------------------------
   call gregorian_date(pConfig%iCurrentJulianDay + 1, &
     iTempYear, iTempMonth, iTempDay)
+
+  call MODEL_SIM%addDay()
 
   if(pConfig%iYear /= iTempYear) then
     close(unit=LU_TS)
@@ -1089,9 +1088,9 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
   real (kind=T_SGL) ::  rMonthlySnowRunoff
   real (kind=T_SGL) :: rFracRain
   real (kind=T_SGL) :: rTd, rTempDifference
-  real (kind=T_SGL) :: rDelta,rOmega_s,rD_r, rRa, rRs, rRn_mean, rN
-  real (kind=T_SGL) :: rRso, rRns, rRnl, rRn, rZenithAngle
-  real (kind=T_SGL) :: rLatitude
+  real (kind=T_DBL) :: rDelta,rOmega_s,rD_r, rRa, rRs, rRn_mean, rN, rRso
+  real (kind=T_SGL) :: rRns, rRnl, rRn, rZenithAngle
+  real (kind=T_DBL) :: rLatitude
   real (kind=T_SGL) :: rTempComp, rRadComp
   logical (kind=T_LOGICAL), parameter :: lENERGY_BALANCE = lFALSE
 
@@ -1206,7 +1205,7 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
   rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
   rTd = max(rTempDifference,rZERO)
 
-  rRns = net_shortwave_radiation_Rns(rRs, cel%rSnowAlbedo)
+  rRns = net_shortwave_radiation_Rns(rRs, real(cel%rSnowAlbedo, kind=T_DBL))
 
   rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
 
@@ -3283,8 +3282,7 @@ real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
     case ( CONFIG_ET_NONE )
       call Assert( .false._T_LOGICAL, "No ET configuration was specified" )
     case ( CONFIG_ET_THORNTHWAITE_MATHER )
-      call et_tm_ComputeET ( pGrd, pConfig, iDayOfYear, rRH, rMinRH, &
-        rWindSpd, rSunPct)
+      call et_tm_ComputeET ( pGrd, pConfig, iDayOfYear )
     case ( CONFIG_ET_TURC )
       call et_turc_ComputeET ( pGrd, iDayOfYear, rRH, rSunPct)
     case ( CONFIG_ET_JENSEN_HAISE )
@@ -3336,7 +3334,7 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
         lMatch = lFALSE
         cel => pGrd%Cells(iCol,iRow)
-        ! loop over all LAND USE types...
+        ! loop over all LAND use types...
         do k=1,size(pConfig%LU,1)
           pLU => pConfig%LU(k)
           if ( pLU%iLandUseType == cel%iLandUse ) then

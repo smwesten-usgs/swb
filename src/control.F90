@@ -6,10 +6,12 @@
 module control
 
   use types
+
   use model
   use swb_grid
   use stats
   use data_factory
+  use datetime
 
   contains
 
@@ -1705,7 +1707,8 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iStartYear = pTSt%iYear
         pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
         ! current julian day will be incremented in model_Main
-        pConfig%iCurrentJulianDay = pConfig%iStartJulianDay - 1
+!        pConfig%iCurrentJulianDay = pConfig%iStartJulianDay - 1
+         pConfig%iCurrentJulianDay = pConfig%iStartJulianDay
         close( unit=LU_TS )
       end if
       pConfig%lGriddedData = lFALSE
@@ -1724,6 +1727,7 @@ subroutine control_setModelOptions(sControlFile)
       call Assert( iStat == 0, &
          "Cannot read integer data value for beginning year of simulation" )
       pConfig%iStartJulianDay = julian_day ( pConfig%iStartYear, 1, 1)
+      call MODEL_SIM%tStartDate%calcJulianDay(iMonth=1, iDay=1, iYear=pConfig%iStartYear)
 
       call Chomp ( sRecord, sArgument )
       call Assert ( len_trim(sArgument) > 0, &
@@ -1733,7 +1737,10 @@ subroutine control_setModelOptions(sControlFile)
          "Cannot read integer data value for ending year of simulation" )
       call Assert( pConfig%iStartYear <= pConfig%iEndYear, &
          "Ending year must be equal to or greater than the beginning year" )
+      call MODEL_SIM%tEndDate%calcJulianDay(iMonth=1, iDay=1, iYear=pConfig%iStartYear)
       pConfig%iEndJulianDay = julian_day ( pConfig%iEndYear, 12, 31)
+      MODEL_SIM%iJulianDay = MODEL_SIM%tStartDate%iJulianDay
+      call MODEL_SIM%calcGregorianDate()
       pConfig%iCurrentJulianDay = pConfig%iStartJulianDay
       call gregorian_date(pConfig%iStartJulianDay, pConfig%iYear, &
          pConfig%iMonth, pConfig%iDay)
@@ -1747,7 +1754,7 @@ subroutine control_setModelOptions(sControlFile)
         write(UNIT=LU_LOG,FMT="(a,i4.4)") "Calling model_Main." &
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
-        ! actual call to "model_Solve" subroutine
+       ! actual call to "model_Solve" subroutine
         call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
       end do
 

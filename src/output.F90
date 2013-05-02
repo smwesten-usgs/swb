@@ -4,6 +4,7 @@
 module output
 
   use types
+
   use swb_grid
   use stats
   use RLE

@@ -15,6 +15,7 @@ module types
 #endif
 
   use iso_c_binding
+
   implicit none
 
   !> @defgroup types types
@@ -74,6 +75,7 @@ module types
   real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
   real (kind=T_DBL), parameter :: dpONE = 1.0_T_DBL
   real (kind=T_SGL), parameter :: rFREEZING = 32.0_T_SGL
+  real (kind=T_DBL), parameter :: dpFREEZING = 32.0_T_DBL
   real (kind=T_SGL), parameter :: rTEN = 10.0_T_SGL
   real (kind=T_SGL), parameter :: rHUNDRED = 100.0_T_SGL
   real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
@@ -1214,13 +1216,13 @@ module types
 !**********************************************************************
 
   interface approx_equal
-    module procedure approx_equal_sgl
-    module procedure approx_equal_dbl
+    module procedure :: approx_equal_sgl
+    module procedure :: approx_equal_dbl
   end interface approx_equal
 
   interface assert
-    module procedure assert_simple_sub
-    module procedure assert_module_details_sub
+    module procedure :: assert_simple_sub
+    module procedure :: assert_module_details_sub
   end interface assert
 
   interface asCharacter
@@ -1235,7 +1237,24 @@ module types
     module procedure chomp_default_sub
   end interface chomp
 
+  interface CtoF
+    module procedure CtoF_sgl_fn
+    module procedure CtoF_dbl_fn
+  end interface CtoF
+
+  interface FtoC
+    module procedure FtoC_sgl_fn
+    module procedure FtoC_dbl_fn
+  end interface FtoC
+
+  interface FtoK
+    module procedure FtoK_sgl_fn
+    module procedure FtoK_dbl_fn
+  end interface FtoK
+
+
 contains
+
 
 function nextunit(iLU)  result(iUnit)
 
@@ -2010,10 +2029,10 @@ end function newunit
 function polynomial(x,a) result(rV)
   ! Computes a polynomial in x, with coefficients in a.
   ! [ ARGUMENTS ]
-  real (kind=T_SGL),intent(in) :: x
-  real (kind=T_SGL),dimension(:) :: a
+  real (kind=T_DBL),intent(in) :: x
+  real (kind=T_DBL),dimension(:) :: a
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rV
+  real (kind=T_DBL) :: rV
   ! [ LOCALS ]
   integer (kind=T_INT) :: i
 
@@ -2022,7 +2041,15 @@ function polynomial(x,a) result(rV)
     rV = rV*x + a(i)
   end do
 
-  return
+!  rV = dpZERO
+
+!  do i=1,size(a)
+
+!    rV = rV + a(i) * x**(i-1)
+
+!  enddo
+
+
 end function polynomial
 
 
@@ -2227,7 +2254,7 @@ end function lf_model_GrowingSeason
 !
 ! SOURCE
 
- function FtoC(rF) result(rC)
+ function FtoC_sgl_fn(rF)   result(rC)
   ! Converts degrees Fahrenheit to degrees Celsius
   ! [ ARGUMENTS ]
   real (kind=T_SGL),intent(in) :: rF
@@ -2236,8 +2263,19 @@ end function lf_model_GrowingSeason
 
   rC = (rF - rFREEZING) * dpC_PER_F
 
-  return
-end function FtoC
+end function FtoC_sgl_fn
+
+
+ function FtoC_dbl_fn(rF)   result(rC)
+  ! Converts degrees Fahrenheit to degrees Celsius
+  ! [ ARGUMENTS ]
+  real (kind=T_DBL),intent(in) :: rF
+  ! [ RETURN VALUE ]
+  real (kind=T_DBL) :: rC
+
+  rC = (rF - dpFREEZING) * dpC_PER_F
+
+end function FtoC_dbl_fn
 
 !--------------------------------------------------------------------------
 !****f* types/CtoF
@@ -2255,7 +2293,7 @@ end function FtoC
 !
 ! SOURCE
 
- function CtoF(rC) result(rF)
+ function CtoF_sgl_fn(rC)   result(rF)
   ! Converts degrees Celsius to degrees Fahrenheit
   ! [ ARGUMENTS ]
   real (kind=T_SGL),intent(in) :: rC
@@ -2264,8 +2302,19 @@ end function FtoC
 
   rF = rC * dpF_PER_C + rFREEZING
 
-  return
-end function CtoF
+end function CtoF_sgl_fn
+
+
+ function CtoF_dbl_fn(rC)   result(rF)
+  ! Converts degrees Celsius to degrees Fahrenheit
+  ! [ ARGUMENTS ]
+  real (kind=T_DBL),intent(in) :: rC
+  ! [ RETURN VALUE ]
+  real (kind=T_DBL) :: rF
+
+  rF = rC * dpF_PER_C + dpFREEZING
+
+end function CtoF_dbl_fn
 
 !--------------------------------------------------------------------------
 !****f* types/FtoK
@@ -2283,7 +2332,7 @@ end function CtoF
 !
 ! SOURCE
 
- function FtoK(rF) result(rK)
+ function FtoK_sgl_fn(rF)    result(rK)
   ! Converts degrees Fahrenheit to kelvins
   ! [ ARGUMENTS ]
   real (kind=T_SGL),intent(in) :: rF
@@ -2292,8 +2341,18 @@ end function CtoF
 
   rK = (rF - rFREEZING) * dpC_PER_F + 273.15_T_SGL
 
-  return
-end function FtoK
+end function FtoK_sgl_fn
+
+ function FtoK_dbl_fn(rF)    result(rK)
+  ! Converts degrees Fahrenheit to kelvins
+  ! [ ARGUMENTS ]
+  real (kind=T_DBL),intent(in) :: rF
+  ! [ RETURN VALUE ]
+  real (kind=T_DBL) :: rK
+
+  rK = (rF - dpFREEZING) * dpC_PER_F + 273.15_T_DBL
+
+end function FtoK_dbl_fn
 
 !***
 !--------------------------------------------------------------------------

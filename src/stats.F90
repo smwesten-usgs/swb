@@ -15,6 +15,7 @@
 module stats
 
   use types
+
   use swb_grid
   use graph
   use RLE
@@ -201,7 +202,7 @@ subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatisti
       write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
       do i=1,iNUM_VARIABLES
         if(STAT_INFO(i)%lActive) &
-          write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMIN,i)
+          write(iLU,"(A, F16.6)" ,advance="no")  ",",rDaily(iMIN,i)
       enddo
 
     case(iMEAN)
@@ -209,7 +210,7 @@ subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatisti
       write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
       do i=1,iNUM_VARIABLES
         if(STAT_INFO(i)%lActive) &
-          write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMEAN,i)
+          write(iLU,"(A, F16.6)" ,advance="no")  ",",rDaily(iMEAN,i)
       enddo
 
     case(iMAX)
@@ -217,7 +218,7 @@ subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatisti
        write(iLU,"(i2.2,A1,i2.2,A1,i4)", advance="no") iMonth,"/",iDay,"/",iYear
        do i=1,iNUM_VARIABLES
          if(STAT_INFO(i)%lActive) &
-           write(iLU,"(A, F12.3)" ,advance="no")  ",",rDaily(iMAX,i)
+           write(iLU,"(A, F16.6)" ,advance="no")  ",",rDaily(iMAX,i)
        enddo
 
    end select
@@ -241,9 +242,9 @@ subroutine stats_WriteAnnualAccumulatorValuesCSV(iLU,iYear)
    write(iLU,"(i4)", advance="no") iYear
    do i=1,iNUM_VARIABLES
      if(STAT_INFO(i)%lActive .and. STAT_INFO(i)%lShowSum) then
-       write(iLU,"(A, F12.3)" ,advance="no")  ",",rAnnual(iSUM,i)
+       write(iLU,"(A, F16.6)" ,advance="no")  ",",rAnnual(iSUM,i)
      elseif(STAT_INFO(i)%lActive .and. (.not. STAT_INFO(i)%lShowSum )) then
-       write(iLU,"(A, F12.3)" ,advance="no")  ",",rAnnual(iMEAN,i)
+       write(iLU,"(A, F16.6)" ,advance="no")  ",",rAnnual(iMEAN,i)
      endif
    enddo
 

@@ -1,3 +1,4 @@
+@echo off
 :: cmake -G "Mi:: remove existing Cmake cache and directories
 :: remove existing Cmake cache and directories
 rmdir /S /Q CMake*
@@ -6,7 +7,7 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
 set MINGWBASE=c:\MinGW64
-set MINGW_VERSION=4.9.0
+set MINGW_VERSION=4.8.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 set R_HOME=C:\Program Files\R\R-2.15.2\bin
 
@@ -77,6 +78,8 @@ set CTEST_OUTPUT_ON_FAILURE=1
 
 cmake ..\..\.. -G "MinGW Makefiles" ^
 -DMINGWBASE=%MINGWBASE% ^
+-DMINGW_VERSION=%MINGW_VERSION% ^
+-DCOMPILER_TRIPLET=%COMPILER_TRIPLET% ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^

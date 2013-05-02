@@ -91,7 +91,7 @@ for (i in sort(unique(v_in$Year))) {
   
   for (j in 2:ncol(vb)) {
     
-    y<-vb[ ,j ]
+    y<-vb[ ,j ]  # these are the SWB values
     
     if ( any(colnames(vbb)==colnames(vb)[j] ) ) {
       x<-as.vector( unlist( vbb[which(colnames(vbb)==colnames(vb)[j] ) ]  ) )

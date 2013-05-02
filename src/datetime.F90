@@ -1,6 +1,7 @@
 module datetime
 
   use types
+
   implicit none
   private
 
@@ -56,8 +57,8 @@ module datetime
     procedure, public :: date_minus_date_fn
     generic, public :: operator( - ) => date_minus_date_fn
 
-    procedure, public :: increment => date_plus_day_sub
-    procedure, public :: decrement => date_minus_day_sub
+    procedure, public :: addDay => date_plus_day_sub
+    procedure, public :: subtractDay => date_minus_day_sub
 
     procedure, public :: prettydate => write_pretty_date_fn
     procedure, public :: listdatetime => write_list_datetime_fn
@@ -82,6 +83,13 @@ module datetime
 
   end type T_DATERANGE
 
+  type, extends (T_DATETIME) :: T_MODEL_SIM
+    type (T_DATETIME) :: tStartDate
+    type (T_DATETIME) :: tEndDate
+
+  end type T_MODEL_SIM
+
+
   ! the following values are determined by the date format string; defaults to MM/DD/YYYY
   character (len=14), private :: sDATE_FORMAT = "MM/DD/YYYY"
   character (len=14), public  :: sDEFAULT_DATE_FORMAT = "MM/DD/YYYY"
@@ -103,7 +111,7 @@ module datetime
   integer (kind=T_INT), private :: iScanSec1 = 7
   integer (kind=T_INT), private :: iScanSec2 = 8
 
-  type (T_DATETIME), public :: CURRENT_DATE
+  type (T_MODEL_SIM), public :: MODEL_SIM
 
 contains
 
@@ -414,26 +422,26 @@ subroutine calc_gregorian_date_sub(this)
   integer (kind=T_INT) :: iMonth
   integer (kind=T_INT) :: iDay
   integer (kind=T_INT) :: iYear
-  integer (kind=T_BYTE) :: iHour
-  integer (kind=T_BYTE) :: iMinute
-  integer (kind=T_BYTE) :: iSecond
+  integer (kind=T_INT) :: iHour
+  integer (kind=T_INT) :: iMinute
+  integer (kind=T_INT) :: iSecond
 
   real(kind=T_SGL) :: rHour, rMinute, rSecond
 
   call gregorian_date(this%iJulianDay, iYear, iMonth, iDay)
 
-  this%iYear = int(iYear, kind=T_SHORT)
-  this%iMonth = int(iMonth, kind=T_BYTE)
-  this%iDay = int(iDay, kind=T_BYTE)
+  this%iYear = iYear
+  this%iMonth = iMonth
+  this%iDay = iDay
 
   rHour = this%rFractionOfDay * 24_T_DBL
-  iHour = int(rHour, kind=T_BYTE)
+  iHour = iHour
 
   rMinute = (rHour - real(iHour, kind=T_SGL) ) * 1440_T_DBL
-  iMinute = int(rMinute, kind=T_BYTE)
+  iMinute = int(rMinute, kind=T_INT)
 
   rSecond = ( rMinute - real(iMinute, kind=T_SGL) ) * 86400_T_DBL
-  iSecond = int(rSecond, kind=T_BYTE)
+  iSecond = int(rSecond, kind=T_INT)
 
   this%iHour = iHour
   this%iMinute = iMinute

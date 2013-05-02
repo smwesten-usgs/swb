@@ -137,10 +137,10 @@ cellclass <- function(RootingDepth, AWC, latitude, grow_start, grow_stop) {
     lFREEZING = 32.
     
     TM_e <- TM_e(AirTemp=FtoC(cel$tmean), HeatIndex_I=cel$I, TM_a=cel$a)
-    cel$potet <- TM_ea(month, day, year,cel$daysinmonth,cel$latitude,TM_e) / 25.4
+    cel$potet <- TM_ea(month, day, year, cel$latitude,TM_e) / 25.4
     
     if(cel$tmean < lFREEZING) cel$potet <- 0.
-    
+
   }
 
   cel$opendaily <- function(filename) {
@@ -156,8 +156,8 @@ cellclass <- function(RootingDepth, AWC, latitude, grow_start, grow_stop) {
   
   cel$dumpdaily <- function(currentdate) {
     
-    SIGDIGITS <- 3
-    
+    SIGDIGITS <- 5
+      
     outputtext <- paste(format(currentdate, "%m/%d/%Y"),
           signif(cel$tmin, digits=SIGDIGITS),                        
           signif(cel$tmax, digits=SIGDIGITS),                        
@@ -196,11 +196,11 @@ cellclass <- function(RootingDepth, AWC, latitude, grow_start, grow_stop) {
 }
 
 
-TM_ea <- function(Month, Day, Year, daysinmonth, Latitude, TM_e) {
+TM_ea <- function(Month, Day, Year, Latitude, TM_e) {
   
   h <- get_daylight_hours(Month, Day, Year, Latitude)
-  numdaysinmonth <- daysinmonth[Month]
-  TM_ea <- TM_e * (1/numdaysinmonth) * (h/12)
+  TM_ea <- TM_e /30 * (h/12)
+  
   return(TM_ea)
   
 }
@@ -221,9 +221,13 @@ get_daylight_hours <- function(Month, Day, Year, Latitude) {
   
   frac_year <- fractional_year(Month, Day, Year)
   solar_decl <- solar_declination(frac_year)
+  
+  solar_decl <- 0.4093 * sin((2 * pi * day_of_year(Month, Day, Year)/365) - 1.405) 
+  
+  
   sunset_ang <- sunset_angle(Latitude, solar_decl)
   daylight_hrs <- daylight_hours(sunset_ang)
-      
+
   return(daylight_hrs)  
   
 }
@@ -349,6 +353,12 @@ TM_a <- function(HeatIndex_I) {
 }
 
 TM_e_hi_temp <- function(AirTemp) {
+
+  result <- -415.85 + 32.24*AirTemp - 0.43*AirTemp^2
+  return(result)  
+}
+
+TM_e_hi_temp_orig <- function(AirTemp) {
   
   # These values come from Fig 13, Thornthwaite and Mather (1948)
   temp <- seq(26.5,38,0.5)
@@ -363,15 +373,13 @@ TM_e_hi_temp <- function(AirTemp) {
 # UNADJUSTED Potential ET
 TM_e <- function(AirTemp, HeatIndex_I, TM_a) {
   
-  t <- AirTemp
-  Temp_degC <- FtoC(AirTemp)
   I <- HeatIndex_I
   a <- TM_a
   
-  if (Temp_degC < 26.5) {
-    result <- ifelse(t > 0, 16. * (10*t / I)^a, 0.)
+  if (AirTemp < 26.5) {
+    result <- ifelse(AirTemp > 0, 16. * (10*AirTemp / I)^a, 0.)
   } else {
-    result <- TM_e_hi_temp(Temp_degC)
+    result <- TM_e_hi_temp(AirTemp)
   }
   
   
