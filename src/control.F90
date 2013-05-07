@@ -329,6 +329,18 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    else if ( str_compare(sItem,"PRECIPITATION_SCALE") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_scale(asReal(sArgument))
+
+    else if ( str_compare(sItem,"PRECIPITATION_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_offset(asReal(sArgument))
+
+    else if ( str_compare(sItem,"PRECIPITATION_CONVERSION_FACTOR") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_conversion_factor(asReal(sArgument))
+
     else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_x = trim(sArgument)

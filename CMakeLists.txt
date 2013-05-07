@@ -131,23 +131,44 @@ if(CMAKE_HOST_WIN32)
              PROPERTY STRINGS "Release" "Debug")
 
      if( PLATFORM_TYPE MATCHES "x86" )
-       set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
-        CACHE FILEPATH "Location of NetCDF library")
-       set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
+       set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libnetcdf.a
+         CACHE FILEPATH "Location of NetCDF C library")
+       set(HDF5_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libhdf5.a
+         CACHE FILEPATH "Location of HDF5 library")
+       set(HDF5_HL_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libhdf5_hl.a
+         CACHE FILEPATH "Location of HDF5_HL library")
+
+       set(SZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libsz.a
+         CACHE FILEPATH "Location of szlib library")
+       set(ZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libzlib.a
+         CACHE FILEPATH "Location of zlib library")
+
        set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libproj4.a
-         CACHE FILEPATH "Location of PROJ4 C library")
+         CACHE FILEPATH "Location of PROJ4 library")
+
+
+       set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
        set(USER32_LIB ${MINGWBASE}/lib/libuser32.a)
        set(GDI32_LIB ${MINGWBASE}/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGWBASE}/lib/libopengl32.a)
        set(GCC_LIB ${MINGWBASE}/lib/libgcc.a)
      else()
-       set(NETCDF_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdff.a
-         CACHE FILEPATH "Location of NetCDF Fortran library")
        set(NETCDF_C_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libnetcdf.a
          CACHE FILEPATH "Location of NetCDF C library")
+       set(HDF5_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libhdf5.a
+         CACHE FILEPATH "Location of HDF5 library")
+       set(HDF5_HL_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libhdf5_hl.a
+         CACHE FILEPATH "Location of HDF5_HL library")
+       set(SZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libsz.a
+         CACHE FILEPATH "Location of szlib library")
+       set(ZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libzlib.a
+         CACHE FILEPATH "Location of zlib library")
+
        set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj4.a
-         CACHE FILEPATH "Location of PROJ4 C library")
+         CACHE FILEPATH "Location of PROJ4 library")
+
+
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x64/gfortran )
        set(USER32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libuser32.a)
@@ -160,6 +181,11 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_HL_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${SZLIB_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${ZLIB_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )

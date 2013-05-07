@@ -1,6 +1,8 @@
 !> @file
-!> @brief
-!> @brief
+!> @brief The output module contains a collection of routines that
+!> write output to disk.
+!> @brief The output module centralizes routines that write SSF files,
+ !> run-length-encoded (RLE) SWB binary files, and statistics files.
 module output
 
   use types

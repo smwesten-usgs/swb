@@ -1,23 +1,11 @@
 !> @file
 !> @brief  Contains a single module, swb_grid, which
 !>  provides support for gridded ASCII data file and data structure operations
-
+!> @ingroup grid
 
 !> @brief  Provides support for input and output of gridded ASCII data,
 !> as well as for creation and destruction of grid data structures (defined types).
 module swb_grid
-!!****h* SWB/grid
-! NAME
-!
-!   grid.f95 - Grid I/O and support routines for SWB model
-!
-! SYNOPSIS
-!   These routines provide generic grid I/O and grid functions for
-!   the SWB model.
-!
-! NOTES
-!
-!!***
 
   use types
 
@@ -25,9 +13,9 @@ module swb_grid
 
   implicit none
 
-  ! interface to C code that provides a simplified entry point to PROJ4
-  ! capabilities: it has been modified so that all C pointers are kept within the
-  ! C code; no pointers are returned to fortran
+  !> interface to C code that provides a simplified entry point to PROJ4
+  !> capabilities: it has been modified so that all C pointers are kept within the
+  !> C code; no pointers are returned to fortran
   interface
     function pj_init_and_transform(from_projection, to_projection, point_count, x, y) &
      bind(c,name='pj_init_and_transform')
@@ -119,35 +107,23 @@ module swb_grid
 contains
 
 !--------------------------------------------------------------------------
-!!****f* grid/grid_Create
-! NAME
-!   grid_Create - Creates a grid of a specified type.
-!
-! SYNOPSIS
-!   Creates a grid pointer object and allocates memory for the data
-!   associated with the grid (REAL, INTEGER, or T_CELL).
-!
-! INPUTS
-!   iNX - Number of grid cells in the x direction
-!   iNY - Number of grid cells in the y direction
-!   rX0 - X coordinate for the lower left corner of the grid
-!   rY0 - Y coordinate for the lower left corner of the grid
-!   rX1 - X coordinate for the upper right corner of the grid
-!   rY1 - Y coordinate for the upper right corner of the grid
-!   iDataType - Integer value corresponding to the type of data contained
-!     in the grid
-!
-! OUTPUTS
-!   pGrd - Pointer to a grid object
-!
-! NOTES
-!   Code refers to parameters that are set within types.f95.
-!
-! SOURCE
 
+!> @brief Creates a grid of a specified type.
+!>
+!>  Creates a grid pointer object and allocates memory for the data
+!>  associated with the grid (REAL, INTEGER, or T_CELL).
+!
+!> @param iNX Number of grid cells in the x direction
+!> @param iNY Number of grid cells in the y direction
+!> @param rX0 X coordinate for the lower left corner of the grid
+!> @param rY0 Y coordinate for the lower left corner of the grid
+!> @param rX1 X coordinate for the upper right corner of the grid
+!> @param rY1 Y coordinate for the upper right corner of the grid
+!> @param iDataType Integer value corresponding to the type of data contained in the grid
+!>
+!> @return pGrd Pointer to a grid object
 function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result ( pGrd )
-  !! Creates a new iNX-by-iNY T_GRID of data type iDataType, over the extent
-  !! (rX0,rY0)-(rX1,rY1), and returns a pointer.
+
   ! ARGUMENTS
   integer (kind=T_INT), intent(in) :: iNX, iNY        ! Grid dimensions
   real (kind=T_DBL), intent(in) :: rX0, rY0          ! Lower-left corner (world coords)
@@ -2289,7 +2265,7 @@ function grid_Convolve_sgl(rValues, iTargetCol, &
   integer (kind=T_INT) :: iColMin, iColMax
   integer (kind=T_INT) :: iKernelSize         ! i.e. 3, 5, 7, 9, 11, etc.
   integer (kind=T_INT) :: iIncValue
-  integer (kind=T_INT) :: iCol, iRow
+  integer (kind=T_INT) :: iCol, iRow, iRownum, iColnum
   real (kind=T_SGL) :: rKernelSum
 
   rKernelSum = rZERO
@@ -2322,8 +2298,15 @@ function grid_Convolve_sgl(rValues, iTargetCol, &
 
     do iCol=0,iKernelSize-1
       do iRow=0,iKernelSize-1
-        if(rValues(iCol+iColMin,iRow+iRowMin) >= 0. ) then
-          rRetVal = rRetVal + rValues(iCol+iColMin,iRow+iRowMin) * rKernel(iCol+1, iRow+1)
+
+        iRownum = iRow + iRowMin
+        iColnum = iCol + iColmin
+
+        if (iRownum > iNY .or. iColnum > iNX) then
+          cycle   ! our calculated row or column number is outside of the
+                  ! bounds of the rValues array
+        else if(rValues(iColnum,iRownum) >= 0. ) then
+          rRetVal = rRetVal + rValues(iColnum,iRownum) * rKernel(iCol+1, iRow+1)
           rKernelSum = rKernelSum + rKernel(iCol+1, iRow+1)
         endif
       enddo

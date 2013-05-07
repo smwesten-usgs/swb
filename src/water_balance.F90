@@ -1,5 +1,5 @@
 !> @file
-!> @brief Contains a single module, @ref sm_thornthwaite_mather, which estimates runoff by
+!> @brief Contains a single module, @ref water_balance, which estimates runoff by
 !> means of the NRCS/SCS curve number method.
 
 !> @brief Performs the actual soil-moisture balance once precip, snowmelt, runoff, and ET have
@@ -7,7 +7,6 @@
 !> 1) Calulated ET and Thornthwaite and Mathers' (1957) tables;
 !> 2) Crop coefficients for all vegetation classes and soil water balance
 !>    calculated as per FAO56.
-
 module water_balance
 
   use types
@@ -26,17 +25,18 @@ module water_balance
 
 contains
 
+
+! Handles the soil moisture calculations using the model grid 'pGrd' and
+! the water-loss table in gWLT
+!
+! The water loss values are looked up in the gWLT table by interpolation
+! and by searching the columns in the grid according to the water capacity
+! in each cell.
+!
+! During the calculations, the model grid receives updates to the
+! monthly recharge and annual recharge values.
 subroutine calculate_water_balance ( pGrd, pConfig, &
       iDayOfYear, iDay, iMonth, iYear)
-  !! Handles the soil moisture calculations using the model grid 'pGrd' and
-  !! the water-loss table in gWLT
-  !!
-  !! The water loss values are looked up in the gWLT table by interpolation
-  !! and by searching the columns in the grid according to the water capacity
-  !! in each cell.
-  !!
-  !! During the calculations, the model grid receives updates to the
-  !! monthly recharge and annual recharge values.
   ! [ ARGUMENTS ]
   type (T_GENERAL_GRID),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains

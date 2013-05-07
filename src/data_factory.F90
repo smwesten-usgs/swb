@@ -1,3 +1,15 @@
+!> @file
+!> @brief  This module provides a layer of abstraction between the
+!> SWB data structures and the source of the data being accessed. The idea is that
+!> when SWB requests updated grid values, this is the module that requests data
+!> from the appropriate source, whether that is an ARC ASCII grid or NetCDF, etc.
+!> @ingroup data
+
+!> @namespace data_factory
+!> @brief  Provide a uniform way from within the main SWB code to access data,
+!> for example, call mydata$getvalues(), which will retrieve data from the
+!> appropriate underlying source, whether that is a series of ARC ASCII grids,
+!> a single NetCDF file, or a series of NetCDF files.
 module data_factory
 
   use types
@@ -9,6 +21,7 @@ module data_factory
   implicit none
   private
 
+  !> @class T_DATA_GRID
   type, public :: T_DATA_GRID
     integer (kind=T_INT) :: iSourceDataForm  ! constant, static grid, dynamic grid
     integer (kind=T_INT) :: iSourceDataType  ! real, short, integer, etc.
@@ -20,7 +33,7 @@ module data_factory
     character (len=256) :: sFilenameTemplate    ! e.g. %Y_%#_prcp.nc
     character (len=256) :: sSourceFilename      ! e.g. 1980_00_prcp.nc
     character (len=256) :: sOldFilename = "NA"  ! e.g. 1980_00_prcp.nc
-    integer (kind=T_INT) :: iFileCount = 0
+    integer (kind=T_INT) :: iFileCount = -1
     integer (kind=T_INT) :: iFileCountYear = -9999
     logical (kind=T_LOGICAL) :: lProjectionDiffersFromBase = lFALSE
     real (kind=T_SGL) :: rMinAllowedValue = 1.0
@@ -70,6 +83,10 @@ module data_factory
                              init_const_real, &
                              init_gridded
 
+    procedure :: set_scale => set_scale_sub
+    procedure :: set_offset => set_offset_sub
+    procedure :: set_conversion_factor => set_conversion_factor_sub
+
     procedure :: getvalues_constant => getvalues_constant_sub
     procedure :: getvalues_gridded => getvalues_gridded_sub
     procedure :: getvalues_netcdf => getvalues_dynamic_netcdf_sub
@@ -98,7 +115,7 @@ module data_factory
 
   end type T_DATA_GRID
 
-  type (T_DATA_GRID), dimension(9), public, target :: DAT
+  type (T_DATA_GRID), dimension(10), public, target :: DAT
 
   integer (kind=T_INT), parameter, public :: LANDUSE_DATA = 1
   integer (kind=T_INT), parameter, public :: AWC_DATA = 2
@@ -109,7 +126,7 @@ module data_factory
   integer (kind=T_INT), parameter, public :: TMAX_DATA = 7
   integer (kind=T_INT), parameter, public :: REL_HUM_DATA = 8
   integer (kind=T_INT), parameter, public :: SOL_RAD_DATA = 9
-
+  integer (kind=T_INT), parameter, public :: WIND_VEL_DATA = 10
 
   integer (kind=T_INT), parameter :: NETCDF_FILE_OPEN = 27
   integer (kind=T_INT), parameter :: NETCDF_FILE_CLOSED = 42
@@ -643,14 +660,17 @@ end subroutine set_constant_value_real
     character (len=256) :: sNewFilename
     character (len=256) :: sUppercaseFilename
     character (len=256) :: sCWD
-    integer (kind=T_INT) :: iPos_Y, iPos_D, iPos_M, iPos, iLen, iCount
+    character (len=256) :: sBuf2
+    integer (kind=T_INT) :: iPos_Y, iPos_D, iPos_M, iPos, iPos2, iLen, iCount
+    integer (kind=T_INT) :: iNumZeros, iNumZerosToPrint
     logical (kind=T_LOGICAL) :: lMatch
     logical (kind=T_LOGICAL) :: lExist
     character (len=2) :: sBuf
+    character (len=12) :: sNumber
     character (len=1) :: sDelimiter
     integer (kind=T_INT) :: iStatus
 
-    iPos_Y = 0; iPos_M = 0; iPos_D = 0; iPos = 0
+    iPos_Y = 0; iPos_M = 0; iPos_D = 0; iPos = 0; sNumber = ""
 
     ! EXAMPLES of the kinds of templates that we need to be able to understand:
     ! tars1980\prcp.nc   template => "tars%Y\prcp.nc"
@@ -680,13 +700,25 @@ end subroutine set_constant_value_real
 
       endif
 
-      iPos = index(sNewFilename, "%#")
+      iPos = index(sNewFilename, "#")
 
       if (iPos > 0) then
+
+        iPos2 = index(sNewFilename(1:iPos),"%", BACK=lTRUE)
+        sBuf2 = trim(asCharacter(this%iFileCount))
+        iNumZeros = max(0, iPos - iPos2 - 1)
+
+        if (iNumZeros > 0) then
+          iNumZerosToPrint = max(0,iNumZeros - len_trim(sBuf2) + 1)
+          sNumber = repeat("0", iNumZerosToPrint )//trim(sBuf2)
+        else
+          sNumber = repeat("0", iNumZeros - len_trim(sBuf2) )//trim(sBuf2)
+        endif
+
         lMatch = lTRUE
         iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos-1)//trim(asCharacter(this%iFileCount)) &
-                       //sNewFilename(iPos+2:iLen)
+        sNewFilename = sNewFilename(1:iPos-2-iNumZeros)//trim(sNumber) &
+                       //sNewFilename(iPos+1:iLen)
       endif
 
       if (present(iMonth) ) iPos_M = &
@@ -812,11 +844,16 @@ end subroutine set_constant_value_real
 
         this%lPerformFullInitialization = lFALSE
 
-      else
+      else  !> Projection settings can be left along; read values from new
+            !> NetCDF file with same grid boundaries, projection, etc.
 
         call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
 
         this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
+
+        !> new file likely has different time dimensions at the least
+        call nc_populate_dimension_struct( NCFILE=this%NCFILE )
+        call nc_populate_variable_struct( NCFILE=this%NCFILE )
 
         call netcdf_update_time_range(NCFILE=this%NCFILE)
 
@@ -890,6 +927,39 @@ end subroutine set_constant_value_real
      this%sSourcePROJ4_string = sPROJ4_string
 
   end subroutine set_PROJ4_string
+
+!----------------------------------------------------------------------
+
+subroutine set_scale_sub(this, rScale)
+
+   class (T_DATA_GRID) :: this
+   real (kind=T_SGL) :: rScale
+
+   this%rScale = rScale
+
+end subroutine set_scale_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_conversion_factor_sub(this, rConversionFactor)
+
+   class (T_DATA_GRID) :: this
+   real (kind=T_SGL) :: rConversionFactor
+
+   this%rConversionFactor = rConversionFactor
+
+end subroutine set_conversion_factor_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_offset_sub(this, rOffset)
+
+   class (T_DATA_GRID) :: this
+   real (kind=T_SGL) :: rOffset
+
+   this%rOffset = rOffset
+
+end subroutine set_offset_sub
 
 !----------------------------------------------------------------------
 

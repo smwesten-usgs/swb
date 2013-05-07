@@ -740,6 +740,7 @@ module types
   integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
 
+  !> @anchor const_runoffCalc
   !> @name Constants: Runoff calculation
   !> Options controlling the selection of a runoff calculation algorithm
   !> @{
@@ -1231,6 +1232,12 @@ module types
     module procedure real2char
     module procedure dbl2char
   end interface asCharacter
+
+  interface asReal
+    module procedure char2real
+    module procedure int2real
+    module procedure dbl2real
+  end interface asReal
 
   interface chomp
     module procedure chomp_delim_sub
@@ -2625,6 +2632,42 @@ function int2char(iValue)  result(sBuf)
   return
 
 end function int2char
+
+!--------------------------------------------------------------------------
+
+!> Convert an character value into a real
+function char2real(sValue)  result(rValue)
+
+  character (len=256) :: sValue
+  real (kind=T_SGL) :: rValue
+
+  read(UNIT=sValue,FMT=*) rValue
+
+end function char2real
+
+!--------------------------------------------------------------------------
+
+!> Convert an int value into a real
+function int2real(iValue)  result(rValue)
+
+  integer (kind=T_INT) :: iValue
+  real (kind=T_SGL) :: rValue
+
+  rValue = real(iValue, kind=T_SGL)
+
+end function int2real
+
+!--------------------------------------------------------------------------
+
+!> Convert an dbl value into a real
+function dbl2real(dpValue)  result(rValue)
+
+  real (kind=T_DBL) :: dpValue
+  real (kind=T_SGL) :: rValue
+
+  rValue = real(dpValue, kind=T_SGL)
+
+end function dbl2real
 
 !--------------------------------------------------------------------------
 

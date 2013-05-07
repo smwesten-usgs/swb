@@ -1,3 +1,10 @@
+!> @file
+!> @brief  Contains a single module, @ref datetime, which
+!> contains all time and date-related routines as well as the
+!> @ref T_DATETIME class.
+
+!> @namespace datetime
+!> @brief  This module contains all time and date-related routines as well as the @ref T_DATETIME class.
 module datetime
 
   use types
@@ -5,6 +12,7 @@ module datetime
   implicit none
   private
 
+  !> @class T_DATETIME
   type T_DATETIME
 
     integer (kind=T_INT) :: iMonth = 1

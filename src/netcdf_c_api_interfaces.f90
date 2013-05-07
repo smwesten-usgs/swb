@@ -1,3 +1,10 @@
+!> @file
+!> @brief  This module provides Fortran interfaces to the NetCDF C API.
+
+!> @brief Provides Fortran interfaces to the NetCDF C API. This approach
+!> is much more straightforward than using the old Fortran 90 NetCDF interface,
+!> which was built on top of the Fortran 77 interface, which (finally) was
+!> built atop the C interface.
 module netcdf_c_api_interfaces
 
   use,intrinsic :: iso_c_binding

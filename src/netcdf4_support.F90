@@ -1,5 +1,5 @@
 !> @file
-!> @brief  Contains a single module, @ref netcdf_support, which
+!> @brief  Contains a single module, @ref netcdf4_support, which
 !>  provides support for use of NetCDF files as input or output.
 
 !> @brief Provides support for use of NetCDF files as input for time-varying,
@@ -166,6 +166,12 @@ function netcdf_date_to_index( NCFILE, iJulianDay )  result(iStart)
   integer (kind=c_size_t) :: iStart
 
   iStart = int(iJulianDay - NCFILE%iFirstDayJD, kind=c_size_t)
+
+  print *, "start idx: ", iStart, iJulianDay, NCFILE%iFirstDayJD, trim(__FILE__), __LINE__
+
+  call assert(iStart >=0, "Problem finding the index number of the time " &
+    //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+
 
 end function netcdf_date_to_index
 
@@ -617,15 +623,15 @@ subroutine nc_get_x_and_y(NCFILE)
 
   NCFILE%rX_Coords = nc_get_variable_double(NCFILE=NCFILE, &
        iNC_VarID=pNC_VAR_x%iNC_VarID, &
-       iNC_Start=[0], &
+       iNC_Start=[0_c_size_t], &
        iNC_Count=[pNC_DIM_x%iNC_DimSize], &
-       iNC_Stride=[1])
+       iNC_Stride=[1_c_size_t])
 
   NCFILE%rY_Coords = nc_get_variable_double(NCFILE=NCFILE, &
        iNC_VarID=pNC_VAR_y%iNC_VarID, &
-       iNC_Start=[0], &
+       iNC_Start=[0_c_size_t], &
        iNC_Count=[pNC_DIM_y%iNC_DimSize], &
-       iNC_Stride=[1])
+       iNC_Stride=[1_c_size_t])
 
   iLowerBound = lbound(NCFILE%rX_Coords, 1)
   iUpperBound = ubound(NCFILE%rX_Coords, 1)
@@ -666,8 +672,8 @@ subroutine netcdf_open_file(NCFILE, sFilename, iLU)
   ! [ LOCALS ]
   logical (kind=T_LOGICAL) :: lFileOpen
 
-  write(UNIT=LU_LOG,FMT="(a)") "Attempting to open READONLY NetCDF file: " &
-    //dquote(sFilename)
+  call echolog("Attempting to open READONLY NetCDF file: " &
+    //dquote(sFilename))
 
   call nc_trap( nc_open(sFilename//c_null_char, &
                 NC_READONLY, NCFILE%iNCID), __FILE__, __LINE__ )
@@ -675,8 +681,8 @@ subroutine netcdf_open_file(NCFILE, sFilename, iLU)
   call nc_trap( nc_inq_format(ncid=NCFILE%iNCID, formatp=NCFILE%iFileFormat), &
                __FILE__, __LINE__)
 
-  write(UNIT=LU_LOG,FMT="(a,/,a,i0,/,a)") "   Succeeded.","  ncid: ",NCFILE%iNCID, &
-         "  format: "//trim(NETCDF_FORMAT_STRING(NCFILE%iFileFormat) )
+  call echolog("   Succeeded.  ncid: "//trim(asCharacter(NCFILE%iNCID)) &
+         //"  format: "//trim(NETCDF_FORMAT_STRING(NCFILE%iFileFormat) ) )
 
   NCFILE%sFilename = sFilename
 
@@ -1024,9 +1030,15 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
       if (present(iValues) ) then
         iValues = reshape(source=int(i2TempData, kind=T_INT), &
                           shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)] )
+
+        iValues = transpose(reshape(source=int(i2TempData, kind=T_INT), &
+                  shape=[NCFILE%iCount(NC_Y), NCFILE%iCount(NC_X)], &
+                       order=[2, 1]))
+
       else
-        rValues = reshape(source=real(i2TempData, kind=T_SGL), &
-                          shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)] )
+        rValues = transpose(reshape(source=int(i2TempData, kind=T_SGL), &
+                  shape=[NCFILE%iCount(NC_Y), NCFILE%iCount(NC_X)], &
+                       order=[2, 1]))
       endif
 
       deallocate(i2TempData)
@@ -1044,7 +1056,7 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
       if (present(iValues) ) then
 
         iValues = transpose(reshape(source=int(rTempData, kind=T_INT), &
-                          shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)], &
+                          shape=[NCFILE%iCount(NC_Y), NCFILE%iCount(NC_X)], &
                           order=[2, 1]))
       else
 
@@ -1112,9 +1124,9 @@ function nc_get_variable_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
   integer (kind=c_int) :: iNC_VarID
-  integer (kind=c_int), dimension(:) :: iNC_Start
+  integer (kind=c_size_t), dimension(:) :: iNC_Start
   integer (kind=c_size_t), dimension(:) :: iNC_Count
-  integer (kind=c_int), dimension(:) :: iNC_Stride
+  integer (kind=c_size_t), dimension(:) :: iNC_Stride
   real (kind=c_double), dimension(:), allocatable :: dpNC_Vars
 
   type (c_ptr) :: pCount, pStart, pStride
@@ -1308,6 +1320,7 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
   integer (kind=T_INT) :: iDimSize
   integer (kind=T_INT) :: iDimIndex
   integer (kind=c_size_t) :: iStride
+  integer (kind=c_size_t) :: iCount
   integer (kind=c_short), dimension(2) :: spValues
   integer (kind=c_int), dimension(2) :: ipValues
   real (kind=c_float), dimension(2) :: rpValues
@@ -1319,12 +1332,17 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
       trim(__FILE__), __LINE__)
 
   pNC_VAR => NCFILE%NC_VAR(iVarIndex)
+  iDimSize = nc_return_DimSize(NCFILE, pNC_VAR%iNC_DimID(0) )
 
-  iDimIndex = netcdf_return_DimIndex( NCFILE, pNC_VAR%iNC_DimID(0) )
+  print *, iDimSize, " | ", trim(__FILE__), __LINE__
 
-  pNC_DIM => NCFILE%NC_DIM( iDimIndex )
-  iDimSize = pNC_DIM%iNC_DimSize
-  iStride = int(iDimSize, kind=c_size_t) - 1_c_size_t
+  if (iDimSize > 1) then
+    iCount = 2_c_size_t
+    iStride = int(iDimSize, kind=c_size_t) - 1_c_size_t
+  else
+    iCount = 1_c_size_t
+    iStride = 1_c_size_t
+  endif
 
   select case (pNC_VAR%iNC_VarType )
 
@@ -1333,7 +1351,7 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
       spValues = nc_get_variable_short(NCFILE=NCFILE, &
         iNC_VarID=pNC_VAR%iNC_VarID, &
         iNC_Start=[0_c_size_t], &
-        iNC_Count=[2_c_size_t], &
+        iNC_Count=[iCount], &
         iNC_Stride=[iStride] )
 
       dpValues = real(spValues, kind=c_double)
@@ -1342,17 +1360,29 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
     case (NC_FLOAT)
 
+      rpValues = nc_get_variable_float(NCFILE=NCFILE, &
+        iNC_VarID=pNC_VAR%iNC_VarID, &
+        iNC_Start=[0_c_size_t], &
+        iNC_Count=[iCount], &
+        iNC_Stride=[iStride] )
+
+      dpValues = real(rpValues, kind=c_double)
+
     case (NC_DOUBLE)
 
       dpValues = nc_get_variable_double(NCFILE=NCFILE, &
         iNC_VarID=pNC_VAR%iNC_VarID, &
-        iNC_Start=[0], &
-        iNC_Count=[2_c_size_t], &
-        iNC_Stride=[iDimSize-1] )
+        iNC_Start=[0_c_size_t], &
+        iNC_Count=[iCount], &
+        iNC_Stride=[iStride] )
 
     case default
 
   end select
+
+  !> if there is only one day of data in this NetCDF file, the
+  !> first day equals the last day
+  if (iCount == 1) dpValues(2) = dpValues(1)
 
 end function netcdf_get_first_and_last
 
