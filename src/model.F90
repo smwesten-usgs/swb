@@ -1949,15 +1949,18 @@ function rf_model_CellRunoff(pConfig, cel, iDayOfYear) result(rOutFlow)
 
   if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_CURVE_NUMBER) then
     rOutFlow = runoff_CellRunoff_CurveNumber(pConfig, cel, iDayOfYear)
-    call Assert(rOutFlow >= rZERO,"CN outflow is negative", &
-      TRIM(__FILE__),__LINE__)
   else if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_GREEN_AMPT) then
     rOutFlow = rf_model_CellRunoff_GreenAmpt(pConfig, cel, iDayOfYear)
-    call Assert(rOutFlow >= rZERO,"Green-Ampt outflow is negative", &
-      TRIM(__FILE__),__LINE__)
   end if
 
-  return
+  if (rOutFlow < rZERO) then
+    call echolog("gross precip: " &
+      //trim(asCharacter(cel%rGrossPrecip))//"~outflow: " &
+      //trim(asCharacter(rOutflow)))
+    call assert(lFALSE, "Negative outflow calculated for cell!", &
+      trim(__FILE__), __LINE__)
+  endif
+
 end function rf_model_CellRunoff
 
 !!***
@@ -3085,7 +3088,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iSoilGroup = pGrd%iData
-!!  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
+  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
 
 !  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
 !  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &

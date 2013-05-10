@@ -1395,8 +1395,6 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   ! [ LOCALS ]
   integer (kind=T_SGL) :: iRetVal
-  character (len=256) :: sErrorMessage
-  logical (kind=T_LOGICAL) :: lFound
   integer (kind=T_INT) :: i
   logical (kind=T_LOGICAL), dimension(pGrd%iNY, pGrd%iNX) :: lMask
 
@@ -1409,8 +1407,6 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   !x = pack(pGrd%rX, lMask)
   !y = pack(pGrd%rY, lMask)
-
-  sErrorMessage = repeat(" ",256)
 
   !> PROJ4 expects unprojected coordinates (i.e. lat lon) to be provided
   !> in RADIANS. Therefore, we convert to radians prior to the call...
@@ -1426,7 +1422,42 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
                                   csToPROJ4//C_NULL_CHAR, &
                                   pGrd%iNumGridCells, pGrd%rX, pGrd%rY)
 
-  lFound = lFALSE
+  call grid_CheckForPROJ4Error(iRetVal, sFromPROJ4, sToPROJ4)
+
+  ! transfer coordinate values back into an array structure
+!  pGrd%rY = unpack(y, lMask, pGrd%rY)
+
+  ! transfer coordinate values back into an array structure
+!  pGrd%rX = unpack(x, lMask, pGrd%rX)
+
+  ! now update the grid boundaries based on the transformed coordinate values
+  pGrd%rGridCellSize = ( maxval(pGrd%rX) - minval(pGrd%rX) ) &
+             / real(pGrd%iNX - 1, kind=T_DBL)
+  pGrd%rX0 = minval(pGrd%rX) - pGrd%rGridCellSize / 2_T_SGL
+  pGrd%rX1 = maxval(pGrd%rX) + pGrd%rGridCellSize / 2_T_SGL
+  pGrd%rY0 = minval(pGrd%rY) - pGrd%rGridCellSize / 2_T_SGL
+  pGrd%rY1 = maxval(pGrd%rY) + pGrd%rGridCellSize / 2_T_SGL
+
+  ! finally, change the projection string to reflect the new coordinate system
+  pGrd%sPROJ4_string = trim(sToPROJ4)
+
+end subroutine grid_Transform
+
+!--------------------------------------------------------------------------
+
+subroutine grid_CheckForPROJ4Error(iRetVal, sFromPROJ4, sToPROJ4)
+
+  ! [ ARGUMENTS ]
+  integer (kind=T_INT) :: iRetVal
+  character (len=*) :: sFromPROJ4
+  character (len=*) :: sToPROJ4
+
+  ! [ LOCALS ]
+  integer (kind=T_INT) :: i
+  logical (kind=T_LOGICAL) :: lFound
+  character (len=256) :: sErrorMessage
+
+  sErrorMessage = ""
 
   if (iRetVal /= 0) then
 
@@ -1449,24 +1480,7 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   endif
 
-  ! transfer coordinate values back into an array structure
-!  pGrd%rY = unpack(y, lMask, pGrd%rY)
-
-  ! transfer coordinate values back into an array structure
-!  pGrd%rX = unpack(x, lMask, pGrd%rX)
-
-  ! now update the grid boundaries based on the transformed coordinate values
-  pGrd%rGridCellSize = ( maxval(pGrd%rX) - minval(pGrd%rX) ) &
-             / real(pGrd%iNX - 1, kind=T_DBL)
-  pGrd%rX0 = minval(pGrd%rX) - pGrd%rGridCellSize / 2_T_SGL
-  pGrd%rX1 = maxval(pGrd%rX) + pGrd%rGridCellSize / 2_T_SGL
-  pGrd%rY0 = minval(pGrd%rY) - pGrd%rGridCellSize / 2_T_SGL
-  pGrd%rY1 = maxval(pGrd%rY) + pGrd%rGridCellSize / 2_T_SGL
-
-  ! finally, change the projection string to reflect the new coordinate system
-  pGrd%sPROJ4_string = trim(sToPROJ4)
-
-end subroutine grid_Transform
+end subroutine grid_CheckForPROJ4Error
 
 !!***
 !--------------------------------------------------------------------------

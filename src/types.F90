@@ -2629,8 +2629,6 @@ function int2char(iValue)  result(sBuf)
   write(UNIT=sBuf,FMT="(i14)") iValue
   sBuf = ADJUSTL(sBuf)
 
-  return
-
 end function int2char
 
 !--------------------------------------------------------------------------
@@ -2723,6 +2721,36 @@ function dbl2char(rValue, sFmt)  result(sBuf)
   sBuf = ADJUSTL(sBuf)
 
 end function dbl2char
+
+!--------------------------------------------------------------------------
+
+elemental function deg2rad(rDeg) result(rRad)
+
+  ! [ ARGUMENTS ]
+  real (kind=T_DBL), intent(in) :: rDeg
+
+  ! [ LOCALS ]
+  real (kind=T_DBL) :: rRad
+
+  rRad = dpPI / 180_T_DBL * rDeg
+
+end function deg2rad
+
+!--------------------------------------------------------------------------
+
+elemental function rad2deg(rRad) result(rDeg)
+
+  ! [ ARGUMENTS ]
+  real (kind=T_DBL), intent(in) :: rRad
+
+  ! [ LOCALS ]
+  real (kind=T_DBL) :: rDeg
+
+  rDeg = rRad * 180_T_DBL / dpPI
+
+end function rad2deg
+
+!--------------------------------------------------------------------------
 
 !> @brief Return the number of days in the given year.
 !>
@@ -2937,16 +2965,14 @@ function fortran_to_c_string( sText )  result(cCharacterString)
   implicit none
 
   character (len=*) :: sText
-  character(len=:), allocatable :: cCharacterString
+  character(len=len_trim(sText)+1) :: cCharacterString
   integer (kind=T_INT) :: iIndex
 
   iIndex = index(string=sText, substring=c_null_char)
 
   if (iIndex == 0) then
-    allocate( character (len=len(sText)+1 ):: cCharacterString )
-    cCharacterString = sText//c_null_char
+    cCharacterString = trim(sText)//c_null_char
   else
-    allocate( character (len=iIndex) :: cCharacterString )
     cCharacterString  = sText(1:iIndex)
   endif
 

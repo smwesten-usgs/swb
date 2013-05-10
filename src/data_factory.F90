@@ -36,8 +36,11 @@ module data_factory
     integer (kind=T_INT) :: iFileCount = -1
     integer (kind=T_INT) :: iFileCountYear = -9999
     logical (kind=T_LOGICAL) :: lProjectionDiffersFromBase = lFALSE
-    real (kind=T_SGL) :: rMinAllowedValue = 1.0
-    real (kind=T_SGL) :: rMaxAllowedValue = 1.0e6
+    real (kind=T_SGL) :: rMinAllowedValue = -rBIGVAL     ! default condition is to impose
+    real (kind=T_SGL) :: rMaxAllowedValue = rBIGVAL      ! no bounds on data
+    real (kind=T_SGL) :: rMissingValuesCode = -99999.0
+    character (len=2) :: sMissingValuesOperator = "<="
+    integer (kind=T_INT) :: iMissingValuesAction = 0
     real (kind=T_SGL) :: rScale = rONE
     real (kind=T_SGL) :: rOffset = rZERO
     real (kind=T_SGL) :: rConversionFactor = rONE
@@ -110,7 +113,13 @@ module data_factory
     procedure :: dump_data_structure => dump_data_structure_sub
     procedure :: transfer_from_native => transform_grid_to_grid
 
-    procedure :: enforce_limits => data_GridEnforceLimits_int
+    procedure :: enforce_limits_real => data_GridEnforceLimits_real
+    procedure :: enforce_limits_int => data_GridEnforceLimits_int
+    generic :: enforce_limits => enforce_limits_real, enforce_limits_int
+
+    procedure :: handle_missing_values_real => data_GridHandleMissingData_real
+    generic :: handle_missing_values => handle_missing_values_real
+
     procedure :: calc_project_boundaries => calc_project_boundaries
 
   end type T_DATA_GRID
@@ -130,6 +139,9 @@ module data_factory
 
   integer (kind=T_INT), parameter :: NETCDF_FILE_OPEN = 27
   integer (kind=T_INT), parameter :: NETCDF_FILE_CLOSED = 42
+
+  integer (kind=T_INT), parameter, public :: MISSING_VALUES_ZERO_OUT = 0
+  integer (kind=T_INT), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
 
 contains
 
@@ -302,13 +314,13 @@ end subroutine initialize_netcdf_data_object_sub
 !----------------------------------------------------------------------
 
   subroutine getvalues_sub( this, pGrdBase, iMonth, iDay, iYear, iJulianDay, &
-      rValues, iValues)
+    iValues, rValues)
 
     class (T_DATA_GRID) :: this
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
     integer (kind=T_INT), intent(in), optional :: iMonth, iDay, iYear, iJulianDay
-    real (kind=T_SGL), dimension(:,:), optional :: rValues
     integer (kind=T_INT), dimension(:,:), optional :: iValues
+    real (kind=T_SGL), dimension(:,:), optional :: rValues
 
     ! [ LOCALS ]
     integer (kind=c_int) :: iNumDaysToPad
@@ -360,12 +372,19 @@ end subroutine initialize_netcdf_data_object_sub
 
     endif
 
-    if (present(rValues)) &
+    if (present(rValues)) then
+
+
        rValues = ( pGrdBase%rData * this%rScale + this%rOffset ) * this%rConversionFactor
 
-    if (present(iValues)) &
-       iValues = ( pGrdBase%iData * int(this%rScale, kind=T_INT)  &
+    endif
+
+    if (present(iValues)) then
+
+        iValues = ( pGrdBase%iData * int(this%rScale, kind=T_INT)  &
                                   + int(this%rOffset,kind=T_INT) ) * this%rConversionFactor
+
+    endif
 
   end subroutine getvalues_sub
 
@@ -488,8 +507,8 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
       this%lGridHasChanged = lTRUE
 
-      ! TODO *** expand to include limits for real grids as well
-      if (this%iSourceDataType == DATATYPE_INT) call this%enforce_limits()
+      call this%handle_missing_values(pGrdBase%rData)
+      call this%enforce_limits(pGrdBase%rData)
 
       call this%transfer_from_native( pGrdBase )
 
@@ -857,33 +876,38 @@ end subroutine set_constant_value_real
 
         call netcdf_update_time_range(NCFILE=this%NCFILE)
 
-        if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
-
-          call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
-            //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
-          call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
-
-          call assert (lFALSE, "Date range for currently open NetCDF file" &
-             //" does not include the present simulation date.", &
-             trim(__FILE__), __LINE__)
-
-        endif
-
       endif
 
     endif
 
+    if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
+
+      call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
+        //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
+
+      call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
+
+      call assert (lFALSE, "Date range for currently open NetCDF file" &
+         //" does not include the present simulation date.", &
+         trim(__FILE__), __LINE__)
+
+    endif
+
+   print *, trim(__FILE__), __LINE__
     call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
                                            iJulianDay=iJulianDay)
 
+  print *, trim(__FILE__), __LINE__
     call netcdf_get_variable_time_y_x(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+  print *, trim(__FILE__), __LINE__
+    call this%handle_missing_values(this%pGrdNative%rData)
+  print *, trim(__FILE__), __LINE__
+    call this%enforce_limits(this%pGrdNative%rData)
+  print *, trim(__FILE__), __LINE__
 
     call this%transfer_from_native( pGrdBase )
 
-!    call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
-!          sText="Precip: ", &
-!          rData=pGrdBase%rData )
-
+  print *, trim(__FILE__), __LINE__
 
   end subroutine getvalues_dynamic_netcdf_sub
 
@@ -970,7 +994,7 @@ end subroutine set_offset_sub
 
     ! [ LOCALS ]
     integer (kind=T_INT) :: iRetVal
-    real (kind=T_SGL) :: rMultiplier = 1.
+    real (kind=T_SGL) :: rMultiplier = 1.5
     real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid
@@ -990,25 +1014,42 @@ end subroutine set_offset_sub
                 trim(this%sSourcePROJ4_string)//C_NULL_CHAR, 4, &
                 rX, rY )
 
+  call grid_CheckForPROJ4Error(iRetVal=iRetVal, &
+     sFromPROJ4=trim(pGrdBase%sPROJ4_string), &
+     sToPROJ4=trim(this%sSourcePROJ4_string))
+
+  !> because PROJ4 works in RADIANS if data are unprojected (i.e. GEOGRAPHIC),
+  !> we need to convert back to degrees on the assumption that the coordinates
+  !> referenced in the file will also be i degrees
+  if( index(string=trim(this%sSourcePROJ4_string), substring="latlon") > 0 &
+      .or. index(string=trim(this%sSourcePROJ4_string), substring="lonlat") > 0 ) then
+
+    rX = rad2deg(rX)
+    rY = rad2deg(rY)
+
+  endif
+
    this%GRID_BOUNDS%rXll = rX(1); this%GRID_BOUNDS%rXlr = rX(2)
    this%GRID_BOUNDS%rYll = rY(1); this%GRID_BOUNDS%rYlr = rY(2)
    this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
    this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
 
-!   print *, "--"
-!   print *, "            X                            Y"
-!   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
-!   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
-!   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
-!   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
+   print *, "--  BOUNDS projected to NATIVE COORDS"
+   PRINT *, "file: ", dquote(this%sSourceFileName)
+   print *, "            X                            Y"
+   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
+   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
+   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
+   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
 
   end subroutine calc_project_boundaries
 
 !----------------------------------------------------------------------
 
-  subroutine data_GridEnforceLimits_int(this)
+  subroutine data_GridEnforceLimits_int(this, iValues)
 
     class (T_DATA_GRID) :: this
+    integer (kind=T_INT), dimension(:,:) :: iValues
 
     ! [ LOCALS ]
     integer (kind=T_INT) :: iMin, iMax
@@ -1016,9 +1057,96 @@ end subroutine set_offset_sub
     iMin = int(this%rMinAllowedValue, kind=T_INT)
     iMax = int(this%rMaxAllowedValue, kind=T_INT)
 
-    where ( this%pGrdNative%iData < iMin )  this%pGrdNative%iData = iMin
-    where ( this%pGrdNative%iData > iMax )  this%pGrdNative%iData = iMax
+    where ( iValues < iMin )  iValues = iMin
+    where ( iValues > iMax )  iValues = iMax
 
   end subroutine data_GridEnforceLimits_int
+
+!----------------------------------------------------------------------
+
+  subroutine data_GridEnforceLimits_real(this, rValues)
+
+    class (T_DATA_GRID) :: this
+    real (kind=T_SGL), dimension(:,:) :: rValues
+
+    ! [ LOCALS ]
+    real (kind=T_SGL) :: rMin, rMax
+
+    rMin = real(this%rMinAllowedValue, kind=T_SGL)
+    rMax = real(this%rMaxAllowedValue, kind=T_SGL)
+
+    where ( rValues < rMin )  rValues = rMin
+    where ( rValues > rMax )  rValues = rMax
+
+  end subroutine data_GridEnforceLimits_real
+
+!----------------------------------------------------------------------
+
+  subroutine data_GridHandleMissingData_real(this, rValues)
+
+    class (T_DATA_GRID) :: this
+    real (kind=T_SGL), dimension(:,:), intent(inout) :: rValues
+
+    ! [ LOCALS ]
+    real (kind=T_SGL) :: rMissing, rMean
+
+    rMissing = real(this%rMissingValuesCode, kind=T_SGL)
+
+    select case (this%iMissingValuesAction)
+
+      case (MISSING_VALUES_ZERO_OUT)
+
+        select case (this%sMissingValuesOperator)
+
+          case ("<=")
+
+            where (rValues <= rMissing) rValues = rZERO
+
+          case (">=")
+
+            where (rValues >= rMissing) rValues = rZERO
+
+          case default
+
+            call assert(lFALSE, "Unknown missing values code was supplied " &
+              //"for processing data "//squote(this%sDescription)//": " &
+              //dquote(this%sMissingValuesOperator) )
+
+          end select
+
+      case (MISSING_VALUES_REPLACE_WITH_MEAN)
+
+        select case (this%sMissingValuesOperator)
+
+          case ("<=")
+
+            rMean = sum(rValues, rValues > rMissing ) &
+               / count(rValues > rMissing )
+
+            where (rValues <= rMissing) rValues = rMean
+
+          case (">=")
+
+            rMean = sum(rValues, rValues < rMissing ) &
+               / count(rValues < rMissing )
+
+            where (rValues >= rMissing) rValues = rMean
+
+          case default
+
+            call assert(lFALSE, "Unknown missing values code was supplied " &
+              //"for processing data "//squote(this%sDescription)//": " &
+              //dquote(this%sMissingValuesOperator) )
+
+          end select
+
+      case default
+
+        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - unhandled iMissingValuesAction", &
+        trim(__FILE__), __LINE__)
+
+    end select
+
+  end subroutine data_GridHandleMissingData_real
 
 end module data_factory

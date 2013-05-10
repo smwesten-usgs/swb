@@ -136,34 +136,6 @@ function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(
 end function extraterrestrial_radiation_Ra
 
 !!***
-!--------------------------------------------------------------------------
-!!****f* meteorological_functions/deg2rad
-! NAME
-!   deg2rad - converts decimal degrees to a value in radians.
-! SYNOPSIS
-!   Returns a value in radians given a value in decimal degrees.
-!
-! INPUTS
-!   rDeg - Value in decimal degrees.
-!
-! OUTPUTS
-!   rRad - Return value in radians
-!
-! SOURCE
-
-function deg2rad(rDeg) result(rRad)
-
-  ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rDeg
-
-  ! [ LOCALS ]
-  real (kind=T_DBL) :: rRad
-
-  rRad = dpPI / 180_T_DBL * rDeg
-
-end function deg2rad
-
-!!***
 
 !--------------------------------------------------------------------------
 !!****f* meteorological_functions/equivalent_evaporation

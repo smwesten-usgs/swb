@@ -360,6 +360,33 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
       call DAT(PRECIP_DATA)%definePROJ4( trim(sRecord) )
 
+    elseif (sItem == "PRECIPITATION_MINIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%rMinAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "PRECIPITATION_MAXIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%rMaxAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "PRECIPITATION_MISSING_VALUES_CODE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%rMissingValuesCode = asReal(sArgument)
+
+    elseif (sItem == "PRECIPITATION_MISSING_VALUES_OPERATOR") then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%sMissingValuesOperator = trim(sArgument)
+
+    elseif (sItem == "PRECIPITATION_MISSING_VALUES_ACTION") then
+      call Chomp ( sRecord, sArgument )
+      if (sArgument == "ZERO") then
+        DAT(PRECIP_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
+      elseif (sArgument == "MEAN" ) then
+        DAT(PRECIP_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
+      else
+        call assert(lFALSE, "Unknown missing value action supplied for" &
+          //" precipitation data: "//dquote(sArgument) )
+      endif
+
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
       call Chomp ( sRecord, sOption )
@@ -442,6 +469,10 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
+      call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
+
     else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_x = trim(sArgument)
@@ -474,9 +505,90 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
 
-    else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
+    else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
+
+    else if ( str_compare(sItem,"TMAX_SCALE") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMAX_DATA)%set_scale(asReal(sArgument))
+
+    else if ( str_compare(sItem,"TMAX_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMAX_DATA)%set_offset(asReal(sArgument))
+
+    else if ( str_compare(sItem,"TMAX_CONVERSION_FACTOR") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMAX_DATA)%set_conversion_factor(asReal(sArgument))
+
+    elseif (sItem == "TMAX_MINIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%rMinAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "TMAX_MAXIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%rMaxAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "TMAX_MISSING_VALUES_CODE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%rMissingValuesCode = asReal(sArgument)
+
+    elseif (sItem == "TMAX_MISSING_VALUES_OPERATOR") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMAX_DATA)%sMissingValuesOperator = trim(sArgument)
+
+    elseif (sItem == "TMAX_MISSING_VALUES_ACTION") then
+      call Chomp ( sRecord, sArgument )
+      if (sArgument == "ZERO") then
+        DAT(TMAX_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
+      elseif (sArgument == "MEAN" ) then
+        DAT(TMAX_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
+      else
+        call assert(lFALSE, "Unknown missing value action supplied for" &
+          //" TMAX data: "//dquote(sArgument) )
+      endif
+
+    else if (sItem == "TMIN_GRID_PROJECTION_DEFINITION") then
       call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
+
+    else if ( str_compare(sItem,"TMIN_SCALE") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMIN_DATA)%set_scale(asReal(sArgument))
+
+    else if ( str_compare(sItem,"TMIN_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMIN_DATA)%set_offset(asReal(sArgument))
+
+    else if ( str_compare(sItem,"TMIN_CONVERSION_FACTOR") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMIN_DATA)%set_conversion_factor(asReal(sArgument))
+
+    elseif (sItem == "TMIN_MINIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%rMinAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "TMIN_MAXIMUM_ALLOWED_VALUE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%rMaxAllowedValue = asReal(sArgument)
+
+    elseif (sItem == "TMIN_MISSING_VALUES_CODE") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%rMissingValuesCode = asReal(sArgument)
+
+    elseif (sItem == "TMIN_MISSING_VALUES_OPERATOR") then
+      call Chomp ( sRecord, sArgument )
+      DAT(TMIN_DATA)%sMissingValuesOperator = trim(sArgument)
+
+    elseif (sItem == "TMIN_MISSING_VALUES_ACTION") then
+      call Chomp ( sRecord, sArgument )
+      if (sArgument == "ZERO") then
+        DAT(TMIN_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
+      elseif (sArgument == "MEAN" ) then
+        DAT(TMIN_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
+      else
+        call assert(lFALSE, "Unknown missing value action supplied for" &
+          //" TMIN data: "//dquote(sArgument) )
+      endif
+
 
     else if ( sItem == "LAND_USE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating land use grid"

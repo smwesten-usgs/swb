@@ -118,10 +118,11 @@ module netcdf4_support
     logical (kind=T_LOGICAL) :: lX_IncreasesWithIndex = lTRUE
     logical (kind=T_LOGICAL) :: lY_IncreasesWithIndex = lFALSE
 
-    real (kind=c_double), dimension(2) :: dpFirstAndLastTimeValues
+    real (kind=c_double), dimension(0:1) :: dpFirstAndLastTimeValues
     integer (kind=c_int), dimension(0:3) :: iVarID = -9999
     integer (kind=c_int), dimension(0:3) :: iVarIndex = -9999
     integer (kind=c_int), dimension(0:3) :: iVarType = -9999
+    character (len=256), dimension(0:3) :: sVarUnits = "NA"
     integer (kind=c_int), dimension(0:3, 0:3) :: iVar_DimID = -9999
 
     real (kind=c_double), allocatable, dimension(:) :: rX_Coords
@@ -133,6 +134,21 @@ module netcdf4_support
     type (T_NETCDF_VARIABLE), dimension(:), pointer :: NC_VAR
     type (T_NETCDF_ATTRIBUTE), dimension(:), pointer :: NC_ATT
   end type T_NETCDF4_FILE
+
+!
+!                  /\
+!  coordinates     |   |
+!  increase        |   |
+!  in upward       |   |
+!  direction       |   |
+!                  |   |
+!                  |   | column index increases in downward direction
+!                  |   |
+!                  |   |
+!                      \/
+!
+!
+
 
 contains
 
@@ -166,8 +182,6 @@ function netcdf_date_to_index( NCFILE, iJulianDay )  result(iStart)
   integer (kind=c_size_t) :: iStart
 
   iStart = int(iJulianDay - NCFILE%iFirstDayJD, kind=c_size_t)
-
-  print *, "start idx: ", iStart, iJulianDay, NCFILE%iFirstDayJD, trim(__FILE__), __LINE__
 
   call assert(iStart >=0, "Problem finding the index number of the time " &
     //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
@@ -391,10 +405,9 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
   character (len=256) :: sY_VarName
   character (len=256) :: sZ_VarName
   character (len=256) :: sTime_VarName
-  integer (kind=c_int), dimension(2) :: iColRow_ll, iColRow_ur
+  integer (kind=c_int), dimension(2) :: iColRow_ll, iColRow_ur, iColRow_lr, iColRow_ul
+  integer (kind=T_INT) :: iColmin, iColmax, iRowmin, iRowmax
   integer (kind=T_INT) :: iIndex
-  integer :: iCrap
-
 
   call netcdf_open_file(NCFILE=NCFILE, sFilename=sFilename)
 
@@ -446,38 +459,51 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
   if (present(tGridBounds) ) then
 
     !> define a subset of the grid as the AOI
+    !> need all four corner points since it is likely that
+    !> the AOI rectangle is rotated relative to the base
+    !> projection
     iColRow_ll = nc_coord_to_col_row(NCFILE=NCFILE, &
                                      rX=tGridBounds%rXll, &
                                      rY=tGridBounds%rYll)
+
+    iColRow_lr = nc_coord_to_col_row(NCFILE=NCFILE, &
+                                     rX=tGridBounds%rXlr, &
+                                     rY=tGridBounds%rYlr)
+
+    iColRow_ul = nc_coord_to_col_row(NCFILE=NCFILE, &
+                                     rX=tGridBounds%rXul, &
+                                     rY=tGridBounds%rYul)
 
     iColRow_ur = nc_coord_to_col_row(NCFILE=NCFILE, &
                                      rX=tGridBounds%rXur, &
                                      rY=tGridBounds%rYur)
 
-!  print *, "LL: ", iColRow_ll(COLUMN), iColRow_ll(ROW), " <==> ", tGridBounds%rXll, tGridBounds%rYll
-!  print *, "UR: ", iColRow_ur(COLUMN), iColRow_ur(ROW), " <==> ", tGridBounds%rXur, tGridBounds%rYur
+    print *, "LL: ", iColRow_ll(COLUMN), iColRow_ll(ROW), " <==> ", tGridBounds%rXll, tGridBounds%rYll
+    print *, "LR: ", iColRow_lr(COLUMN), iColRow_lr(ROW), " <==> ", tGridBounds%rXlr, tGridBounds%rYlr
+    print *, "UL: ", iColRow_ul(COLUMN), iColRow_ul(ROW), " <==> ", tGridBounds%rXul, tGridBounds%rYul
+    print *, "UR: ", iColRow_ur(COLUMN), iColRow_ur(ROW), " <==> ", tGridBounds%rXur, tGridBounds%rYur
+    print *, trim(__FILE__), __LINE__
+
+    NCFILE%iColBounds(FIRST) = &
+      max( min( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) - 4, &
+                lbound(NCFILE%rX_Coords,1) )
+
+    NCFILE%iColBounds(LAST) = &
+      min( max( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) + 4, &
+                ubound(NCFILE%rX_Coords,1) )
 
 
-    NCFILE%iColBounds(FIRST) = max( min( iColRow_ur(COLUMN), iColRow_ll(COLUMN) ) - 4, &
-                                         lbound(NCFILE%rX_Coords,1))
-    NCFILE%iColBounds(LAST) = min( max( iColRow_ur(COLUMN), iColRow_ll(COLUMN) ) + 4, &
-                                         ubound(NCFILE%rX_Coords,1))
+      NCFILE%iRowBounds(FIRST) = &
+        max( min( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) - 4, &
+                  lbound(NCFILE%rY_Coords,1) )
 
-    if (NCFILE%lY_IncreasesWithIndex) then
+      NCFILE%iRowBounds(LAST) = &
+        min( max( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) + 4, &
+                  ubound(NCFILE%rY_Coords,1) )
 
-      NCFILE%iRowBounds(FIRST) = max( min( iColRow_ur(ROW), iColRow_ll(ROW) ) - 4, &
-                                         lbound(NCFILE%rY_Coords,1))
-      NCFILE%iRowBounds(LAST) = min( max( iColRow_ur(ROW), iColRow_ll(ROW) ) + 10, &
-                                             ubound(NCFILE%rY_Coords,1))
 
-    else
-
-      NCFILE%iRowBounds(FIRST) = max( min( iColRow_ur(ROW), iColRow_ll(ROW) ) - 4, &
-                                         lbound(NCFILE%rY_Coords,1))
-      NCFILE%iRowBounds(LAST) = min( max( iColRow_ur(ROW), iColRow_ll(ROW) ) - 10, &
-                                             ubound(NCFILE%rY_Coords,1))
-
-    endif
+    print *, NCFILE%iRowBounds
+    print *, NCFILE%iColBounds
 
   else
 
@@ -489,6 +515,11 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
     NCFILE%iRowBounds(LAST) = ubound(NCFILE%rY_Coords,1)
 
   endif
+
+  print *, "final col, row bounds:"
+  print *, "LL  ", NCFILE%iColBounds(FIRST), NCFILE%iRowBounds(FIRST)
+  print *, "UR  ", NCFILE%iColBounds(LAST), NCFILE%iRowBounds(LAST)
+
 
   call nc_set_start_count_stride(NCFILE)
 
@@ -569,16 +600,25 @@ subroutine nc_return_native_coord_bounds(NCFILE)
 
   type (T_NETCDF4_FILE ), pointer :: NCFILE
 
+  !> @todo If there are ever cases where coordinates increase in
+  !>     different directions, this code will fail
 
+  print *, trim(__FILE__), __LINE__
   NCFILE%rX(LEFT) = NCFILE%rX_Coords(NCFILE%iColBounds(FIRST)) &
     - NCFILE%rGridCellSizeX * dpHALF
+  print *, trim(__FILE__), __LINE__
   NCFILE%rX(RIGHT) = NCFILE%rX_Coords(NCFILE%iColBounds(LAST)) &
   + NCFILE%rGridCellSizeY * dpHALF
-
-  NCFILE%rY(TOP) = NCFILE%rY_Coords(NCFILE%iRowBounds(FIRST)) &
+  print *, trim(__FILE__), __LINE__
+  NCFILE%rY(TOP) = NCFILE%rY_Coords(NCFILE%iRowBounds(LAST)) &
    + NCFILE%rGridCellSizeX * dpHALF
-  NCFILE%rY(BOTTOM) = NCFILE%rY_Coords(NCFILE%iRowBounds(LAST)) &
+  print *, trim(__FILE__), __LINE__
+  NCFILE%rY(BOTTOM) = NCFILE%rY_Coords(NCFILE%iRowBounds(FIRST)) &
   - NCFILE%rGridCellSizeY * dpHALF
+  print *, trim(__FILE__), __LINE__
+
+  print *, NCFILE%rX
+  print *, NCFILE%rY
 
 end subroutine nc_return_native_coord_bounds
 
@@ -1004,11 +1044,15 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
   integer (kind=c_short), dimension(:), allocatable :: i2TempData
   real (kind=c_float), dimension(:), allocatable :: rTempData
   integer (kind=T_INT) :: iSize
+  integer (kind=T_INT) :: iStat
+
 
     pNC_VAR => NCFILE%NC_VAR(netcdf_return_VarIndex( NCFILE, NCFILE%iVarID(NC_Z)) )
 
     iSize = NCFILE%iCount(NC_TIME) * NCFILE%iCount(NC_Y) * NCFILE%iCount(NC_X)
-
+    print *, trim(__FILE__), __LINE__
+    print *, iSize
+    print *, size(rValues)
     if ( pNC_VAR%iNC_VarType == NC_INT) then
 
 !      pGrdBase%iData=nc_get_variable_short(NCFILE=this%NCFILE, &
@@ -1019,7 +1063,9 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
 
     elseif ( pNC_VAR%iNC_VarType == NC_SHORT) then
 
-      allocate(i2TempData(iSize))
+      allocate(i2TempData(iSize), stat=iStat)
+      call assert(iStat==0, "There was a problem allocating memory for " &
+        //"temporary data storage", trim(__FILE__), __LINE__)
 
       i2TempData = nc_get_variable_short(NCFILE=NCFILE, &
          iNC_VarID=NCFILE%iVarID(NC_Z), &
@@ -1029,19 +1075,23 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
 
       if (present(iValues) ) then
         iValues = reshape(source=int(i2TempData, kind=T_INT), &
-                          shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)] )
+                      shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)] )
 
         iValues = transpose(reshape(source=int(i2TempData, kind=T_INT), &
                   shape=[NCFILE%iCount(NC_Y), NCFILE%iCount(NC_X)], &
                        order=[2, 1]))
 
       else
+
         rValues = transpose(reshape(source=int(i2TempData, kind=T_SGL), &
                   shape=[NCFILE%iCount(NC_Y), NCFILE%iCount(NC_X)], &
                        order=[2, 1]))
       endif
 
-      deallocate(i2TempData)
+      deallocate(i2TempData, stat=iStat)
+
+      call assert(iStat==0, "There was a problem deallocating memory for " &
+        //"temporary data storage", trim(__FILE__), __LINE__)
 
     elseif ( pNC_VAR%iNC_VarType == NC_FLOAT) then
 
@@ -1077,7 +1127,7 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
 
     endif
 
-
+    print *, trim(__FILE__), __LINE__
 
 end subroutine netcdf_get_variable_time_y_x
 
@@ -1312,7 +1362,7 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
   type (T_NETCDF4_FILE ), pointer :: NCFILE
   integer (kind=c_int) :: iVarIndex
-  real (kind=c_double), dimension(2) :: dpValues
+  real (kind=c_double), dimension(0:1) :: dpValues
 
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
@@ -1321,9 +1371,9 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
   integer (kind=T_INT) :: iDimIndex
   integer (kind=c_size_t) :: iStride
   integer (kind=c_size_t) :: iCount
-  integer (kind=c_short), dimension(2) :: spValues
-  integer (kind=c_int), dimension(2) :: ipValues
-  real (kind=c_float), dimension(2) :: rpValues
+  integer (kind=c_short), dimension(0:1) :: spValues
+  integer (kind=c_int), dimension(0:1) :: ipValues
+  real (kind=c_float), dimension(0:1) :: rpValues
 
   call assert (iVarIndex >= lbound(NCFILE%NC_VAR,1) &
     .and. iVarIndex <= ubound(NCFILE%NC_VAR,1), &
@@ -1333,8 +1383,6 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
   pNC_VAR => NCFILE%NC_VAR(iVarIndex)
   iDimSize = nc_return_DimSize(NCFILE, pNC_VAR%iNC_DimID(0) )
-
-  print *, iDimSize, " | ", trim(__FILE__), __LINE__
 
   if (iDimSize > 1) then
     iCount = 2_c_size_t
@@ -1382,7 +1430,7 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
   !> if there is only one day of data in this NetCDF file, the
   !> first day equals the last day
-  if (iCount == 1) dpValues(2) = dpValues(1)
+  if (iCount == 1) dpValues(LAST) = dpValues(FIRST)
 
 end function netcdf_get_first_and_last
 
@@ -1395,8 +1443,8 @@ subroutine netcdf_calculate_time_range(NCFILE)
   NCFILE%iOriginJD = julian_day(NCFILE%iOriginYear, &
     NCFILE%iOriginMonth, NCFILE%iOriginDay)
 
-  NCFILE%iFirstDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(1)
-  NCFILE%iLastDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(2)
+  NCFILE%iFirstDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(FIRST)
+  NCFILE%iLastDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(LAST)
 
 end subroutine netcdf_calculate_time_range
 
@@ -1457,6 +1505,45 @@ subroutine nc_get_time_units(NCFILE)
   read(sDateTime, *) NCFILE%iOriginSS
 
 end subroutine nc_get_time_units
+
+!----------------------------------------------------------------------
+
+subroutine nc_get_XYZ_units(NCFILE)
+
+  type (T_NETCDF4_FILE), intent(inout) :: NCFILE
+
+  ! [ LOCALS ]
+  type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
+  integer (kind=T_INT) :: iIndex, iIndex2
+  logical (kind=T_LOGICAL) :: lFound
+  integer (kind=T_INT) :: iStat
+
+  do iIndex = NC_X, NC_Z
+
+    call assert(NCFILE%iVarID(iIndex) >= 0, "INTERNAL PROGRAMMING ERROR -- " &
+    //"nc_get_XYZ_units must be called only after a call is made to ~" &
+    //"netcdf_get_variable_ids", trim(__FILE__), __LINE__)
+
+    pNC_VAR => NCFILE%NC_VAR(NCFILE%iVarID(iIndex) )
+
+    lFound = lFALSE
+
+    do iIndex2=0, pNC_VAR%iNumberOfAttributes - 1
+
+      if ( str_compare(pNC_VAR%NC_ATT(iIndex2)%sAttributeName, "units") ) then
+        lFound = lTRUE
+        exit
+      endif
+
+    enddo
+
+    if (lFound) then
+      NCFILE%sVarUnits(iIndex) = trim(pNC_VAR%NC_ATT(iIndex2)%sAttributeValue)
+    endif
+
+  enddo
+
+end subroutine nc_get_XYZ_units
 
 !----------------------------------------------------------------------
 
@@ -1540,11 +1627,13 @@ function nc_return_index_double(rValues, rTargetValue)  result(iIndex)
   integer (kind=c_int) :: iCount
   real (kind=c_double) :: rDiff, rDiffMin
 
-  call assert( rTargetValue >= minval(rValues) &
-    .and. rTargetValue <= maxval(rValues), &
-    "INTERNAL PROGRAMMING ERROR? - rTargetValue is not within the range " &
-    //trim(asCharacter(minval(rValues)))//" to "//trim(asCharacter(maxval(rValues))), &
-    trim(__FILE__), __LINE__)
+  if ( .not. (rTargetValue >= minval(rValues) .and. rTargetValue <= maxval(rValues)) ) then
+    call echolog("rTargetValue (" &
+    //trim(asCharacter(rTargetValue))//") is not within the range " &
+    //trim(asCharacter(minval(rValues)))//" to "//trim(asCharacter(maxval(rValues))) )
+
+    call assert(lFALSE, "INTERNAL PROGRAMMING ERROR", trim(__FILE__), __LINE__)
+  endif
 
   rDiffMin = 1.e+20
 
@@ -1572,8 +1661,6 @@ function nc_coord_to_col_row(NCFILE, rX, rY)  result(iColRow)
 
 
   ! [ LOCALS ]
-  real (kind=c_double) :: dpMin, dpDiff
-  real (kind=T_SGL) :: rDist, rMinDistance, rDist2
   integer (kind=c_int) :: iColNum, iRowNum
 
   iColNum = nc_return_index_double(NCFILE%rX_Coords, rX)

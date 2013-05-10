@@ -174,7 +174,6 @@ end function et_kc_CalcSurfaceEvaporationCoefficient
 
 !> @brief This subroutine updates the total available water (TAW)
 !> (water within the rootzone) for a gridcell
-
 subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
 
   ! [ ARGUMENTS ]

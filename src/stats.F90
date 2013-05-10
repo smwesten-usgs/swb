@@ -628,10 +628,10 @@ subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
   end if
 
   if(iNumGridCells>0) then
-    write(iLU,"(1x,a,t31,f12.2,t46,f12.2,t61,f12.2)") TRIM(ADJUSTL(sText)), &
+    write(iLU,"(1x,a,t31,f14.2,t46,f14.2,t61,f14.2)") TRIM(ADJUSTL(sText)), &
        minval(rData),sum(rData)/REAL(iNumGridCells,kind=T_SGL),maxval(rData)
   else
-    write(iLU,"(1x,a,t31,f12.2,t46,f12.2,t61,f12.2)") TRIM(ADJUSTL(sText)), &
+    write(iLU,"(1x,a,t31,f14.2,t46,f14.2,t61,f14.2)") TRIM(ADJUSTL(sText)), &
        minval(rData),sum(rData),maxval(rData)
   endif
 

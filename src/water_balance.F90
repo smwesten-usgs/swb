@@ -17,10 +17,6 @@ module water_balance
   use output
   use RLE
 
-#ifdef NETCDF_SUPPORT
-  use netcdf_support
-#endif
-
   implicit none
 
 contains

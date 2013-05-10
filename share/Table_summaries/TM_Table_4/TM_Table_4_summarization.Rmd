@@ -1,0 +1,100 @@
+Equation-fitting: Table 4, Thornthwaite and Mather (1957)
+========================================================
+
+This documents the process of fitting a general equation to Table 4 of Thornthwaite and Mather (1957). Table 4 is entitled "Values of unadjusted daily potential evapotranspiration (mm) for different mean temperatures (degrees C) and I values." This equation fitting exercise is designed as a check of the regression equations coded into the original version of SWB.
+
+The first step is to define the general form of the equation we wish to use to summarize the Thornthwaite-Mather tables. The original version of SWB defines this table with a quartic (4th degree) polynomial:
+```{r}
+# x=I; y=Temp_degC
+gen<-function(x, y,fac0, fac1, fac2, fac3, fac4, fac5) {
+
+  result <- fac0 + fac1*x + fac2*y + fac3*x*y + fac4*x^2 + fac5*y^2
+  
+  return(result)
+}
+
+```
+
+The next code block reads in the data from Thornthwaite and Mather (1957), Table 2. 
+
+
+```{r}
+
+library(minpack.lm) 
+
+load("D:\\SMWData\\Source_Code\\swb\\share\\Table_summaries\\TM_Table_4\\TM_Table_4.RData")
+mycolnames <- colnames(TM_table_4)[2:ncol(TM_table_4)]
+
+TM_4C <- TM_table_4
+
+
+```
+
+The potential evapotranspiration at various combinations of temperature and "I" values looks like this:
+
+
+```{r, fig.width=14, fig.height=10}
+
+#filled.contour(x=x, y=y, z=TM4_mat, xlab="THORNTHWAITE-MATHER \"I\" VALUE",
+##      ylab="AIR TEMPERATURE, IN DEGREES FAHRENHEIT", col=topo.colors(30),
+#      main="POTENTIAL EVAPOTRANSPIRATION, IN INCHES")
+
+
+```
+
+```{r}
+
+TM4C_yxz <- data.frame(Temp_degC=numeric(), I=numeric(), POTET=numeric() )
+
+mycolnames <- colnames(TM_table_4)[2:ncol(TM_table_4)]
+
+y<- TM_table_4[ ,1]
+x<- as.numeric(gsub(pattern="I", replacement="", x=mycolnames) )
+
+temp_df <-data.frame(Temp_degC=y, I=numeric(length(y)), POTET=numeric(length(y)) )
+
+for (i in 2:ncol(TM_4C)) {
+
+  temp_df$I <- x[i-1]
+  temp_df$POTET <- TM_4C[ ,i]
+
+  TM4C_yxz <- rbind(TM4C_yxz, temp_df)
+}
+
+# sort in ascending order
+TM4C_yxz <- TM4C_yxz[order(TM4C_yxz[ ,c(1:2)]), ]
+TM4C_yxz <- subset(TM4C_yxz, !is.na(POTET))
+
+TM4C_mat <- TM4C_yxz[ ,c(1,2)]
+
+TM_4C_opt <- nlsLM( POTET ~ gen(I, Temp_degC, fac0, fac1, fac2, fac3, fac4, fac5), 
+                  data=TM4C_yxz, start=list(fac0=0., fac1=0.04, fac2=0.02, fac3=0.05, fac4=0.01, fac5=0.01),
+                  control=list(maxiter=1024, tol=1.e-13, printEval=TRUE, 
+                               minFactor=1.e-8, warnOnly=TRUE))
+
+
+fac <- as.numeric(TM_4C_opt$m$getPars())
+
+```
+
+
+```{r, fig.width=15, fig.height=48}
+
+layout(matrix(c(1:32), nrow=16 , ncol=2, byrow = TRUE))
+
+for (airtemp in seq(0,26.5,0.5)) {
+  
+  I <- seq(25,140,5)
+  
+  table_ET <- subset(TM4C_yxz, airtemp==Temp_degC)
+  predicted_ET <- gen(I, airtemp, fac[0], fac[1], fac[2], fac[3], fac[4], fac[5])
+  
+  with(table_ET, plot(xlim=c(20,145),ylim=c(0,7), x=I, y=POTET, cex=0.7) )
+  lines(x=I, y=predicted_ET, col="red")
+  
+  
+  
+}
+
+
+```
