@@ -1050,9 +1050,7 @@ subroutine netcdf_get_variable_time_y_x(NCFILE, iValues, rValues)
     pNC_VAR => NCFILE%NC_VAR(netcdf_return_VarIndex( NCFILE, NCFILE%iVarID(NC_Z)) )
 
     iSize = NCFILE%iCount(NC_TIME) * NCFILE%iCount(NC_Y) * NCFILE%iCount(NC_X)
-    print *, trim(__FILE__), __LINE__
-    print *, iSize
-    print *, size(rValues)
+
     if ( pNC_VAR%iNC_VarType == NC_INT) then
 
 !      pGrdBase%iData=nc_get_variable_short(NCFILE=this%NCFILE, &

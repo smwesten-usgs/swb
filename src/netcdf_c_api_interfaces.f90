@@ -7,9 +7,13 @@
 !> built atop the C interface.
 module netcdf_c_api_interfaces
 
+#ifdef NETCDF_SUPPORT
+
   use,intrinsic :: iso_c_binding
 
   implicit none
+
+!  integer, parameter :: c_ptrdiff_t = 8
 
   interface
     function nc_get_var_short(ncid, varid, sp) bind(c)
@@ -376,5 +380,7 @@ module netcdf_c_api_interfaces
 
     end function nc_close
   end interface
+
+#endif
 
 end module netcdf_c_api_interfaces

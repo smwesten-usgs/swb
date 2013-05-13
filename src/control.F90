@@ -341,6 +341,8 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_conversion_factor(asReal(sArgument))
 
+#ifdef NETCDF_SUPPORT
+
     else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_x = trim(sArgument)
@@ -356,6 +358,8 @@ subroutine control_setModelOptions(sControlFile)
     else if ( str_compare(sItem,"NETCDF_PRECIP_TIME_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_time = trim(sArgument)
+
+#endif
 
     else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
       call DAT(PRECIP_DATA)%definePROJ4( trim(sRecord) )
@@ -473,6 +477,8 @@ subroutine control_setModelOptions(sControlFile)
       call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
       call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
 
+#ifdef NETCDF_SUPPORT
+
     else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_x = trim(sArgument)
@@ -504,6 +510,8 @@ subroutine control_setModelOptions(sControlFile)
     else if ( str_compare(sItem,"NETCDF_TMIN_TIME_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
+
+#endif
 
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )

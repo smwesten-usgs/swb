@@ -62,8 +62,13 @@ module data_factory
     ! units?
     ! conversion factor?
 
+#ifdef NETCDF_SUPPORT
+
     integer (kind=T_INT) :: iNC_FILE_STATUS
     type (T_NETCDF4_FILE), pointer :: NCFILE
+
+#endif
+
     integer (kind=T_INT) :: iConstantValue
     real (kind=T_SGL) :: rConstantValue
 
@@ -80,7 +85,10 @@ module data_factory
     procedure :: init_const_int => initialize_constant_int_data_object_sub
     procedure :: init_const_real => initialize_constant_real_data_object_sub
     procedure :: init_gridded => initialize_gridded_data_object_sub
+
+#ifdef NETCDF_SUPPORT
     procedure :: initialize_netcdf => initialize_netcdf_data_object_sub
+#endif
 
     generic :: initialize => init_const_int, &
                              init_const_real, &
@@ -92,7 +100,11 @@ module data_factory
 
     procedure :: getvalues_constant => getvalues_constant_sub
     procedure :: getvalues_gridded => getvalues_gridded_sub
+
+#ifdef NETCDF_SUPPORT
     procedure :: getvalues_netcdf => getvalues_dynamic_netcdf_sub
+#endif
+
     procedure :: getvalues => getvalues_sub
 
  !   procedure :: update => update_data_object_sub
@@ -257,6 +269,8 @@ end subroutine initialize_gridded_data_object_sub
 
 !----------------------------------------------------------------------
 
+#ifdef NETCDF_SUPPORT
+
 subroutine initialize_netcdf_data_object_sub( &
    this, &
    sDescription, &
@@ -311,6 +325,8 @@ subroutine initialize_netcdf_data_object_sub( &
 
 end subroutine initialize_netcdf_data_object_sub
 
+#endif
+
 !----------------------------------------------------------------------
 
   subroutine getvalues_sub( this, pGrdBase, iMonth, iDay, iYear, iJulianDay, &
@@ -327,7 +343,13 @@ end subroutine initialize_netcdf_data_object_sub
     integer (kind=c_int) :: iPadDays
     integer (kind=T_INT) :: iLocalJulianDay
 
-    if ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
+    if(this%iSourceDataForm == DYNAMIC_GRID ) then
+
+      call getvalues_gridded_sub( this, pGrdBase, iMonth, iDay, iYear)
+
+#ifdef NETCDF_SUPPORT
+
+    elseif ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
       iLocalJulianDay = iJulianDay
 
@@ -356,9 +378,7 @@ end subroutine initialize_netcdf_data_object_sub
       call getvalues_dynamic_netcdf_sub( this, &
                            pGrdBase,  iMonth, iDay, iYear, iLocalJulianDay)
 
-    elseif(this%iSourceDataForm == DYNAMIC_GRID ) then
-
-      call getvalues_gridded_sub( this, pGrdBase, iMonth, iDay, iYear)
+#endif
 
     elseif(this%iSourceDataForm == STATIC_GRID ) then
 
@@ -369,6 +389,9 @@ end subroutine initialize_netcdf_data_object_sub
       call getvalues_constant_sub( this, pGrdBase )
 
     else
+
+      call assert(lFALSE, "Unsupported data source sepecified", &
+        trim(__FILE__), __LINE__)
 
     endif
 
@@ -791,6 +814,8 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
+#ifdef NETCDF_SUPPORT
+
   subroutine getvalues_dynamic_netcdf_sub( this, pGrdBase, &
      iMonth, iDay, iYear, iJulianDay)
 
@@ -893,23 +918,19 @@ end subroutine set_constant_value_real
 
     endif
 
-   print *, trim(__FILE__), __LINE__
     call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
                                            iJulianDay=iJulianDay)
 
-  print *, trim(__FILE__), __LINE__
     call netcdf_get_variable_time_y_x(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
-  print *, trim(__FILE__), __LINE__
+
     call this%handle_missing_values(this%pGrdNative%rData)
-  print *, trim(__FILE__), __LINE__
     call this%enforce_limits(this%pGrdNative%rData)
-  print *, trim(__FILE__), __LINE__
 
     call this%transfer_from_native( pGrdBase )
 
-  print *, trim(__FILE__), __LINE__
-
   end subroutine getvalues_dynamic_netcdf_sub
+
+#endif
 
 !----------------------------------------------------------------------
 
