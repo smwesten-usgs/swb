@@ -1420,7 +1420,7 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   iRetVal = pj_init_and_transform(csFromPROJ4//C_NULL_CHAR, &
                                   csToPROJ4//C_NULL_CHAR, &
-                                  pGrd%iNumGridCells, pGrd%rX, pGrd%rY)
+                                  int(pGrd%iNumGridCells, kind=c_long), pGrd%rX, pGrd%rY)
 
   call grid_CheckForPROJ4Error(iRetVal, sFromPROJ4, sToPROJ4)
 

@@ -22,11 +22,13 @@ endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
 # NOTE: must enable CXX as a language in order to use the GNU compiler
 #       toolchain
 #
-project (swb Fortran CXX)
-enable_language (Fortran CXX)
+project (swb Fortran C CXX)
+enable_language (Fortran C CXX)
 
 SET(CPACK_GENERATOR "TGZ")
 include(CPack)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
@@ -41,14 +43,15 @@ cmake_minimum_required(VERSION 2.8)
 #------------------------------------------------------------------------
 
 find_program( R_SCRIPT Rscript.exe Rscript
-			  HINTS
-			  ENV R_HOME
-              PATHS
-			  "c:/Program Files/R"
-			  "c:/Program Files (x86)/R"
+    HINTS
+    ENV R_HOME
+    PATHS
+    "c:/Program Files/R"
+    "c:/Program Files (x86)/R"
+    "/usr/bin"
 )
 
-message("Rscript.exe is defined as: " ${R_SCRIPT})
+message("Rscript is defined as: " ${R_SCRIPT})
 
 #------------------------------------------------------------------------
 # Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
@@ -66,9 +69,6 @@ set_property(CACHE PLATFORM_TYPE
 set( PLATFORM_TYPE "x64" CACHE STRING
        "Compile for 32-bit or 64-bit" )
 
-set( Fortran_COMPILER_NAME "gfortran" CACHE STRING
-       "Which Fortran compiler is used?" )
-
 #------------------------------------------------------------------------
 # Enable or disable compilation TARGETS from the GUI
 #------------------------------------------------------------------------
@@ -78,7 +78,6 @@ option (TARGET__SWB_EXECUTABLE
 
 option (TARGET__SWB_LIBRARY
       "Compile SWB as a library?" OFF)
-
 
 option (TARGET__SWBSTATS
       "Compile the swbstats application?" OFF)
@@ -165,8 +164,8 @@ if(CMAKE_HOST_WIN32)
        set(ZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libzlib.a
          CACHE FILEPATH "Location of zlib library")
 
-       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj4.a
-         CACHE FILEPATH "Location of PROJ4 library")
+#       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj4.a
+#         CACHE FILEPATH "Location of PROJ4 library")
 
 
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/dismg.a )
@@ -192,9 +191,11 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
 
-     include_directories( ${MODULE_DIR} )
+     include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES})
 
      SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
+     
+     set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH};${PROJECT_SOURCE_DIR}/src/proj4")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
@@ -252,7 +253,7 @@ if(CMAKE_HOST_WIN32)
       )
 
       set( Fortran_MODULE_DIRECTORY ${MODULE_DIR} )
-      include_directories( ${MODULE_DIR} )
+      include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
 
       set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
       set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
@@ -285,7 +286,7 @@ elseif(CMAKE_HOST_APPLE)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
 
-     include_directories( ${MODULE_DIR} )
+     include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
 
      SET(CMAKE_INSTALL_PREFIX "/Users/smwesten" CACHE PATHFILE "Installation directory")
 
@@ -307,56 +308,69 @@ elseif(CMAKE_HOST_APPLE)
 
 elseif(CMAKE_HOST_UNIX)
 
-   if (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
-     #------------------------------------------------------------------------
-     # Set compilation and link preferences for Intel Fortran on Linux
-     #------------------------------------------------------------------------
-     set (CMAKE_Fortran_FLAGS_RELEASE "-O2 -fPIC")
-     set (CMAKE_Fortran_FLAGS_DEBUG "-O0 -g -traceback -fpe0 -check all -debug all -fPIC")
+   #------------------------------------------------------------------------
+   # Set compilation and link preferences for Linux
+   #------------------------------------------------------------------------
+
      set(CMAKE_FIND_LIBRARY_PREFIXES lib)
      set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" "")
 #     set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" "")
 
-     set(CMAKE_Fortran_LINK_FLAGS "-Bdynamic -fPIC -pie")
-#     set(CMAKE_LINKER "/usr/bin/gcc")
-#     set(CMAKE_Fortran_LINK_EXECUTABLE "/usr/bin/gcc")
+   find_program(CMAKE_MAKE_PROGRAM make
+     DOC "Find a suitable make program for building under Linux"
+     HINTS
+     /bin
+     /usr/bin)
+     message("CMAKE_MAKE_PROGRAM: " ${CMAKE_MAKE_PROGRAM})
 
-     find_program(CMAKE_MAKE_PROGRAM make
-       DOC "Find a suitable make program for building under Linux/IFORT"
+   find_program(CMAKE_SH sh
+     DOC "Find a suitable shell for building  under Linux"
+     HINTS
+     /bin)
+     message("CMAKE_SH: " ${CMAKE_SH})
+
+   find_path(MODULE_DIR
+             NAMES netcdf.mod NETCDF.mod
+             DOC "Include directory (must contain netcdf.mod)"
+             HINTS
+             "${PROJECT_SOURCE_DIR}/include/linux_x64/gfortran"
+             /usr/include )
+             message("Using include directory: " ${INCLUDE_DIR})
+
+   find_path(INCLUDE_DISLIN 
+     NAMES dislin.mod
+     DOC "Find the DISLIN module file"
+     PATHS
+     "${PROJECT_SOURCE_DIR}/include/linux_x64/gfortran"
+     /usr/local/dislin/gf )
+     
+   find_library(NETCDF_C_LIB
+     NAMES netcdf NETCDF
+     DOC "NetCDF C library"
+     HINTS
+     /usr/local/lib )
+
+   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")     
+     
+     find_library(DISLIN_FORTRAN_LIB
+       NAMES dislin dislin.a libdislin.a 
+       DOC "DISLIN Fortran library"
        HINTS
-       /bin
-       /usr/bin)
-       message("CMAKE_MAKE_PROGRAM: " ${CMAKE_MAKE_PROGRAM})
+       /usr/local/dislin
+       "${PROJECT_SOURCE_DIR}/lib/linux_x64/gfortran"
+     )
+     
+   elseif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
+   
+     find_library(DISLIN_FORTRAN_LIB
+       NAMES disifl
+       DOC "DISLIN Fortran library"
+       PATHS
+       ${PROJECT_SOURCE_DIR}/lib/linux_x64/ifort
+     )
 
-     find_program(CMAKE_SH sh
-       DOC "Find a suitable shell for building  under Linux/IFORT"
-       HINTS
-       /bin)
-       message("CMAKE_SH: " ${CMAKE_SH})
-
-     find_path(MODULE_DIR netcdf.mod NETCDF.mod
-       DOC "Include directory (must contain netcdf.mod)"
-       HINTS
-       /usr/include )
-       message("Using include directory: " ${INCLUDE_DIR})
-
-     find_path(INCLUDE_DISLIN dislin.mod
-       DOC "Find the DISLIN module file"
-       HINTS
-       /usr/local/dislin/gf )
-       message("Using DISLIN include directory: " ${INCLUDE_DISLIN})
-
-     find_library(NETCDF_C_LIB
-       NAMES netcdf NETCDF
-       DOC "NetCDF C library"
-       HINTS
-       /usr/local/lib )
-
-     find_library(NETCDF_FORTRAN_LIB
-       NAMES netcdff NETCDFF
-       DOC "NetCDF Fortran library"
-       /usr/local/lib )
-
+   endif()     
+     
 #     find_library(OPEN_MOTIF_LIB
 #       NAMES Xm
 #       NAMES Xm
@@ -374,24 +388,14 @@ elseif(CMAKE_HOST_UNIX)
 #     set(X_LIB ${X_LIB} "/opt/mesa/lib/libEGL.a;/opt/mesa/lib/libglut.a")
 #     set(X_LIB ${X_LIB} "/opt/mesa/lib/libGLw.a")
 
-     find_library(DISLIN_FORTRAN_LIB
-       NAMES dislin
-       DOC "DISLIN Fortran library"
-       HINTS
-       /usr/local/dislin)
+   set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
+   set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
 
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_FORTRAN_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
+   include_directories( ${MODULE_DIR} "${PROJECT_SOURCE_DIR}/src/proj4")
 
-     include_directories( ${MODULE_DIR} )
-      message("libs: " "${EXTRA_LIBS}")
-
-     SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
-     add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
-           COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats /usr/local/bin/swbstats )
-
-   endif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
+   SET(CMAKE_INSTALL_PREFIX "/usr/local/bin")
+   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb /usr/local/bin/swb
+         COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats /usr/local/bin/swbstats )
 
 else()
 
@@ -419,25 +423,24 @@ message("   Summary of CMAKE environment variables")
 message("--------------------------------------------------------------------")
 message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
 message( " ")
-message("CMAKE_AR: " ${CMAKE_AR})
+message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
+message("CMAKE_HOST_APPLE: " ${CMAKE_HOST_APPLE})
+message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
+message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
 message("CMAKE Fortran flags (Profile):      " ${CMAKE_Fortran_FLAGS_PROFILE})
 message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
 message( " ")
 MESSAGE("Install to directory: " ${CMAKE_INSTALL_PREFIX})
-message("Using NetCDF library: " ${NETCDF_FORTRAN_LIB})
-message("Using Module include directory: " ${MODULE_DIR})
-message("Using DISLIN library: " ${DISLIN_FORTRAN_LIB})
+message("NetCDF C library: " ${NETCDF_C_LIB})
+message("Module include directory: " ${MODULE_DIR})
+message("DISLIN library: " ${DISLIN_FORTRAN_LIB})
 message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
 message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
 message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
 message("CMAKE_Fortran_LINK_FLAGS: " ${CMAKE_Fortran_LINK_FLAGS})
 message("CMAKE_LINK_FLAGS: " ${CMAKE_LINK_FLAGS})
 message( " ")
-message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
-message("CMAKE_HOST_APPLE: " ${CMAKE_HOST_APPLE})
-message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
-message("Fortran compiler: " ${Fortran_COMPILER_NAME})
 message("--------------------------------------------------------------------")
 
 enable_testing()
