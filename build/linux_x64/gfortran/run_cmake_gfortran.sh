@@ -28,7 +28,7 @@ export TARGET__SWBSTATS="FALSE"
 # define which conditional compilation statements to include
 export OPTION__GRAPHICS_SUPPORT="TRUE"
 export OPTION__STREAM_INTERACTIONS="FALSE"
-export OPTION__NETCDF_SUPPORT="FALSE"
+export OPTION__NETCDF_SUPPORT="TRUE"
 export OPTION__STRICT_DATE_CHECKING="FALSE"
 export OPTION__DEBUG_PRINT="FALSE"
 
