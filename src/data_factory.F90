@@ -1032,7 +1032,7 @@ end subroutine set_offset_sub
     ! use the native coordinate boundaries to "cookie-cut" only the data
     ! pertinent to our project area.
     iRetVal = pj_init_and_transform(trim(pGrdBase%sPROJ4_string)//C_NULL_CHAR, &
-                trim(this%sSourcePROJ4_string)//C_NULL_CHAR, 4, &
+                trim(this%sSourcePROJ4_string)//C_NULL_CHAR, 4_c_long, &
                 rX, rY )
 
   call grid_CheckForPROJ4Error(iRetVal=iRetVal, &

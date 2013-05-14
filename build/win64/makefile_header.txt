@@ -1,4 +1,0 @@
-FC = gfortran
-LF = gfortran
-FFLAGS = -I../../include/win32/gfortran_mingw -L../../lib/win32/gfortran_mingw -O2
-LIBS = -lnetcdf -ldislin -lgfortran

@@ -2441,6 +2441,9 @@ subroutine model_ReadLanduseLookupTable( pConfig )
       "Unknown option in landuse lookup table; was expecting NUM_LANDUSE_TYPES #")
   end if
 
+  !> keep track of number of landuses for use throughout code
+  pConfig%iNumberOfLanduses = iNumLandUses 
+  
   ! read second line of file
   read ( unit=LU_LOOKUP, fmt="(a)", iostat=iStat ) sRecord
   call Assert( iStat == 0, &
@@ -2459,6 +2462,8 @@ subroutine model_ReadLanduseLookupTable( pConfig )
       "Unknown option in landuse lookup table; was expecting NUM_SOIL_TYPES #")
   end if
 
+  pConfig%iNumberOfSoilTypes = iNumSoilTypes
+  
   ! now allocate memory for landuse table
   allocate ( pConfig%LU( iNumLandUses ), stat=iStat )
   call Assert ( iStat == 0, &
