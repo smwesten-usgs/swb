@@ -9,6 +9,7 @@ set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
 set MINGWBASE=c:\MinGW64
 set MINGW_VERSION=4.8.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
+set Fortran_COMPILER_NAME=gfortran
 set R_HOME=C:\Program Files\R\R-2.15.2\bin
 
 :: define where 'make copy' will place executables
@@ -80,6 +81,7 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DMINGWBASE=%MINGWBASE% ^
 -DMINGW_VERSION=%MINGW_VERSION% ^
 -DCOMPILER_TRIPLET=%COMPILER_TRIPLET% ^
+-DFortran_COMPILER_NAME=%Fortran_COMPILER_NAME% ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^

@@ -191,11 +191,9 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
 
-     include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES})
+     include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
 
      SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
-     
-     set(CMAKE_INCLUDE_PATH "${CMAKE_INCLUDE_PATH};${PROJECT_SOURCE_DIR}/src/proj4")
 
      add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
            COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
@@ -337,31 +335,31 @@ elseif(CMAKE_HOST_UNIX)
              /usr/include )
              message("Using include directory: " ${INCLUDE_DIR})
 
-   find_path(INCLUDE_DISLIN 
+   find_path(INCLUDE_DISLIN
      NAMES dislin.mod
      DOC "Find the DISLIN module file"
      PATHS
      "${PROJECT_SOURCE_DIR}/include/linux_x64/gfortran"
      /usr/local/dislin/gf )
-     
+
    find_library(NETCDF_C_LIB
      NAMES netcdf NETCDF
      DOC "NetCDF C library"
      HINTS
      /usr/local/lib )
 
-   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")     
-     
+   if (Fortran_COMPILER_NAME MATCHES "gfortran[.a-z]*")
+
      find_library(DISLIN_FORTRAN_LIB
-       NAMES dislin dislin.a libdislin.a 
+       NAMES dislin dislin.a libdislin.a
        DOC "DISLIN Fortran library"
        HINTS
        /usr/local/dislin
        "${PROJECT_SOURCE_DIR}/lib/linux_x64/gfortran"
      )
-     
+
    elseif (Fortran_COMPILER_NAME MATCHES "ifort[.a-z]*")
-   
+
      find_library(DISLIN_FORTRAN_LIB
        NAMES disifl
        DOC "DISLIN Fortran library"
@@ -369,8 +367,8 @@ elseif(CMAKE_HOST_UNIX)
        ${PROJECT_SOURCE_DIR}/lib/linux_x64/ifort
      )
 
-   endif()     
-     
+   endif()
+
 #     find_library(OPEN_MOTIF_LIB
 #       NAMES Xm
 #       NAMES Xm
