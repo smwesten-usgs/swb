@@ -801,7 +801,7 @@ end subroutine set_constant_value_real
       sDelimiter = "\"
     endif
 
-    this%sSourceFilename = trim(sCWD)//trim(sDelimiter)//trim(sNewFilename)
+!    this%sSourceFilename = trim(sCWD)//trim(sDelimiter)//trim(sNewFilename)
 
     ! does this file actually exist?
     inquire( file=this%sSourceFilename, exist=lExist )

@@ -79,7 +79,7 @@ program main
 
   character (len=256) :: sControlFile
   integer (kind=T_INT) :: iNumArgs
-  character (len=512) :: sCompilerFlags
+  character (len=1024) :: sCompilerFlags
   character (len=256) :: sCompilerVersion
 
   ! warning - calling a Fortran 2003 extension function here
