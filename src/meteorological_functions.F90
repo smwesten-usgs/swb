@@ -21,8 +21,8 @@ module meteorological_functions
 !
 !!***
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
 
   implicit none
 
@@ -72,12 +72,12 @@ contains
  function daylight_hours(rOmega_s) result(rN)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rOmega_s
+  real (kind=c_double), intent(in) :: rOmega_s
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rN
+  real (kind=c_double) :: rN
 
-  rN = 24_T_DBL / dpPI * rOmega_s
+  rN = 24_c_double / dpPI * rOmega_s
 
 end function daylight_hours
 
@@ -117,21 +117,21 @@ end function daylight_hours
 function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(rRa)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rLatitude
-  real (kind=T_DBL), intent(in) :: rDelta
-  real (kind=T_DBL), intent(in) :: rOmega_s
-  real (kind=T_DBL), intent(in) :: rDsubR
+  real (kind=c_double), intent(in) :: rLatitude
+  real (kind=c_double), intent(in) :: rDelta
+  real (kind=c_double), intent(in) :: rOmega_s
+  real (kind=c_double), intent(in) :: rDsubR
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRa
-  real (kind=T_DBL) :: rPartA, rPartB
-  real (kind=T_DBL), parameter :: rGsc = 0.0820_T_DBL  ! MJ / m**2 / min
+  real (kind=c_double) :: rRa
+  real (kind=c_double) :: rPartA, rPartB
+  real (kind=c_double), parameter :: rGsc = 0.0820_c_double  ! MJ / m**2 / min
 
   rPartA = rOmega_s * sin(rLatitude) * sin(rDelta)
   rPartB = cos(rLatitude) * cos(rDelta) * sin(rOmega_s)
 
 
-  rRa = 24_T_DBL * 60_T_DBL * rGsc * rDsubR * (rPartA + rPartB) / dpPI
+  rRa = 24_c_double * 60_c_double * rGsc * rDsubR * (rPartA + rPartB) / dpPI
 
 end function extraterrestrial_radiation_Ra
 
@@ -157,12 +157,12 @@ end function extraterrestrial_radiation_Ra
 function equivalent_evaporation(rR) result(rR_ET)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rR
+  real (kind=c_double), intent(in) :: rR
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rR_ET
+  real (kind=c_double) :: rR_ET
 
-    rR_ET = rR * 0.408_T_DBL
+    rR_ET = rR * 0.408_c_double
 
 end function equivalent_evaporation
 
@@ -190,19 +190,19 @@ end function equivalent_evaporation
  function row_latitude(rNorthLat, rSouthLat, iNumRows, iCurrRow) result(rRowLat)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rNorthLat
-  real (kind=T_SGL), intent(in) :: rSouthLat
-  integer (kind=T_INT), intent(in) :: iNumRows
-  integer (kind=T_INT), intent(in) :: iCurrRow
+  real (kind=c_float), intent(in) :: rNorthLat
+  real (kind=c_float), intent(in) :: rSouthLat
+  integer (kind=c_int), intent(in) :: iNumRows
+  integer (kind=c_int), intent(in) :: iCurrRow
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRowLat
+  real (kind=c_double) :: rRowLat
 
 !  print *, rNorthLat,rSouthLat,iCurrRow,iNumRows
 
-  rRowLat = real(rNorthLat, kind=T_DBL) &
-      - ((real(rNorthLat, kind=T_DBL) - real(rSouthLat, kind=T_DBL)) &
-      * (REAL(iCurrRow,kind=T_DBL) / REAL(iNumRows,kind=T_DBL)))
+  rRowLat = real(rNorthLat, kind=c_double) &
+      - ((real(rNorthLat, kind=c_double) - real(rSouthLat, kind=c_double)) &
+      * (REAL(iCurrRow,kind=c_double) / REAL(iNumRows,kind=c_double)))
 
 end function row_latitude
 
@@ -232,18 +232,18 @@ end function row_latitude
 
 function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
 
-  real (kind=T_SGL) :: rTSnow
-  real (kind=T_SGL) :: rTAvg
-  real (kind=T_SGL), optional :: rWindSpd   ! wind speed in meters per second
-  real(kind=T_DBL) :: rH
+  real (kind=c_float) :: rTSnow
+  real (kind=c_float) :: rTAvg
+  real (kind=c_float), optional :: rWindSpd   ! wind speed in meters per second
+  real(kind=c_double) :: rH
 
   ! [ LOCALS ]
-  real (kind=T_SGL), parameter :: rCa = 0.93   ! kJ per cubic meter per degree C
+  real (kind=c_float), parameter :: rCa = 0.93   ! kJ per cubic meter per degree C
                                                ! (heat capacity of air)
 
-  real (kind=T_SGL), parameter :: rRho_air = 1.29  ! kg per cubic meter
+  real (kind=c_float), parameter :: rRho_air = 1.29  ! kg per cubic meter
 
-  real (kind=T_DBL) :: rWindSpeed
+  real (kind=c_double) :: rWindSpeed
 
   ! rTurbConst derived from equation 12 in the reference by assigning
   ! reasonable default values to the parameters and combining into a constant
@@ -262,10 +262,10 @@ function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
   ! [1] 8.517393
   ! a * b / 86400 / 0.41^2
   ! [1] 0.0044577833643
-!  real (kind=T_DBL) :: rTurbConst = 0.0044577833643_T_DBL
-  real (kind=T_DBL) :: rTurbConst = 385.16_T_DBL
+!  real (kind=c_double) :: rTurbConst = 0.0044577833643_c_double
+  real (kind=c_double) :: rTurbConst = 385.16_c_double
 
-  real (kind=T_SGL) :: rRh                     ! resistance to heat x-fer in
+  real (kind=c_float) :: rRh                     ! resistance to heat x-fer in
                                                ! days per meter
   if(present(rWindspd)) then
     rWindSpeed = rWindSpd
@@ -310,20 +310,20 @@ end function sensible_heat_exchange_h
 
 function convective_heat_exchange_e(rTSnow, rTAvg, rWindSpd) result(rE)
 
-  real (kind=T_SGL) :: rTSnow
-  real (kind=T_SGL) :: rTAvg
-  real (kind=T_SGL), optional :: rWindSpd   ! wind speed in meters per second
-  real(kind=T_DBL) :: rE
+  real (kind=c_float) :: rTSnow
+  real (kind=c_float) :: rTAvg
+  real (kind=c_float), optional :: rWindSpd   ! wind speed in meters per second
+  real(kind=c_double) :: rE
 
   ! [ LOCALS ]
-  real (kind=T_SGL), parameter :: rLambda_v = 2500.0
+  real (kind=c_float), parameter :: rLambda_v = 2500.0
                                               ! kJ per kg
                                               !(latent heat of vaporization)
 
-  real (kind=T_SGL) :: rRho_surface   ! vapor density at snow surface
-  real (kind=T_SGL) :: rRho_air       ! vapor density of air
+  real (kind=c_float) :: rRho_surface   ! vapor density at snow surface
+  real (kind=c_float) :: rRho_air       ! vapor density of air
 
-  real (kind=T_DBL) :: rWindSpeed
+  real (kind=c_double) :: rWindSpeed
 
   ! rTurbConst derived from equation 12 in the reference by assigning
   ! reasonable default values to the parameters and combining into a constant
@@ -342,10 +342,10 @@ function convective_heat_exchange_e(rTSnow, rTAvg, rWindSpd) result(rE)
   ! [1] 8.517393
   ! a * b / 86400 / 0.41^2
   ! [1] 0.0044577833643
-!  real (kind=T_DBL) :: rTurbConst = 0.0044577833643_T_DBL
-  real (kind=T_DBL) :: rTurbConst = 385.16_T_DBL
+!  real (kind=c_double) :: rTurbConst = 0.0044577833643_c_double
+  real (kind=c_double) :: rTurbConst = 385.16_c_double
 
-  real (kind=T_SGL) :: rRv                     ! resistance to heat x-fer in
+  real (kind=c_float) :: rRv                     ! resistance to heat x-fer in
                                                ! days per meter
   if(present(rWindspd)) then
     rWindSpeed = rWindSpd
@@ -395,11 +395,11 @@ function net_shortwave_radiation_Rns(rRs, rAlbedo)  result(rRns)
 !
 ! SOURCE
 
-  real(kind=T_DBL), intent(in) :: rRs
-  real(kind=T_DBL), intent(in) :: rAlbedo
+  real(kind=c_double), intent(in) :: rRs
+  real(kind=c_double), intent(in) :: rAlbedo
 
   ! [ LOCALS ]
-  real(kind=T_DBL) :: rRns
+  real(kind=c_double) :: rRns
 
   rRns = (dpONE - rAlbedo) * rRs
 
@@ -428,16 +428,16 @@ end function net_shortwave_radiation_Rns
 
 function precipitation_heat_p(rPrecipAmount, rTAvg) result(rP)
 
-  real (kind=T_SGL) :: rPrecipAmount
-  real (kind=T_SGL) :: rTAvg
-  real (kind=T_SGL) :: rP
+  real (kind=c_float) :: rPrecipAmount
+  real (kind=c_float) :: rTAvg
+  real (kind=c_float) :: rP
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rPrecipAmount_meters
-  real (kind=T_DBL), parameter :: rCw = 4.2E+03  ! kJ per cubic meter per deg C
+  real (kind=c_double) :: rPrecipAmount_meters
+  real (kind=c_double), parameter :: rCw = 4.2E+03  ! kJ per cubic meter per deg C
 
-  rPrecipAmount_meters = real(rPrecipAmount, kind=T_DBL) / 12_T_DBL &
-          * 0.3048_T_DBL
+  rPrecipAmount_meters = real(rPrecipAmount, kind=c_double) / 12_c_double &
+          * 0.3048_c_double
 
   ! this is supposed to represent the amount of heat added to snowpack
   ! when rain falls on the snowpack; restrict rainfall temperature to
@@ -468,16 +468,16 @@ end function precipitation_heat_p
 function solar_declination(iDayOfYear, iNumDaysInYear) result(rDelta)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT), intent(in) :: iDayOfYear
-  integer (kind=T_INT), intent(in) :: iNumDaysInYear
+  integer (kind=c_int), intent(in) :: iDayOfYear
+  integer (kind=c_int), intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rDelta
+  real (kind=c_double) :: rDelta
 
-  rDelta = 0.409_T_DBL &
-           * sin ( (2_T_DBL * dpPI &
-           * real(iDayOfYear, kind=T_DBL) / real(iNumDaysInYear, kind=T_DBL)) &
-		          - 1.39_T_DBL)
+  rDelta = 0.409_c_double &
+           * sin ( (2_c_double * dpPI &
+           * real(iDayOfYear, kind=c_double) / real(iNumDaysInYear, kind=c_double)) &
+		          - 1.39_c_double)
 
 end function solar_declination
 
@@ -511,14 +511,14 @@ end function solar_declination
 function rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear) result(rDsubR)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT), intent(in) :: iDayOfYear
-  integer (kind=T_INT), intent(in) :: iNumDaysInYear
+  integer (kind=c_int), intent(in) :: iDayOfYear
+  integer (kind=c_int), intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDsubR
+  real (kind=c_float) :: rDsubR
 
-  rDsubR = 1_T_SGL + 0.033_T_SGL &
-           * cos ( 2_T_SGL * dpPI * iDayOfYear / iNumDaysInYear )
+  rDsubR = 1_c_float + 0.033_c_float &
+           * cos ( 2_c_float * dpPI * iDayOfYear / iNumDaysInYear )
   return
 
 end function rel_Earth_Sun_dist
@@ -553,11 +553,11 @@ end function rel_Earth_Sun_dist
  function sunset_angle(rLatitude, rDelta) result(rOmega_s)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rLatitude
-  real (kind=T_DBL), intent(in) :: rDelta
+  real (kind=c_double), intent(in) :: rLatitude
+  real (kind=c_double), intent(in) :: rDelta
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rOmega_s
+  real (kind=c_double) :: rOmega_s
 
   call Assert(rLatitude <1.58 .and. rLatitude > -1.58, &
     "Internal programming error: Latitude must be expressed in RADIANS", &
@@ -601,13 +601,13 @@ end function sunset_angle
 function solar_radiation_Hargreaves_Rs(rRa, rTMIN, rTMAX) result(rRs)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rRa
-  real (kind=T_SGL), intent(in) :: rTMIN
-  real (kind=T_SGL), intent(in) :: rTMAX
+  real (kind=c_double), intent(in) :: rRa
+  real (kind=c_float), intent(in) :: rTMIN
+  real (kind=c_float), intent(in) :: rTMAX
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRs
-  real (kind=T_DBL), parameter :: rKRs = 0.175
+  real (kind=c_double) :: rRs
+  real (kind=c_double), parameter :: rKRs = 0.175
 
   rRs = rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) * rRa
 
@@ -625,24 +625,24 @@ function estimate_percent_of_possible_sunshine(rTMAX, rTMIN)  result(rPsun)
   ! equation 5 results in the formulation below
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rTMIN
-  real (kind=T_SGL), intent(in) :: rTMAX
+  real (kind=c_float), intent(in) :: rTMIN
+  real (kind=c_float), intent(in) :: rTMAX
 
   ! [ RETURNS ]
 
-  real (kind=T_SGL) :: rPsun
+  real (kind=c_float) :: rPsun
 
   ! [ LOCALS ]
-  real (kind=T_SGL), parameter :: rKRs = 0.175
+  real (kind=c_float), parameter :: rKRs = 0.175
 
-  rPsun = ( 2_T_SGL * rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) ) - 0.5_T_SGL
+  rPsun = ( 2_c_float * rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) ) - 0.5_c_float
 
-  if (rPsun < 0_T_SGL) then
-    rPsun = 0_T_SGL
-  elseif (rPsun > 1.0_T_SGL) then
-    rPsun = 100_T_SGL
+  if (rPsun < 0_c_float) then
+    rPsun = 0_c_float
+  elseif (rPsun > 1.0_c_float) then
+    rPsun = 100_c_float
   else
-    rPsun = rPsun * 100_T_SGL
+    rPsun = rPsun * 100_c_float
   endif
 
 end function estimate_percent_of_possible_sunshine
@@ -681,20 +681,20 @@ end function estimate_percent_of_possible_sunshine
 function clear_sky_solar_radiation_Rso(rRa, rAs_in, rBs_in) result(rRso)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rRa
-  real (kind=T_DBL), intent(in), optional :: rAs_in
-  real (kind=T_DBL), intent(in),optional :: rBs_in
+  real (kind=c_double), intent(in) :: rRa
+  real (kind=c_double), intent(in), optional :: rAs_in
+  real (kind=c_double), intent(in),optional :: rBs_in
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRso
-  real (kind=T_DBL) :: rAs
-  real (kind=T_DBL) :: rBs
+  real (kind=c_double) :: rRso
+  real (kind=c_double) :: rAs
+  real (kind=c_double) :: rBs
 
   ! assign default value to As if none is provided
   if(present(rAs_in)) then
     rAs = rAs_in
   else
-    rAs = 0.25_T_DBL
+    rAs = 0.25_c_double
 
   end if
 
@@ -702,7 +702,7 @@ function clear_sky_solar_radiation_Rso(rRa, rAs_in, rBs_in) result(rRso)
   if(present(rBs_in)) then
     rBs = rBs_in
   else
-    rBs = 0.5_T_DBL
+    rBs = 0.5_c_double
   end if
 
   rRso = (rAs + rBs) * rRa
@@ -741,13 +741,13 @@ end function clear_sky_solar_radiation_Rso
 function clear_sky_solar_radiation_noAB_Rso(rRa, rElevation) result(rRso)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rRa
-  real (kind=T_DBL), intent(in) :: rElevation
+  real (kind=c_double), intent(in) :: rRa
+  real (kind=c_double), intent(in) :: rElevation
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rRso
+  real (kind=c_float) :: rRso
 
-  rRso = (0.75_T_DBL + 1.0E-5_T_DBL * rElevation) * rRa
+  rRso = (0.75_c_double + 1.0E-5_c_double * rElevation) * rRa
 
 end function clear_sky_solar_radiation_noAB_Rso
 
@@ -786,15 +786,15 @@ end function clear_sky_solar_radiation_noAB_Rso
 function solar_radiation_Rs(rRa, rAs, rBs, rPctSun) result(rRs)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rRa
-  real (kind=T_DBL), intent(in) :: rAs
-  real (kind=T_DBL), intent(in) :: rBs
-  real (kind=T_DBL), intent(in) :: rPctSun
+  real (kind=c_double), intent(in) :: rRa
+  real (kind=c_double), intent(in) :: rAs
+  real (kind=c_double), intent(in) :: rBs
+  real (kind=c_double), intent(in) :: rPctSun
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRs
+  real (kind=c_double) :: rRs
 
-  rRs = ( rAs + (rBs * rPctSun / 100_T_SGL)) * rRa
+  rRs = ( rAs + (rBs * rPctSun / 100_c_float)) * rRa
 
   return
 
@@ -831,13 +831,13 @@ end function solar_radiation_Rs
 function sat_vapor_pressure_es(rT) result (re_0)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rT
+  real (kind=c_float), intent(in) :: rT
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: re_0
+  real (kind=c_float) :: re_0
 
-  re_0 = 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rT) &
-             / (FtoC(rT) + 237.3_T_DBL))
+  re_0 = 0.6108_c_double * exp (17.27_c_double * FtoC(rT) &
+             / (FtoC(rT) + 237.3_c_double))
 
 end function sat_vapor_pressure_es
 
@@ -845,14 +845,14 @@ end function sat_vapor_pressure_es
 
 function sat_vapor_density(rT) result(rRho)
 
-  real(kind=T_SGL), intent(in):: rT
+  real(kind=c_float), intent(in):: rT
 
   ! [ LOCALS ]
-  real(kind=T_DBL) :: rRho
-  real (kind=T_DBL), parameter :: rR = 0.4615_T_DBL     ! kJ per kg per deg K
+  real(kind=c_double) :: rRho
+  real (kind=c_double), parameter :: rR = 0.4615_c_double     ! kJ per kg per deg K
 
 
-  rRho = exp((16.78_T_DBL * FtoC(rT) - 116.8_T_DBL) / (FtoK(rT))) &
+  rRho = exp((16.78_c_double * FtoC(rT) - 116.8_c_double) / (FtoK(rT))) &
          * (1. / ((FtoK(rT)) * rR))
 
 end function sat_vapor_density
@@ -887,13 +887,13 @@ end function sat_vapor_density
 function dewpoint_vapor_pressure_ea(rTMIN) result (re_a)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rTMIN
+  real (kind=c_float), intent(in) :: rTMIN
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: re_a
+  real (kind=c_double) :: re_a
 
-  re_a = 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rTMIN) &
-             / (FtoC(rTMIN) + 237.3_T_DBL))
+  re_a = 0.6108_c_double * exp (17.27_c_double * FtoC(rTMIN) &
+             / (FtoC(rTMIN) + 237.3_c_double))
 
 end function dewpoint_vapor_pressure_ea
 !!***
@@ -926,15 +926,15 @@ end function dewpoint_vapor_pressure_ea
 function minimum_rel_hum(rTMin, rTMax) result (rMinRH)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rTMin, rTMax
+  real (kind=c_float), intent(in) :: rTMin, rTMax
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rMinRH, re_a, re_x
+  real (kind=c_double) :: rMinRH, re_a, re_x
 
   re_a = dewpoint_vapor_pressure_ea(rTMin)
   re_x = sat_vapor_pressure_es(rTMax)
 
-  rMinRH = 100_T_DBL * re_a / re_x
+  rMinRH = 100_c_double * re_a / re_x
 
 end function minimum_rel_hum
 
@@ -968,15 +968,15 @@ end function minimum_rel_hum
 function maximum_rel_hum(rTMin) result (rMaxRH)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), intent(in) :: rTMin
+  real (kind=c_float), intent(in) :: rTMin
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rMaxRH, re_a, re_n
+  real (kind=c_double) :: rMaxRH, re_a, re_n
 
   re_a = dewpoint_vapor_pressure_ea(rTMin)
   re_n = sat_vapor_pressure_es(rTMin)
 
-  rMaxRH = 100_T_SGL * re_a / re_n
+  rMaxRH = 100_c_float * re_a / re_n
 
 end function maximum_rel_hum
 
@@ -1011,19 +1011,19 @@ end function maximum_rel_hum
 
 function net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso)  result(rRnl)
 
-  real(kind=T_SGL), intent(in) :: rTMin
-  real(kind=T_SGL), intent(in) :: rTMax
-  real(kind=T_DBL), intent(in) :: rRs
-  real(kind=T_DBL), intent(in) :: rRso
+  real(kind=c_float), intent(in) :: rTMin
+  real(kind=c_float), intent(in) :: rTMax
+  real(kind=c_double), intent(in) :: rRs
+  real(kind=c_double), intent(in) :: rRso
 
   ! [ LOCALS ]
-  real(kind=T_DBL) :: rRnl
-  real(kind=T_DBL) :: rTAvg_K
-  real(kind=T_DBL) :: rTAvg_4
+  real(kind=c_double) :: rRnl
+  real(kind=c_double) :: rTAvg_K
+  real(kind=c_double) :: rTAvg_4
 
-  real (kind=T_DBL) :: r_ea
-  real (kind=T_DBL) :: rCloudFrac
-  real (kind=T_DBL),parameter :: rSIGMA = 4.903E-9_T_DBL
+  real (kind=c_double) :: r_ea
+  real (kind=c_double) :: rCloudFrac
+  real (kind=c_double),parameter :: rSIGMA = 4.903E-9_c_double
 
   rTAvg_K = FtoK((rTMin + rTMax )/ 2.)
 
@@ -1032,8 +1032,8 @@ function net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso)  result(rRnl)
 
   rCloudFrac = min(rRs / rRso, 1.0)
 
-  rRnl = rTAvg_4 * (0.34_T_DBL - 0.14_T_DBL * sqrt(r_ea)) &
-          * (1.35_T_DBL * rCloudFrac - 0.35_T_DBL)
+  rRnl = rTAvg_4 * (0.34_c_double - 0.14_c_double * sqrt(r_ea)) &
+          * (1.35_c_double * rCloudFrac - 0.35_c_double)
 
   return
 
@@ -1068,11 +1068,11 @@ end function net_longwave_radiation_Rnl
 
 function zenith_angle(rLatitude, rDelta) result(rZenithAngle)
 
-  real (kind=T_DBL), intent(in) :: rLatitude
-  real (kind=T_DBL), intent(in) :: rDelta
+  real (kind=c_double), intent(in) :: rLatitude
+  real (kind=c_double), intent(in) :: rDelta
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rZenithAngle
+  real (kind=c_double) :: rZenithAngle
 
   call Assert(rLatitude <1.58 .and. rLatitude > -1.58, &
     "Internal programming error: Latitude must be expressed in RADIANS", &
@@ -1117,14 +1117,14 @@ end function zenith_angle
 function slope_sat_vapor_pressure_curve(rT) result (rSlope)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rT
+  real (kind=c_double), intent(in) :: rT
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rSlope
+  real (kind=c_double) :: rSlope
 
-  rSlope = 4098_T_DBL * 0.6108_T_DBL * exp (17.27_T_DBL * FtoC(rT) &
-                                       / (FtoC(rT) + 237.3_T_DBL)) &
-			 / ((FtoC(rT) + 237.3_T_DBL)**2)
+  rSlope = 4098_c_double * 0.6108_c_double * exp (17.27_c_double * FtoC(rT) &
+                                       / (FtoC(rT) + 237.3_c_double)) &
+			 / ((FtoC(rT) + 237.3_c_double)**2)
 
 end function slope_sat_vapor_pressure_curve
 

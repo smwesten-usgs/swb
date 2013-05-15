@@ -19,6 +19,7 @@ module sm_thornthwaite_mather
 !
 !!***
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
   use swb_grid
   use stats
@@ -26,7 +27,7 @@ module sm_thornthwaite_mather
 
   implicit none
 
-  real (kind=T_SGL), parameter :: APWL_Cap = -40.69_T_SGL
+  real (kind=c_float), parameter :: APWL_Cap = -40.69_c_float
 
   !! Module data
 
@@ -35,8 +36,8 @@ module sm_thornthwaite_mather
 
   ! parameters that allow the Thornthwaite-Mather tables (1957) to be
   ! represented by a single equation
-  real (kind=T_DBL), parameter :: rTM_slope_term = 0.478769194198665_T_DBL
-  real (kind=T_DBL), parameter :: rTM_exp_term = -1.03678439421169_T_DBL
+  real (kind=c_double), parameter :: rTM_slope_term = 0.478769194198665_c_double
+  real (kind=c_double), parameter :: rTM_exp_term = -1.03678439421169_c_double
 
 contains
 
@@ -73,7 +74,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iRow,iCol
+  integer (kind=c_int) :: iRow,iCol
   type ( T_CELL ),pointer :: cel
 
   ! Initialize the accumulated water loss for each cell according to the
@@ -88,18 +89,18 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
       !! Constrain rSoilWaterCap to limits of Thornthwaite-Mather tables
 
-        if ( cel%rSoilWaterCap < 0.5_T_SGL ) then
+        if ( cel%rSoilWaterCap < 0.5_c_float ) then
           write(UNIT=LU_LOG,FMT="(a,f10.3,a,i4,',',i4,a)") &
             'Soil water capacity', cel%rSoilWaterCap,' for cell ',iRow,iCol, &
             ' out of range; adjusted to 0.5'
           flush(unit=LU_LOG)
-          cel%rSoilWaterCap = 0.51_T_SGL
-        else if ( cel%rSoilWaterCap > 17.5_T_SGL ) then
+          cel%rSoilWaterCap = 0.51_c_float
+        else if ( cel%rSoilWaterCap > 17.5_c_float ) then
           write(UNIT=LU_LOG,FMT="(a,f10.3,a,i4,',',i4,a)") &
             'Soil water capacity', cel%rSoilWaterCap,' for cell ',iRow,iCol, &
             ' out of range; adjusted to 17.5'
           flush(unit=LU_LOG)
-          cel%rSoilWaterCap = 17.49_T_SGL
+          cel%rSoilWaterCap = 17.49_c_float
         end if
 
      !! convert input soil moisture (as percent of soil water capacity)
@@ -122,7 +123,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
        ! calculate APWL from equation
        cel%rSM_AccumPotentWatLoss = &
-         sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=T_DBL) )
+         sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=c_double) )
 
 #endif
 
@@ -146,10 +147,10 @@ end subroutine sm_thornthwaite_mather_Initialize
 
 function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(dpValue)
 
-  real (kind=T_SGL), intent(in) :: rSWC     ! max soil-water capacity (inches)
-  real (kind=T_SGL), intent(in) :: rAPWL    ! accum pot. water loss (inches)
+  real (kind=c_float), intent(in) :: rSWC     ! max soil-water capacity (inches)
+  real (kind=c_float), intent(in) :: rAPWL    ! accum pot. water loss (inches)
 
-  real (kind=T_DBL) :: dpValue
+  real (kind=c_double) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
@@ -160,9 +161,9 @@ function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(dpValue)
 
   if(rSWC > rZERO ) &
 
-    dpValue = 10_T_DBL**( log10(REAL(rSWC,kind=T_DBL)) - &
-              ( ABS(REAL(rAPWL,kind=T_DBL)) * rTM_slope_term &
-              * real(rSWC, kind=T_DBL)**rTM_exp_term ) )
+    dpValue = 10_c_double**( log10(REAL(rSWC,kind=c_double)) - &
+              ( ABS(REAL(rAPWL,kind=c_double)) * rTM_slope_term &
+              * real(rSWC, kind=c_double)**rTM_exp_term ) )
 
 
 end function sm_thornthwaite_mather_soil_storage
@@ -171,10 +172,10 @@ end function sm_thornthwaite_mather_soil_storage
 
 function sm_thornthwaite_mather_APWL(rSWC, dpSoilStorage)  result(dpValue)
 
-  real (kind=T_SGL), intent(in) :: rSWC          ! max soil-water capacity (inches)
-  real (kind=T_DBL), intent(in) :: dpSoilStorage  ! curr soil storage (inches)
+  real (kind=c_float), intent(in) :: rSWC          ! max soil-water capacity (inches)
+  real (kind=c_double), intent(in) :: dpSoilStorage  ! curr soil storage (inches)
 
-  real (kind=T_DBL) :: dpValue
+  real (kind=c_double) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
@@ -185,8 +186,8 @@ function sm_thornthwaite_mather_APWL(rSWC, dpSoilStorage)  result(dpValue)
 
   if(rSWC > rZERO .and. dpSoilStorage > dpZERO) &
 
-    dpValue = -( log10(REAL(rSWC,kind=T_DBL)) - log10(dpSoilStorage)) / &
-          ( rTM_slope_term * REAL(rSWC,kind=T_DBL)**rTM_exp_term )
+    dpValue = -( log10(REAL(rSWC,kind=c_double)) - log10(dpSoilStorage)) / &
+          ( rTM_slope_term * REAL(rSWC,kind=c_double)**rTM_exp_term )
 
 end function sm_thornthwaite_mather_APWL
 

@@ -3,9 +3,10 @@
 !>  provides data compression (run-length encoding) for internal data structures.
 module RLE
 
-use types
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
+  use types
 
-implicit none
+  implicit none
 
 contains
 
@@ -38,22 +39,22 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
                     iByteTotal, iVarNum)
 
   ![ARGUMENTS]
-  integer(kind=T_INT), intent(in) :: iLU
-  real(kind=T_SGL),intent(in) :: rValue
-  integer(kind=T_INT),intent(in) :: iRLE_MULT
-  real(kind=T_SGL),intent(in) :: rRLE_OFFSET
-  integer(kind=T_INT), intent(in) :: iByteTotal      ! total # of bytes in
+  integer(kind=c_int), intent(in) :: iLU
+  real(kind=c_float),intent(in) :: rValue
+  integer(kind=c_int),intent(in) :: iRLE_MULT
+  real(kind=c_float),intent(in) :: rRLE_OFFSET
+  integer(kind=c_int), intent(in) :: iByteTotal      ! total # of bytes in
                                                      ! original datastream
-  integer(kind=T_INT), intent(in) :: iVarNum
+  integer(kind=c_int), intent(in) :: iVarNum
 
   ![LOCALS]
-  integer(kind=T_INT),dimension(1:iNUM_VARIABLES), save :: iRunCount
-  integer(kind=T_INT),dimension(1:iNUM_VARIABLES), save :: iByteCount = 0
+  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iRunCount
+  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iByteCount = 0
                                                 ! total # of bytes fed into
                                                 ! RLE_writeByte so far
-  integer(kind=T_INT) :: i
-  integer(kind=T_INT),dimension(1:iNUM_VARIABLES), save :: iPrevious, iCurr
-  logical(kind=T_INT),dimension(1:iNUM_VARIABLES),save :: lRun
+  integer(kind=c_int) :: i
+  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iPrevious, iCurr
+  logical(kind=c_bool),dimension(1:iNUM_VARIABLES),save :: lRun
 
   ! iByteCount is incremented *EVERY* time this subroutine is called.
   ! This subroutine should be called a number of times that EXACTLY
@@ -169,21 +170,21 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
                         iByteTotal,lEOF)
 
   ![ARGUMENTS]
-  integer(kind=T_INT), intent(in) :: iLU
-  integer(kind=T_INT),intent(in) :: iRLE_MULT
-  real(kind=T_SGL),intent(in) :: rRLE_OFFSET
-  real(kind=T_SGL),dimension(iByteTotal), intent(out) :: rValue
-  integer(kind=T_INT), intent(in) :: iByteTotal      ! total # of bytes in
+  integer(kind=c_int), intent(in) :: iLU
+  integer(kind=c_int),intent(in) :: iRLE_MULT
+  real(kind=c_float),intent(in) :: rRLE_OFFSET
+  real(kind=c_float),dimension(iByteTotal), intent(out) :: rValue
+  integer(kind=c_int), intent(in) :: iByteTotal      ! total # of bytes in
                                                      ! original datastream
-  logical(kind=T_LOGICAL),intent(out) :: lEOF
+  logical(kind=c_bool),intent(out) :: lEOF
 
   ![LOCALS]
-  integer(kind=T_INT), save :: iByteCount   ! total # of bytes reconstituted
+  integer(kind=c_int), save :: iByteCount   ! total # of bytes reconstituted
                                             ! by RLE_readByte so far
 
-  integer(kind=T_INT) iCurr, i, iRepeat, iStat
-  integer(kind=T_INT), save :: iPrevious
-  logical(kind=T_LOGICAL),save :: lRun
+  integer(kind=c_int) iCurr, i, iRepeat, iStat
+  integer(kind=c_int), save :: iPrevious
+  logical(kind=c_bool),save :: lRun
   lEOF = lFALSE
 
 
@@ -203,7 +204,7 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
     read(iLU,iostat=iStat) iCurr  ! read in a byte of data
     call Assert(iStat == 0, &
        "Error reading input file: module RLE, subroutine RLE_readByte")
-    call Assert(LOGICAL(iCurr>=-HUGE(iCurr),kind=T_LOGICAL), &
+    call Assert(LOGICAL(iCurr>=-HUGE(iCurr),kind=c_bool), &
         "Integer overflow; iLU= "//TRIM(int2char(iLU)) &
         //"; iCurr= "//TRIM(int2char(iCurr)) &
           //". Use a smaller value for RLE_MULTIPLIER", &
@@ -214,11 +215,11 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	  lRun = lFALSE
 
-	  call Assert(LOGICAL( iByteCount <=iByteTotal, kind=T_LOGICAL), &
+	  call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
         "iByteCount exceeds iByteTotal: module RLE, subroutine RLE_readByte")
 
-      rValue(iByteCount) = REAL(iPrevious, kind=T_SGL) &
-                           / REAL(iRLE_MULT, kind=T_SGL) &
+      rValue(iByteCount) = REAL(iPrevious, kind=c_float) &
+                           / REAL(iRLE_MULT, kind=c_float) &
                            - rRLE_OFFSET
 
 !      write(UNIT=LU_LOG,FMT=*) iByteCount,":  iPrev: ",iPrevious,"  iCurr: ", iCurr, "  rValue: ", &
@@ -230,17 +231,17 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	  ! assign value of iCurr
       iByteCount = iByteCount + 1
-      call Assert(LOGICAL( iByteCount <=iByteTotal, kind=T_LOGICAL), &
+      call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
         "iByteCount exceeds iByteTotal", &
                 trim(__FILE__),__LINE__)
 
-!      rValue(iByteCount) = REAL(iCurr, kind=T_SGL) / REAL(iRLE_MULT, kind=T_SGL)
+!      rValue(iByteCount) = REAL(iCurr, kind=c_float) / REAL(iRLE_MULT, kind=c_float)
 
-      rValue(iByteCount) = REAL(iCurr, kind=T_SGL) &
-                           / REAL(iRLE_MULT, kind=T_SGL) &
+      rValue(iByteCount) = REAL(iCurr, kind=c_float) &
+                           / REAL(iRLE_MULT, kind=c_float) &
                            - rRLE_OFFSET
 
-      call Assert(LOGICAL(iCurr>=-iEOF,kind=T_LOGICAL), &
+      call Assert(LOGICAL(iCurr>=-iEOF,kind=c_bool), &
         "Read beyond end of file marker", &
                 trim(__FILE__),__LINE__)
 
@@ -254,13 +255,13 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 	  ! if iRepeat is ZERO, loop will *NOT* execute
       do i=iRepeat,1,-1
         iByteCount = iByteCount + 1
-	    call Assert(LOGICAL( iByteCount <=iByteTotal, kind=T_LOGICAL), &
+	    call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
           "iByteCount exceeds iByteTotal: module RLE, subroutine RLE_readByte", &
                 trim(__FILE__),__LINE__)
-!        rValue(iByteCount) = REAL(iCurr, kind=T_SGL) / REAL(iRLE_MULT, kind=T_SGL)
+!        rValue(iByteCount) = REAL(iCurr, kind=c_float) / REAL(iRLE_MULT, kind=c_float)
 
-        rValue(iByteCount) = REAL(iCurr, kind=T_SGL) &
-                           / REAL(iRLE_MULT, kind=T_SGL) &
+        rValue(iByteCount) = REAL(iCurr, kind=c_float) &
+                           / REAL(iRLE_MULT, kind=c_float) &
                            - rRLE_OFFSET
 
         call Assert( iCurr >= -iEOF, &

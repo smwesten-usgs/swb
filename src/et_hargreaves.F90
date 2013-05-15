@@ -25,8 +25,8 @@ module et_hargreaves
 !
 !!***
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use stats
   use meteorological_functions
 
@@ -43,20 +43,20 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
 
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=T_INT) :: iStat
-  real (kind=T_SGL) :: rValue
+  integer (kind=c_int) :: iStat
+  real (kind=c_float) :: rValue
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Hargreaves PET model"
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rValue
   call Assert( iStat == 0, "Could not read the southerly latitude" )
-  pConfig%rSouthernLatitude = dpTWOPI * rValue / 360.0_T_SGL
+  pConfig%rSouthernLatitude = dpTWOPI * rValue / 360.0_c_float
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rValue
   call Assert( iStat == 0, "Could not read the northerly latitude" )
-  pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_T_SGL
+  pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_c_float
 
 end subroutine et_hargreaves_configure
 
@@ -72,12 +72,12 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
-  integer (kind=T_INT),intent(in) :: iDayOfYear
-  integer (kind=T_INT),intent(in) :: iNumDaysInYear
+  integer (kind=c_int),intent(in) :: iDayOfYear
+  integer (kind=c_int),intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
-  integer (kind=T_INT) :: iCol, iRow
+  real (kind=c_double) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
+  integer (kind=c_int) :: iCol, iRow
 
 !  write(UNIT=LU_LOG,FMT=*) iDayOfYear, iNumDaysInYear
 
@@ -142,25 +142,25 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
 
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  real (kind=T_DBL),intent(in) :: rRa
-  real (kind=T_SGL),intent(in) :: rTMinF
-  real (kind=T_SGL),intent(in) :: rTMaxF
+  real (kind=c_double),intent(in) :: rRa
+  real (kind=c_float),intent(in) :: rTMinF
+  real (kind=c_float),intent(in) :: rTMaxF
 
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rET_0
+  real (kind=c_float) :: rET_0
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rTDelta
-  real (kind=T_DBL) :: rTAvg
+  real (kind=c_double) :: rTDelta
+  real (kind=c_double) :: rTAvg
 
-  rTAvg = (rTMinF + rTMaxF) / 2_T_DBL
+  rTAvg = (rTMinF + rTMaxF) / 2_c_double
 
   rTDelta = FtoK(rTMaxF) - FtoK(rTMinF)
 
 !  rET_0 = MAX(rZERO, &
-!           ( 0.0023_T_SGL &
+!           ( 0.0023_c_float &
 !           * rRa &
-!           * (FtoC(rTavg) + 17.8_T_SGL) &
+!           * (FtoC(rTavg) + 17.8_c_float) &
 !           * sqrt(rTDelta)) &
 !           / rMM_PER_INCH)
 

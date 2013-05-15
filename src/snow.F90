@@ -9,8 +9,8 @@
 !> \c pConfig%iConfigureSnow is set to \c CONFIG_SNOW_NEW_SWB
 module snow
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use meteorological_functions
   implicit none
 
@@ -22,13 +22,13 @@ function snow_depth_in(rTAvg)  result(rSnowDepth)
   ! Weather Service table "Approximate snowfall amounts at
   ! specified temperature ranges"
 
-  real(kind=T_SGL), intent(in) :: rTAvg
+  real(kind=c_float), intent(in) :: rTAvg
 
   ! [ LOCALS ]
-  real(kind=T_SGL) :: rSnowDepth
+  real(kind=c_float) :: rSnowDepth
 
-  rSnowDepth = 30.0_T_DBL &
-     * exp(-0.04_T_DBL * REAL(rTAvg,kind=T_DBL))
+  rSnowDepth = 30.0_c_double &
+     * exp(-0.04_c_double * REAL(rTAvg,kind=c_double))
 
   return
 
@@ -39,14 +39,14 @@ end function snow_depth_in
 function snow_depth_Hedstrom(rTAvg, pConfig)   result(rSnowDepth)
 
   ! returns fresh snow depth in inches, per inch of liquid precipitation
-  real(kind=T_SGL), intent(in) :: rTAvg
+  real(kind=c_float), intent(in) :: rTAvg
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
   ! [ LOCALS ]
-  real(kind=T_SGL) :: rSnowDepth
-  real (kind=T_SGL) :: rRhoS                       ! density of fresh snow in kg/m^3
-  real (kind=T_SGL), parameter :: rRhoW = 1000.0   ! density of water in kg/m^3
+  real(kind=c_float) :: rSnowDepth
+  real (kind=c_float) :: rRhoS                       ! density of fresh snow in kg/m^3
+  real (kind=c_float), parameter :: rRhoW = 1000.0   ! density of water in kg/m^3
 
   ! ensure that Hedstrom and Pomeroy's equation (1998) stays within reasonable values
 !  rRhoS = MIN(MAX(50.,67.9 + 51.3 * exp(FtoC(rTAvg)/2.6)),130.)
@@ -75,38 +75,38 @@ end function snow_depth_Hedstrom
 subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
    rSnowcover, rNetRainfall, rSnowTemperature, rMeltAmount, i, j)
 
-  real (kind=T_SGL)::  rTMin
-  real (kind=T_SGL) :: rTMax
-  real (kind=T_SGL) :: rTAvg
-  real (kind=T_DBL) :: rRs
-  real (kind=T_DBL) :: rRso
-  real (kind=T_SGL) :: rAlbedo
-  real (kind=T_SGL) :: rSnowcover
-  real (kind=T_SGL) :: rNetRainfall
-  real (kind=T_SGL) :: rSnowTemperature
-  real (kind=T_SGL) :: rMeltAmount
-  real (kind=T_SGL) :: rMeltPotential
-  integer (kind=T_INT) :: i,j
+  real (kind=c_float)::  rTMin
+  real (kind=c_float) :: rTMax
+  real (kind=c_float) :: rTAvg
+  real (kind=c_double) :: rRs
+  real (kind=c_double) :: rRso
+  real (kind=c_float) :: rAlbedo
+  real (kind=c_float) :: rSnowcover
+  real (kind=c_float) :: rNetRainfall
+  real (kind=c_float) :: rSnowTemperature
+  real (kind=c_float) :: rMeltAmount
+  real (kind=c_float) :: rMeltPotential
+  integer (kind=c_int) :: i,j
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rSn                   ! net shortwave radiation
-  real (kind=T_SGL) :: rLn                   ! net longwave radiation
-  real (kind=T_SGL) :: rH                    ! sensible heat exchange
-  real (kind=T_SGL) :: rE                    ! convective heat exchange
-  real (kind=T_SGL), parameter :: rG = 173.  ! ground heat, kj per square meter
-  real (kind=T_SGL) :: rP                    ! precipitation heat exchange
-  real(kind=T_SGL) :: rSWE
-  real (kind=T_DBL) :: rDeltaT
-  real (kind=T_DBL) :: rDeltaSWE
-  real (kind=T_SGL) :: rSnowTemp_degC
-  real (kind=T_SGL) :: rTMin_C
-  real (kind=T_DBL) :: rNetEnergy
-  real (kind=T_DBL) :: rT_RiseEnergy
-  real (kind=T_DBL) :: rMeltEnergy
-  real (kind=T_DBL), parameter :: rCsnow = 2.1  ! kJ per kg per deg C
+  real (kind=c_float) :: rSn                   ! net shortwave radiation
+  real (kind=c_float) :: rLn                   ! net longwave radiation
+  real (kind=c_float) :: rH                    ! sensible heat exchange
+  real (kind=c_float) :: rE                    ! convective heat exchange
+  real (kind=c_float), parameter :: rG = 173.  ! ground heat, kj per square meter
+  real (kind=c_float) :: rP                    ! precipitation heat exchange
+  real(kind=c_float) :: rSWE
+  real (kind=c_double) :: rDeltaT
+  real (kind=c_double) :: rDeltaSWE
+  real (kind=c_float) :: rSnowTemp_degC
+  real (kind=c_float) :: rTMin_C
+  real (kind=c_double) :: rNetEnergy
+  real (kind=c_double) :: rT_RiseEnergy
+  real (kind=c_double) :: rMeltEnergy
+  real (kind=c_double), parameter :: rCsnow = 2.1  ! kJ per kg per deg C
                                                 ! snow heat capacity
 
-  real (kind=T_DBL), parameter :: rLambda = 3.35E+05  ! kJ per cubic meter per deg C
+  real (kind=c_double), parameter :: rLambda = 3.35E+05  ! kJ per cubic meter per deg C
                                                       ! latent heat of fusion
 
   ! Snowcover is in INCHES SWE; we need METERS SWE
@@ -118,8 +118,8 @@ subroutine snow_energy_balance(rTMin, rTMax, rTAvg, rRs, rRso, rAlbedo, &
   ! all component energy values must be in kJ per square meter per day
   ! radiation components must be multiplied by 1000 since they are returned
   ! in MJ per square meters per day
-  rSn = net_shortwave_radiation_Rns(rRs, real(rAlbedo, kind=T_DBL)) * 1000_T_DBL
-  rLn = net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso) * 1000_T_DBL
+  rSn = net_shortwave_radiation_Rns(rRs, real(rAlbedo, kind=c_double)) * 1000_c_double
+  rLn = net_longwave_radiation_Rnl(rTMin, rTMax, rRs, rRso) * 1000_c_double
   rH = sensible_heat_exchange_h(rSnowTemperature, rTAvg)
   rE = convective_heat_exchange_e(rSnowTemperature, rTAvg)
   rP = precipitation_heat_p(rNetRainfall, rTAvg)
@@ -209,20 +209,20 @@ end subroutine snow_energy_balance
 
 function snow_albedo(rAlbedoInit, iNumDaysLastSnow, rZenithAngle)  result(rAlbedo)
 
-  real (kind=T_SGL), intent(in) :: rAlbedoInit
-  integer (kind=T_INT), intent(in) :: iNumDaysLastSnow
-  real (kind=T_SGL), intent(in) :: rZenithAngle
+  real (kind=c_float), intent(in) :: rAlbedoInit
+  integer (kind=c_int), intent(in) :: iNumDaysLastSnow
+  real (kind=c_float), intent(in) :: rZenithAngle
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rAlbedo
-  real (kind=T_SGL) :: rSnowGrainSize
-  real (kind=T_SGL), parameter :: rSnowGrainSizeBeforeMelting = 0.25 ! millimeters
+  real (kind=c_float) :: rAlbedo
+  real (kind=c_float) :: rSnowGrainSize
+  real (kind=c_float), parameter :: rSnowGrainSizeBeforeMelting = 0.25 ! millimeters
 
   rSnowGrainSize = (rSnowGrainSizeBeforeMelting * rSnowGrainSizeBeforeMelting &
                      * rSnowGrainSizeBeforeMelting &
-                       + 0.252_T_SGL * REAL(iNumDaysLastSnow))**0.3333333_T_DBL
+                       + 0.252_c_float * REAL(iNumDaysLastSnow))**0.3333333_c_double
 
-  rAlbedo = rAlbedoInit - (0.083_T_SGL + 0.23_T_SGL * sqrt(rSnowGrainSize)) &
+  rAlbedo = rAlbedoInit - (0.083_c_float + 0.23_c_float * sqrt(rSnowGrainSize)) &
                             * sqrt(cos(rZenithAngle))
 
 end function snow_albedo

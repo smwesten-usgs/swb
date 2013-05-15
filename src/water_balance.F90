@@ -9,6 +9,7 @@
 !>    calculated as per FAO56.
 module water_balance
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
 !
   use sm_thornthwaite_mather
@@ -38,29 +39,29 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
-  integer (kind=T_INT), intent(in) :: iDayOfYear
-  integer (kind=T_INT), intent(in) :: iDay
-  integer (kind=T_INT), intent(in) :: iMonth
-  integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=c_int), intent(in) :: iDayOfYear
+  integer (kind=c_int), intent(in) :: iDay
+  integer (kind=c_int), intent(in) :: iMonth
+  integer (kind=c_int), intent(in) :: iYear
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iCol,iRow,k,l,iTgt_Col,iTgt_Row
-  integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT) :: iTime
-  real (kind=T_SGL) :: rPrevious_Soil_Moisture
-  real (kind=T_SGL) :: rPrecipMinusPotentET
-  real (kind=T_SGL) :: rMSB_DailyMassBalance
-  real (kind=T_SGL) :: rMoistureDeficit
-  real (kind=T_SGL) :: rMoistureSurplus
-  real (kind=T_SGL) :: rChangeInStorage
-  real (kind=T_SGL) :: rNetInfil
-  real (kind=T_SGL) :: rNetInflow
-  real (kind=T_SGL) :: rAppliedPotentialET   ! this will be adjusted within loop to
-  real (kind=T_SGL) :: rDailyRecharge           ! account for evap of interception
-  real (kind=T_SGL) :: rStreamCapture
-  real (kind=T_SGL) :: rDailyRejectedRecharge
-  real (kind=T_SGL) :: rMAXIMUM_RECHARGE
-  real (kind=T_SGL) :: rMin, rMean, rMax, rSum
-  integer (kind=T_INT) :: iRowCount
+  integer (kind=c_int) :: iCol,iRow,k,l,iTgt_Col,iTgt_Row
+  integer (kind=c_int) :: iNumGridCells
+  integer (kind=c_int) :: iTime
+  real (kind=c_float) :: rPrevious_Soil_Moisture
+  real (kind=c_float) :: rPrecipMinusPotentET
+  real (kind=c_float) :: rMSB_DailyMassBalance
+  real (kind=c_float) :: rMoistureDeficit
+  real (kind=c_float) :: rMoistureSurplus
+  real (kind=c_float) :: rChangeInStorage
+  real (kind=c_float) :: rNetInfil
+  real (kind=c_float) :: rNetInflow
+  real (kind=c_float) :: rAppliedPotentialET   ! this will be adjusted within loop to
+  real (kind=c_float) :: rDailyRecharge           ! account for evap of interception
+  real (kind=c_float) :: rStreamCapture
+  real (kind=c_float) :: rDailyRejectedRecharge
+  real (kind=c_float) :: rMAXIMUM_RECHARGE
+  real (kind=c_float) :: rMin, rMean, rMax, rSum
+  integer (kind=c_int) :: iRowCount
 
   type ( T_CELL ),pointer :: cel
   character (len=256) :: sBuf
@@ -267,7 +268,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                   ! detemine APWL from an equation
                   cel%rSM_AccumPotentWatLoss = &
-                    sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,REAL(cel%rSoilMoisture, kind=T_DBL) )
+                    sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,REAL(cel%rSoilMoisture, kind=c_double) )
                 endif
 
                else  ! L1e: we are *NOT* using T-M soil moisture retention tables or equations

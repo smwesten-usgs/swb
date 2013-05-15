@@ -17,11 +17,11 @@ module runoff_curve_number
 !
 !!***
 
-use types
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
+  use types
+  use swb_grid
 
-use swb_grid
-
-implicit none
+  implicit none
 
 contains
 
@@ -33,14 +33,14 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iCol,iRow,k,l
+  integer (kind=c_int) :: iCol,iRow,k,l
   type (T_CELL),pointer :: cel              ! pointer to a grid cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  logical (kind=T_LOGICAL) :: lMatch
+  logical (kind=c_bool) :: lMatch
 
   write(UNIT=LU_LOG,FMT=*)"Initializing the base curve numbers"
   ! Initialize all CNs to "bare rock"
-  pGrd%Cells(:,:)%rBaseCN = real(5,T_SGL)
+  pGrd%Cells(:,:)%rBaseCN = real(5,c_float)
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
@@ -103,9 +103,9 @@ end subroutine runoff_InitializeCurveNumber
 
 function prob_runoff_enhancement(rCFGI, rLL, rUL)    result(rPf)
 
-  real (kind=T_SGL) :: rCFGI, rLL, rUL, rPf
+  real (kind=c_float) :: rCFGI, rLL, rUL, rPf
 
-  call Assert(LOGICAL(rLL<=rUL,kind=T_LOGICAL), &
+  call Assert(LOGICAL(rLL<=rUL,kind=c_bool), &
     "Lower CFGI limit defining unfrozen ground must be <= upper CFGI limit")
 
   if(rCFGI <= rLL) then
@@ -126,25 +126,25 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that con
                                                    ! model options, flags, and other se
   type (T_CELL),pointer :: cel
-  integer (kind=T_INT),intent(in) :: iJulDay
+  integer (kind=c_int),intent(in) :: iJulDay
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rTotalInflow
-  real (kind=T_SGL) :: rTempCN
-  real (kind=T_SGL) :: rPf
+  real (kind=c_float) :: rTotalInflow
+  real (kind=c_float) :: rTempCN
+  real (kind=c_float) :: rPf
 
   !! update curve numbers based on antecedent moisture conditions
-! real (kind=T_SGL),dimension(5),parameter :: rDRY_COEFS = (/ &
-!                       1.44206581732462E-06_T_SGL, &
-!                      -2.54340415305462E-04_T_SGL, &
-!                       2.07018739405394E-02_T_SGL, &
-!                      -7.67877072822852E-03_T_SGL, &
-!                       2.09678222732103_T_SGL /)
-!  real (kind=T_SGL),dimension(5),parameter :: rWET_COEFS = (/ &
-!                      -6.20352282661163E-07_T_SGL, &
-!                       1.60650096926368E-04_T_SGL, &
-!                      -2.03362629006156E-02_T_SGL, &
-!                       2.01054923513527_T_SGL, &
-!                       3.65427885962651_T_SGL /)
+! real (kind=c_float),dimension(5),parameter :: rDRY_COEFS = (/ &
+!                       1.44206581732462E-06_c_float, &
+!                      -2.54340415305462E-04_c_float, &
+!                       2.07018739405394E-02_c_float, &
+!                      -7.67877072822852E-03_c_float, &
+!                       2.09678222732103_c_float /)
+!  real (kind=c_float),dimension(5),parameter :: rWET_COEFS = (/ &
+!                      -6.20352282661163E-07_c_float, &
+!                       1.60650096926368E-04_c_float, &
+!                      -2.03362629006156E-02_c_float, &
+!                       2.01054923513527_c_float, &
+!                       3.65427885962651_c_float /)
 
   ! Here goes...
   rTotalInflow = sum(cel%rNetInflowBuf)
@@ -152,8 +152,8 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   ! Correct the curve number...
   if(cel%rCFGI>pConfig%rLL_CFGI &
        .and. cel%rSoilWaterCap > rNEAR_ZERO) then
-!    cel%rAdjCN = MIN(98_T_SGL,cel%rAdjCN + &
-!       ((98_T_SGL-cel%rAdjCN) * cel%rSoilMoisture / cel%rSoilWaterCap))
+!    cel%rAdjCN = MIN(98_c_float,cel%rAdjCN + &
+!       ((98_c_float-cel%rAdjCN) * cel%rSoilMoisture / cel%rSoilWaterCap))
 
      rPf = prob_runoff_enhancement(cel%rCFGI,pConfig%rLL_CFGI,pConfig%rUL_CFGI)
 
@@ -222,13 +222,13 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   type (T_CELL),pointer :: cel
-  integer (kind=T_INT),intent(in) :: iJulDay
+  integer (kind=c_int),intent(in) :: iJulDay
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rOutFlow
+  real (kind=c_float) :: rOutFlow
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rP
-  real (kind=T_SGL) :: rCN_05
-  real (kind=T_SGL) :: rSMax
+  real (kind=c_float) :: rP
+  real (kind=c_float) :: rCN_05
+  real (kind=c_float) :: rSMax
 
   rP = cel%rNetRainfall &
        + cel%rSnowMelt &
@@ -252,16 +252,16 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
                                    CONFIG_SM_INIT_ABSTRACTION_HAWKINS) then
 
     ! Equation 9, Hawkins and others, 2002
-    rCN_05 = 100_T_SGL / &
-      ((1.879_T_SGL * ((100_T_SGL / cel%rAdjCN) - 1_T_SGL )**1.15_T_SGL) +1_T_SGL)
+    rCN_05 = 100_c_float / &
+      ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
 
 
 	! Equation 8, Hawkins and others, 2002
-    rSMax = 1.33_T_SGL * ( rSMax ) ** 1.15_T_SGL
+    rSMax = 1.33_c_float * ( rSMax ) ** 1.15_c_float
 
     ! now consider runoff if Ia ~ 0.05S
-    if ( rP > 0.05_T_SGL * rSMax ) then
-      rOutFlow = ( rP - 0.05_T_SGL * rSMax )**2  / (rP + 0.95_T_SGL*rSMax)
+    if ( rP > 0.05_c_float * rSMax ) then
+      rOutFlow = ( rP - 0.05_c_float * rSMax )**2  / (rP + 0.95_c_float*rSMax)
     else
       rOutFlow = rZERO
     end if

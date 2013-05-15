@@ -9,11 +9,11 @@ module netcdf_c_api_interfaces
 
 #ifdef NETCDF_SUPPORT
 
-  use,intrinsic :: iso_c_binding
+  use iso_c_binding
 
   implicit none
 
-  integer, parameter :: c_ptrdiff_t = 8
+!  integer, parameter :: c_ptrdiff_t = 8
 
   interface
     function nc_get_var_short(ncid, varid, sp) bind(c)

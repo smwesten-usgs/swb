@@ -1,29 +1,29 @@
 module swbstats_support
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
 
   implicit none
 
-  logical (kind=T_LOGICAL) :: lCUMULATIVE = lFALSE
-  logical (kind=T_LOGICAL) :: lSUM = lFALSE
-  logical (kind=T_LOGICAL) :: lPERIOD_SLICE = lFALSE
-  logical (kind=T_LOGICAL) :: lRESET = lFALSE
-  logical (kind=T_LOGICAL) :: lVERBOSE = lFALSE
-  logical (kind=T_LOGICAL) :: lMASKSSF = lFALSE
-  logical (kind=T_LOGICAL) :: lBASINSTATS = lFALSE
-  logical (kind=T_LOGICAL) :: lMASKSTATS = lFALSE
-  logical (kind=T_LOGICAL) :: lF_TO_C = lFALSE
-  logical (kind=T_LOGICAL) :: lGAP_DIFFERENCE = lFALSE
+  logical (kind=c_bool) :: lCUMULATIVE = lFALSE
+  logical (kind=c_bool) :: lSUM = lFALSE
+  logical (kind=c_bool) :: lPERIOD_SLICE = lFALSE
+  logical (kind=c_bool) :: lRESET = lFALSE
+  logical (kind=c_bool) :: lVERBOSE = lFALSE
+  logical (kind=c_bool) :: lMASKSSF = lFALSE
+  logical (kind=c_bool) :: lBASINSTATS = lFALSE
+  logical (kind=c_bool) :: lMASKSTATS = lFALSE
+  logical (kind=c_bool) :: lF_TO_C = lFALSE
+  logical (kind=c_bool) :: lGAP_DIFFERENCE = lFALSE
 
   character (len=256) :: sStatsDescription = ""
-  integer (kind=T_INT) :: LU_STATS
+  integer (kind=c_int) :: LU_STATS
 
-  integer (kind=T_INT) :: iSlcStartMM = 1
-  integer (kind=T_INT) :: iSlcStartDD = 1
-  integer (kind=T_INT) :: iSlcEndMM = 12
-  integer (kind=T_INT) :: iSlcEndDD = 31
-  logical (kind=T_LOGICAL) :: lPRINT
+  integer (kind=c_int) :: iSlcStartMM = 1
+  integer (kind=c_int) :: iSlcStartDD = 1
+  integer (kind=c_int) :: iSlcEndMM = 12
+  integer (kind=c_int) :: iSlcEndDD = 31
+  logical (kind=c_bool) :: lPRINT
 
   character (len=78), dimension(34), parameter :: sUsageText = &
     [ "Usage: swbstats [binary file name]                                            ", &
@@ -76,24 +76,24 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
                                                    ! model options, flags, and other settings
   character(len=*) :: sVarName
   character (len=*) :: sLabel
-  integer (kind=T_INT), optional :: iNumDays
+  integer (kind=c_int), optional :: iNumDays
 
   ![LOCALS]
-  integer (kind=T_INT) :: j, k, iStat, iCount
-  integer (kind=T_INT) ::   iNumGridCells
-  real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
-  real (kind=T_SGL) :: rDenominator
+  integer (kind=c_int) :: j, k, iStat, iCount
+  integer (kind=c_int) ::   iNumGridCells
+  real (kind=c_float) :: rSum, rAvg, rMin, rMax
+  real (kind=c_float) :: rDenominator
 
   character (len=256) :: sBuf
 
-  integer (kind=T_INT) :: iNumRecs
+  integer (kind=c_int) :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
 
   if(present(iNumDays)) then
-    rDenominator = real(iNumDays, kind=T_SGL)
+    rDenominator = real(iNumDays, kind=c_float)
   else
-    rDenominator = 1_T_SGL
+    rDenominator = 1_c_float
   end if
 
   call assert(associated(pConfig%BMASK), "A basin mask list must be supplied in order " &
@@ -155,8 +155,8 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
     endif
 
     ! convert average value in inches to cubic feet
-    rAvg = real(rAvg,kind=T_DBL) * real(pConfig%BMASK(k)%rDrainageArea,kind=T_DBL) &
-               * 4.01449E9_T_DBL
+    rAvg = real(rAvg,kind=c_double) * real(pConfig%BMASK(k)%rDrainageArea,kind=c_double) &
+               * 4.01449E9_c_double
 
     if( k < iNumRecs ) then
 
@@ -195,34 +195,34 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   character(len=*) :: sVarName
   character (len=*) :: sLabel
-  integer (kind=T_INT), optional :: iNumDays
+  integer (kind=c_int), optional :: iNumDays
 
   ![LOCALS]
-  integer (kind=T_INT) :: j, k, iStat, iCount, m, n
-  integer (kind=T_INT) ::   iNumGridCells
-  real (kind=T_SGL) :: rSum, rAvg, rMin, rMax
-  real (kind=T_SGL) :: rBaseSum, rBaseAvg
-  real (kind=T_DBL), dimension(:), allocatable, save :: rRunningSum
-  integer (kind=T_INT), save :: i
-  real (kind=T_DBL) :: rConversionFactor
-  real (kind=T_SGL) :: rDenominator
+  integer (kind=c_int) :: j, k, iStat, iCount, m, n
+  integer (kind=c_int) ::   iNumGridCells
+  real (kind=c_float) :: rSum, rAvg, rMin, rMax
+  real (kind=c_float) :: rBaseSum, rBaseAvg
+  real (kind=c_double), dimension(:), allocatable, save :: rRunningSum
+  integer (kind=c_int), save :: i
+  real (kind=c_double) :: rConversionFactor
+  real (kind=c_float) :: rDenominator
 
   character (len=256) :: sBuf
 
-  integer (kind=T_INT), save :: iNumRecs
+  integer (kind=c_int), save :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
 
   if(present(iNumDays)) then
-    rDenominator = real(iNumDays, kind=T_DBL)
+    rDenominator = real(iNumDays, kind=c_double)
   else
-    rDenominator = 1_T_DBL
+    rDenominator = 1_c_double
   end if
 
   if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
-    rConversionFactor = 2589988.11_T_DBL
+    rConversionFactor = 2589988.11_c_double
   else
-    rConversionFactor = 27878400_T_DBL
+    rConversionFactor = 27878400_c_double
   endif
 
   if(pConfig%lFirstDayOfSimulation) then
@@ -230,7 +230,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     iNumRecs = maxval(pMaskGrd%rData)
     if(lCUMULATIVE) then
       allocate(rRunningSum(iNumRecs))
-      rRunningSum = 0_T_DBL
+      rRunningSum = 0_c_double
     endif
 
 
@@ -274,7 +274,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(lPRINT) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
-  if(lRESET .and. lCUMULATIVE) rRunningSum = 0_T_DBL
+  if(lRESET .and. lCUMULATIVE) rRunningSum = 0_c_double
 
   if(.not. lGAP_DIFFERENCE) then
 
@@ -295,7 +295,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
            //trim(int2char(k) )
         write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
         write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
-            real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
+            real(iCount, kind=c_double) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
         write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
@@ -367,7 +367,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
            //trim(int2char(k) )
         write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
         write(UNIT=LU_LOG,FMT="(5x,'Grid cell area (sq mi):', f14.2)") &
-            real(iCount, kind=T_DBL) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
+            real(iCount, kind=c_double) * pGrd%rGridCellSize * pGrd%rGridCellSize / rConversionFactor
         write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
@@ -413,41 +413,41 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
 
 
   character(len=*) :: sVarName
-  integer (kind=T_INT) :: iGridValue
+  integer (kind=c_int) :: iGridValue
   character (len=*) :: sLabel
-  integer (kind=T_INT), optional :: iNumDays
+  integer (kind=c_int), optional :: iNumDays
 
   ![LOCALS]
-  integer (kind=T_INT) :: j, iStat, iCount, m, n
-  integer (kind=T_INT) ::   iNumGridCells
-  real (kind=T_DBL) :: rSum, rAvg, rMin, rMax
-  real (kind=T_DBL) :: rDenominator
-  real (kind=T_DBL),save :: rConversionFactor
-  real (kind=T_DBL),save :: rGridCellAreaSF
+  integer (kind=c_int) :: j, iStat, iCount, m, n
+  integer (kind=c_int) ::   iNumGridCells
+  real (kind=c_double) :: rSum, rAvg, rMin, rMax
+  real (kind=c_double) :: rDenominator
+  real (kind=c_double),save :: rConversionFactor
+  real (kind=c_double),save :: rGridCellAreaSF
 
   character (len=256) :: sBuf
 
-  integer (kind=T_INT), save :: iNumRecs
+  integer (kind=c_int), save :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
 
   if(present(iNumDays)) then
-    rDenominator = real(iNumDays, kind=T_DBL)
+    rDenominator = real(iNumDays, kind=c_double)
   else
-    rDenominator = 1_T_DBL
+    rDenominator = 1_c_double
   end if
 
   if(pConfig%lFirstDayOfSimulation) then
 
     ! conversion factor: grid cell sum to square feet
     if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
-      rConversionFactor = 10.76391042_T_DBL
+      rConversionFactor = 10.76391042_c_double
     else
-      rConversionFactor = 1_T_DBL
+      rConversionFactor = 1_c_double
     endif
 
-    rGridCellAreaSF = real(pGrd%rGridCellSize, kind=T_DBL) &
-      * real(pGrd%rGridCellSize, kind=T_DBL) * rConversionFactor
+    rGridCellAreaSF = real(pGrd%rGridCellSize, kind=c_double) &
+      * real(pGrd%rGridCellSize, kind=c_double) * rConversionFactor
 
     sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".ssf"
     open(newunit=LU_STATS,FILE=trim(sBuf), &
@@ -477,15 +477,15 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
     write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "cell area:", &
        rGridCellAreaSF
     write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "sum cell area:", &
-      real(iCount, kind=T_DBL) * rGridCellAreaSF
+      real(iCount, kind=c_double) * rGridCellAreaSF
     write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "sum:",rSum
     write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "avg:",rAvg
-    write(UNIT=LU_LOG,FMT="(2x,'avg (cfs):',t30,g14.3)") rSum * rGridCellAreaSF / 86400_T_DBL / 12_T_DBL
+    write(UNIT=LU_LOG,FMT="(2x,'avg (cfs):',t30,g14.3)") rSum * rGridCellAreaSF / 86400_c_double / 12_c_double
     write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
   endif
 
   if(lPRINT) write(UNIT=LU_STATS,FMT="(a,3x,g16.8)") TRIM(sLabel), &
-     rSum * rGridCellAreaSF / 86400_T_DBL / 12_T_DBL
+     rSum * rGridCellAreaSF / 86400_c_double / 12_c_double
 
   flush(UNIT=LU_STATS)
 
@@ -504,7 +504,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iStat, iNumMaskFiles, i, iRecNum, iSize
+  integer (kind=c_int) :: iStat, iNumMaskFiles, i, iRecNum, iSize
   character (len=256) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
   character (len=256) :: sBuf
@@ -512,7 +512,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   ! open basin mask file
   open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
             status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=T_LOGICAL), &
+  call Assert( LOGICAL( iStat == 0,kind=c_bool), &
             "Open failed for file: " // pConfig%sBasinMaskFilename )
 
   ! read first line of file
@@ -612,7 +612,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
        TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
     pConfig%BMASK(iRecNum)%pGrd => &
            grid_Read(TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-          "ARC_GRID", T_SGL_GRID )
+          "ARC_GRID", c_float_GRID )
     call Assert( grid_Conform( pGrd, pConfig%BMASK(iRecNum)%pGrd ), &
               "Non-conforming grid - filename: " &
               // TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
@@ -645,49 +645,49 @@ implicit none
   character (len=256)  :: sBinFile, sBuf, sBuf2, sBuf3 = ""
   character (len=256)  :: sOutputFilename = ""
   character (len=256)  :: sItem
-  integer (kind=T_INT) :: iNumArgs
-  integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT) :: iStat
-  integer (kind=T_INT) :: i, k
-  integer (kind=T_INT) :: iDateNum = 0
-  integer (kind=T_INT) :: iNumDaysInYear
-  integer (kind=T_INT) :: iLen1, iLen2
-  integer (kind=T_INT), dimension(2) :: iTempDate
+  integer (kind=c_int) :: iNumArgs
+  integer (kind=c_int) :: iNumGridCells
+  integer (kind=c_int) :: iStat
+  integer (kind=c_int) :: i, k
+  integer (kind=c_int) :: iDateNum = 0
+  integer (kind=c_int) :: iNumDaysInYear
+  integer (kind=c_int) :: iLen1, iLen2
+  integer (kind=c_int), dimension(2) :: iTempDate
   character (len=256) :: sSiteNumber
   character (len=7) :: sLengthUnits
-  integer (kind=T_INT) :: iPos
+  integer (kind=c_int) :: iPos
 
   ! variables that are read in from the binary file header
-  integer (kind=T_INT) :: iNX
-  integer (kind=T_INT) :: iNY
-  integer (kind=T_INT) :: iDataType
-  real (kind=T_SGL)    :: rGridCellSize
-  integer (kind=T_INT) :: iLengthUnits
-  integer (kind=T_INT) :: iVariableNumber
-  integer (kind=T_INT) :: iRLE_MULT
-  real (kind=T_SGL)    :: rRLE_OFFSET
-  real (kind=T_DBL)    :: rX0, rX1
-  real (kind=T_DBL)    :: rY0, rY1
-  real (kind=T_DBL)    :: rX0_cntr, rX1_cntr
-  real (kind=T_DBL)    :: rY0_cntr, rY1_cntr
-  integer (kind=T_INT) :: iStartMM, iStartDD, iStartYYYY
-  integer (kind=T_INT) :: iEndMM, iEndDD, iEndYYYY
+  integer (kind=c_int) :: iNX
+  integer (kind=c_int) :: iNY
+  integer (kind=c_int) :: iDataType
+  real (kind=c_float)    :: rGridCellSize
+  integer (kind=c_int) :: iLengthUnits
+  integer (kind=c_int) :: iVariableNumber
+  integer (kind=c_int) :: iRLE_MULT
+  real (kind=c_float)    :: rRLE_OFFSET
+  real (kind=c_double)    :: rX0, rX1
+  real (kind=c_double)    :: rY0, rY1
+  real (kind=c_double)    :: rX0_cntr, rX1_cntr
+  real (kind=c_double)    :: rY0_cntr, rY1_cntr
+  integer (kind=c_int) :: iStartMM, iStartDD, iStartYYYY
+  integer (kind=c_int) :: iEndMM, iEndDD, iEndYYYY
 
-  integer (kind=T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD, iTemp
-  integer (kind=T_INT) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
-  integer (kind=T_INT) :: iTempStartDate, iTempEndDate
+  integer (kind=c_int) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD, iTemp
+  integer (kind=c_int) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
+  integer (kind=c_int) :: iTempStartDate, iTempEndDate
   character (len=256) :: sMonthName = ""
-  logical (kind=T_LOGICAL) :: lMonthEnd
-  logical (kind=T_LOGICAL) :: lYearEnd
+  logical (kind=c_bool) :: lMonthEnd
+  logical (kind=c_bool) :: lYearEnd
 
-  integer (kind=T_INT) :: LU_SWBSTATS
+  integer (kind=c_int) :: LU_SWBSTATS
 
-  integer (kind=T_INT) :: iSWBStatsStartDate, iSWBStatsStartMM, &
+  integer (kind=c_int) :: iSWBStatsStartDate, iSWBStatsStartMM, &
                           iSWBStatsStartDD,iSWBStatsStartYYYY
-  integer (kind=T_INT) :: iSWBStatsEndDate, iSWBStatsEndMM, &
+  integer (kind=c_int) :: iSWBStatsEndDate, iSWBStatsEndMM, &
                           iSWBStatsEndDD,iSWBStatsEndYYYY
-  integer (kind=T_INT) :: iSWBStatsOutputType = iBOTH
-  integer (kind=T_INT) :: iSWBStatsType = iMEAN
+  integer (kind=c_int) :: iSWBStatsOutputType = iBOTH
+  integer (kind=c_int) :: iSWBStatsType = iMEAN
 
   character (len=256) :: sTitleTxt
   character (len=10) :: sDateTxt
@@ -698,7 +698,7 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
 
-  real(kind=T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad, rValTmp
+  real(kind=c_float),dimension(:), allocatable :: rVal,rValSum,rPad, rValTmp
 
   character (len=8) :: sDate
   character (len=10) :: sTime
@@ -710,12 +710,12 @@ implicit none
   character (len=256) :: sVarName
   character (len=256) :: sLabel = ""
 
-  integer (kind=T_INT) :: iOutputFormat = OUTPUT_ARC
-  logical (kind=T_LOGICAL) :: lYearBegin
-  logical (kind=T_LOGICAL) :: lEOF
-  logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
-  integer (kind=T_INT) :: iMonthCount, iYearCount, iPeriodCount
-  integer (kind=T_INT) :: iGridCellValue
+  integer (kind=c_int) :: iOutputFormat = OUTPUT_ARC
+  logical (kind=c_bool) :: lYearBegin
+  logical (kind=c_bool) :: lEOF
+  logical (kind=c_bool) :: lPrematureEOF = lFALSE
+  integer (kind=c_int) :: iMonthCount, iYearCount, iPeriodCount
+  integer (kind=c_int) :: iGridCellValue
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -950,14 +950,14 @@ implicit none
       iSWBStatsOutputType = iSTATS
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
-      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", T_SGL_GRID )
+      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", c_float_GRID )
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
         lMASKSSF = lTRUE
         STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
         iSWBStatsOutputType = iSTATS
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", T_SGL_GRID )
+        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", c_float_GRID )
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         sSiteNumber = trim(sBuf)
@@ -1090,17 +1090,17 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   allocate(rValSum(iNX*iNY))
   allocate(rPad(iNX*iNY))
 
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
-  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, T_SGL_GRID)
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
+  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
+  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
 
   ! copy some key information into the grid data structure
   pGrd%iDataType =iDataType              ! Type of the grid
   pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
   pGrd%iLengthUnits = iLengthUnits       ! length units code
 
-  rPad = -9999_T_SGL
+  rPad = -9999_c_float
 
   write(LU_LOG, &
      fmt='("CALCULATING STATS for ",A)') &

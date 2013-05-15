@@ -70,15 +70,16 @@
 !> to the control_setModelOptions routine in module \ref control.
 program main
 
-  use types
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
+  use types
   use control
-  use ISO_FORTRAN_ENV
+  use iso_fortran_env
 
   implicit none
 
   character (len=256) :: sControlFile
-  integer (kind=T_INT) :: iNumArgs
+  integer (kind=c_int) :: iNumArgs
   character (len=1024) :: sCompilerFlags
   character (len=256) :: sCompilerVersion
 

@@ -25,7 +25,7 @@ if (get_new_data) {
   cex.main=1.0
   
   v_in<-read.csv(val_filename, header=TRUE, as.is=TRUE, row.names=NULL, skip=2)
-  v_base<-read.csv(val_filename_base, header=TRUE, as.is=TRUE, row.names=NULL)
+  v_base<-read.csv(val_filename_base, header=TRUE, as.is=TRUE, row.names=NULL, skip=2)
   
   v_in$Date<-as.Date(v_in$Date,format="%m/%d/%Y")
   v_in$Year <- format(v_in$Date, format="%Y")

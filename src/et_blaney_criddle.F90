@@ -32,8 +32,8 @@ module et_blaney_criddle
 !
 !!***
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use meteorological_functions
 
   implicit none
@@ -41,8 +41,8 @@ module et_blaney_criddle
   !! Module data
 
   !! Configuration -- input data
-  real (kind=T_SGL) :: rLatitude       ! degrees on input; stored in radians
-  real (kind=T_SGL) :: rSunAnnual      ! Annual sun hours
+  real (kind=c_float) :: rLatitude       ! degrees on input; stored in radians
+  real (kind=c_float) :: rSunAnnual      ! Annual sun hours
 
 contains
 
@@ -52,14 +52,14 @@ subroutine et_bc_configure( sRecord )
   character (len=*),intent(inout) :: sRecord
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=T_INT) :: iStat
+  integer (kind=c_int) :: iStat
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Blaney-Criddle PET model"
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rLatitude
-  call Assert( LOGICAL(iStat==0,kind=T_LOGICAL), "Could not read the latitude" )
-  rLatitude = dpTWOPI * rLatitude / 360.0_T_SGL
+  call Assert( LOGICAL(iStat==0,kind=c_bool), "Could not read the latitude" )
+  rLatitude = dpTWOPI * rLatitude / 360.0_c_float
 
   return
 end subroutine et_bc_configure
@@ -71,13 +71,13 @@ subroutine et_bc_initialize( grd, sFileName )
   type ( T_GENERAL_GRID ),pointer :: grd
   character (len=*),intent(in) :: sFileName
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDelta
-  integer (kind=T_INT) :: iDay
+  real (kind=c_float) :: rDelta
+  integer (kind=c_int) :: iDay
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Blaney-Criddle PET model"
   do iDay=1,365
-    rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDay / 365.0_T_SGL) - 1.405_T_SGL )
-    rSunAnnual = rSunAnnual + 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI
+    rDelta = 0.4093_c_float * sin( (dpTWOPI * iDay / 365.0_c_float) - 1.405_c_float )
+    rSunAnnual = rSunAnnual + 24.0_c_float * acos(-tan(rLatitude) * tan(rDelta)) / dpPI
   end do
 
 end subroutine et_bc_initialize
@@ -92,31 +92,31 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   !!
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  integer (kind=T_INT),intent(in) :: iDayOfYear
-  real (kind=T_SGL),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
+  integer (kind=c_int),intent(in) :: iDayOfYear
+  real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
-  real (kind=T_SGL) :: rDelta,rT,rSunFrac,rPRatio,rAbc,rBbc,rF
-  integer (kind=T_INT) :: iCol,iRow
+  real (kind=c_float) :: rDelta,rT,rSunFrac,rPRatio,rAbc,rBbc,rF
+  integer (kind=c_int) :: iCol,iRow
   ! [ CONSTANTS ]
-  real (kind=T_SGL),parameter :: UNIT_CONV = 0.313_T_SGL / 25.4_T_SGL
+  real (kind=c_float),parameter :: UNIT_CONV = 0.313_c_float / 25.4_c_float
 
-  call Assert( LOGICAL(rSunPct>=rZERO,kind=T_LOGICAL), "Missing data for percent sunshine" )
-  call Assert( LOGICAL(rMinRH>=rZERO,kind=T_LOGICAL),"Missing data for relative humidity" )
+  call Assert( LOGICAL(rSunPct>=rZERO,kind=c_bool), "Missing data for percent sunshine" )
+  call Assert( LOGICAL(rMinRH>=rZERO,kind=c_bool),"Missing data for relative humidity" )
 
-!  rDelta = 0.4093_T_SGL * sin( (dpTWOPI * iDayOfYear / 365.0_T_SGL) - 1.405_T_SGL )
+!  rDelta = 0.4093_c_float * sin( (dpTWOPI * iDayOfYear / 365.0_c_float) - 1.405_c_float )
   rDelta = solar_declination(iDayOfYear, 365)
 
-  rPRatio = ( 24.0_T_SGL * acos(-tan(rLatitude) * tan(rDelta)) / dpPI ) / rSunAnnual
+  rPRatio = ( 24.0_c_float * acos(-tan(rLatitude) * tan(rDelta)) / dpPI ) / rSunAnnual
 
   rSunFrac = rSunPct / rHUNDRED
-  rAbc = ( 0.0043_T_SGL * rMinRH) - rSunFrac - 1.41_T_SGL
+  rAbc = ( 0.0043_c_float * rMinRH) - rSunFrac - 1.41_c_float
 
 !
 ! The following is what was originally coded by WES and Vic.  Origin unclear.
 ! Possibly (probably) the source is Doorenbos and Pruitt (1977)?
 ! More like likely source is Allen and Pruitt (1986) "Rational Use of the FAO BC Formula"
 !
-  rBbc = 0.81917_T_SGL - 0.0040922_T_SGL*rMinRH +1.0705_T_SGL*rSunFrac + &
+  rBbc = 0.81917_c_float - 0.0040922_c_float*rMinRH +1.0705_c_float*rSunFrac + &
          0.065649*rWindSpd - 0.0059684*rMinRH*rSunFrac - &
          0.0005967*rMinRH*rWindSpd
 
@@ -135,7 +135,7 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
 
       rT = FtoC(pGrd%Cells(iCol,iRow)%rTAvg)
 
-      rF = rPRatio * ( 8.13_T_SGL + 0.46_T_SGL * rT)
+      rF = rPRatio * ( 8.13_c_float + 0.46_c_float * rT)
 
       if ( pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
         pGrd%Cells(iCol,iRow)%rReferenceET0 = rZERO

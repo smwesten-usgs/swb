@@ -5,8 +5,8 @@
  !> run-length-encoded (RLE) SWB binary files, and statistics files.
 module output
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use swb_grid
   use stats
   use RLE
@@ -28,21 +28,21 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
                                                    ! model options, flags, and other settings
 
   type ( T_CELL ), pointer :: cel
-  integer (kind=T_INT), intent(in) :: iRow
-  integer (kind=T_INT), intent(in) :: iCol
-  integer (kind=T_INT), intent(in) :: iTime
-  real (kind=T_SGL), intent(in) :: rDailyRejectedRecharge
-  real (kind=T_SGL), intent(in) :: rNetInflow
-  real (kind=T_SGL), intent(in) :: rNetInfil
-  real (kind=T_SGL), intent(in) :: rSM_ActualET
-  real (kind=T_SGL), intent(in) :: rPrecipMinusPotentET
-  real (kind=T_SGL), intent(in) :: rMoistureDeficit
-  real (kind=T_SGL), intent(in) :: rMoistureSurplus
-  real (kind=T_SGL), intent(in) :: rChangeInStorage
-  real (kind=T_SGL), intent(in) :: rDailyRecharge
+  integer (kind=c_int), intent(in) :: iRow
+  integer (kind=c_int), intent(in) :: iCol
+  integer (kind=c_int), intent(in) :: iTime
+  real (kind=c_float), intent(in) :: rDailyRejectedRecharge
+  real (kind=c_float), intent(in) :: rNetInflow
+  real (kind=c_float), intent(in) :: rNetInfil
+  real (kind=c_float), intent(in) :: rSM_ActualET
+  real (kind=c_float), intent(in) :: rPrecipMinusPotentET
+  real (kind=c_float), intent(in) :: rMoistureDeficit
+  real (kind=c_float), intent(in) :: rMoistureSurplus
+  real (kind=c_float), intent(in) :: rChangeInStorage
+  real (kind=c_float), intent(in) :: rDailyRecharge
 
   ![ LOCALS ]
-  integer (kind=T_INT) :: iIndex
+  integer (kind=c_int) :: iIndex
 
   do iIndex=1,iNUM_VARIABLES
 
@@ -244,7 +244,7 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
 
         case(iSTREAM_CAPTURE)
           call RLE_writeByte(STAT_INFO(iSTREAM_CAPTURE)%iLU, &
-            REAL(cel%rStreamCapture,kind=T_SGL), pConfig%iRLE_MULT, &
+            REAL(cel%rStreamCapture,kind=c_float), pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSTREAM_CAPTURE)
 
         case default
@@ -268,28 +268,28 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
                                                    ! model options, flags, and other settings
 
   type ( T_CELL ), pointer :: cel
-  integer (kind=T_INT), intent(in) :: iRow
-  integer (kind=T_INT), intent(in) :: iCol
-  integer (kind=T_INT), intent(in) :: iMonth
-  integer (kind=T_INT), intent(in) :: iDay
-  integer (kind=T_INT), intent(in) :: iYear
-  real (kind=T_SGL), intent(in) :: rDailyRejectedRecharge
-  real (kind=T_SGL), intent(in) :: rNetInflow
-  real (kind=T_SGL), intent(in) :: rNetInfil
-  real (kind=T_SGL), intent(in) :: rSM_ActualET
-  real (kind=T_SGL), intent(in) :: rPrecipMinusPotentET
-  real (kind=T_SGL), intent(in) :: rMoistureDeficit
-  real (kind=T_SGL), intent(in) :: rMoistureSurplus
-  real (kind=T_SGL), intent(in) :: rChangeInStorage
-  real (kind=T_SGL), intent(in) :: rDailyRecharge
+  integer (kind=c_int), intent(in) :: iRow
+  integer (kind=c_int), intent(in) :: iCol
+  integer (kind=c_int), intent(in) :: iMonth
+  integer (kind=c_int), intent(in) :: iDay
+  integer (kind=c_int), intent(in) :: iYear
+  real (kind=c_float), intent(in) :: rDailyRejectedRecharge
+  real (kind=c_float), intent(in) :: rNetInflow
+  real (kind=c_float), intent(in) :: rNetInfil
+  real (kind=c_float), intent(in) :: rSM_ActualET
+  real (kind=c_float), intent(in) :: rPrecipMinusPotentET
+  real (kind=c_float), intent(in) :: rMoistureDeficit
+  real (kind=c_float), intent(in) :: rMoistureSurplus
+  real (kind=c_float), intent(in) :: rChangeInStorage
+  real (kind=c_float), intent(in) :: rDailyRecharge
 
   !@TODO
   ! figure out why *.SSF files are not written to if they reference the
   ! first column (colnum=1)
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iIndex
-  integer (kind=T_INT) :: iVariableNumber
+  integer (kind=c_int) :: iIndex
+  integer (kind=c_int) :: iVariableNumber
 
   ! write out SSF files, if requested
   if( cel%iNumFilesSSF > 0)  then
@@ -445,112 +445,112 @@ subroutine output_update_accumulators(cel, iMonth, &
                                                    ! model options, flags, and other settings
 
   type ( T_CELL ), pointer :: cel
-  integer (kind=T_INT), intent(in) :: iMonth
-  real (kind=T_SGL), intent(in) :: rDailyRejectedRecharge
-  real (kind=T_SGL), intent(in) :: rNetInflow
-  real (kind=T_SGL), intent(in) :: rNetInfil
-  real (kind=T_SGL), intent(in) :: rSM_ActualET
-  real (kind=T_SGL), intent(in) :: rPrecipMinusPotentET
-  real (kind=T_SGL), intent(in) :: rMoistureDeficit
-  real (kind=T_SGL), intent(in) :: rMoistureSurplus
-  real (kind=T_SGL), intent(in) :: rChangeInStorage
-  real (kind=T_SGL), intent(in) :: rDailyRecharge
+  integer (kind=c_int), intent(in) :: iMonth
+  real (kind=c_float), intent(in) :: rDailyRejectedRecharge
+  real (kind=c_float), intent(in) :: rNetInflow
+  real (kind=c_float), intent(in) :: rNetInfil
+  real (kind=c_float), intent(in) :: rSM_ActualET
+  real (kind=c_float), intent(in) :: rPrecipMinusPotentET
+  real (kind=c_float), intent(in) :: rMoistureDeficit
+  real (kind=c_float), intent(in) :: rMoistureSurplus
+  real (kind=c_float), intent(in) :: rChangeInStorage
+  real (kind=c_float), intent(in) :: rDailyRecharge
 
   ! the following code block sends the appropriate cell value to the
   ! associated accumulator variables rDaily, rMonthly, and rAnnual,
   ! which are defined in the stats.f95 module
-  call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRejectedRecharge,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRejectedRecharge,kind=c_double), &
     iREJECTED_RECHARGE,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCFGI,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCFGI,kind=c_double), &
     iCFGI,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMin,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMin,kind=c_double), &
     iMIN_TEMP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMax,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTMax,kind=c_double), &
     iMAX_TEMP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTAvg,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTAvg,kind=c_double), &
     iAVG_TEMP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRecharge,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRecharge,kind=c_double), &
     iRECHARGE,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSoilMoisture,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSoilMoisture,kind=c_double), &
     iSOIL_MOISTURE,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_AccumPotentWatLoss,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSM_AccumPotentWatLoss,kind=c_double), &
     iSM_APWL,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rNetInfil,kind=T_DBL),&
+  call stats_UpdateAllAccumulatorsByCell(REAL(rNetInfil,kind=c_double),&
      iNET_INFIL,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInterception, kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInterception, kind=c_double), &
      iINTERCEPTION,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureDeficit,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureDeficit,kind=c_double), &
      iSM_DEFICIT,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureSurplus,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rMoistureSurplus,kind=c_double), &
      iSM_SURPLUS,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rChangeInStorage,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rChangeInStorage,kind=c_double), &
      iCHG_IN_SOIL_MOIST,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rNetInflow,kind=T_DBL),&
+  call stats_UpdateAllAccumulatorsByCell(REAL(rNetInflow,kind=c_double),&
        iNET_INFLOW,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rFlowOutOfGrid,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rFlowOutOfGrid,kind=c_double), &
       iRUNOFF_OUTSIDE,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rPrecipMinusPotentET,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rPrecipMinusPotentET,kind=c_double), &
       iP_MINUS_PET,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0,kind=c_double), &
        iREFERENCE_ET,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0_adj,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rReferenceET0_adj,kind=c_double), &
        iREFERENCE_ET_ADJ,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCropETc,kind=c_double), &
        iCROP_ET,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rBareSoilEvap,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rBareSoilEvap,kind=c_double), &
        iBARE_SOIL_EVAP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rSM_ActualET,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(rSM_ActualET,kind=c_double), &
        iACT_ET,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInFlow,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInFlow,kind=c_double), &
        iINFLOW,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rOutFlow,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rOutFlow,kind=c_double), &
        iOUTFLOW,iMonth,iZERO)
 
 #ifdef STREAM_INTERACTIONS
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rStreamCapture,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rStreamCapture,kind=c_double), &
        iSTREAM_CAPTURE,iMonth,iZERO)
 
 #endif
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=c_double), &
        iGDD,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCurrentRootingDepth,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rCurrentRootingDepth,kind=c_double), &
        iROOTING_DEPTH,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rKcb,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rKcb,kind=c_double), &
        iCROP_COEFFICIENT,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationAmount,kind=c_double), &
        iIRRIGATION,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromGW,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromGW,kind=c_double), &
        iIRRIGATION_FROM_GW,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromSW,kind=T_DBL), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromSW,kind=c_double), &
        iIRRIGATION_FROM_SW,iMonth,iZERO)
 
 end subroutine output_update_accumulators
@@ -562,17 +562,17 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   rChangeInStorage,rDailyRecharge)
 
   type ( T_CELL ), pointer :: cel
-  integer (kind=T_INT), intent(in) :: iMonth
-  integer (kind=T_INT), intent(in) :: iNumGridCells
-  real (kind=T_SGL), intent(in) :: rDailyRejectedRecharge
-  real (kind=T_SGL), intent(in) :: rNetInflow
-  real (kind=T_SGL), intent(in) :: rNetInfil
-  real (kind=T_SGL), intent(in) :: rSM_ActualET
-  real (kind=T_SGL), intent(in) :: rPrecipMinusPotentET
-  real (kind=T_SGL), intent(in) :: rMoistureDeficit
-  real (kind=T_SGL), intent(in) :: rMoistureSurplus
-  real (kind=T_SGL), intent(in) :: rChangeInStorage
-  real (kind=T_SGL), intent(in) :: rDailyRecharge
+  integer (kind=c_int), intent(in) :: iMonth
+  integer (kind=c_int), intent(in) :: iNumGridCells
+  real (kind=c_float), intent(in) :: rDailyRejectedRecharge
+  real (kind=c_float), intent(in) :: rNetInflow
+  real (kind=c_float), intent(in) :: rNetInfil
+  real (kind=c_float), intent(in) :: rSM_ActualET
+  real (kind=c_float), intent(in) :: rPrecipMinusPotentET
+  real (kind=c_float), intent(in) :: rMoistureDeficit
+  real (kind=c_float), intent(in) :: rMoistureSurplus
+  real (kind=c_float), intent(in) :: rChangeInStorage
+  real (kind=c_float), intent(in) :: rDailyRecharge
 
   !
   ! NOTE: stats_UpdateAllAccumulatorsByCell may be called in one of two ways.

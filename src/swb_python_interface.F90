@@ -1,7 +1,7 @@
 module swb_python_interface
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use swb_grid
   use stats
   use runoff_curve_number

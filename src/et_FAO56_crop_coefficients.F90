@@ -8,8 +8,8 @@
 !> for specific crop types.
 module et_crop_coefficients
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
 	use sm_thornthwaite_mather
   implicit none
 
@@ -23,21 +23,21 @@ module et_crop_coefficients
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  integer (kind=T_INT) :: iThreshold
+  integer (kind=c_int) :: iThreshold
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i, j
+  integer (kind=c_int) :: i, j
 
-  real (kind=T_DBL) :: frac
+  real (kind=c_double) :: frac
 
   ! now calculate Kcb for the given landuse
   if(iThreshold > pIRRIGATION%iL_late) then
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
 
   elseif ( iThreshold > pIRRIGATION%iL_mid ) then
-    frac = real(iThreshold - pIRRIGATION%iL_mid, kind=T_DBL ) &
-      / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=T_DBL )
-    pIRRIGATION%rKcb =  pIRRIGATION%rKcb_mid * (1_T_DBL - frac) &
+    frac = real(iThreshold - pIRRIGATION%iL_mid, kind=c_double ) &
+      / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=c_double )
+    pIRRIGATION%rKcb =  pIRRIGATION%rKcb_mid * (1_c_double - frac) &
                          + pIRRIGATION%rKcb_end * frac
 
   elseif ( iThreshold > pIRRIGATION%iL_dev ) then
@@ -46,7 +46,7 @@ module et_crop_coefficients
   elseif ( iThreshold > pIRRIGATION%iL_ini ) then
     frac = real(iThreshold - pIRRIGATION%iL_ini) &
         / real( pIRRIGATION%iL_dev - pIRRIGATION%iL_ini )
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini * (1_T_DBL - frac) &
+    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
                            + pIRRIGATION%rKcb_mid * frac
 
   elseif ( iThreshold > pIRRIGATION%iL_plant ) then
@@ -63,12 +63,12 @@ function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, &
    rDeficit)  result(rKr)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL) :: rTEW
-  real (kind=T_SGL) :: rREW
-  real (kind=T_SGL) :: rDeficit
+  real (kind=c_float) :: rTEW
+  real (kind=c_float) :: rREW
+  real (kind=c_float) :: rDeficit
 
   ! [ RESULT ]
-  real (kind=T_SGL) :: rKr
+  real (kind=c_float) :: rKr
 
   if(rDeficit > rREW .and. rDeficit < rTEW) then
     rKr = (rTEW - rDeficit) / (rTEW - rREW)
@@ -91,13 +91,13 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
   type (T_IRRIGATION_LOOKUP), pointer :: pIRRIGATION  ! pointer to an irrigation table entry
 
   ! [ RESULT ]
-  real (kind=T_SGL) :: r_few
+  real (kind=c_float) :: r_few
 
   ! [ LOCALS ]
-  real (kind=T_SGL) :: r_fc
-  real (kind=T_SGL) :: rNumerator
-  real (kind=T_SGL) :: rDenominator
-  real (kind=T_SGL) :: rExponent
+  real (kind=c_float) :: r_fc
+  real (kind=c_float) :: rNumerator
+  real (kind=c_float) :: rDenominator
+  real (kind=c_float) :: rExponent
 
   rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKcb_min
   rDenominator = pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_min
@@ -123,14 +123,14 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-	real (kind=T_SGL) :: rZr_max
-	integer (kind=T_INT) :: iThreshold ! either GDD or DOY
+	real (kind=c_float) :: rZr_max
+	integer (kind=c_int) :: iThreshold ! either GDD or DOY
 
   ! [ RESULT ]
-  real (kind=T_SGL) :: rZr_i
+  real (kind=c_float) :: rZr_i
 
 	! [ LOCALS ]
-	real (kind=T_SGL), parameter :: rZr_min = 0.328
+	real (kind=c_float), parameter :: rZr_min = 0.328
 
 	if ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini < 0.1) then
 	  ! this is needed because for areas like forests, where the
@@ -161,10 +161,10 @@ function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  real (kind=T_SGL) :: rKr
+  real (kind=c_float) :: rKr
 
   ! [ RESULT ]
-  real (kind=T_SGL) :: rKe
+  real (kind=c_float) :: rKe
 
   rKe = rKr * ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb )
 
@@ -195,11 +195,11 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  real (kind=T_SGL) :: rDeficit
+  real (kind=c_float) :: rDeficit
   type (T_CELL), pointer :: cel
 
   ! [ RESULT ]
-  real (kind=T_SGL) :: rKs
+  real (kind=c_float) :: rKs
 
   if (rDeficit < cel%rReadilyAvailableWater) then
     rKs = rONE
@@ -225,17 +225,17 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iRow, iCol
+  integer (kind=c_int) :: iRow, iCol
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL),pointer :: cel
-  real (kind=T_SGL) :: rTEW      ! Total evaporable water
-  real (kind=T_SGL) :: rREW      ! Readily evaporable water
-  real (kind=T_SGL) :: rKr       ! Evaporation reduction coefficient
-  real (kind=T_SGL) :: rDeficit  ! Soil moisture deficit
-  real (kind=T_SGL) :: r_few     ! Fraction exposed and wetted soil
-  real (kind=T_SGL) :: rKe       ! Surface evaporation coefficient
-  real (kind=T_SGL) :: rKs       ! Water stress coefficient
-	real (kind=T_SGL) :: rZr_max   ! Maximum rooting depth
+  real (kind=c_float) :: rTEW      ! Total evaporable water
+  real (kind=c_float) :: rREW      ! Readily evaporable water
+  real (kind=c_float) :: rKr       ! Evaporation reduction coefficient
+  real (kind=c_float) :: rDeficit  ! Soil moisture deficit
+  real (kind=c_float) :: r_few     ! Fraction exposed and wetted soil
+  real (kind=c_float) :: rKe       ! Surface evaporation coefficient
+  real (kind=c_float) :: rKs       ! Water stress coefficient
+	real (kind=c_float) :: rZr_max   ! Maximum rooting depth
 
    ! iterate over cells; update evaporation coefficients,
    ! calculate Kc, and apply to ET0
@@ -263,11 +263,11 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				 endif
 
        else
-         call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=T_INT))
+         call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=c_int))
 
-				 if(int(cel%rGDD, kind=T_INT) < pIRRIGATION%iL_dev) then
+				 if(int(cel%rGDD, kind=c_int) < pIRRIGATION%iL_dev) then
 				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
-				     rZr_max,INT(cel%rGDD, kind=T_INT))
+				     rZr_max,INT(cel%rGDD, kind=c_int))
 !					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
 				 endif
 

@@ -24,85 +24,73 @@ module types
   character(len=45), public, parameter :: &
       SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
 
-  !> Define the sizes of base types used in the model
-  integer, public, parameter :: T_LOGICAL = 4
-  integer, public, parameter :: T_INT = 4
-  integer, public, parameter :: T_SHORT = 2
-  integer, public, parameter :: T_BYTE = 1
-  integer, public, parameter :: T_SGL_DISLIN = 4
-
-  !> Define machine-independent sizes for base types
-  !  integer*2, public, parameter :: T_SGL = SELECTED_REAL_KIND(p=6,r=37)
-  integer, public, parameter :: T_SGL = SELECTED_REAL_KIND(p=6,r=37)
-  integer, public, parameter :: T_DBL = SELECTED_REAL_KIND(p=13,r=200)
-
   !> @name Variables: Fortran logical unit numbers
   !> Global logical unit numbers for input and output
   !> @{
-  integer (kind=T_INT), parameter :: LU_STD_OUT = 6
-  integer (kind=T_INT), parameter :: LU_CONTROL = 12
-  integer (kind=T_INT), parameter :: LU_GRID = 14
-  integer (kind=T_INT), parameter :: LU_LOOKUP = 16
-  integer (kind=T_INT), parameter :: LU_TS = 18
-  integer (kind=T_INT), parameter :: LU_TEMP = 20
-  integer (kind=T_INT), parameter :: LU_MSB_REPORT = 22
-  integer (kind=T_INT), parameter :: LU_BIN_FILE = 24
-  integer (kind=T_INT), parameter :: LU_ROUTING = 26
-  integer (kind=T_INT), parameter :: LU_CSV_MIN = 28
-  integer (kind=T_INT), parameter :: LU_CSV_MEAN = 30
-  integer (kind=T_INT), parameter :: LU_CSV_MAX = 32
-  integer (kind=T_INT), parameter :: LU_CSV_ANNUAL = 34
-  integer (kind=T_INT), parameter :: LU_MASK = 36
-  integer (kind=T_INT), parameter :: LU_MASK_FILE = 38
-  integer (kind=T_INT), parameter :: LU_MASK_STATS_CSV = 40
-  integer (kind=T_INT), parameter :: LU_PEST_STATS = 42
-  integer (kind=T_INT), parameter :: LU_PEST_OBS = 44
-  integer (kind=T_INT), parameter :: LU_PEST_INS = 46
-  integer (kind=T_INT), parameter :: LU_LOG = 48
+  integer (kind=c_int), parameter :: LU_STD_OUT = 6
+  integer (kind=c_int), parameter :: LU_CONTROL = 12
+  integer (kind=c_int), parameter :: LU_GRID = 14
+  integer (kind=c_int), parameter :: LU_LOOKUP = 16
+  integer (kind=c_int), parameter :: LU_TS = 18
+  integer (kind=c_int), parameter :: LU_TEMP = 20
+  integer (kind=c_int), parameter :: LU_MSB_REPORT = 22
+  integer (kind=c_int), parameter :: LU_BIN_FILE = 24
+  integer (kind=c_int), parameter :: LU_ROUTING = 26
+  integer (kind=c_int), parameter :: LU_CSV_MIN = 28
+  integer (kind=c_int), parameter :: LU_CSV_MEAN = 30
+  integer (kind=c_int), parameter :: LU_CSV_MAX = 32
+  integer (kind=c_int), parameter :: LU_CSV_ANNUAL = 34
+  integer (kind=c_int), parameter :: LU_MASK = 36
+  integer (kind=c_int), parameter :: LU_MASK_FILE = 38
+  integer (kind=c_int), parameter :: LU_MASK_STATS_CSV = 40
+  integer (kind=c_int), parameter :: LU_PEST_STATS = 42
+  integer (kind=c_int), parameter :: LU_PEST_OBS = 44
+  integer (kind=c_int), parameter :: LU_PEST_INS = 46
+  integer (kind=c_int), parameter :: LU_LOG = 48
   !> @}
 
   !> @name Constants: General conversion factors and flags
   !> Some useful and common conversion factors, defined here
   !> to ensure consistency throughout the code
   !> @{
-  real (kind=T_SGL), parameter :: rZERO = 0.0_T_SGL
-  real (kind=T_DBL), parameter :: dpZERO = 0.0_T_DBL
-  real (kind=T_SGL), parameter :: rNEAR_ZERO = 1E-9_T_SGL
-  real (kind=T_SGL), parameter :: rPOINT2 = 0.2_T_SGL
-  real (kind=T_SGL), parameter :: rHALF = 0.5_T_SGL
-  real (kind=T_SGL), parameter :: dpHALF = 0.5_T_DBL
-  real (kind=T_SGL), parameter :: rPOINT8 = 0.8_T_SGL
-  real (kind=T_SGL), parameter :: rONE = 1.0_T_SGL
-  real (kind=T_DBL), parameter :: dpONE = 1.0_T_DBL
-  real (kind=T_SGL), parameter :: rFREEZING = 32.0_T_SGL
-  real (kind=T_DBL), parameter :: dpFREEZING = 32.0_T_DBL
-  real (kind=T_SGL), parameter :: rTEN = 10.0_T_SGL
-  real (kind=T_SGL), parameter :: rHUNDRED = 100.0_T_SGL
-  real (kind=T_SGL), parameter :: rTHOUSAND = 1000.0_T_SGL
-  real (kind=T_DBL), parameter :: dpC_PER_F = 5.0_T_DBL / 9.0_T_DBL
-  real (kind=T_DBL), parameter :: dpF_PER_C = 9.0_T_DBL / 5.0_T_DBL
-  real (kind=T_SGL), parameter :: rM_PER_FOOT = 0.3048_T_SGL
-  real (kind=T_SGL), parameter :: rMM_PER_INCH = 25.4_T_SGL
-  real (kind=T_SGL), parameter :: rCM_PER_INCH = 2.54_T_SGL
-  real (kind=T_DBL), parameter :: dpPI = 3.141592653589793_T_DBL
-  real (kind=T_DBL), parameter :: dpPI_OVER_180 = dpPI / 180_T_DBL
-  real (kind=T_DBL), parameter :: dpTWOPI = 2.0_T_DBL * dpPI
-  real (kind=T_DBL), parameter :: dpSQM_to_SQFT = 10.76391_T_DBL
-  real (kind=T_SGL), parameter :: rMINIMUM_SOIL_MOISTURE = 0.51_T_SGL
-  integer (kind=T_SHORT), parameter :: iACTIVE_CELL = 1
-  integer (kind=T_SHORT), parameter :: iINACTIVE_CELL = 0
-  integer (kind=T_INT), parameter :: iMOVING_AVG_TERMS = 5
-  integer (kind=T_INT), parameter :: iROUTE_CELL_MARKED = -1
-  integer (kind=T_INT), parameter :: iROUTE_DEPRESSION = -999
-  integer (kind=T_INT), parameter :: iROUTE_LEFT_GRID = -1000
-  integer (kind=T_INT), parameter :: iNO_DATA_NCDC = -99999
-  integer (kind=T_INT), parameter :: iNUM_DIGITS = 3
-  integer (kind=T_INT), parameter :: iFIELD_WIDTH = 10
-  integer (kind=T_INT), parameter :: iZERO = 0
-  logical (kind=T_LOGICAL), parameter :: lTRUE = .true._T_LOGICAL
-  logical (kind=T_LOGICAL), parameter :: lFALSE = .false._T_LOGICAL
-  integer(kind=T_INT), parameter :: iEOF = HUGE(iZERO)
-  real (kind=T_SGL), parameter :: rBIGVAL = HUGE(rZERO)
+  real (kind=c_float), parameter :: rZERO = 0.0_c_float
+  real (kind=c_double), parameter :: dpZERO = 0.0_c_double
+  real (kind=c_float), parameter :: rNEAR_ZERO = 1E-9_c_float
+  real (kind=c_float), parameter :: rPOINT2 = 0.2_c_float
+  real (kind=c_float), parameter :: rHALF = 0.5_c_float
+  real (kind=c_float), parameter :: dpHALF = 0.5_c_double
+  real (kind=c_float), parameter :: rPOINT8 = 0.8_c_float
+  real (kind=c_float), parameter :: rONE = 1.0_c_float
+  real (kind=c_double), parameter :: dpONE = 1.0_c_double
+  real (kind=c_float), parameter :: rFREEZING = 32.0_c_float
+  real (kind=c_double), parameter :: dpFREEZING = 32.0_c_double
+  real (kind=c_float), parameter :: rTEN = 10.0_c_float
+  real (kind=c_float), parameter :: rHUNDRED = 100.0_c_float
+  real (kind=c_float), parameter :: rTHOUSAND = 1000.0_c_float
+  real (kind=c_double), parameter :: dpC_PER_F = 5.0_c_double / 9.0_c_double
+  real (kind=c_double), parameter :: dpF_PER_C = 9.0_c_double / 5.0_c_double
+  real (kind=c_float), parameter :: rM_PER_FOOT = 0.3048_c_float
+  real (kind=c_float), parameter :: rMM_PER_INCH = 25.4_c_float
+  real (kind=c_float), parameter :: rCM_PER_INCH = 2.54_c_float
+  real (kind=c_double), parameter :: dpPI = 3.141592653589793_c_double
+  real (kind=c_double), parameter :: dpPI_OVER_180 = dpPI / 180_c_double
+  real (kind=c_double), parameter :: dpTWOPI = 2.0_c_double * dpPI
+  real (kind=c_double), parameter :: dpSQM_to_SQFT = 10.76391_c_double
+  real (kind=c_float), parameter :: rMINIMUM_SOIL_MOISTURE = 0.51_c_float
+  integer (kind=c_short), parameter :: iACTIVE_CELL = 1
+  integer (kind=c_short), parameter :: iINACTIVE_CELL = 0
+  integer (kind=c_int), parameter :: iMOVING_AVG_TERMS = 5
+  integer (kind=c_int), parameter :: iROUTE_CELL_MARKED = -1
+  integer (kind=c_int), parameter :: iROUTE_DEPRESSION = -999
+  integer (kind=c_int), parameter :: iROUTE_LEFT_GRID = -1000
+  integer (kind=c_int), parameter :: iNO_DATA_NCDC = -99999
+  integer (kind=c_int), parameter :: iNUM_DIGITS = 3
+  integer (kind=c_int), parameter :: iFIELD_WIDTH = 10
+  integer (kind=c_int), parameter :: iZERO = 0
+  logical (kind=c_bool), parameter :: lTRUE = .true._c_bool
+  logical (kind=c_bool), parameter :: lFALSE = .false._c_bool
+  integer(kind=c_int), parameter :: iEOF = HUGE(iZERO)
+  real (kind=c_float), parameter :: rBIGVAL = HUGE(rZERO)
   character (len=1), parameter :: sTAB = achar(9)
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
@@ -114,24 +102,24 @@ module types
   !> Some useful and common conversion factors, defined here
   !> to ensure consistency throughout the code
   !> @{
-  integer (kind=T_SHORT),parameter :: iDIR_DEPRESSION=0
-  integer (kind=T_SHORT),parameter :: iDIR_RIGHT=1
-  integer (kind=T_SHORT),parameter :: iDIR_DOWN_RIGHT=2
-  integer (kind=T_SHORT),parameter :: iDIR_DOWN=4
-  integer (kind=T_SHORT),parameter :: iDIR_DOWN_LEFT=8
-  integer (kind=T_SHORT),parameter :: iDIR_LEFT=16
-  integer (kind=T_SHORT),parameter :: iDIR_UP_LEFT=32
-  integer (kind=T_SHORT),parameter :: iDIR_UP=64
-  integer (kind=T_SHORT),parameter :: iDIR_UP_RIGHT=128
+  integer (kind=c_short),parameter :: iDIR_DEPRESSION=0
+  integer (kind=c_short),parameter :: iDIR_RIGHT=1
+  integer (kind=c_short),parameter :: iDIR_DOWN_RIGHT=2
+  integer (kind=c_short),parameter :: iDIR_DOWN=4
+  integer (kind=c_short),parameter :: iDIR_DOWN_LEFT=8
+  integer (kind=c_short),parameter :: iDIR_LEFT=16
+  integer (kind=c_short),parameter :: iDIR_UP_LEFT=32
+  integer (kind=c_short),parameter :: iDIR_UP=64
+  integer (kind=c_short),parameter :: iDIR_UP_RIGHT=128
   !> @}
 
   !> @name Globals: Variables for run-length encoding operation
   !> These variables store the position of the start date and
   !> end date within the binary (stream) output file.
   !> @{
-  integer(kind=T_INT) :: iSTARTDATE_POS
-  integer(kind=T_INT) :: iENDDATE_POS
-  integer(kind=T_INT) :: iENDHEADER_POS
+  integer(kind=c_int) :: iSTARTDATE_POS
+  integer(kind=c_int) :: iENDDATE_POS
+  integer(kind=c_int) :: iENDHEADER_POS
   !> @}
 
 
@@ -152,106 +140,106 @@ module types
 !>
 !> Type that contains data for an individual grid cell. The model uses
 !> a grid of T_CELL types. Each variable added to this data type
-!> consumes Ny * Nx * size(T_SGL) bytes.
+!> consumes Ny * Nx * size(c_float) bytes.
   type T_CELL
-      integer (kind=T_INT) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
-      integer (kind=T_INT) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
-      integer (kind=T_INT) :: iLandUseIndex       ! Index (row num) of land use table
-      integer (kind=T_INT) :: iLandUse = iZERO    ! Land use from land-use grid
-      integer (kind=T_INT) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
-      real (kind=T_SGL) :: rElevation =rZERO            ! Ground elevation
-      real (kind=T_SGL) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
-      real (kind=T_SGL) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
-      real (kind=T_SGL) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
-			real (kind=T_SGL) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
-			real (kind=T_SGL) :: rKcb                         ! crop coefficient for this cell
-			real (kind=T_SGL) :: rTotalAvailableWater = rZERO
-			real (kind=T_SGL) :: rReadilyAvailableWater = rZERO
+      integer (kind=c_int) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
+      integer (kind=c_int) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
+      integer (kind=c_int) :: iLandUseIndex       ! Index (row num) of land use table
+      integer (kind=c_int) :: iLandUse = iZERO    ! Land use from land-use grid
+      integer (kind=c_int) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
+      real (kind=c_float) :: rElevation =rZERO            ! Ground elevation
+      real (kind=c_float) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
+      real (kind=c_float) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
+      real (kind=c_float) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
+			real (kind=c_float) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
+			real (kind=c_float) :: rKcb                         ! crop coefficient for this cell
+			real (kind=c_float) :: rTotalAvailableWater = rZERO
+			real (kind=c_float) :: rReadilyAvailableWater = rZERO
 
-      real (kind=T_SGL) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
-      real (kind=T_SGL) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
+      real (kind=c_float) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
+      real (kind=c_float) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
 
-!      real (kind=T_SGL) :: rMaxRecharge             ! Maximum groundwater recharge rate
+!      real (kind=c_float) :: rMaxRecharge             ! Maximum groundwater recharge rate
 
-      real (kind=T_SGL) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
-      real (kind=T_SGL) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
-      real (kind=T_SGL) :: rCropETc = rZERO            ! unadjusted crop ET
-      real (kind=T_SGL) :: rBareSoilEvap = rZERO
-      real (kind=T_SGL) :: rActualET = rZERO           ! Actual Evapotranspiration
+      real (kind=c_float) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
+      real (kind=c_float) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
+      real (kind=c_float) :: rCropETc = rZERO            ! unadjusted crop ET
+      real (kind=c_float) :: rBareSoilEvap = rZERO
+      real (kind=c_float) :: rActualET = rZERO           ! Actual Evapotranspiration
 
 !if_defined STREAM_INTERACTIONS
-      integer (kind=T_INT) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
-      real (kind=T_SGL) :: rStreamCapture           ! Amount of water captured by the stream (or fracture)
+      integer (kind=c_int) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
+      real (kind=c_float) :: rStreamCapture           ! Amount of water captured by the stream (or fracture)
 !end_if
 
-      integer (kind=T_INT) :: iTgt_Row   ! Row: "i" index of target cell into which runoff flows
-      integer (kind=T_INT) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
+      integer (kind=c_int) :: iTgt_Row   ! Row: "i" index of target cell into which runoff flows
+      integer (kind=c_int) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
 
-      real (kind=T_SGL) :: rBaseCN                 ! Curve number from landuse/soil group
-      real (kind=T_SGL) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
-!      real (kind=T_SGL) :: rSMax                   ! S_max parameter from runoff calculation
-      real (kind=T_SGL) :: rInFlow = rZERO         ! flow in from uphill
-      real (kind=T_SGL) :: rOutFlow = rZERO        ! flow out downhill
-      real (kind=T_SGL) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
-      real (kind=T_SGL) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
-      real (kind=T_SGL) :: rGrossPrecip = rZERO    ! Precip - no interception applied
-      real (kind=T_SGL) :: rNetPrecip
-      real (kind=T_SGL) :: rInterception = rZERO   ! Interception term
-      real (kind=T_SGL) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
-      real (kind=T_SGL) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception
-      real (kind=T_SGL) :: rSnowFall_SWE = rZERO   ! precipitation that falls as snow (in SWE)
-      real (kind=T_SGL) :: rSnowFall = rZERO       ! snowfall in inches as SNOW
-      real (kind=T_SGL) :: rSnowCover = rZERO      ! snowcover expressed as inches of water
-      real (kind=T_SGL) :: rSnowTemperature = 23. ! snow temperature
-!      real (kind=T_SGL) :: rPrevious_SnowCover     ! Previous day's snow cover
-      real (kind=T_SGL) :: rSnowMelt = rZERO       ! snowmelt in inches of water
-      real (kind=T_SGL) :: rTMin = rZERO           ! Minimum daily temperature
-      real (kind=T_SGL) :: rTMax = rZERO           ! Maximum daily temperature
-      real (kind=T_SGL) :: rTAvg = rZERO           ! Average daily temperature
-      real (kind=T_SGL) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
+      real (kind=c_float) :: rBaseCN                 ! Curve number from landuse/soil group
+      real (kind=c_float) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
+!      real (kind=c_float) :: rSMax                   ! S_max parameter from runoff calculation
+      real (kind=c_float) :: rInFlow = rZERO         ! flow in from uphill
+      real (kind=c_float) :: rOutFlow = rZERO        ! flow out downhill
+      real (kind=c_float) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
+      real (kind=c_float) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
+      real (kind=c_float) :: rGrossPrecip = rZERO    ! Precip - no interception applied
+      real (kind=c_float) :: rNetPrecip
+      real (kind=c_float) :: rInterception = rZERO   ! Interception term
+      real (kind=c_float) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
+      real (kind=c_float) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception
+      real (kind=c_float) :: rSnowFall_SWE = rZERO   ! precipitation that falls as snow (in SWE)
+      real (kind=c_float) :: rSnowFall = rZERO       ! snowfall in inches as SNOW
+      real (kind=c_float) :: rSnowCover = rZERO      ! snowcover expressed as inches of water
+      real (kind=c_float) :: rSnowTemperature = 23. ! snow temperature
+!      real (kind=c_float) :: rPrevious_SnowCover     ! Previous day's snow cover
+      real (kind=c_float) :: rSnowMelt = rZERO       ! snowmelt in inches of water
+      real (kind=c_float) :: rTMin = rZERO           ! Minimum daily temperature
+      real (kind=c_float) :: rTMax = rZERO           ! Maximum daily temperature
+      real (kind=c_float) :: rTAvg = rZERO           ! Average daily temperature
+      real (kind=c_float) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
 
-      real (kind=T_SGL) :: rGDD = rZERO            ! Growing Degree Day
-      real (kind=T_SGL) :: rIrrigationAmount = rZERO ! total amount of any irrigation
-      real (kind=T_SGL) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
-      real (kind=T_SGL) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
-!      real (kind=T_SGL) :: rMaximumAllowableDepletion = 100_T_SGL ! by default, no irrigation
+      real (kind=c_float) :: rGDD = rZERO            ! Growing Degree Day
+      real (kind=c_float) :: rIrrigationAmount = rZERO ! total amount of any irrigation
+      real (kind=c_float) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
+      real (kind=c_float) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
+!      real (kind=c_float) :: rMaximumAllowableDepletion = 100_c_float ! by default, no irrigation
                                                                   ! will be performed
 
-      real (kind=T_SGL) :: rSnowAlbedo             ! Snow albedo value
-      integer (kind=T_INT) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
-!      real (kind=T_SGL) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
-      real (kind=T_SGL),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
-      real (kind=T_SGL) :: rDailyRecharge = rZERO  ! Daily recharge
-      real (kind=T_SGL) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
-      real (kind=T_SGL) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
-      real (kind=T_SGL) :: rMSB = rZERO            ! cellular mass balance
-      integer(kind=T_SHORT) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
+      real (kind=c_float) :: rSnowAlbedo             ! Snow albedo value
+      integer (kind=c_int) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
+!      real (kind=c_float) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
+      real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
+      real (kind=c_float) :: rDailyRecharge = rZERO  ! Daily recharge
+      real (kind=c_float) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
+      real (kind=c_float) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
+      real (kind=c_float) :: rMSB = rZERO            ! cellular mass balance
+      integer(kind=c_short) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
 
-      logical (kind=T_LOGICAL) :: lDownhillMarked = lFALSE  ! Has been marked for downhill solution
+      logical (kind=c_bool) :: lDownhillMarked = lFALSE  ! Has been marked for downhill solution
   end type T_CELL
 
   ! Generic grid data type identifier constants
-  integer (kind=T_INT), parameter :: CONSTANT_GRID = 0
-  integer (kind=T_INT), parameter :: STATIC_GRID = 1
-  integer (kind=T_INT), parameter :: STATIC_NETCDF_GRID = 2
-  integer (kind=T_INT), parameter :: DYNAMIC_GRID = 3
-  integer (kind=T_INT), parameter :: DYNAMIC_NETCDF_GRID = 4
+  integer (kind=c_int), parameter :: CONSTANT_GRID = 0
+  integer (kind=c_int), parameter :: STATIC_GRID = 1
+  integer (kind=c_int), parameter :: STATIC_NETCDF_GRID = 2
+  integer (kind=c_int), parameter :: DYNAMIC_GRID = 3
+  integer (kind=c_int), parameter :: DYNAMIC_NETCDF_GRID = 4
 
-  integer (kind=T_INT), parameter :: DATATYPE_INT = 0
-  integer (kind=T_INT), parameter :: DATATYPE_REAL = 1
-  integer (kind=T_INT), parameter :: DATATYPE_CELL_GRID = 2
-  integer (kind=T_INT), parameter :: DATATYPE_SHORT = 3
-  integer (kind=T_INT), parameter :: DATATYPE_DOUBLE = 4
+  integer (kind=c_int), parameter :: DATATYPE_INT = 0
+  integer (kind=c_int), parameter :: DATATYPE_REAL = 1
+  integer (kind=c_int), parameter :: DATATYPE_CELL_GRID = 2
+  integer (kind=c_int), parameter :: DATATYPE_SHORT = 3
+  integer (kind=c_int), parameter :: DATATYPE_DOUBLE = 4
 
-  integer (kind=T_INT), parameter :: FILETYPE_ARC_ASCII = 0
-  integer (kind=T_INT), parameter :: FILETYPE_SURFER = 1
-  integer (kind=T_INT), parameter :: FILETYPE_NETCDF = 2
-  integer (kind=T_INT), parameter :: FILETYPE_NONE = 3
+  integer (kind=c_int), parameter :: FILETYPE_ARC_ASCII = 0
+  integer (kind=c_int), parameter :: FILETYPE_SURFER = 1
+  integer (kind=c_int), parameter :: FILETYPE_NETCDF = 2
+  integer (kind=c_int), parameter :: FILETYPE_NONE = 3
 
-  integer (kind=T_INT), parameter :: GRID_DATATYPE_INT = 0
-  integer (kind=T_INT), parameter :: GRID_DATATYPE_REAL = 1
-  integer (kind=T_INT), parameter :: GRID_DATATYPE_CELL_GRID = 2
-  integer (kind=T_INT), parameter :: GRID_DATATYPE_ALL = 3
+  integer (kind=c_int), parameter :: GRID_DATATYPE_INT = 0
+  integer (kind=c_int), parameter :: GRID_DATATYPE_REAL = 1
+  integer (kind=c_int), parameter :: GRID_DATATYPE_CELL_GRID = 2
+  integer (kind=c_int), parameter :: GRID_DATATYPE_ALL = 3
 
 !> @brief Type that contains the data for a grid.
 !>
@@ -261,29 +249,29 @@ module types
 !>   simpler, but at the cost of two unpopulated pointer variables per grid.
 !>   This implements a coding mechanism comparable to templates in C++.!
   type T_GENERAL_GRID
-!      integer (kind=T_INT) :: iGridType            ! One of the grid type options above
-      integer (kind=T_INT) :: iNX                   ! Number of cells in the x-direction
-      integer (kind=T_INT) :: iNY                   ! Number of cells in the y-direction
-      integer (kind=T_INT) :: iNumGridCells         ! Total number of grid cells
-      integer (kind=T_INT) :: iDataType             ! Data type contained in the grid (integer, real, SWB cell)
+!      integer (kind=c_int) :: iGridType            ! One of the grid type options above
+      integer (kind=c_int) :: iNX                   ! Number of cells in the x-direction
+      integer (kind=c_int) :: iNY                   ! Number of cells in the y-direction
+      integer (kind=c_int) :: iNumGridCells         ! Total number of grid cells
+      integer (kind=c_int) :: iDataType             ! Data type contained in the grid (integer, real, SWB cell)
       character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
       character (len=256)  :: sFilename             ! original file name that the data was read from
-      real (kind=T_DBL)    :: rGridCellSize         ! size of one side of a grid cell
-      integer (kind=T_INT) :: iLengthUnits= -99999  ! length units code
-      real (kind=T_DBL)    :: rX0, rX1              ! World-coordinate range in X
-      real (kind=T_DBL)    :: rY0, rY1              ! World-coordinate range in Y
-      integer (kind=T_INT), dimension(:,:), pointer :: iData ! Integer data
-      integer (kind=T_INT) :: iNoDataValue = -9999
-      real (kind=T_SGL), dimension(:,:), pointer :: rData    ! Real data
-      real (kind=T_SGL) :: rNoDataValue
+      real (kind=c_double)    :: rGridCellSize         ! size of one side of a grid cell
+      integer (kind=c_int) :: iLengthUnits= -99999  ! length units code
+      real (kind=c_double)    :: rX0, rX1              ! World-coordinate range in X
+      real (kind=c_double)    :: rY0, rY1              ! World-coordinate range in Y
+      integer (kind=c_int), dimension(:,:), pointer :: iData ! Integer data
+      integer (kind=c_int) :: iNoDataValue = -9999
+      real (kind=c_float), dimension(:,:), pointer :: rData    ! Real data
+      real (kind=c_float) :: rNoDataValue
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
   !> define parameter values for working with type T_GENERAL_GRID
-  integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_METERS = 0
-  integer (kind=T_INT), parameter :: iGRID_LENGTH_UNITS_FEET = 1
+  integer (kind=c_int), parameter :: iGRID_LENGTH_UNITS_METERS = 0
+  integer (kind=c_int), parameter :: iGRID_LENGTH_UNITS_FEET = 1
 
   type T_GRID_BOUNDS
     real (kind=c_double) :: rXll, rYll
@@ -308,7 +296,7 @@ module types
 
     !> Land use type; values are expected to correspond to those provided
     !> by the user in the input landuse grid.
-	integer (kind=T_INT) :: iLandUseType
+	integer (kind=c_int) :: iLandUseType
 
     !> Land use description
     character (len=256) :: sLandUseDescription
@@ -317,10 +305,10 @@ module types
 	character (len=256) :: sAssumedPercentImperviousness
 
     !> Interception value (inches per day) during growing season
-	real (kind=T_SGL) :: rIntercept_GrowingSeason
+	real (kind=c_float) :: rIntercept_GrowingSeason
 
     !> Interception value (inches per day) outside of growing season
-	real (kind=T_SGL) :: rIntercept_NonGrowingSeason
+	real (kind=c_float) :: rIntercept_NonGrowingSeason
 
   end type T_LANDUSE_LOOKUP
 
@@ -332,7 +320,7 @@ module types
   type T_IRRIGATION_LOOKUP
 
     !> Landuse code corresponding to the codes specified in landuse grid
- 	integer (kind=T_INT) :: iLandUseType
+ 	integer (kind=c_int) :: iLandUseType
 
     !> Land use description
     character (len=256) :: sLandUseDescription
@@ -341,68 +329,68 @@ module types
     character (len=256) :: sCropDescription
 
     !> Mean plant or crop height, feet
-    real (kind=T_SGL) :: rMeanPlantHeight = 3.0
+    real (kind=c_float) :: rMeanPlantHeight = 3.0
 
     !> Crop coefficient, basal, for a given day (calculated in code)
-    real (kind=T_SGL) :: rKcb
+    real (kind=c_float) :: rKcb
 
     !> Crop coefficient, basal, initial growth phase (Kcb_ini)
-    real (kind=T_SGL) :: rKcb_ini = 0.25
+    real (kind=c_float) :: rKcb_ini = 0.25
 
     !> Crop coefficient, basal, mid-growth phase (Kcb_mid)
-    real (kind=T_SGL) :: rKcb_mid = 1.3
+    real (kind=c_float) :: rKcb_mid = 1.3
 
     !> Crop coefficient, basal, end-growth phase (Kcb_end)
-    real (kind=T_SGL) :: rKcb_end = 0.7
+    real (kind=c_float) :: rKcb_end = 0.7
 
     !> Crop coefficient, MINIMUM allowed value (Kc_min)
-    real (kind=T_SGL) :: rKcb_min = 0.1
+    real (kind=c_float) :: rKcb_min = 0.1
 
     !> Day of year (or GDD) for initial planting
-    integer (kind=T_INT) :: iL_plant = 50
+    integer (kind=c_int) :: iL_plant = 50
 
     !> Day of year (or GDD) for end of initial growth phase
-    integer (kind=T_INT) :: iL_ini = 300
+    integer (kind=c_int) :: iL_ini = 300
 
     !> Day of year (or GDD) for end of development phase
-    integer (kind=T_INT) :: iL_dev = 650
+    integer (kind=c_int) :: iL_dev = 650
 
     !> Day of year (or GDD) for end of mid-season growth phase
-    integer (kind=T_INT) :: iL_mid = 1300
+    integer (kind=c_int) :: iL_mid = 1300
 
     !> Day of year (or GDD) for end of late season growth phase
-    integer (kind=T_INT) :: iL_late = 1800
+    integer (kind=c_int) :: iL_late = 1800
 
     !> How should the growth phase identifiers be treated (DOY or GDD)
-    logical (kind=T_LOGICAL) :: lUnitsAreDOY = lFALSE
+    logical (kind=c_bool) :: lUnitsAreDOY = lFALSE
 
     !> Growing degree-day base temperature (10 degrees C for corn)
-    real (kind=T_SGL) :: rGDD_BaseTemp  = 50.
+    real (kind=c_float) :: rGDD_BaseTemp  = 50.
 
     !> Growing degree-day maximum temperature (cutoff; 30 degrees C for corn)
-    real (kind=T_SGL) :: rGDD_MaxTemp   = 130.
+    real (kind=c_float) :: rGDD_MaxTemp   = 130.
 
     ! Depletion fraction: fraction of soil moisture depletion beyond which
     ! significant plant stress results
-    real (kind=T_SGL) :: rDepletionFraction = 0.2
+    real (kind=c_float) :: rDepletionFraction = 0.2
 
     ! Maximum allowable depletion (MAD) = maximum allowed soil water depletion (as fraction)
-    real (kind=T_SGL) :: rMAD           = 1.
+    real (kind=c_float) :: rMAD           = 1.
 
     !> Day of year before which no irrigation is assumed to take place
-    integer (kind=T_INT) :: iBeginIrrigation = 120
+    integer (kind=c_int) :: iBeginIrrigation = 120
 
     !> Day of year after which no irrigation is assumed to take place
-    integer (kind=T_INT) :: iEndIrrigation = 240
+    integer (kind=c_int) :: iEndIrrigation = 240
 
     !> Fraction of irrigation water obtained from GW rather than surface water
-    real (kind=T_SGL) :: rFractionOfIrrigationFromGW = rONE
+    real (kind=c_float) :: rFractionOfIrrigationFromGW = rONE
 
     !> Irrigation efficiency, surface-water sources
-    real (kind=T_SGL) :: rIrrigationEfficiency_SW = 1.0 / 0.8
+    real (kind=c_float) :: rIrrigationEfficiency_SW = 1.0 / 0.8
 
     !> Irrigation efficiency, groundwater sources
-    real (kind=T_SGL) :: rIrrigationEfficiency_GW = 1.0 / 0.8
+    real (kind=c_float) :: rIrrigationEfficiency_GW = 1.0 / 0.8
 
   end type T_IRRIGATION_LOOKUP
 
@@ -412,26 +400,26 @@ module types
     character(len=256) :: sBasinDescription
     character(len=256) :: sBasinMaskFilename
     character(len=256) :: sFileType
-    real (kind=T_SGL) :: rPestWeight = 1.0
+    real (kind=c_float) :: rPestWeight = 1.0
     character (len=256) :: sPestGroup
 
     type(T_GENERAL_GRID), pointer :: pGrd
 
-    real (kind=T_SGL) :: rQb
-    real (kind=T_SGL) :: rDrainageArea
-    integer (kind=T_INT) :: iLENGTH
-    real (kind=T_SGL) :: rMIN
-    real (kind=T_SGL) :: rMAX
-    real (kind=T_SGL) :: rMEAN
+    real (kind=c_float) :: rQb
+    real (kind=c_float) :: rDrainageArea
+    integer (kind=c_int) :: iLENGTH
+    real (kind=c_float) :: rMIN
+    real (kind=c_float) :: rMAX
+    real (kind=c_float) :: rMEAN
   end type T_BASIN_MASK
 
   !> container for SSF file information
   type T_SSF_FILES
-    integer (kind=T_INT) :: iLU      ! Fortran logical unit #
+    integer (kind=c_int) :: iLU      ! Fortran logical unit #
     character (len=128) :: sFileName
-    integer (kind=T_INT) :: iRowNum
-    integer (kind=T_INT) :: iColNum
-    integer (kind=T_INT) :: iVarNum  ! T_STATS variable number
+    integer (kind=c_int) :: iRowNum
+    integer (kind=c_int) :: iColNum
+    integer (kind=c_int) :: iVarNum  ! T_STATS variable number
   end type T_SSF_FILES
 
 
@@ -440,10 +428,10 @@ module types
     ! Container for calendar lookup information
     character (len=3) :: sName          ! Abbreviated name
 	character (len=9) :: sFullName      ! Full month name
-    integer (kind=T_INT) :: iStart      ! Starting (Julian) date
-    integer (kind=T_INT) :: iEnd        ! Ending (Julian) date
-	integer (kind=T_INT) :: iMonth      ! Month number (1-12)
-    integer (kind=T_INT) :: iNumDays    ! Max number of days in month
+    integer (kind=c_int) :: iStart      ! Starting (Julian) date
+    integer (kind=c_int) :: iEnd        ! Ending (Julian) date
+	integer (kind=c_int) :: iMonth      ! Month number (1-12)
+    integer (kind=c_int) :: iNumDays    ! Max number of days in month
   end type T_MONTH
 
   !> Month information
@@ -473,51 +461,51 @@ module types
     !> Short version of the variable name
     character (len=20) :: sVARIABLE_NAME
     !> Fortran logical unit for binary file writes
-    integer(kind=T_INT) :: iLU
+    integer(kind=c_int) :: iLU
     !> Integer number of characters to indent (on-screen display)
-    integer (kind=T_INT) :: iIndent
+    integer (kind=c_int) :: iIndent
     !> Multiplier for calculating mass balances (1=source, 0=NA, -1=sink)
-    integer(kind=T_INT) :: iMassBalanceConst
+    integer(kind=c_int) :: iMassBalanceConst
     !> Does it make sense to show the sum of this accumulator?
-    logical(kind=T_LOGICAL) :: lShowSum
+    logical(kind=c_bool) :: lShowSum
     !> Does it make sense to show the daily sum of this accumulator?
-    logical(kind=T_LOGICAL) :: lShowDailySum
+    logical(kind=c_bool) :: lShowDailySum
     !> Is this variable active given the compiler options?
-    logical (kind=T_LOGICAL) :: lActive
+    logical (kind=c_bool) :: lActive
     !> Text describing the unit of measure (i.e. inches)
     character (len=20) :: sUnits
     !> Long form of the variable name
     character(len=64) :: sLongName
     !> Multiplication factor when writing to a NetCDF file
-    real (kind=T_DBL) :: rNC_MultFactor
+    real (kind=c_double) :: rNC_MultFactor
     !> Offset when writing to a NetCDF file
-    real (kind=T_DBL) :: rNC_AddOffset
+    real (kind=c_double) :: rNC_AddOffset
     !> Type of daily output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
-    integer(kind=T_INT) :: iDailyOutput
+    integer(kind=c_int) :: iDailyOutput
     !> Type of monthly output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
-    integer(kind=T_INT) :: iMonthlyOutput
+    integer(kind=c_int) :: iMonthlyOutput
     !> Type of annual output desired (0=none; 1=grid; 2=plot; 3=both; 4=stats)
-    integer(kind=T_INT) :: iAnnualOutput
+    integer(kind=c_int) :: iAnnualOutput
     !> Is output to be written to a NetCDF file?
-    integer(kind=T_INT) :: iNetCDFOutput
+    integer(kind=c_int) :: iNetCDFOutput
     !> Description of utility of variable in calculating mass balance
     character (len=24) :: sMSB_Note
     !> Offset value; contains number of bytes written for a given day
-    integer (kind=T_INT) :: iOffset
+    integer (kind=c_int) :: iOffset
     !> Position value; location of current day's position marker
-    integer (kind=T_INT) :: iPos
+    integer (kind=c_int) :: iPos
   end type T_STATS
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
-  integer (kind=T_INT), parameter :: iNUM_MONTHS = 12
-  integer(kind=T_INT), parameter :: iNUM_VARIABLES = 36
+  integer (kind=c_int), parameter :: iNUM_MONTHS = 12
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 36
 
   ! constants defining T_STATS output types
-  integer(kind=T_INT), parameter :: iNONE = 0
-  integer(kind=T_INT), parameter :: iGRID = 1
-  integer(kind=T_INT), parameter :: iGRAPH = 2
-  integer(kind=T_INT), parameter :: iBOTH = 3
-  integer(kind=T_INT), parameter :: iSTATS = 4
+  integer(kind=c_int), parameter :: iNONE = 0
+  integer(kind=c_int), parameter :: iGRID = 1
+  integer(kind=c_int), parameter :: iGRAPH = 2
+  integer(kind=c_int), parameter :: iBOTH = 3
+  integer(kind=c_int), parameter :: iSTATS = 4
 
   !> Define parameter values for working with accumulator arrays
   type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = [ &
@@ -681,12 +669,12 @@ module types
   !> Index values for members of the rMonthly, rDaily, and rAnnual arrays
   !> that are global variables within module stats
   !> @{
-  integer (kind=T_INT), parameter :: iNUM_STATS = 5
-  integer (kind=T_INT), parameter :: iMIN = 1
-  integer (kind=T_INT), parameter :: iMEAN = 2
-  integer (kind=T_INT), parameter :: iMAX = 3
-  integer (kind=T_INT), parameter :: iSUM = 4
-  integer (kind=T_INT), parameter :: iLENGTH = 5
+  integer (kind=c_int), parameter :: iNUM_STATS = 5
+  integer (kind=c_int), parameter :: iMIN = 1
+  integer (kind=c_int), parameter :: iMEAN = 2
+  integer (kind=c_int), parameter :: iMAX = 3
+  integer (kind=c_int), parameter :: iSUM = 4
+  integer (kind=c_int), parameter :: iLENGTH = 5
   character(len=7), dimension(iNUM_STATS), parameter :: STAT_NAMES = &
     [ "Minimum", "Mean   ", "Maximum", "Sum    ", "Length " ]
   !> @}
@@ -698,173 +686,173 @@ module types
   !> for daily and annual reporting: sources first, then the sinks,
   !> and then all other informational items
   !> @{
-  integer (kind=T_INT), parameter :: iGROSS_PRECIP = 1
-  integer (kind=T_INT), parameter :: iSNOWMELT = 2
-  integer (kind=T_INT), parameter :: iINFLOW = 3
-  integer (kind=T_INT), parameter :: iIRRIGATION = 4
-  integer (kind=T_INT), parameter :: iSNOWFALL_SWE = 5
-  integer (kind=T_INT), parameter :: iINTERCEPTION = 6
-  integer (kind=T_INT), parameter :: iOUTFLOW = 7
-  integer (kind=T_INT), parameter :: iRUNOFF_OUTSIDE = 8
-  integer (kind=T_INT), parameter :: iACT_ET = 9
-  integer (kind=T_INT), parameter :: iCHG_IN_SOIL_MOIST = 10
-  integer (kind=T_INT), parameter :: iRECHARGE = 11
-  integer (kind=T_INT), parameter :: iREJECTED_RECHARGE = 12
-  integer (kind=T_INT), parameter :: iSTREAM_CAPTURE = 13
-  integer (kind=T_INT), parameter :: iSNOWCOVER = 14
-  integer (kind=T_INT), parameter :: iCFGI = 15
-  integer (kind=T_INT), parameter :: iMIN_TEMP = 16
-  integer (kind=T_INT), parameter :: iMAX_TEMP = 17
-  integer (kind=T_INT), parameter :: iAVG_TEMP = 18
-  integer (kind=T_INT), parameter :: iCHG_IN_SNOW_COV = 19
-  integer (kind=T_INT), parameter :: iNET_RAINFALL = 20
-  integer (kind=T_INT), parameter :: iNET_INFLOW = 21
-  integer (kind=T_INT), parameter :: iNET_INFIL = 22
-  integer (kind=T_INT), parameter :: iREFERENCE_ET = 23
-  integer (kind=T_INT), parameter :: iREFERENCE_ET_ADJ = 24
-  integer (kind=T_INT), parameter :: iCROP_ET = 25
-  integer (kind=T_INT), parameter :: iBARE_SOIL_EVAP = 26
-  integer (kind=T_INT), parameter :: iP_MINUS_PET = 27
-  integer (kind=T_INT), parameter :: iSM_DEFICIT = 28
-  integer (kind=T_INT), parameter :: iSM_SURPLUS = 29
-  integer (kind=T_INT), parameter :: iSM_APWL = 30
-  integer (kind=T_INT), parameter :: iSOIL_MOISTURE = 31
-  integer (kind=T_INT), parameter :: iGDD = 32
-  integer (kind=T_INT), parameter :: iROOTING_DEPTH = 33
-  integer (kind=T_INT), parameter :: iCROP_COEFFICIENT = 34
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_GW = 35
-  integer (kind=T_INT), parameter :: iIRRIGATION_FROM_SW = 36
+  integer (kind=c_int), parameter :: iGROSS_PRECIP = 1
+  integer (kind=c_int), parameter :: iSNOWMELT = 2
+  integer (kind=c_int), parameter :: iINFLOW = 3
+  integer (kind=c_int), parameter :: iIRRIGATION = 4
+  integer (kind=c_int), parameter :: iSNOWFALL_SWE = 5
+  integer (kind=c_int), parameter :: iINTERCEPTION = 6
+  integer (kind=c_int), parameter :: iOUTFLOW = 7
+  integer (kind=c_int), parameter :: iRUNOFF_OUTSIDE = 8
+  integer (kind=c_int), parameter :: iACT_ET = 9
+  integer (kind=c_int), parameter :: iCHG_IN_SOIL_MOIST = 10
+  integer (kind=c_int), parameter :: iRECHARGE = 11
+  integer (kind=c_int), parameter :: iREJECTED_RECHARGE = 12
+  integer (kind=c_int), parameter :: iSTREAM_CAPTURE = 13
+  integer (kind=c_int), parameter :: iSNOWCOVER = 14
+  integer (kind=c_int), parameter :: iCFGI = 15
+  integer (kind=c_int), parameter :: iMIN_TEMP = 16
+  integer (kind=c_int), parameter :: iMAX_TEMP = 17
+  integer (kind=c_int), parameter :: iAVG_TEMP = 18
+  integer (kind=c_int), parameter :: iCHG_IN_SNOW_COV = 19
+  integer (kind=c_int), parameter :: iNET_RAINFALL = 20
+  integer (kind=c_int), parameter :: iNET_INFLOW = 21
+  integer (kind=c_int), parameter :: iNET_INFIL = 22
+  integer (kind=c_int), parameter :: iREFERENCE_ET = 23
+  integer (kind=c_int), parameter :: iREFERENCE_ET_ADJ = 24
+  integer (kind=c_int), parameter :: iCROP_ET = 25
+  integer (kind=c_int), parameter :: iBARE_SOIL_EVAP = 26
+  integer (kind=c_int), parameter :: iP_MINUS_PET = 27
+  integer (kind=c_int), parameter :: iSM_DEFICIT = 28
+  integer (kind=c_int), parameter :: iSM_SURPLUS = 29
+  integer (kind=c_int), parameter :: iSM_APWL = 30
+  integer (kind=c_int), parameter :: iSOIL_MOISTURE = 31
+  integer (kind=c_int), parameter :: iGDD = 32
+  integer (kind=c_int), parameter :: iROOTING_DEPTH = 33
+  integer (kind=c_int), parameter :: iCROP_COEFFICIENT = 34
+  integer (kind=c_int), parameter :: iIRRIGATION_FROM_GW = 35
+  integer (kind=c_int), parameter :: iIRRIGATION_FROM_SW = 36
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
-  integer (kind=T_INT), parameter :: STREAM_INTERACTIONS_MAX = 100
+  integer (kind=c_int), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
 
   !> @anchor const_runoffCalc
   !> @name Constants: Runoff calculation
   !> Options controlling the selection of a runoff calculation algorithm
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_CURVE_NUMBER = 0
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_GREEN_AMPT = 1
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_CURVE_NUMBER = 0
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_GREEN_AMPT = 1
   !> @}
 
   !> @anchor const_runoffSoln
   !> @name Constants: Runoff routing calculation
   !> Options for routing mechanism selection
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
-  integer (kind=T_INT),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
   !> @}
 
 
   !> @name Constants: Evapotranspiration algorithm
   !> Options for specifying the choice of evapotranspiration algorithm
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_ET_NONE = 0
-  integer (kind=T_INT),parameter :: CONFIG_ET_THORNTHWAITE_MATHER = 1
-  integer (kind=T_INT),parameter :: CONFIG_ET_TURC = 2
-  integer (kind=T_INT),parameter :: CONFIG_ET_JENSEN_HAISE = 3
-  integer (kind=T_INT),parameter :: CONFIG_ET_BLANEY_CRIDDLE = 4
-  integer (kind=T_INT),parameter :: CONFIG_ET_HARGREAVES = 5
+  integer (kind=c_int),parameter :: CONFIG_ET_NONE = 0
+  integer (kind=c_int),parameter :: CONFIG_ET_THORNTHWAITE_MATHER = 1
+  integer (kind=c_int),parameter :: CONFIG_ET_TURC = 2
+  integer (kind=c_int),parameter :: CONFIG_ET_JENSEN_HAISE = 3
+  integer (kind=c_int),parameter :: CONFIG_ET_BLANEY_CRIDDLE = 4
+  integer (kind=c_int),parameter :: CONFIG_ET_HARGREAVES = 5
   !> @}
 
   !> @name Constants: Precipitation data format
   !> Options for specifying the method of input for precipitation data
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SINGLE_STATION = 0
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_SURFER_GRID = 2
-  integer (kind=T_INT),parameter :: CONFIG_PRECIP_NETCDF = 3
+  integer (kind=c_int),parameter :: CONFIG_PRECIP_SINGLE_STATION = 0
+  integer (kind=c_int),parameter :: CONFIG_PRECIP_ARC_GRID = 1
+  integer (kind=c_int),parameter :: CONFIG_PRECIP_SURFER_GRID = 2
+  integer (kind=c_int),parameter :: CONFIG_PRECIP_NETCDF = 3
   !> @}
 
   !> @name Constants: Temperature data format
   !> Options for specifying the method of input for temperature data
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SINGLE_STATION = 0
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_SURFER_GRID = 2
-  integer (kind=T_INT),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
+  integer (kind=c_int),parameter :: CONFIG_TEMPERATURE_SINGLE_STATION = 0
+  integer (kind=c_int),parameter :: CONFIG_TEMPERATURE_ARC_GRID = 1
+  integer (kind=c_int),parameter :: CONFIG_TEMPERATURE_SURFER_GRID = 2
+  integer (kind=c_int),parameter :: CONFIG_TEMPERATURE_NETCDF = 3
   !> @}
 
   !> @name Constants: Landuse input data format
   !> Options for specifying the method of input for temperature data
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_CONSTANT = 0
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
-  integer (kind=T_INT),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
+  integer (kind=c_int),parameter :: CONFIG_LANDUSE_CONSTANT = 0
+  integer (kind=c_int),parameter :: CONFIG_LANDUSE_DYNAMIC_ARC_GRID = 1
+  integer (kind=c_int),parameter :: CONFIG_LANDUSE_DYNAMIC_SURFER = 2
+  integer (kind=c_int),parameter :: CONFIG_LANDUSE_DYNAMIC_NETCDF = 3
+  integer (kind=c_int),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
   !> @}
 
   !> @name Constants: Snow module
   !> Configuration for selection of snowfall and snowmelt modules
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
-  integer (kind=T_INT),parameter :: CONFIG_SNOW_NEW_SWB = 1
+  integer (kind=c_int),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
+  integer (kind=c_int),parameter :: CONFIG_SNOW_NEW_SWB = 1
   !> @}
 
   !> @name Constants: Soil-moisture input data format
   !> Configuration information for soil-moisture capacity calculations
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
-  integer (kind=T_INT),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
+  integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
+  integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
+  integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
   !> @}
 
   !> @name Constants: Soil-moisture calculation
   !> Configuration information for soil-moisture retention calculations
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_SM_NONE = 0
-  integer (kind=T_INT),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
+  integer (kind=c_int),parameter :: CONFIG_SM_NONE = 0
+  integer (kind=c_int),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
   !> @}
 
   !> @name Constants: Thornthwaite-Mather implementation method
   !> Configuration information for Thornthwaite-Mather SM retention
   !> @{
-  integer (kind=T_INT),parameter :: CONFIG_TM_NONE = 0
-  integer (kind=T_INT),parameter :: CONFIG_TM_LOOKUP_TABLE = 1
-  integer (kind=T_INT),parameter :: CONFIG_TM_EQUATIONS = 2
+  integer (kind=c_int),parameter :: CONFIG_TM_NONE = 0
+  integer (kind=c_int),parameter :: CONFIG_TM_LOOKUP_TABLE = 1
+  integer (kind=c_int),parameter :: CONFIG_TM_EQUATIONS = 2
   !> @}
 
   !> @name Constants: FAO56 module
   !> Configuration information for FAO56 calculations
   !> @{
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_NONE = 0
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
-  integer (kind=T_INT), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
+  integer (kind=c_int), parameter :: CONFIG_FAO56_NONE = 0
+  integer (kind=c_int), parameter :: CONFIG_FAO56_ONE_FACTOR_STANDARD = 1
+  integer (kind=c_int), parameter :: CONFIG_FAO56_ONE_FACTOR_NONSTANDARD = 2
+  integer (kind=c_int), parameter :: CONFIG_FAO56_TWO_FACTOR_STANDARD = 3
+  integer (kind=c_int), parameter :: CONFIG_FAO56_TWO_FACTOR_NONSTANDARD = 4
 
   !> @}
 
   !> @name Constants: SCS curve number
   !> Configuration information for initial abstraction assumptions
   !> @{
-  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
-  integer (kind=T_INT), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
+  integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
   !> @}
 
   ! Define behavior in the case of missing data [UNIMPLEMENTED]
-  integer (kind=T_INT), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
-  integer (kind=T_INT), parameter :: CONFIG_END_IF_MISSING_DATA = 1
+  integer (kind=c_int), parameter :: CONFIG_ESTIMATE_MISSING_DATA = 0
+  integer (kind=c_int), parameter :: CONFIG_END_IF_MISSING_DATA = 1
 
   !> @name Constants: Output grid format
   !> Options for output formats
   !> @{
-  integer (kind=T_INT),parameter :: OUTPUT_SURFER = 0
-  integer (kind=T_INT),parameter :: OUTPUT_ARC = 1
+  integer (kind=c_int),parameter :: OUTPUT_SURFER = 0
+  integer (kind=c_int),parameter :: OUTPUT_ARC = 1
   !> @}
 
   ! Options for ASCII grid output
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DAILY = 0
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DEBUG = 3
-  integer (kind=T_INT), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
+  integer (kind=c_int), parameter :: WRITE_ASCII_GRID_DAILY = 0
+  integer (kind=c_int), parameter :: WRITE_ASCII_GRID_MONTHLY = 1
+  integer (kind=c_int), parameter :: WRITE_ASCII_GRID_ANNUAL = 2
+  integer (kind=c_int), parameter :: WRITE_ASCII_GRID_DEBUG = 3
+  integer (kind=c_int), parameter :: WRITE_ASCII_GRID_DIAGNOSTIC = 4
 
   !> generic configuration
-  integer (kind=T_INT), parameter :: CONFIG_NONE = 0
+  integer (kind=c_int), parameter :: CONFIG_NONE = 0
 
   !> @}
 
@@ -876,82 +864,82 @@ module types
   type T_MODEL_CONFIGURATION
 
       !> Runoff calculation method @ref const_runoffCalc "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoff = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureRunoff = CONFIG_NONE
 
       !> Runoff routing solution mode @ref const_runoffSoln "(\em see defined constants)"
-      integer (kind=T_INT) :: iConfigureRunoffMode = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureRunoffMode = CONFIG_NONE
 
       !> Reference evapotranspiration calculation method
-      integer (kind=T_INT) :: iConfigureET = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureET = CONFIG_NONE
 
       !> Precipitation input option
-      integer (kind=T_INT) :: iConfigurePrecip = CONFIG_NONE
+      integer (kind=c_int) :: iConfigurePrecip = CONFIG_NONE
 
       !> Temperature data input option
-      integer (kind=T_INT) :: iConfigureTemperature = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureTemperature = CONFIG_NONE
 
       !> Landuse data input option
-      integer (kind=T_INT) :: iConfigureLanduse = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureLanduse = CONFIG_NONE
 
       !> Soil moisture calculation option
-      integer (kind=T_INT) :: iConfigureSM = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureSM = CONFIG_NONE
 
       !> Thornthwaite-Mather soil moisture retention method
-      integer (kind=T_INT) :: iSoilMoistureRetentionMethod = CONFIG_TM_EQUATIONS
+      integer (kind=c_int) :: iSoilMoistureRetentionMethod = CONFIG_TM_EQUATIONS
 
       !> Snowfall and snowmelt option
-      integer (kind=T_INT) :: iConfigureSnow = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureSnow = CONFIG_NONE
 
       !> Maximum soil water capacity option
-      integer (kind=T_INT) :: iConfigureSMCapacity = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureSMCapacity = CONFIG_NONE
 
       !> FAO56 module options calculation option
-      integer (kind=T_INT) :: iConfigureFAO56 = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureFAO56 = CONFIG_NONE
 
       !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
-      integer (kind=T_INT) :: iConfigureInitialAbstraction = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureInitialAbstraction = CONFIG_NONE
 
 			!> Enable irrigation calculations?
-			logical (kind=T_LOGICAL) ::lEnableIrrigation = lFALSE
+			logical (kind=c_bool) ::lEnableIrrigation = lFALSE
 
       !> Option to write extra files when using PEST
-      logical (kind=T_LOGICAL) :: lWriteExtraPestFiles = lFALSE
+      logical (kind=c_bool) :: lWriteExtraPestFiles = lFALSE
 
       !> flag indicating whether or not screen output should include
       !> ANSI.sys-like colors
-      logical (kind=T_LOGICAL) :: lANSI_Colors = lFALSE
+      logical (kind=c_bool) :: lANSI_Colors = lFALSE
 
       !> allow for alternate methods of delimiting subdirectories;
       !> needed for operation on Windows *and* Linux platforms
       character(len=1) :: sSlash = sBACKSLASH
 
-      integer(kind=T_INT) :: iRLE_MULT = 10000
-      real (kind=T_SGL) :: rRLE_OFFSET = 0.
+      integer(kind=c_int) :: iRLE_MULT = 10000
+      real (kind=c_float) :: rRLE_OFFSET = 0.
 
       !> flag indicating whether this is the first year of a
       !> multiple-year simulation
-      logical (kind=T_LOGICAL) :: lFirstYearOfSimulation  = lTRUE
-      logical (kind=T_LOGICAL) :: lFirstDayOfSimulation  = lTRUE
-      integer (kind=T_INT) :: iStartYear
-      integer (kind=T_INT) :: iEndYear
-      integer (kind=T_INT) :: iYear           ! keep track of current
-      integer (kind=T_INT) :: iMonth          ! simulation date by
-      integer (kind=T_INT) :: iDay            ! updating these values
-      integer (kind=T_INT) :: iDayOfYear
-      integer (kind=T_INT) :: iNumDaysInYear
-      integer (kind=T_INT) :: iStartJulianDay
-      integer (kind=T_INT) :: iCurrentJulianDay
-      integer (kind=T_INT) :: iEndJulianDay
-      integer (kind=T_INT) :: iStartYearforCalculation = -99999
-      integer (kind=T_INT) :: iEndYearforCalculation = 99999
-      integer (kind=T_INT) :: iNumberOfLanduses
-      integer (kind=T_INT) :: iNumberOfSoilTypes
-      logical (kind=T_LOGICAL) :: lGriddedData = lFALSE
-      logical (kind=T_LOGICAL) :: lUseSWBRead = lFALSE
-      logical (kind=T_LOGICAL) :: lHaltIfMissingClimateData = lTRUE
+      logical (kind=c_bool) :: lFirstYearOfSimulation  = lTRUE
+      logical (kind=c_bool) :: lFirstDayOfSimulation  = lTRUE
+      integer (kind=c_int) :: iStartYear
+      integer (kind=c_int) :: iEndYear
+      integer (kind=c_int) :: iYear           ! keep track of current
+      integer (kind=c_int) :: iMonth          ! simulation date by
+      integer (kind=c_int) :: iDay            ! updating these values
+      integer (kind=c_int) :: iDayOfYear
+      integer (kind=c_int) :: iNumDaysInYear
+      integer (kind=c_int) :: iStartJulianDay
+      integer (kind=c_int) :: iCurrentJulianDay
+      integer (kind=c_int) :: iEndJulianDay
+      integer (kind=c_int) :: iStartYearforCalculation = -99999
+      integer (kind=c_int) :: iEndYearforCalculation = 99999
+      integer (kind=c_int) :: iNumberOfLanduses
+      integer (kind=c_int) :: iNumberOfSoilTypes
+      logical (kind=c_bool) :: lGriddedData = lFALSE
+      logical (kind=c_bool) :: lUseSWBRead = lFALSE
+      logical (kind=c_bool) :: lHaltIfMissingClimateData = lTRUE
 
       ! flag indicating whether a previous downhill routing table exists
-      logical (kind=T_LOGICAL) :: lDownhillRoutingTableExists = lFALSE
+      logical (kind=c_bool) :: lDownhillRoutingTableExists = lFALSE
 
       ! Prefix of input ARC or SURFER gridded precip time-series files
       character (len=256) :: sPrecipFilePrefix = repeat(" ", 256)
@@ -964,26 +952,26 @@ module types
       character (len=256) :: sDynamicLanduseFilePrefix = repeat(" ", 256)
 
       ! ET parameters
-      real (kind=T_SGL) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
-      real (kind=T_SGL) :: rET_Exponent = 0.5
-      real (kind=T_SGL) :: rET_Constant = 17.8
+      real (kind=c_float) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
+      real (kind=c_float) :: rET_Exponent = 0.5
+      real (kind=c_float) :: rET_Constant = 17.8
 
       ! precip correction factors
-      real (kind=T_SGL) :: rRainfall_Corr_Factor = 1.0
-      real (kind=T_SGL) :: rSnowFall_SWE_Corr_Factor = 1.0
+      real (kind=c_float) :: rRainfall_Corr_Factor = 1.0
+      real (kind=c_float) :: rSnowFall_SWE_Corr_Factor = 1.0
 
       ! minimum value for valid precip  and temperature data
-      real (kind=T_SGL) :: rMinValidPrecip = 0.
-      real (kind=T_SGL) :: rMinValidTemp = -100.0
+      real (kind=c_float) :: rMinValidPrecip = 0.
+      real (kind=c_float) :: rMinValidTemp = -100.0
 
       ! define temperature values at which precip is all rain or all snow
-      real (kind=T_SGL) :: rTMaxAllSnow = 30.5
-      real (kind=T_SGL) :: rTMaxAllRain = 40.0
+      real (kind=c_float) :: rTMaxAllSnow = 30.5
+      real (kind=c_float) :: rTMaxAllRain = 40.0
 
       ! SNOW DEPTH parameters for fresh snow
-      real (kind=T_SGL) :: rSNWD_slp1 = 51.3
-      real (kind=T_SGL) :: rSNWD_intcp1 = 67.9
-      real (kind=T_SGL) :: rSNWD_denom = 2.6
+      real (kind=c_float) :: rSNWD_slp1 = 51.3
+      real (kind=c_float) :: rSNWD_intcp1 = 67.9
+      real (kind=c_float) :: rSNWD_denom = 2.6
 
       ! Filename for standard (single-station) time-series file
       character (len=256) :: sTimeSeriesFilename = repeat(" ", 256)
@@ -998,12 +986,12 @@ module types
       character (len=256) :: sBASE_PROJ4 = repeat(" ", 256)
 
       !> project grid definitions
-      real (kind=T_DBL) :: rX0, rY0          ! Lower-left corner (world coords)
-      real (kind=T_DBL) :: rX1, rY1          ! Upper-right corner (world coords)
-      integer (kind=T_INT) :: iNumGridCells  !
-      real (kind=T_SGL) :: rGridCellSize     !
-      integer (kind=T_INT) :: iNX            !
-      integer (kind=T_INT) :: iNY            !
+      real (kind=c_double) :: rX0, rY0          ! Lower-left corner (world coords)
+      real (kind=c_double) :: rX1, rY1          ! Upper-right corner (world coords)
+      integer (kind=c_int) :: iNumGridCells  !
+      real (kind=c_float) :: rGridCellSize     !
+      integer (kind=c_int) :: iNX            !
+      integer (kind=c_int) :: iNY            !
 
       ! PROJ4 string for Landuse Grid
       character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
@@ -1047,30 +1035,30 @@ module types
       character (len=256) :: sOutputFileSuffix = "asc"
 
       ! Precipitation amounts describing antecedent runoff conditions
-      real (kind=T_SGL) :: rDRY_DORMANT = 0.50_T_SGL   ! shift to Type I
-      real (kind=T_SGL) :: rWET_DORMANT = 1.10_T_SGL   ! shift to Type II
-      real (kind=T_SGL) :: rDRY_GROWING = 1.40_T_SGL   ! shift to Type I
-      real (kind=T_SGL) :: rWET_GROWING = 2.10_T_SGL   ! shift to Type II
+      real (kind=c_float) :: rDRY_DORMANT = 0.50_c_float   ! shift to Type I
+      real (kind=c_float) :: rWET_DORMANT = 1.10_c_float   ! shift to Type II
+      real (kind=c_float) :: rDRY_GROWING = 1.40_c_float   ! shift to Type I
+      real (kind=c_float) :: rWET_GROWING = 2.10_c_float   ! shift to Type II
 
       ! Configuration flag for type of grid output to write to disk
       ! output file is either ARC_GRID or SURFER
-      integer (kind=T_INT) :: iOutputFormat
+      integer (kind=c_int) :: iOutputFormat
 
       ! Growing season configuration
-      integer (kind=T_INT) :: iDayOfFirstFrost
-      integer (kind=T_INT) :: iDayOfLastFrost
-      logical (kind=T_LOGICAL) :: lNorthernHemisphere = lTRUE
+      integer (kind=c_int) :: iDayOfFirstFrost
+      integer (kind=c_int) :: iDayOfLastFrost
+      logical (kind=c_bool) :: lNorthernHemisphere = lTRUE
 
       ! flags to control output
-      logical (kind=T_LOGICAL) :: lReportDaily       !
-      logical (kind=T_LOGICAL) :: lWriteToScreen     !
+      logical (kind=c_bool) :: lReportDaily       !
+      logical (kind=c_bool) :: lWriteToScreen     !
 
-      integer (kind=T_INT) :: iHeaderPrintInterval ! frequency with which to reprint
+      integer (kind=c_int) :: iHeaderPrintInterval ! frequency with which to reprint
                                                    ! detailed output header
 
       ! Define how low iteration-to-iteration variance must be
       ! before the iterative approach is determined to have converged
-      real (kind=T_SGL) :: rIterationTolerance = 1.0E-6
+      real (kind=c_float) :: rIterationTolerance = 1.0E-6
 
       ! define a pointer to the landuse lookup table
       type (T_LANDUSE_LOOKUP), dimension(:), pointer :: LU  ! T_LANDUSE_LOOKUP objects
@@ -1082,39 +1070,39 @@ module types
       type (T_BASIN_MASK), dimension(:), pointer :: BMASK  ! T_BASIN_MASK objects
 
       ! define a pointer to the CURVE NUMBER lookup table
-      real (kind=T_SGL), dimension(:,:), pointer :: CN
+      real (kind=c_float), dimension(:,:), pointer :: CN
 
       ! define a pointer to the MAXIMUM RECHARGE RATE lookup table
-      real (kind=T_SGL), dimension(:,:),pointer :: MAX_RECHARGE
+      real (kind=c_float), dimension(:,:),pointer :: MAX_RECHARGE
 
       ! define a pointer to the ROOTING DEPTH lookup table
-      real (kind=T_SGL), dimension(:,:),pointer :: ROOTING_DEPTH
+      real (kind=c_float), dimension(:,:),pointer :: ROOTING_DEPTH
 
       ! define a pointer to the READILY_EVAPORABLE_WATER lookup table
-      real (kind=T_SGL), dimension(:,:),pointer :: READILY_EVAPORABLE_WATER
+      real (kind=c_float), dimension(:,:),pointer :: READILY_EVAPORABLE_WATER
 
       ! define a pointer to the TOTAL_EVAPORABLE_WATER lookup table
-      real (kind=T_SGL), dimension(:,:),pointer :: TOTAL_EVAPORABLE_WATER
+      real (kind=c_float), dimension(:,:),pointer :: TOTAL_EVAPORABLE_WATER
 
       ! define threshold value for CFGI below which ground is considered unfrozen
-      real (kind=T_SGL) :: rLL_CFGI = 9999.0
+      real (kind=c_float) :: rLL_CFGI = 9999.0
       ! define threshold value for CFGI above which ground is considered frozen
-      real (kind=T_SGL) :: rUL_CFGI = 9999.0
+      real (kind=c_float) :: rUL_CFGI = 9999.0
 
       ! define the land use category associated with open water
-      integer(kind=T_INT) :: iOPEN_WATER_LU = -99999
+      integer(kind=c_int) :: iOPEN_WATER_LU = -99999
 
       ! define southern and northern latitude values bounding the grid
-	  real (kind=T_SGL) :: rSouthernLatitude
- 	  real (kind=T_SGL) :: rNorthernLatitude
+	  real (kind=c_float) :: rSouthernLatitude
+ 	  real (kind=c_float) :: rNorthernLatitude
 
 #ifdef STREAM_INTERACTIONS
  	    ! Data for the elevation corrections on temperature
- 	    logical (kind=T_LOGICAL) :: lElevAdjustment
- 	    real (kind=T_SGL) :: rElevStationElevation
- 	    real (kind=T_SGL) :: rElevDryFactor
- 	    real (kind=T_SGL) :: rElevHumidFactor
- 	    real (kind=T_SGL) :: rElevHumidityThreshold
+ 	    logical (kind=c_bool) :: lElevAdjustment
+ 	    real (kind=c_float) :: rElevStationElevation
+ 	    real (kind=c_float) :: rElevDryFactor
+ 	    real (kind=c_float) :: rElevHumidFactor
+ 	    real (kind=c_float) :: rElevHumidityThreshold
 #endif
 
        ! data structure to hold information about which cells we
@@ -1148,26 +1136,26 @@ module types
      !!
  	  !! The constant STREAM_INTERACTIONS_MAX is the maximum number of curve
  	  !! number entries allowed for the fracture recharge option.
-	  real (kind=T_SGL), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxInflow
- 	  real (kind=T_SGL), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxCapture
+	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxInflow
+ 	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxCapture
 #endif
 
   end type T_MODEL_CONFIGURATION
 
   !> data structure to hold a line of input from the classic time-series file
   type T_TIME_SERIES_FILE
-     integer (kind=T_INT) :: iMonth
-     integer (kind=T_INT) :: iDay
-     integer (kind=T_INT) :: iYear
-     real (kind=T_SGL) :: rAvgT
-     real (kind=T_SGL) :: rPrecip
-     real (kind=T_SGL) :: rRH
-     real (kind=T_SGL) :: rMaxT
-     real (kind=T_SGL) :: rMinT
-     real (kind=T_SGL) :: rWindSpd
-     real (kind=T_SGL) :: rMinRH
-     real (kind=T_SGL) :: rSunPct
-     logical (kind=T_LOGICAL) :: lEOF = lFALSE
+     integer (kind=c_int) :: iMonth
+     integer (kind=c_int) :: iDay
+     integer (kind=c_int) :: iYear
+     real (kind=c_float) :: rAvgT
+     real (kind=c_float) :: rPrecip
+     real (kind=c_float) :: rRH
+     real (kind=c_float) :: rMaxT
+     real (kind=c_float) :: rMinT
+     real (kind=c_float) :: rWindSpd
+     real (kind=c_float) :: rMinRH
+     real (kind=c_float) :: rSunPct
+     logical (kind=c_bool) :: lEOF = lFALSE
   end type T_TIME_SERIES_FILE
 
   !> Type that holds parameters used to create graphics with the DISLIN
@@ -1194,23 +1182,23 @@ module types
     character(len=256) :: cFONT_NAME = "HELVE"
     character(len=256) :: cCOLOR_TABLE = "SPEC"
 
-    integer(kind=T_INT) :: iWinSizeX = 768
-    integer(kind=T_INT) :: iWinSizeY = 1024
+    integer(kind=c_int) :: iWinSizeX = 768
+    integer(kind=c_int) :: iWinSizeY = 1024
 
-    integer(kind=T_INT) :: iTimeFrame = 1
+    integer(kind=c_int) :: iTimeFrame = 1
 
-    real(kind=T_SGL),dimension(3) :: rZA = 0.
-    real(kind=T_SGL),dimension(3) :: rZE = 10.
-    real(kind=T_SGL),dimension(3) :: rZOR = 0.
-    real(kind=T_SGL),dimension(3) :: rZSTEP = 1.
+    real(kind=c_float),dimension(3) :: rZA = 0.
+    real(kind=c_float),dimension(3) :: rZE = 10.
+    real(kind=c_float),dimension(3) :: rZOR = 0.
+    real(kind=c_float),dimension(3) :: rZSTEP = 1.
 
-    logical (kind=T_LOGICAL) :: lEnableDislinMessages = lTRUE
+    logical (kind=c_bool) :: lEnableDislinMessages = lTRUE
 
   end type T_GRAPH_CONFIGURATION
 
-  integer(kind=T_INT),parameter :: iDAILY = 1
-  integer(kind=T_INT),parameter :: iMONTHLY = 2
-  integer(kind=T_INT),parameter :: iANNUAL = 3
+  integer(kind=c_int),parameter :: iDAILY = 1
+  integer(kind=c_int),parameter :: iMONTHLY = 2
+  integer(kind=c_int),parameter :: iANNUAL = 3
 
 !**********************************************************************
 !! GENERIC interfaces
@@ -1223,7 +1211,9 @@ module types
 
   interface assert
     module procedure :: assert_simple_sub
+    module procedure :: assert_simple_fl_sub
     module procedure :: assert_module_details_sub
+    module procedure :: assert_module_details_fl_sub
   end interface assert
 
   interface asCharacter
@@ -1265,13 +1255,13 @@ contains
 
 function nextunit(iLU)  result(iUnit)
 
-  integer (kind=T_INT), intent(out), optional :: iLU
-  integer (kind=T_INT) :: iUnit
+  integer (kind=c_int), intent(out), optional :: iLU
+  integer (kind=c_int) :: iUnit
 
   ! [ LOCALS ]
-  logical (kind=T_LOGICAL) :: lOpened
-  integer (kind=T_INT) :: iStartLU = 201
-  integer (kind=T_INT) :: iStopLU = 10000
+  logical (kind=c_bool) :: lOpened
+  integer (kind=c_int) :: iStartLU = 201
+  integer (kind=c_int) :: iStopLU = 10000
 
   do iUnit=iStartLU, iStopLU
     inquire(unit = iUnit, opened = lOpened )
@@ -1316,7 +1306,7 @@ function str_compare(sString1, sString2)                   result(lBool)
 
   character(len=*), intent(in) :: sString1
   character(len=*), intent(in) :: sString2
-  logical (kind=T_LOGICAL) :: lBool
+  logical (kind=c_bool) :: lBool
 
 #ifdef DEBUG_PRINT
   write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
@@ -1339,12 +1329,12 @@ end function str_compare
 subroutine assert_simple_sub(lCondition,sErrorMessage)
 
   ! ARGUMENTS
-  logical (kind=T_LOGICAL), intent(in) :: lCondition
+  logical (kind=c_bool), intent(in) :: lCondition
   character (len=*), intent(in) :: sErrorMessage
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i
-  integer (kind=T_INT), dimension(2) :: iLU
+  integer (kind=c_int) :: i
+  integer (kind=c_int), dimension(2) :: iLU
 
   iLU = [ LU_STD_OUT, LU_LOG ]
 
@@ -1363,17 +1353,30 @@ end subroutine assert_simple_sub
 
 !--------------------------------------------------------------------------
 
+subroutine assert_simple_fl_sub(lCondition,sErrorMessage)
+
+  ! ARGUMENTS
+  logical, intent(in) :: lCondition
+  character (len=*), intent(in) :: sErrorMessage
+
+  call assert_simple_sub(logical(lCondition, kind=c_bool), &
+      sErrorMessage)
+
+end subroutine assert_simple_fl_sub
+
+!--------------------------------------------------------------------------
+
 subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum)
 
   ! ARGUMENTS
-  logical (kind=T_LOGICAL), intent(in) :: lCondition
+  logical (kind=c_bool), intent(in) :: lCondition
   character (len=*), intent(in) :: sErrorMessage
   character (len=*) :: sFilename
-  integer (kind=T_INT) :: iLineNum
+  integer (kind=c_int) :: iLineNum
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i
-  integer (kind=T_INT), dimension(2) :: iLU
+  integer (kind=c_int) :: i
+  integer (kind=c_int), dimension(2) :: iLU
   character (len=12) :: sLineNum
 
   iLU = [ LU_STD_OUT, LU_LOG ]
@@ -1394,6 +1397,20 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
   endif
 
 end subroutine assert_module_details_sub
+
+
+subroutine assert_module_details_fl_sub(lCondition,sErrorMessage,sFilename,iLineNum)
+
+  ! ARGUMENTS
+  logical, intent(in) :: lCondition
+  character (len=*), intent(in) :: sErrorMessage
+  character (len=*) :: sFilename
+  integer (kind=c_int) :: iLineNum
+
+  call assert_module_details_sub(logical(lCondition, kind=c_bool), &
+    sErrorMessage,sFilename,iLineNum)
+
+end subroutine assert_module_details_fl_sub
 
 !-------------------------------------------------------------------------------
 
@@ -1417,9 +1434,9 @@ subroutine Chomp_delim_sub(sRecord, sItem, sDelimiters)
   character (len=256), intent(out)   :: sItem
   character (len=*), intent(in)                    :: sDelimiters
   ! LOCALS
-  integer (kind=T_INT) :: iR                      ! Index in sRecord
-  integer (kind=T_INT) :: iB                      !
-  integer (kind=T_INT) :: iLen
+  integer (kind=c_int) :: iR                      ! Index in sRecord
+  integer (kind=c_int) :: iB                      !
+  integer (kind=c_int) :: iLen
 
   iB = 0
 
@@ -1463,9 +1480,9 @@ subroutine Chomp_default_sub(sRecord, sItem)
   character (len=256), intent(out)   :: sItem
 
   ! LOCALS
-  integer (kind=T_INT) :: iR                      ! Index in sRecord
-  integer (kind=T_INT) :: iB                      !
-  integer (kind=T_INT) :: iLen
+  integer (kind=c_int) :: iR                      ! Index in sRecord
+  integer (kind=c_int) :: iB                      !
+  integer (kind=c_int) :: iLen
 
 #ifdef DEBUG_PRINT
   write(*,fmt="(/,a)") trim(__FILE__)//":"//trim(int2char(__LINE__))
@@ -1525,9 +1542,9 @@ end subroutine Chomp_default_sub
 !   character (len=*), intent(inout) :: sRecord
 !   character (len=256), intent(out) :: sItem
 !   ! LOCALS
-!   integer (kind=T_INT) :: iR                      ! Index in sRecord
-!   integer (kind=T_INT) :: iS                      ! Index in sItem
-!   logical (kind=T_LOGICAL) :: lSkip               ! TRUE while skipping spaces
+!   integer (kind=c_int) :: iR                      ! Index in sRecord
+!   integer (kind=c_int) :: iS                      ! Index in sItem
+!   logical (kind=c_bool) :: lSkip               ! TRUE while skipping spaces
 !
 !   ! Set my pointers and remove leading and trailing spaces
 !   iR = 1
@@ -1617,7 +1634,7 @@ end subroutine Chomp_default_sub
    character (len=*), intent(inout)                :: sRecord
    character (len=256), intent(out)   :: sItem
    ! LOCALS
-   integer (kind=T_INT) :: iR                      ! Index in sRecord
+   integer (kind=c_int) :: iR                      ! Index in sRecord
    character (len=1), parameter :: cTab = ACHAR(9) ! ASCII tab character
 
    iR = SCAN(sRecord,cTab)
@@ -1668,7 +1685,7 @@ subroutine Chomp_slash(sRecord, sItem)
   character (len=*), intent(inout)                 :: sRecord
   character (len=256), intent(out)   :: sItem
   ! LOCALS
-  integer (kind=T_INT) :: iR                      ! Index in sRecord
+  integer (kind=c_int) :: iR                      ! Index in sRecord
   character (len=1), parameter :: cSlash = "/"
 
   iR = SCAN(sRecord,cSlash)
@@ -1698,14 +1715,14 @@ end subroutine Chomp_slash
 function mmddyyyy2julian(sMMDDYYYY)  result(iJD)
 
   character (len=*) :: sMMDDYYYY
-  integer (kind=T_INT) :: iJD
+  integer (kind=c_int) :: iJD
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iMonth
-  integer (kind=T_INT) :: iDay
-  integer (kind=T_INT) :: iYear
+  integer (kind=c_int) :: iMonth
+  integer (kind=c_int) :: iDay
+  integer (kind=c_int) :: iYear
   character (len=256) :: sItem, sBuf
-  integer (kind=T_INT) :: iStat
+  integer (kind=c_int) :: iStat
 
   sItem = sMMDDYYYY
 
@@ -1738,16 +1755,16 @@ end function mmddyyyy2julian
 function mmdd2doy(sMMDD)  result(iDOY)
 
   character (len=*) :: sMMDD
-  integer (kind=T_INT) :: iDOY
+  integer (kind=c_int) :: iDOY
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iMonth
-  integer (kind=T_INT) :: iDay
-  integer (kind=T_INT) :: iYear
+  integer (kind=c_int) :: iMonth
+  integer (kind=c_int) :: iDay
+  integer (kind=c_int) :: iYear
   character (len=256) :: sItem, sBuf
-  integer (kind=T_INT) :: iStat
-  integer (kind=T_INT) :: iJD
-  integer (kind=T_INT) :: iStartingJD
+  integer (kind=c_int) :: iStat
+  integer (kind=c_int) :: iJD
+  integer (kind=c_int) :: iStartingJD
 
   sItem = sMMDD
 
@@ -1778,16 +1795,16 @@ end function mmdd2doy
 function mmddyyyy2doy(sMMDDYYYY)  result(iDOY)
 
   character (len=*) :: sMMDDYYYY
-  integer (kind=T_INT) :: iDOY
+  integer (kind=c_int) :: iDOY
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iMonth
-  integer (kind=T_INT) :: iDay
-  integer (kind=T_INT) :: iYear
+  integer (kind=c_int) :: iMonth
+  integer (kind=c_int) :: iDay
+  integer (kind=c_int) :: iYear
   character (len=256) :: sItem, sBuf
-  integer (kind=T_INT) :: iStat
-  integer (kind=T_INT) :: iJD
-  integer (kind=T_INT) :: iStartingJD
+  integer (kind=c_int) :: iStat
+  integer (kind=c_int) :: iJD
+  integer (kind=c_int) :: iStartingJD
 
   sItem = sMMDDYYYY
 
@@ -1827,9 +1844,9 @@ function uppercase_fn ( s )                               result(sOut)
   character (len=*), intent(in) :: s
   character(len=len(s)) :: sOut
   ! LOCALS
-  integer (kind=T_INT) :: i    ! do loop index
+  integer (kind=c_int) :: i    ! do loop index
   ! CONSTANTS
-  integer (kind=T_INT), parameter :: LOWER_TO_UPPER = -32
+  integer (kind=c_int), parameter :: LOWER_TO_UPPER = -32
 
 !  LOWER_TO_UPPER = ichar( "A" ) - ichar( "a" )
 
@@ -1852,9 +1869,9 @@ function lowercase_fn ( s )                               result(sOut)
   character (len=*), intent(in) :: s
   character(len=len(s)) :: sOut
   ! LOCALS
-  integer (kind=T_INT) :: i    ! do loop index
+  integer (kind=c_int) :: i    ! do loop index
   ! CONSTANTS
-  integer (kind=T_INT), parameter :: UPPER_TO_LOWER = 32
+  integer (kind=c_int), parameter :: UPPER_TO_LOWER = 32
 
 !  UPPER_TO_LOWER = ichar( "a" ) - ichar( "A" )
 
@@ -1875,9 +1892,9 @@ subroutine uppercase ( s )
   ! ARGUMENTS
   character (len=*), intent(inout) :: s
   ! LOCALS
-  integer (kind=T_INT) :: i    ! do loop index
+  integer (kind=c_int) :: i    ! do loop index
   ! CONSTANTS
-  integer (kind=T_INT) :: LOWER_TO_UPPER = ichar( "A" ) - ichar( "a" )
+  integer (kind=c_int) :: LOWER_TO_UPPER = ichar( "A" ) - ichar( "a" )
 
   do i=1,len_trim(s)
       if ( ichar(s(i:i) ) >= ichar("a") .and. ichar(s(i:i)) <= ichar("z") ) then
@@ -1908,7 +1925,7 @@ subroutine CleanUpCsv ( s )
   ! ARGUMENTS
   character (len=*), intent(inout) :: s
   ! LOCALS
-  integer (kind=T_INT) :: i,j
+  integer (kind=c_int) :: i,j
   ! LOCAL PARAMETERS
   character (len=1),dimension(3),parameter :: &
                 REPLACE_CHARS = (/ ',', achar(9), '"' /)
@@ -1930,8 +1947,8 @@ function clean(sRecord,sDelimiters)                       result(sItem)
 
   ! LOCALS
   character (len=256) :: sItem
-  integer (kind=T_INT) :: iR                 ! Index in sRecord
-  integer (kind=T_INT) :: i, j
+  integer (kind=c_int) :: iR                 ! Index in sRecord
+  integer (kind=c_int) :: i, j
 
   ! eliminate any leading spaces
   sRecord = adjustl(sRecord)
@@ -1977,7 +1994,7 @@ subroutine CleanUpSlash ( s )
   ! ARGUMENTS
   character (len=*), intent(inout) :: s
   ! LOCALS
-  integer (kind=T_INT) :: i,j
+  integer (kind=c_int) :: i,j
   ! LOCAL PARAMETERS
   character (len=1),dimension(5),parameter :: &
                 REPLACE_CHARS = [ ',', sTAB, '"', &
@@ -2036,12 +2053,12 @@ end function newunit
 function polynomial(x,a) result(rV)
   ! Computes a polynomial in x, with coefficients in a.
   ! [ ARGUMENTS ]
-  real (kind=T_DBL),intent(in) :: x
-  real (kind=T_DBL),dimension(:) :: a
+  real (kind=c_double),intent(in) :: x
+  real (kind=c_double),dimension(:) :: a
   ! [ RETURN VALUE ]
-  real (kind=T_DBL) :: rV
+  real (kind=c_double) :: rV
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i
+  integer (kind=c_int) :: i
 
   rV =a(1)
   do i=2,size(a)
@@ -2094,21 +2111,21 @@ subroutine LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
                        sMonthName,lMonthEnd)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT),intent(in) :: iMonth
-  integer (kind=T_INT),intent(in) :: iDay
-  integer (kind=T_INT),intent(in) :: iYear
-  integer (kind=T_INT),intent(out) :: iDayOfYear
+  integer (kind=c_int),intent(in) :: iMonth
+  integer (kind=c_int),intent(in) :: iDay
+  integer (kind=c_int),intent(in) :: iYear
+  integer (kind=c_int),intent(out) :: iDayOfYear
   character (len=3),intent(out) :: sMonthName
-  logical (kind=T_LOGICAL),intent(out) :: lMonthEnd
+  logical (kind=c_bool),intent(out) :: lMonthEnd
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i
+  integer (kind=c_int) :: i
   type ( T_MONTH ),pointer :: mo
-  integer (kind=T_INT) :: iEpochMonth = 1
-  integer (kind=T_INT) :: iEpochDay = 1
-  integer (kind=T_INT) :: iEpochJulianDay
-  integer (kind=T_INT) :: iDummy1, iDummy2
-  integer (kind=T_INT) :: iJulianDay
-  integer (kind=T_INT) :: iTomorrowsMonth
+  integer (kind=c_int) :: iEpochMonth = 1
+  integer (kind=c_int) :: iEpochDay = 1
+  integer (kind=c_int) :: iEpochJulianDay
+  integer (kind=c_int) :: iDummy1, iDummy2
+  integer (kind=c_int) :: iJulianDay
+  integer (kind=c_int) :: iTomorrowsMonth
 
   ! get the Julian Day corresponding to the first day of the
   ! current calendar year
@@ -2137,15 +2154,15 @@ end subroutine LookupMonth
 
 function approx_equal_dbl(rA, rB, rTol)  result(lTest)
 
-   real(kind=T_DBL) :: rA
-   real(kind=T_DBL) :: rB
-   real(kind=T_DBL), optional :: rTol
-   logical(kind=T_LOGICAL) :: lTest
+   real(kind=c_double) :: rA
+   real(kind=c_double) :: rB
+   real(kind=c_double), optional :: rTol
+   logical(kind=c_bool) :: lTest
 
    ! [ LOCALS ]
-   real (kind=T_DBL) :: rDiff
-   integer (kind=T_INT) :: iDiff
-   real(kind=T_DBL) :: rMultiplier
+   real (kind=c_double) :: rDiff
+   integer (kind=c_int) :: iDiff
+   real(kind=c_double) :: rMultiplier
 
    if(present(rTol) ) then
      rMultiplier = rTol
@@ -2154,7 +2171,7 @@ function approx_equal_dbl(rA, rB, rTol)  result(lTest)
    endif
 
    rDiff = ABS(rA - rB)
-   iDiff = int(rDiff * rMultiplier, kind=T_INT)
+   iDiff = int(rDiff * rMultiplier, kind=c_int)
 
    if(iDiff == 0) then
      lTest = lTRUE
@@ -2169,15 +2186,15 @@ end function approx_equal_dbl
 
 function approx_equal_sgl(rA, rB, rTol)  result(lTest)
 
-   real(kind=T_SGL) :: rA
-   real(kind=T_SGL) :: rB
-   real(kind=T_SGL), optional :: rTol
-   logical(kind=T_LOGICAL) :: lTest
+   real(kind=c_float) :: rA
+   real(kind=c_float) :: rB
+   real(kind=c_float), optional :: rTol
+   logical(kind=c_bool) :: lTest
 
    ! [ LOCALS ]
-   real (kind=T_DBL) :: rDiff
-   integer (kind=T_INT) :: iDiff
-   real(kind=T_SGL) :: rMultiplier
+   real (kind=c_double) :: rDiff
+   integer (kind=c_int) :: iDiff
+   real(kind=c_float) :: rMultiplier
 
    if(present(rTol) ) then
      rMultiplier = rTol
@@ -2186,7 +2203,7 @@ function approx_equal_sgl(rA, rB, rTol)  result(lTest)
    endif
 
    rDiff = ABS(rA - rB)
-   iDiff = int(rDiff * rMultiplier, kind=T_INT)
+   iDiff = int(rDiff * rMultiplier, kind=c_int)
 
    if(iDiff == 0) then
      lTest = lTRUE
@@ -2230,9 +2247,9 @@ function lf_model_GrowingSeason( pConfig, iDayOfYear ) result ( lGrowing )
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  integer (kind=T_INT),intent(in) :: iDayOfYear
+  integer (kind=c_int),intent(in) :: iDayOfYear
   ! [ RETURN VALUE ]
-  logical (kind=T_LOGICAL) :: lGrowing
+  logical (kind=c_bool) :: lGrowing
 
   lGrowing = ( iDayOfYear > pConfig%iDayOfFirstFrost .and. &
                iDayOfYear < pConfig%iDayOfLastFrost )
@@ -2264,9 +2281,9 @@ end function lf_model_GrowingSeason
  function FtoC_sgl_fn(rF)   result(rC)
   ! Converts degrees Fahrenheit to degrees Celsius
   ! [ ARGUMENTS ]
-  real (kind=T_SGL),intent(in) :: rF
+  real (kind=c_float),intent(in) :: rF
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rC
+  real (kind=c_float) :: rC
 
   rC = (rF - rFREEZING) * dpC_PER_F
 
@@ -2276,9 +2293,9 @@ end function FtoC_sgl_fn
  function FtoC_dbl_fn(rF)   result(rC)
   ! Converts degrees Fahrenheit to degrees Celsius
   ! [ ARGUMENTS ]
-  real (kind=T_DBL),intent(in) :: rF
+  real (kind=c_double),intent(in) :: rF
   ! [ RETURN VALUE ]
-  real (kind=T_DBL) :: rC
+  real (kind=c_double) :: rC
 
   rC = (rF - dpFREEZING) * dpC_PER_F
 
@@ -2303,9 +2320,9 @@ end function FtoC_dbl_fn
  function CtoF_sgl_fn(rC)   result(rF)
   ! Converts degrees Celsius to degrees Fahrenheit
   ! [ ARGUMENTS ]
-  real (kind=T_SGL),intent(in) :: rC
+  real (kind=c_float),intent(in) :: rC
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rF
+  real (kind=c_float) :: rF
 
   rF = rC * dpF_PER_C + rFREEZING
 
@@ -2315,9 +2332,9 @@ end function CtoF_sgl_fn
  function CtoF_dbl_fn(rC)   result(rF)
   ! Converts degrees Celsius to degrees Fahrenheit
   ! [ ARGUMENTS ]
-  real (kind=T_DBL),intent(in) :: rC
+  real (kind=c_double),intent(in) :: rC
   ! [ RETURN VALUE ]
-  real (kind=T_DBL) :: rF
+  real (kind=c_double) :: rF
 
   rF = rC * dpF_PER_C + dpFREEZING
 
@@ -2342,22 +2359,22 @@ end function CtoF_dbl_fn
  function FtoK_sgl_fn(rF)    result(rK)
   ! Converts degrees Fahrenheit to kelvins
   ! [ ARGUMENTS ]
-  real (kind=T_SGL),intent(in) :: rF
+  real (kind=c_float),intent(in) :: rF
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rK
+  real (kind=c_float) :: rK
 
-  rK = (rF - rFREEZING) * dpC_PER_F + 273.15_T_SGL
+  rK = (rF - rFREEZING) * dpC_PER_F + 273.15_c_float
 
 end function FtoK_sgl_fn
 
  function FtoK_dbl_fn(rF)    result(rK)
   ! Converts degrees Fahrenheit to kelvins
   ! [ ARGUMENTS ]
-  real (kind=T_DBL),intent(in) :: rF
+  real (kind=c_double),intent(in) :: rF
   ! [ RETURN VALUE ]
-  real (kind=T_DBL) :: rK
+  real (kind=c_double) :: rK
 
-  rK = (rF - dpFREEZING) * dpC_PER_F + 273.15_T_DBL
+  rK = (rF - dpFREEZING) * dpC_PER_F + 273.15_c_double
 
 end function FtoK_dbl_fn
 
@@ -2368,7 +2385,7 @@ function count_fields(sRecord) result(iNumFields)
   character (len=*), intent(inout) :: sRecord
 
   character (len=256) :: sItem
-  integer(kind=T_INT) :: iNumFields, i
+  integer(kind=c_int) :: iNumFields, i
 
   i=1
 
@@ -2407,9 +2424,9 @@ end function count_fields
 function mm_to_in(r_mm) result(r_in)
   ! Converts value in millimeters to inches
   ! [ ARGUMENTS ]
-  real (kind=T_SGL),intent(in) :: r_mm
+  real (kind=c_float),intent(in) :: r_mm
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: r_in
+  real (kind=c_float) :: r_in
 
   r_in = r_mm / rMM_PER_INCH
 
@@ -2445,14 +2462,14 @@ end function mm_to_in
 function interpolate(rXT, rYT, rX) result(rY)
 
   ! [ ARGUMENTS ]
-  real (kind=T_SGL), dimension(:), intent(in) :: rXT, rYT
-  real (kind=T_SGL), intent(in) :: rX
+  real (kind=c_float), dimension(:), intent(in) :: rXT, rYT
+  real (kind=c_float), intent(in) :: rX
   ! [ RETURN VALUE ]
-  real (kind=T_SGL) :: rY
+  real (kind=c_float) :: rY
   ! [ LOCALS ]
-  integer (kind=T_INT) :: i,n
+  integer (kind=c_int) :: i,n
 
-  call Assert(LOGICAL(size(rXT) == size(rYT),kind=T_LOGICAL), &
+  call Assert(LOGICAL(size(rXT) == size(rYT),kind=c_bool), &
      "Interpolation tables don't conform")
   n = size(rXT)
   if (rX <= rXT(1)) then
@@ -2495,15 +2512,15 @@ end function interpolate
 function julian_day ( iYear, iMonth, iDay, iOrigin ) result(iJD)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT), intent(in) :: iYear, iMonth, iDay
-  integer (kind=T_INT), optional :: iOrigin
+  integer (kind=c_int), intent(in) :: iYear, iMonth, iDay
+  integer (kind=c_int), optional :: iOrigin
 
   ! [ LOCALS ]
-  integer (kind=T_INT) i,j,k
-  integer (kind=T_INT) :: iOffset
+  integer (kind=c_int) i,j,k
+  integer (kind=c_int) :: iOffset
 
   ! [ RETURN VALUE ]
-  integer (kind=T_INT) :: iJD
+  integer (kind=c_int) :: iJD
 
   call Assert(iMonth > 0 .and. iMonth <= 12, &
     "Illegal month value supplied: "//TRIM(int2char(iMonth)), &
@@ -2523,10 +2540,10 @@ function julian_day ( iYear, iMonth, iDay, iOrigin ) result(iJD)
     iOffset = 0
   endif
 
-  iJD= ( k-32075_T_INT + 1461_T_INT * (i + 4800_T_INT + (j - 14_T_INT) / 12_T_INT) &
-        /4_T_INT + 367_T_INT * (j - 2_T_INT - (j - 14_T_INT)/ 12_T_INT * 12_T_INT) &
-        /12_T_INT - 3_T_INT *((i + 4900_T_INT + (j - 14_T_INT) &
-        /12_T_INT)/100_T_INT)/4_T_INT ) - iOffset
+  iJD= ( k-32075_c_int + 1461_c_int * (i + 4800_c_int + (j - 14_c_int) / 12_c_int) &
+        /4_c_int + 367_c_int * (j - 2_c_int - (j - 14_c_int)/ 12_c_int * 12_c_int) &
+        /12_c_int - 3_c_int *((i + 4900_c_int + (j - 14_c_int) &
+        /12_c_int)/100_c_int)/4_c_int ) - iOffset
 
 end function julian_day
 
@@ -2554,14 +2571,14 @@ end function julian_day
 function solstice (iJD)  result (iSol)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT), intent(in) :: iJD
+  integer (kind=c_int), intent(in) :: iJD
 
   ! [ LOCALS ]
-  integer (kind=T_INT) iMonth, iDay, iYear
+  integer (kind=c_int) iMonth, iDay, iYear
 
 
   ! [ RETURN VALUE ]
-  integer (kind=T_INT) :: iSol
+  integer (kind=c_int) :: iSol
 
   call gregorian_date(iJD, iYear, iMonth, iDay)
 
@@ -2593,12 +2610,12 @@ subroutine writeMultiLine(sMessageText, iLU)
 
   ! [ ARGUMENTS ]
   character (len=*) :: sMessageText
-  integer (kind=T_INT) :: iLU
+  integer (kind=c_int) :: iLU
 
   ! [ LOCALS ]
   character (len=len(sMessageText) ) :: sRecord
   character (len=256) :: sItem
-  logical (kind=T_LOGICAL) :: lFileOpen
+  logical (kind=c_bool) :: lFileOpen
 
   inquire (unit=iLU, opened=lFileOpen)
 
@@ -2623,7 +2640,7 @@ end subroutine writeMultiLine
 !> Convert an integer value into a formatted character string
 function int2char(iValue)  result(sBuf)
 
-  integer (kind=T_INT) :: iValue
+  integer (kind=c_int) :: iValue
   character (len=256) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
@@ -2637,7 +2654,7 @@ end function int2char
 function char2real(sValue)  result(rValue)
 
   character (len=256) :: sValue
-  real (kind=T_SGL) :: rValue
+  real (kind=c_float) :: rValue
 
   read(UNIT=sValue,FMT=*) rValue
 
@@ -2648,10 +2665,10 @@ end function char2real
 !> Convert an int value into a real
 function int2real(iValue)  result(rValue)
 
-  integer (kind=T_INT) :: iValue
-  real (kind=T_SGL) :: rValue
+  integer (kind=c_int) :: iValue
+  real (kind=c_float) :: rValue
 
-  rValue = real(iValue, kind=T_SGL)
+  rValue = real(iValue, kind=c_float)
 
 end function int2real
 
@@ -2660,10 +2677,10 @@ end function int2real
 !> Convert an dbl value into a real
 function dbl2real(dpValue)  result(rValue)
 
-  real (kind=T_DBL) :: dpValue
-  real (kind=T_SGL) :: rValue
+  real (kind=c_double) :: dpValue
+  real (kind=c_float) :: rValue
 
-  rValue = real(dpValue, kind=T_SGL)
+  rValue = real(dpValue, kind=c_float)
 
 end function dbl2real
 
@@ -2685,7 +2702,7 @@ end function c_size_t2char
 !> Convert a real value into a formatted character string
 function real2char(rValue, sFmt)  result(sBuf)
 
-  real (kind=T_SGL) :: rValue
+  real (kind=c_float) :: rValue
   character (len=*), optional :: sFmt
 
   ![ LOCALS ]
@@ -2705,7 +2722,7 @@ end function real2char
 !> Convert a double precision real value into a formatted character string
 function dbl2char(rValue, sFmt)  result(sBuf)
 
-  real (kind=T_DBL) :: rValue
+  real (kind=c_double) :: rValue
   character (len=*), optional :: sFmt
 
   ![ LOCALS ]
@@ -2727,12 +2744,12 @@ end function dbl2char
 elemental function deg2rad(rDeg) result(rRad)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rDeg
+  real (kind=c_double), intent(in) :: rDeg
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rRad
+  real (kind=c_double) :: rRad
 
-  rRad = dpPI / 180_T_DBL * rDeg
+  rRad = dpPI / 180_c_double * rDeg
 
 end function deg2rad
 
@@ -2741,12 +2758,12 @@ end function deg2rad
 elemental function rad2deg(rRad) result(rDeg)
 
   ! [ ARGUMENTS ]
-  real (kind=T_DBL), intent(in) :: rRad
+  real (kind=c_double), intent(in) :: rRad
 
   ! [ LOCALS ]
-  real (kind=T_DBL) :: rDeg
+  real (kind=c_double) :: rDeg
 
-  rDeg = rRad * 180_T_DBL / dpPI
+  rDeg = rRad * 180_c_double / dpPI
 
 end function rad2deg
 
@@ -2757,10 +2774,10 @@ end function rad2deg
 !> This function simply returns the number of days given the current year.
 function num_days_in_year(iYear) result(iNumDaysInYear)
 
-  integer (kind=T_INT), intent(in) :: iYear
+  integer (kind=c_int), intent(in) :: iYear
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iFirstDay, iLastDay, iNumDaysInYear
+  integer (kind=c_int) :: iFirstDay, iLastDay, iNumDaysInYear
 
   iFirstDay = julian_day ( iYear, 1, 1 )
   iLastDay = julian_day ( iYear, 12, 31 )
@@ -2774,11 +2791,11 @@ end function num_days_in_year
 
 function day_of_year(iJD) result(iDOY)
 
-  integer (kind=T_INT), intent(in) :: iJD
+  integer (kind=c_int), intent(in) :: iJD
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iFirstDay, iLastDay, iDOY
-  integer (kind=T_INT) :: iMonth, iDay, iYear
+  integer (kind=c_int) :: iFirstDay, iLastDay, iDOY
+  integer (kind=c_int) :: iMonth, iDay, iYear
 
 
   call gregorian_date(iJD, iYear, iMonth, iDay)
@@ -2792,8 +2809,8 @@ end function day_of_year
 
 function isLeap(iYear)   result(lResult)
 
-  integer (kind=T_INT), intent(in)     :: iYear
-  logical (kind=T_LOGICAL) :: lResult
+  integer (kind=c_int), intent(in)     :: iYear
+  logical (kind=c_bool) :: lResult
 
   lResult = ( mod(iYear, 4) == 0 .and. mod(iYear, 100) /= 0 ) .or. &
                  ( mod(iYear, 400) == 0 .and. iYear /= 0 )
@@ -2838,12 +2855,12 @@ end function isLeap
 subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
 
   ! [ ARGUMENTS ]
-  integer (kind=T_INT) :: iJD
-  integer (kind=T_INT), intent(inout) :: iYear, iMonth, iDay
-  integer (kind=T_INT), optional :: iOrigin
+  integer (kind=c_int) :: iJD
+  integer (kind=c_int), intent(inout) :: iYear, iMonth, iDay
+  integer (kind=c_int), optional :: iOrigin
   ! [ LOCALS ]
-  integer (kind=T_INT) iI,iJ,iK,iL,iN
-  integer (kind=T_INT) :: iOffset
+  integer (kind=c_int) iI,iJ,iK,iL,iN
+  integer (kind=c_int) :: iOffset
 
   if(present(iOrigin)) then
     iOffset = iOrigin
@@ -2863,16 +2880,16 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
 
   iJD = iJD + iOffset
 
-  iL= iJD + 68569_T_INT
-  iN= 4*iL / 146097_T_INT
-  iL= iL - (146097_T_INT * iN + 3_T_INT)/4_T_INT
-  iI= 4000_T_INT * (iL + 1_T_INT) / 1461001_T_INT
-  iL= iL - 1461_T_INT * iI / 4_T_INT + 31_T_INT
-  iJ= 80_T_INT * iL / 2447_T_INT
-  iK= iL - 2447_T_INT * iJ / 80_T_INT
-  iL= iJ / 11_T_INT
-  iJ= iJ + 2_T_INT - 12_T_INT * iL
-  iI= 100_T_INT * (iN - 49_T_INT) + iI + iL
+  iL= iJD + 68569_c_int
+  iN= 4*iL / 146097_c_int
+  iL= iL - (146097_c_int * iN + 3_c_int)/4_c_int
+  iI= 4000_c_int * (iL + 1_c_int) / 1461001_c_int
+  iL= iL - 1461_c_int * iI / 4_c_int + 31_c_int
+  iJ= 80_c_int * iL / 2447_c_int
+  iK= iL - 2447_c_int * iJ / 80_c_int
+  iL= iJ / 11_c_int
+  iJ= iJ + 2_c_int - 12_c_int * iL
+  iI= 100_c_int * (iN - 49_c_int) + iI + iL
 
   iYear = iI
   iMonth = iJ
@@ -2941,7 +2958,7 @@ function c_to_fortran_string( cCharacterString )  result(sText)
 
   character (len=*) :: cCharacterString
   character(len=256) :: sText
-  integer (kind=T_INT) :: iIndex
+  integer (kind=c_int) :: iIndex
 
   sText = repeat(" ", 256)
 
@@ -2966,7 +2983,7 @@ function fortran_to_c_string( sText )  result(cCharacterString)
 
   character (len=*) :: sText
   character(len=len_trim(sText)+1) :: cCharacterString
-  integer (kind=T_INT) :: iIndex
+  integer (kind=c_int) :: iIndex
 
   iIndex = index(string=sText, substring=c_null_char)
 

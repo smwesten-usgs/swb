@@ -5,8 +5,8 @@
 !> @brief Reads program options from an SWB control file and sets program configuration flags.
 module control
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-
   use model
   use swb_grid
   use stats
@@ -35,7 +35,7 @@ subroutine control_setModelOptions(sControlFile)
 !  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
 !  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
 !  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
-  real (kind=T_SGL), dimension(:,:), pointer :: pArray_sgl
+  real (kind=c_float), dimension(:,:), pointer :: pArray_sgl
 
 
   type (T_GRAPH_CONFIGURATION), dimension(:),pointer :: pGraph
@@ -46,11 +46,11 @@ subroutine control_setModelOptions(sControlFile)
   type (T_TIME_SERIES_FILE), pointer :: pTSt
 
   type (T_SSF_FILES), dimension(:), pointer :: pSSF   ! pointer to struct containing SSF file info
-  logical (kind=t_LOGICAL), save :: lNO_SSF_FILES = lTRUE
-  logical (kind=T_LOGICAL) :: lOpened
-  integer (kind=T_INT) :: iOldSize, iNewSize
-  integer (kind=T_INT) :: iRowNum, iColNum
-  logical (kind=T_LOGICAL) :: lMatch
+  logical (kind=c_bool), save :: lNO_SSF_FILES = lTRUE
+  logical (kind=c_bool) :: lOpened
+  integer (kind=c_int) :: iOldSize, iNewSize
+  integer (kind=c_int) :: iRowNum, iColNum
+  logical (kind=c_bool) :: lMatch
 
   character (len=256) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
@@ -62,20 +62,20 @@ subroutine control_setModelOptions(sControlFile)
   character (len=256) :: sArgument5               ! Key word read from sRecord
   character (len=256) :: sDateStr, sDateStrPretty ! hold date and time of initiation of run
   character(len=256) :: sBuf
-  integer (kind=T_INT) :: iNX                     ! Number of cells in the x-direction
-  integer (kind=T_INT) :: iNY                     ! Number of cells in the y-direction
-  integer (kind=T_INT) :: iValue                  ! Temporary value for 'CONSTANT'
-  integer (kind=T_INT) :: iStat                   ! For 'iostat=' checks
-  integer (kind=T_INT) :: i,iVarNum,iTimeFrame    ! loop counters
-  integer (kind=T_INT) :: idx                    ! index counter for STREAM_CAPTURE routines
-  integer (kind=T_INT) :: iLU_SSF = 300          ! last LU for SSF file
-  integer (kind=T_INT) :: iCurrentLineNumber
-  real (kind=T_DBL) :: rX0, rY0                  ! Model grid extent (lower-left)
-  real (kind=T_DBL) :: rX1, rY1                  ! Model grid extent (upper-right)
-  real (kind=T_DBL) :: rXp, rYp                  ! Coordinates at a point within a grid
-  real (kind=T_DBL) :: rTemp
-  real (kind=T_DBL) :: rGridCellSize             ! Model grid cell size
-  real (kind=T_SGL) :: rValue                    ! Temporary value for 'CONSTANT'
+  integer (kind=c_int) :: iNX                     ! Number of cells in the x-direction
+  integer (kind=c_int) :: iNY                     ! Number of cells in the y-direction
+  integer (kind=c_int) :: iValue                  ! Temporary value for 'CONSTANT'
+  integer (kind=c_int) :: iStat                   ! For 'iostat=' checks
+  integer (kind=c_int) :: i,iVarNum,iTimeFrame    ! loop counters
+  integer (kind=c_int) :: idx                    ! index counter for STREAM_CAPTURE routines
+  integer (kind=c_int) :: iLU_SSF = 300          ! last LU for SSF file
+  integer (kind=c_int) :: iCurrentLineNumber
+  real (kind=c_double) :: rX0, rY0                  ! Model grid extent (lower-left)
+  real (kind=c_double) :: rX1, rY1                  ! Model grid extent (upper-right)
+  real (kind=c_double) :: rXp, rYp                  ! Coordinates at a point within a grid
+  real (kind=c_double) :: rTemp
+  real (kind=c_double) :: rGridCellSize             ! Model grid cell size
+  real (kind=c_float) :: rValue                    ! Temporary value for 'CONSTANT'
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   character (len=8) :: sDate
@@ -270,11 +270,11 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Reading growing season"
       call Chomp ( sRecord, sArgument )
       read ( sArgument, fmt=*, iostat=iStat ) rValue
-      pConfig%iDayOfFirstFrost = INT(rValue,kind=T_INT)
+      pConfig%iDayOfFirstFrost = INT(rValue,kind=c_int)
       call Assert ( iStat == 0, "Could not read start of growing season" )
       call Chomp ( sRecord, sArgument )
       read ( sArgument, fmt=*, iostat=iStat ) rValue
-      pConfig%iDayOfLastFrost = INT(rValue,kind=T_INT)
+      pConfig%iDayOfLastFrost = INT(rValue,kind=c_int)
       call Assert ( iStat == 0, "Could not read end of growing season" )
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
@@ -717,10 +717,10 @@ subroutine control_setModelOptions(sControlFile)
         pGrd%Cells%rRouteFraction = input_grd%rData
         call grid_Destroy( input_grd )
         call Assert(LOGICAL(MAXVAL(pGrd%Cells%rRouteFraction)<=rONE,&
-            kind=T_LOGICAL), &
+            kind=c_bool), &
             "One or mode values in routing fraction grid exceed 1.0")
         call Assert(LOGICAL(MINVAL(pGrd%Cells%rRouteFraction)>=rZERO,&
-            kind=T_LOGICAL), &
+            kind=c_bool), &
             "One or mode values in routing fraction grid are less than 0.0")
       end if
       write(UNIT=LU_LOG, &
@@ -1220,7 +1220,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Reading land-use lookup table"
       call Chomp ( sRecord, pConfig%sLandUseLookupFilename )
       if ( len_trim(pConfig%sLandUseLookupFilename) == 0 ) then
-        call Assert( .false._T_LOGICAL, "No land use lookup table specified" )
+        call Assert( .false._c_bool, "No land use lookup table specified" )
       end if
       call model_ReadLanduseLookupTable( pConfig )
       flush(UNIT=LU_LOG)
@@ -1240,7 +1240,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask lookup table"
       call Chomp ( sRecord, pConfig%sBasinMaskFilename )
       if ( len_trim(pConfig%sBasinMaskFilename) == 0 ) then
-        call Assert( .false._T_LOGICAL, "No basin mask table specified" )
+        call Assert( .false._c_bool, "No basin mask table specified" )
       end if
       call model_ReadBasinMaskTable( pConfig )
       flush(UNIT=LU_LOG)
@@ -1333,7 +1333,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*)  "Initial soil moisture grid MAXIMUM VALUE:", &
          maxval(pGrd%Cells%rSoilMoisturePct)
       call Assert( LOGICAL( minval(pGrd%Cells%rSoilMoisturePct) >= 0, &
-         kind=T_LOGICAL), "Negative values are not allowed in the" &
+         kind=c_bool), "Negative values are not allowed in the" &
          //" initial soil moisture grid.")
 
       flush(UNIT=LU_LOG)
@@ -1353,19 +1353,19 @@ subroutine control_setModelOptions(sControlFile)
       !!                useful for simulations where humidity data are not available)
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevStationElevation
-      call Assert( logical(iStat==0, kind=T_LOGICAL), &
+      call Assert( logical(iStat==0, kind=c_bool), &
         "Failed to read station elevation " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevDryFactor
-      call Assert( logical(iStat==0, kind=T_LOGICAL), &
+      call Assert( logical(iStat==0, kind=c_bool), &
         "Failed to read dry elevation factor " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevHumidFactor
-      call Assert( logical(iStat==0, kind=T_LOGICAL), &
+      call Assert( logical(iStat==0, kind=c_bool), &
         "Failed to read humid elevation factor " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevHumidityThreshold
-      call Assert( logical(iStat==0, kind=T_LOGICAL), &
+      call Assert( logical(iStat==0, kind=c_bool), &
         "Failed to read humidity threshold " // sArgument )
       pconfig%lElevAdjustment = .true.
 
@@ -1603,7 +1603,7 @@ subroutine control_setModelOptions(sControlFile)
       else if (trim(sOption) == "HAWKINS" ) then
         pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_HAWKINS
       else
-        call Assert( .false._T_LOGICAL, "Illegal initial abstraction method specified" )
+        call Assert( .false._c_bool, "Illegal initial abstraction method specified" )
       end if
       flush(UNIT=LU_LOG)
 
@@ -1655,7 +1655,7 @@ subroutine control_setModelOptions(sControlFile)
         pGrd%Cells%rSnowCover = input_grd%rData
         call grid_Destroy( input_grd )
       else
-        call Assert( .false._T_LOGICAL, "Illegal snow cover input format specified" )
+        call Assert( .false._c_bool, "Illegal snow cover input format specified" )
       end if
       flush(UNIT=LU_LOG)
 
@@ -1672,7 +1672,7 @@ subroutine control_setModelOptions(sControlFile)
         !!!STEVE
         !!!PUT INITIALIZATION CODE FOR G-A IN HERE (IF NEEDED)
       else
-        call Assert( .false._T_LOGICAL, "Illegal runoff option specified" )
+        call Assert( .false._c_bool, "Illegal runoff option specified" )
       end if
       ! Look for a solution mode?
       if (len_trim(sRecord) > 0) then
@@ -1688,7 +1688,7 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_NO_ROUTING
           write(UNIT=LU_LOG,FMT=*) "NO FLOW ROUTING WILL BE PERFORMED"
         else
-          call Assert( .false._T_LOGICAL, "Illegal runoff procedure option specified" )
+          call Assert( .false._c_bool, "Illegal runoff procedure option specified" )
         end if
       end if
       flush(UNIT=LU_LOG)
@@ -1706,7 +1706,7 @@ subroutine control_setModelOptions(sControlFile)
         write(UNIT=LU_LOG,FMT=*) "Snow calculations will be made using " &
                        //"*NEW* SWB formulations"
       else
-        call Assert( .false._T_LOGICAL, "Illegal snow module option specified" )
+        call Assert( .false._c_bool, "Illegal snow module option specified" )
       end if
       flush(UNIT=LU_LOG)
 
@@ -1739,7 +1739,7 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureET = CONFIG_ET_HARGREAVES
         call et_hargreaves_configure( pConfig, sRecord )
       else
-        call Assert( .false._T_LOGICAL, "Illegal ET option specified" )
+        call Assert( .false._c_bool, "Illegal ET option specified" )
       end if
       flush(UNIT=LU_LOG)
 
@@ -1787,7 +1787,7 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iOutputFormat = OUTPUT_SURFER
         write(UNIT=LU_LOG,FMT=*) "Selecting SURFER output format"
       else
-        call Assert( .false._T_LOGICAL, "Illegal output format specified" )
+        call Assert( .false._c_bool, "Illegal output format specified" )
       end if
       flush(UNIT=LU_LOG)
 
@@ -1826,7 +1826,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Solving the model"
       flush(UNIT=LU_LOG)
       call Chomp ( sRecord, sArgument )
-      call Assert (LOGICAL(len_trim(sArgument)>0,kind=T_LOGICAL), &
+      call Assert (LOGICAL(len_trim(sArgument)>0,kind=c_bool), &
          "No time-series data file specified" )
       pConfig%sTimeSeriesFilename = trim(sArgument)
       ! if first time through, open file and grab the year so we know
@@ -1853,7 +1853,7 @@ subroutine control_setModelOptions(sControlFile)
         "Solving the model - no single-station time series data will be read"
       flush(UNIT=LU_LOG)
       call Chomp ( sRecord, sArgument )
-      call Assert (LOGICAL(len_trim(sArgument)>0,kind=T_LOGICAL), &
+      call Assert (LOGICAL(len_trim(sArgument)>0,kind=c_bool), &
          "Must specify the year to begin simulation" )
       read(sArgument,FMT=*,iostat=iStat) pConfig%iStartYear
       call Assert( iStat == 0, &
@@ -1909,7 +1909,7 @@ subroutine control_setModelOptions(sControlFile)
     else if (trim(sItem) == "STREAM_CONFIG" ) then
         call chomp(sRecord, sOption)
         read (unit=sOption, fmt=*, iostat=istat) idx
-        call Assert(LOGICAL(idx <= STREAM_INTERACTIONS_MAX, kind=T_LOGICAL), &
+        call Assert(LOGICAL(idx <= STREAM_INTERACTIONS_MAX, kind=c_bool), &
            "STREAM_CONFIG index cannot exceed the value of STREAM_INTERACTIONS_MAX", &
            TRIM(__FILE__),__LINE__)
 

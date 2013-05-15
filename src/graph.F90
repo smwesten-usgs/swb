@@ -8,6 +8,7 @@ module graph
 
 #ifdef GRAPHICS_SUPPORT
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use dislin
   use types
 
@@ -20,9 +21,9 @@ module graph
 
     type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
     type(T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
-    integer (kind=T_INT), intent(in) :: iVarNum
+    integer (kind=c_int), intent(in) :: iVarNum
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
-    integer (kind=T_INT) :: iCol,iRow
+    integer (kind=c_int) :: iCol,iRow
     character (len=256) :: sBuf
 
     ! [ LOCALS ]
@@ -90,16 +91,16 @@ module graph
 
     ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
     ! accordingly
-!    if(approx_equal(real(ZA,kind=T_SGL), real(ZE,kind=T_SGL) ) ) then
+!    if(approx_equal(real(ZA,kind=c_float), real(ZE,kind=c_float) ) ) then
      if( int(ZA) == int(ZE) ) then
       ZE = ZA * 1.1 + .1
       ZSTEP = (ZE - ZA) / 10.
     endif
 
-    write(sBuf,"(a7,f9.2,a9,f9.2,a7,f9.2)") &
-       "  min: ",minval(ZMAT), &
-       "   mean: ",sum(ZMAT)/iNumGridCells, &
-       "  max: ",maxval(ZMAT)
+    write(sBuf,"(a)") &
+       "min: "//adjustl(trim(asCharacter(minval(ZMAT),sFmt="F9.2"))) &
+       //"  mean: "//adjustl(trim(asCharacter(sum(ZMAT)/iNumGridCells,sFmt="F9.2"))) &
+       //"  max: "//adjustl(trim(asCharacter(maxval(ZMAT),sFmt="F9.2")))
 
     ! METAFL defines the metafile format.
     ! 'PS'     defines a coloured PostScript file.
@@ -128,10 +129,10 @@ module graph
       iNYP = 2790
     endif
 
-!      iNXP = INT(rAspectRatio * REAL(iSZ,kind=T_SGL))
+!      iNXP = INT(rAspectRatio * REAL(iSZ,kind=c_float))
     iNXW = iNXP
 
-!      iNYP = INT((1./rAspectRatio) * REAL(iSZ,kind=T_SGL) * 1.15)
+!      iNYP = INT((1./rAspectRatio) * REAL(iSZ,kind=c_float) * 1.15)
       iNYW = iNYP
 
 
@@ -352,19 +353,19 @@ module graph
 
     ! [ LOCALS ]
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
-    integer (kind=T_INT) :: iCol,iRow
+    integer (kind=c_int) :: iCol,iRow
     character (len=256) :: sBuf = ""
     character (len=256) :: sSummaryTxt = ""
-    real (kind=T_SGL) :: rH_V_AspectRatio
-    integer (kind=T_INT) :: iPixVRes = 1000.
-    integer (kind=T_INT) :: iPixHRes
+    real (kind=c_float) :: rH_V_AspectRatio
+    integer (kind=c_int) :: iPixVRes = 1000.
+    integer (kind=c_int) :: iPixHRes
 
-    integer (kind=T_INT) :: iPtVRes
-    integer (kind=T_INT) :: iPtHRes
-    integer (kind=T_INT) :: iPtVOrigin
-    integer (kind=T_INT) :: iPtHOrigin
-    integer (kind=T_INT) :: iPtVAxLen
-    integer (kind=T_INT) :: iPtHAxLen
+    integer (kind=c_int) :: iPtVRes
+    integer (kind=c_int) :: iPtHRes
+    integer (kind=c_int) :: iPtVOrigin
+    integer (kind=c_int) :: iPtHOrigin
+    integer (kind=c_int) :: iPtVAxLen
+    integer (kind=c_int) :: iPtHAxLen
 
     character (len=256) :: sDislin
 
@@ -381,7 +382,7 @@ module graph
     real :: ZA,ZE,ZOR,ZSTEP
 
     integer :: iX, iY, iNXW, iNYW
-    integer (kind=T_INT) :: iNumGridCells
+    integer (kind=c_int) :: iNumGridCells
 
     call get_environment_variable("DISLIN", sDislin)
 
@@ -433,7 +434,7 @@ module graph
 
         do iRow=1,iY
           do iCol=1,iX
-            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),kind=T_SGL_DISLIN)
+            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),kind=c_float)
           end do
         end do
 

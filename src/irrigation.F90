@@ -7,6 +7,7 @@
 !> for specific crop types.
 module irrigation
 
+  use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
 
   implicit none
@@ -24,12 +25,12 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=T_INT) :: iRow, iCol
-  integer (kind=T_INT) :: iNumCells
+  integer (kind=c_int) :: iRow, iCol
+  integer (kind=c_int) :: iNumCells
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type ( T_CELL ),pointer :: cel
-  real (kind=T_SGL) :: rDepletionFraction
-  real (kind=T_DBL) :: rDepletionAmount
+  real (kind=c_float) :: rDepletionFraction
+  real (kind=c_double) :: rDepletionAmount
 
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
@@ -58,15 +59,15 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
           rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
           cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW, &
-                                      kind=T_DBL ) &
+                                      kind=c_double ) &
                                   * rDepletionAmount &
                                   * REAL(pIRRIGATION%rIrrigationEfficiency_GW, &
-                                  kind=T_DBL )
+                                  kind=c_double )
           cel%rIrrigationFromSW = real(1.0 - pIRRIGATION%rFractionOfIrrigationFromGW, &
-                                      kind=T_DBL ) &
+                                      kind=c_double ) &
                                   * rDepletionAmount &
                                   * real(pIRRIGATION%rIrrigationEfficiency_SW, &
-                                      kind=T_DBL )
+                                      kind=c_double )
           cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
         else
           cel%rIrrigationAmount = rZERO
