@@ -242,8 +242,8 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%rY0 = pGrd%rY0; pConfig%rY1 = pGrd%rY1
       pConfig%rGridCellSize = pGrd%rGridCellSize
       pGrd%sFilename = "[none: base grid]"
-      pGrd%sPROJ4_string = "undefined"
-      DAT(:)%sSourcePROJ4_string = "undefined"
+      pGrd%sPROJ4_string = ""
+      DAT(:)%sSourcePROJ4_string = ""
 
     else if (sItem == "BASE_PROJECTION_DEFINITION") then
       pConfig%sBase_PROJ4 = trim(sRecord)

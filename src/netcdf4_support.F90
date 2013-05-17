@@ -517,6 +517,10 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
     NCFILE%iRowBounds(FIRST) = lbound(NCFILE%rY_Coords,1)
     NCFILE%iRowBounds(LAST) = ubound(NCFILE%rY_Coords,1)
 
+    print *, trim(__FILE__), __LINE__
+    print *, NCFILE%iColBounds(FIRST), NCFILE%iRowBounds(FIRST)
+    print *, NCFILE%iColBounds(LAST), NCFILE%iRowBounds(LAST)
+
   endif
 
   call nc_set_start_count_stride(NCFILE)
@@ -562,9 +566,11 @@ subroutine nc_set_start_count_stride(NCFILE)
 
       case (NC_X)
 
-        NCFILE%iStart(iIndex) = minval(NCFILE%iColBounds)
+        !> need to subtract 1 from the start index: we're using the
+        !> NetCDF C API, in which index values are relative to zero
+        NCFILE%iStart(iIndex) = minval(NCFILE%iColBounds) - 1
         NCFILE%iNX = maxval(NCFILE%iColBounds) - minval(NCFILE%iColBounds) + 1
-        NCFILE%iCount(iIndex) = NCFILE%iNX
+        NCFILE%iCount(iIndex) = maxval(NCFILE%iColBounds) - minval(NCFILE%iColBounds)
         NCFILE%iStride(iIndex) = 1_c_size_t
 
       case (NC_Y)
@@ -572,9 +578,9 @@ subroutine nc_set_start_count_stride(NCFILE)
         !> note: this assumes that the row numbers increase from top to bottom,
         !>       while the Y coordinates decrease top to bottom
 
-        NCFILE%iStart(iIndex) = minval(NCFILE%iRowBounds)
+        NCFILE%iStart(iIndex) = minval(NCFILE%iRowBounds) - 1
         NCFILE%iNY = maxval(NCFILE%iRowBounds) - minval(NCFILE%iRowBounds) + 1
-        NCFILE%iCount(iIndex) = NCFILE%iNY
+        NCFILE%iCount(iIndex) = maxval(NCFILE%iRowBounds) - minval(NCFILE%iRowBounds)
         NCFILE%iStride(iIndex) = 1_c_size_t
 
       case (NC_TIME)
@@ -1089,7 +1095,7 @@ subroutine nc_get_variable_time_y_x_short(NCFILE, rValues)
 
 
     i12 = reshape(source=i2TempData, &
-                shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)], &
+                shape=[NCFILE%iNX, NCFILE%iNY], &
                 order=[1, 2] )
 
     rValues = real(i12, kind=c_float)
@@ -1136,7 +1142,7 @@ subroutine nc_get_variable_time_y_x_float(NCFILE, rValues)
 !    rValues = r21
 
     r12 = reshape(source=rTempData, &
-                shape=[NCFILE%iCount(NC_X), NCFILE%iCount(NC_Y)], &
+                shape=[NCFILE%iNX, NCFILE%iNY], &
                 order=[1, 2] )
 
     rValues = r12

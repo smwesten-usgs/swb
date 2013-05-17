@@ -597,13 +597,13 @@ subroutine transform_grid_to_grid(this, pGrdBase)
                         "Non-conforming grid. Filename: " &
                         //dquote(this%pGrdNative%sFilename) )
 
-      select case (this%iSourceDataType)
+      select case (this%iTargetDataType)
 
-        case ( DATATYPE_REAL )
+        case ( GRID_DATATYPE_REAL )
 
           pGrdBase%rData = this%pGrdNative%rData
 
-        case ( DATATYPE_INT)
+        case ( GRID_DATATYPE_INT)
 
           pGrdBase%iData = this%pGrdNative%iData
 
@@ -856,9 +856,11 @@ end subroutine set_constant_value_real
 
         !> calculate the project boundaries in the coordinate system of
         !> the native data file
-        call this%calc_project_boundaries(pGrdBase=pGrdBase)
+        if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 
-        call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+          call this%calc_project_boundaries(pGrdBase=pGrdBase)
+
+          call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
              sFilename=this%sSourceFilename, &
              sVarName_x=this%sVariableName_x, &
              sVarName_y=this%sVariableName_y, &
@@ -866,6 +868,27 @@ end subroutine set_constant_value_real
              sVarName_time=this%sVariableName_time, &
              tGridBounds=this%GRID_BOUNDS, &
              iLU=LU_LOG)
+
+        else
+
+          !> assume source NetCDF file is in same projection and
+          !> of same dimensions as base grid
+          call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+             sFilename=this%sSourceFilename, &
+             sVarName_x=this%sVariableName_x, &
+             sVarName_y=this%sVariableName_y, &
+             sVarName_z=this%sVariableName_z, &
+             sVarName_time=this%sVariableName_time, &
+             iLU=LU_LOG)
+
+          this%NCFILE%iNX = pGrdBase%iNX
+          this%NCFILE%iNY = pGrdBase%iNY
+          this%NCFILE%rX(LEFT) = pGrdBase%rX0
+          this%NCFILE%rY(BOTTOM) = pGrdBase%rY0
+          this%NCFILE%rX(RIGHT) = pGrdBase%rX1
+          this%NCFILE%rY(TOP) = pGrdBase%rY1
+
+        endif
 
         this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
 
@@ -881,19 +904,18 @@ end subroutine set_constant_value_real
                     rY0=this%NCFILE%rY(BOTTOM), &
                     rX1=this%NCFILE%rX(RIGHT), &
                     rY1=this%NCFILE%rY(TOP), &
-!                    rX0=this%GRID_BOUNDS%rXll, &
-!                    rY0=this%GRID_BOUNDS%rYll, &
-!                    rX1=this%GRID_BOUNDS%rXur, &
-!                    rY1=this%GRID_BOUNDS%rYur, &
                     iDataType=this%iTargetDataType )
 
-        ! ensure that PROJ4 string is associated with the native grid
-        this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+        if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+          ! ensure that PROJ4 string is associated with the native grid
+          this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+        endif
+
         this%pGrdNative%sFilename = this%sSourceFilename
 
         this%lPerformFullInitialization = lFALSE
 
-      else  !> Projection settings can be left along; read values from new
+      else  !> Projection settings can be left alone; read values from new
             !> NetCDF file with same grid boundaries, projection, etc.
 
         call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
