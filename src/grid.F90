@@ -934,18 +934,18 @@ subroutine grid_ReadSurferGrid_sub ( sFileName, pGrd )
 end subroutine grid_ReadSurferGrid_sub
 
 
-subroutine grid_WriteGrid(sFilename, pGrd, pConfig)
+subroutine grid_WriteGrid(sFilename, pGrd, iOutputFormat)
 
   ! [ ARGUMENTS ]
   character (len=*),intent(in) :: sFilename
   type (T_GENERAL_GRID), pointer :: pGrd
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig
+  integer (kind=c_int) :: iOutputFormat
 
-  if ( pConfig%iOutputFormat == OUTPUT_ARC ) then
+  if ( iOutputFormat == OUTPUT_ARC ) then
 
     call grid_WriteArcGrid(sFilename, pGrd)
 
-  elseif ( pConfig%iOutputFormat == OUTPUT_SURFER ) then
+  elseif ( iOutputFormat == OUTPUT_SURFER ) then
 
     call grid_WriteSurferGrid(sFilename, pGrd)
 
@@ -1040,6 +1040,7 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
   integer (kind=c_int) :: iNumCols, iNumRows
   integer (kind=c_int) ::  iStat
   character(len=256) :: sBuf
+  real (kind=c_float) :: rHalfCell
 
   if ( pGrd%iDataType == DATATYPE_INT ) then
     iNumCols = size(pGrd%iData,1)
@@ -1051,6 +1052,9 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
     call assert(lFALSE, "Internal programming error - Unsupported grid type", &
       trim(__FILE__), __LINE__)
   endif
+
+  rHalfCell = pGrd%rGridCellSize * rHALF
+
   ! dynamically create the Fortran output format
   write(sBuf,FMT="(a,a,a)") '(',TRIM(int2char(iNumCols)),'(a,1x))'
 
@@ -1066,11 +1070,13 @@ subroutine grid_WriteSurferGrid(sFilename, pGrd)
   call Assert( istat==0, "Error writing SURFER dimensions", &
     trim(__FILE__), __LINE__)
 
-  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) pGrd%rX0, pGrd%rX1
+  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) &
+           pGrd%rX0 + rHalfCell , pGrd%rX1 - rHalfCell
   call Assert( istat==0, "Error writing SURFER X limits", &
     trim(__FILE__), __LINE__)
 
-  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) pGrd%rY0, pGrd%rY1
+  write ( unit=LU_TEMP, fmt="(2f14.3)", iostat=istat ) &
+           pGrd%rY0 + rHalfCell, pGrd%rY1 - rHalfCell
   call Assert( istat==0, "Error writing SURFER Y limits", &
     trim(__FILE__), __LINE__)
 
@@ -2126,6 +2132,11 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
 
   rKernel = 1.
   rKernel(2,2) = 8.
+
+  ! must ensure that there are coordinates associated with the "to" grid...
+  ! by default, these are left unpopulated during a "normal" swb run
+  if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
+  if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
 !  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
   if ( lTRUE ) then

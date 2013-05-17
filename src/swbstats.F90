@@ -612,7 +612,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
        TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
     pConfig%BMASK(iRecNum)%pGrd => &
            grid_Read(TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-          "ARC_GRID", c_float_GRID )
+          "ARC_GRID", GRID_DATATYPE_INT )
     call Assert( grid_Conform( pGrd, pConfig%BMASK(iRecNum)%pGrd ), &
               "Non-conforming grid - filename: " &
               // TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
@@ -661,7 +661,7 @@ implicit none
   integer (kind=c_int) :: iNX
   integer (kind=c_int) :: iNY
   integer (kind=c_int) :: iDataType
-  real (kind=c_float)    :: rGridCellSize
+  real (kind=c_double)    :: rGridCellSize
   integer (kind=c_int) :: iLengthUnits
   integer (kind=c_int) :: iVariableNumber
   integer (kind=c_int) :: iRLE_MULT
@@ -695,8 +695,11 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pGrd
   type ( T_GENERAL_GRID ),pointer :: pMaskGrd
   type ( T_GENERAL_GRID ),pointer :: pMonthGrd
+  type ( T_GENERAL_GRID ),pointer :: pMonthGrdMean
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
+  type ( T_GENERAL_GRID ),pointer :: pYearGrdMean
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
+  type ( T_GENERAL_GRID ),pointer :: pSummaryGrdMean
 
   real(kind=c_float),dimension(:), allocatable :: rVal,rValSum,rPad, rValTmp
 
@@ -950,14 +953,14 @@ implicit none
       iSWBStatsOutputType = iSTATS
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
-      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", c_float_GRID )
+      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", GRID_DATATYPE_INT )
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
         lMASKSSF = lTRUE
         STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
         iSWBStatsOutputType = iSTATS
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", c_float_GRID )
+        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", GRID_DATATYPE_INT )
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         sSiteNumber = trim(sBuf)
@@ -1090,10 +1093,13 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   allocate(rValSum(iNX*iNY))
   allocate(rPad(iNX*iNY))
 
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
-  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
-  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
-  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, c_float_GRID)
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMonthGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
 
   ! copy some key information into the grid data structure
   pGrd%iDataType =iDataType              ! Type of the grid
@@ -1225,13 +1231,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
          iCurrYYYY,iCurrMM,iCurrDD, &
          trim(sOutputFileSuffix)
 
-      if ( iOutputFormat == OUTPUT_SURFER ) then
-         call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-            rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pGrd%rData(:,:))
-      else
-         call grid_WriteArcGrid(TRIM(sOutputFilename), &
-            rX0,rX1,rY0,rY1,pGrd%rData(:,:))
-      end if
+      call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                  pGrd=pGrd, &
+                  iOutputFormat=iOutputFormat)
 
     end if
 
@@ -1261,6 +1263,8 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
 !------------------------- MONTHLY ANALYSIS
     if(lMonthEnd .and. lPRINT) then
+
+      pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
 
       if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
 
@@ -1293,13 +1297,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
              iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
 
-          if ( iOutputFormat == OUTPUT_SURFER ) then
-             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pGrd%rData(:,:))
-          else
-             call grid_WriteArcGrid(TRIM(sOutputFilename), &
-                rX0,rX1,rY0,rY1,pMonthGrd%rData(:,:))
-          end if
+          call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                    pGrd=pMonthGrd, &
+                    iOutputFormat=iOutputFormat)
 
         else
 
@@ -1307,15 +1307,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
              "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
              iCurrYYYY,iCurrMM,trim(sOutputFileSuffix)
 
-          if ( iOutputFormat == OUTPUT_SURFER ) then
-             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-                rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
-                 pMonthGrd%rData(:,:) / REAL(iMonthCount))
-          else
-             call grid_WriteArcGrid(TRIM(sOutputFilename), &
-                rX0,rX1,rY0,rY1, &
-                 pMonthGrd%rData(:,:) / REAL(iMonthCount))
-          end if
+          call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                    pGrd=pMonthGrdMean, &
+                    iOutputFormat=iOutputFormat)
 
         endif
 
@@ -1345,9 +1339,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
           sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
             ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
 
-          pMonthGrd%rData = pMonthGrd%rData / REAL(iMonthCount)
-
-          call make_shaded_contour(pMonthGrd, TRIM(sOutputFilename), &
+          call make_shaded_contour(pMonthGrdMean, TRIM(sOutputFilename), &
              TRIM(sTitleTxt), TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
         endif
@@ -1363,7 +1355,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     if( lYearEnd .and. lPRINT ) then
 
-      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
+      pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
+
+      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
           call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel, iYearCount)
@@ -1372,7 +1366,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
         endif
       endif
 
-      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
+      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
           call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
@@ -1390,13 +1384,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
              iCurrYYYY,trim(sOutputFileSuffix)
 
-          if ( iOutputFormat == OUTPUT_SURFER ) then
-             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-               rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr,pYearGrd%rData(:,:))
-          else
-             call grid_WriteArcGrid(TRIM(sOutputFilename), &
-                rX0,rX1,rY0,rY1,pYearGrd%rData(:,:))
-          end if
+        call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                  pGrd=pYearGrd, &
+                  iOutputFormat=iOutputFormat)
 
         else
 
@@ -1405,14 +1395,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
              "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
              iCurrYYYY,trim(sOutputFileSuffix)
 
-          if ( iOutputFormat == OUTPUT_SURFER ) then
-             call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-                rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
-                pYearGrd%rData / REAL(iYearCount))
-          else
-             call grid_WriteArcGrid(TRIM(sOutputFilename), &
-                rX0,rX1,rY0,rY1,pYearGrd%rData / REAL(iYearCount))
-          end if
+          call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                    pGrd=pYearGrdMean, &
+                    iOutputFormat=iOutputFormat)
 
         endif
 
@@ -1456,9 +1441,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
               " for "//trim(int2char(iCurrYYYY))
           endif
 
-          pYearGrd%rData = pYearGrd%rData / REAL(iYearCount)
-
-          call make_shaded_contour(pYearGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+          call make_shaded_contour(pYearGrdMean, TRIM(sOutputFilename), TRIM(sTitleTxt), &
             TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
         endif
@@ -1512,29 +1495,23 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
      "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
      trim(sLabel),trim(sOutputFileSuffix)
 
-  if ( iOutputFormat == OUTPUT_SURFER ) then
-    call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-       rX0,rX1,rY0,rY1,pSummaryGrd%rData(:,:))
-  else
-    call grid_WriteArcGrid(TRIM(sOutputFilename), &
-       rX0,rX1,rY0,rY1,pSummaryGrd%rData(:,:))
-  end if
+  call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+            pGrd=pSummaryGrd, &
+            iOutputFormat=iOutputFormat)
 
   ! now repeat for reporting of MEAN values
   write(sOutputFilename,FMT="(A,'_',a,'.',a)") &
     "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
      trim(sLabel),trim(sOutputFileSuffix)
 
-  if ( iOutputFormat == OUTPUT_SURFER .and. iPeriodCount > 0) then
-    call grid_WriteSurferGrid(TRIM(sOutputFilename), &
-        rX0_cntr,rX1_cntr,rY0_cntr,rY1_cntr, &
-        pSummaryGrd%rData / REAL(iPeriodCount))
-  else
-    if(iPeriodCount > 0) then
-      call grid_WriteArcGrid(TRIM(sOutputFilename), &
-        rX0,rX1,rY0,rY1,pSummaryGrd%rData / REAL(iPeriodCount))
-    endif
-  end if
+  if (iPeriodCount > 0) then
+    pSummaryGrdMean%rData = pSummaryGrdMean%rData / REAL(iPeriodCount)
+
+    call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+            pGrd=pSummaryGrdMean, &
+            iOutputFormat=iOutputFormat)
+
+  endif
 
   write(sOutputFilename,FMT="(A,'_',a,'.png')") &
     "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), trim(sLabel)
@@ -1554,6 +1531,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
         iSWBStatsStartDD, iSWBStatsStartYYYY, &
         iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
   endif
+
 
   call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
     TRIM(STAT_INFO(iVariableNumber)%sUNITS))
@@ -1579,10 +1557,10 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
   endif
 
   if(iPeriodCount > 0) then
-    pSummaryGrd%rData = pSummaryGrd%rData / REAL(iPeriodCount)
+    pSummaryGrdMean%rData = pSummaryGrd%rData / REAL(iPeriodCount)
   endif
 
-  call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+  call make_shaded_contour(pSummaryGrdMean, TRIM(sOutputFilename), TRIM(sTitleTxt), &
     TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
 

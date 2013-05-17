@@ -527,7 +527,7 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
     call Assert &
      (INT(rDaily(iLENGTH,iVarNum),kind=c_int) == iNumGridCells, &
       "INTERNAL PROGRAMMING ERROR: call to UpdateAllAccumulators failed; number of calls" &
-      // " must be equal to the number of grid cells.", &
+      // " must be equal to the number of grid cells~variable name: "//STAT_INFO(iVarNum)%sVARIABLE_NAME, &
       trim(__FILE__), __LINE__)
 
   else ! continue to accumulate
@@ -857,7 +857,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) &
 
           call grid_WriteGrid(trim(pConfig%sOutputFilePathDaily)//trim(sFilePrefix) &
-            //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+            //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
 #ifdef GRAPHICS_SUPPORT
 
@@ -905,7 +905,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly)//trim(sFilePrefix)//"_SUM." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
 #ifdef GRAPHICS_SUPPORT
 
@@ -941,7 +941,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly) &
               //trim(sFilePrefix)//"_MEAN." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
 #ifdef GRAPHICS_SUPPORT
 
@@ -997,7 +997,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual) &
               //trim(sFilePrefix)//"_SUM." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
 #ifdef GRAPHICS_SUPPORT
 
@@ -1032,7 +1032,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual)//trim(sFilePrefix)//"_MEAN." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig)
+              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
 #ifdef GRAPHICS_SUPPORT
 
@@ -1286,7 +1286,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
     "RECHARGE",pConfig%iStartYearforCalculation, &
     pConfig%iEndYearforCalculation
 
-  call grid_WriteGrid(TRIM(sBuf), pTmpGrd, pConfig)
+  call grid_WriteGrid(TRIM(sBuf), pTmpGrd, pConfig%iOutputFormat)
 
   write(sBuf,FMT="(a,'MEAN_',a,i4.4,'_'i4.4,a)") &
             TRIM(pConfig%sImageFilepath), &
@@ -1617,7 +1617,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
       write(UNIT=LU_LOG,fmt="('X0, X1:',f12.3,3x,f12.3)") pGrd%rX0, pGrd%rX1   ! World-coordinate range in X
       write(UNIT=LU_LOG,fmt="('Y0, Y1:',f12.3,3x,f12.3)") pGrd%rY0, pGrd%rY1   ! World-coordinate range in Y
 
-	end if
+  	end if
 
   end do
 

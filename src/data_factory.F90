@@ -871,6 +871,10 @@ end subroutine set_constant_value_real
 
         this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
 
+        !> Amongst other things, the call to netcdf_open_and_prepare
+        !> finds the nearest column and row that correspond to the
+        !> project bounds, then back-calculates the coordinate values
+        !> of the column and row numbers in the *project* coordinate system
         this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
                     iNY=this%NCFILE%iNY, &
                     rX0=this%NCFILE%rX(LEFT), &
@@ -1057,6 +1061,8 @@ end subroutine set_offset_sub
    this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
    this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
 
+
+   print *, " "
    print *, "--  BASE GRID BOUNDS projected to DATA NATIVE COORDS"
    print *, "FROM: ", dquote(pGrdBase%sPROJ4_string)
    print *, "TO:   ", dquote(this%sSourcePROJ4_string)

@@ -1269,7 +1269,7 @@ end if
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
   ! as the final argument triggers the routine to update monthly and annual stats
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
+!  call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_RAINFALL,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
@@ -2966,7 +2966,7 @@ subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
   pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
 
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
 end subroutine model_PopulateSoilGroupArray
 
@@ -3013,7 +3013,7 @@ subroutine model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
 
   pGenericGrd_int%iData = pGrd%Cells%iFlowDir
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_D8_Flow_Direction" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
 end subroutine model_PopulateFlowDirectionArray
 
@@ -3083,7 +3083,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
 !  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
 !  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
 !  call make_shaded_contour(pGrd=pGenericGrd_int, &
 !     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
@@ -3096,7 +3096,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
 !  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
 !  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
 !  call make_shaded_contour(pGrd=pGenericGrd_int, &
 !      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
@@ -3111,7 +3111,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
 !  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
 !  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, pConfig=pConfig )
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
 
 !  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
 !     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
@@ -3126,7 +3126,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   print *, trim(__FILE__), __LINE__
 !  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, pConfig=pConfig )
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
 !  call make_shaded_contour(pGrd=pGenericGrd_int, &
 !     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
@@ -3494,7 +3494,7 @@ integer (kind=c_int), intent(in) :: iOutputType
      pGenericGrd_sgl%rData = pGrd%Cells%rMSB
      call grid_WriteGrid( &
        sFilename="MASS_BALANCE"//trim(sDayText)//"."//trim(sBufSuffix), &
-       pGrd=pGenericGrd_sgl, pConfig=pConfig)
+       pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat)
      call make_shaded_contour(pGrd=pGenericGrd_sgl, &
            sOutputFilename="MASS_BALANCE"//trim(sDayText)//".png", &
            sTitleTxt="MASS BALANCE ERROR AMOUNTS: "//trim(sDateText), &
@@ -3506,12 +3506,12 @@ integer (kind=c_int), intent(in) :: iOutputType
      pGenericGrd_sgl%rData = pGrd%Cells%rSoilMoisturePct
      call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_pct_sm" // &
      trim(sYearText) // "." //trim(sBufSuffix), &
-       pGrd=pGenericGrd_sgl, pConfig=pConfig)
+       pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat)
 
      pGenericGrd_sgl%rData = pGrd%Cells%rSnowCover
      call grid_WriteGrid(sFilename=trim(sBufFuture) // "final_snow_cover" // &
        trim(sYearText) // "." //trim(sBufSuffix), &
-       pGrd=pGenericGrd_sgl, pConfig=pConfig )
+       pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
 
    elseif ( iOutputType == WRITE_ASCII_GRID_DAILY ) then
 

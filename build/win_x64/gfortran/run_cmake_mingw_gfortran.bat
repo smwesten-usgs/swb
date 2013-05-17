@@ -17,14 +17,14 @@ set INSTALL_PREFIX=d:\DOS
 
 :: define other variables for use in the CMakeList.txt file
 :: options are "Release" or "Debug"
-set BUILD_TYPE="Debug"
+set BUILD_TYPE="Release"
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set PLATFORM_TYPE="x64"
 
 :: define which portions of swb to build (i.e. swbstats? as library?)
 set TARGET__SWB_EXECUTABLE="TRUE"
 set TARGET__SWB_LIBRARY="FALSE"
-set TARGET__SWBSTATS="FALSE"
+set TARGET__SWBSTATS="TRUE"
 
 :: define which conditional compilation statements to include
 set OPTION__GRAPHICS_SUPPORT="TRUE"

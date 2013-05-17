@@ -458,6 +458,9 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
   !> retrieve the X and Y coordinates from the NetCDF file...
   call nc_get_x_and_y(NCFILE)
 
+  print *, "X-coords from NetCDF file: ", minval(NCFILE%rX_Coords), maxval(NCFILE%rX_Coords)
+  print *, "Y-coords from NetCDF file: ", minval(NCFILE%rY_Coords), maxval(NCFILE%rY_Coords)
+
   if (present(tGridBounds) ) then
 
     !> define a subset of the grid as the AOI
@@ -480,11 +483,13 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
                                      rX=tGridBounds%rXur, &
                                      rY=tGridBounds%rYur)
 
-    print *, "LL: ", iColRow_ll(COLUMN), iColRow_ll(ROW), " <==> ", tGridBounds%rXll, tGridBounds%rYll
-    print *, "LR: ", iColRow_lr(COLUMN), iColRow_lr(ROW), " <==> ", tGridBounds%rXlr, tGridBounds%rYlr
-    print *, "UL: ", iColRow_ul(COLUMN), iColRow_ul(ROW), " <==> ", tGridBounds%rXul, tGridBounds%rYul
-    print *, "UR: ", iColRow_ur(COLUMN), iColRow_ur(ROW), " <==> ", tGridBounds%rXur, tGridBounds%rYur
-    print *, trim(__FILE__), __LINE__
+    write(*, fmt="(a,a,i6)") "Find correspondence between project bounds (in native projection) and row, col of dataset |", &
+      trim(__FILE__), __LINE__
+    write(*, fmt="(a)") "      column     row              X              Y"
+    write(*, fmt="(a,i6,i6,a,f14.3,f14.3)") "LL: ", iColRow_ll(COLUMN), iColRow_ll(ROW), " <==> ", tGridBounds%rXll, tGridBounds%rYll
+    write(*, fmt="(a,i6,i6,a,f14.3,f14.3)") "LR: ", iColRow_lr(COLUMN), iColRow_lr(ROW), " <==> ", tGridBounds%rXlr, tGridBounds%rYlr
+    write(*, fmt="(a,i6,i6,a,f14.3,f14.3)") "UL: ", iColRow_ul(COLUMN), iColRow_ul(ROW), " <==> ", tGridBounds%rXul, tGridBounds%rYul
+    write(*, fmt="(a,i6,i6,a,f14.3,f14.3)") "UR: ", iColRow_ur(COLUMN), iColRow_ur(ROW), " <==> ", tGridBounds%rXur, tGridBounds%rYur
 
     NCFILE%iColBounds(FIRST) = &
       max( min( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) - 4, &
@@ -503,10 +508,6 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
         min( max( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) + 4, &
                   ubound(NCFILE%rY_Coords,1) )
 
-
-    print *, NCFILE%iRowBounds
-    print *, NCFILE%iColBounds
-
   else
 
     !> define the entire grid area as the AOI
@@ -518,18 +519,12 @@ subroutine netcdf_open_and_prepare(NCFILE, sFilename, sVarName_x, &
 
   endif
 
-  print *, "final col, row bounds:"
-  print *, "LL  ", NCFILE%iColBounds(FIRST), NCFILE%iRowBounds(FIRST)
-  print *, "UR  ", NCFILE%iColBounds(LAST), NCFILE%iRowBounds(LAST)
-
-
   call nc_set_start_count_stride(NCFILE)
 
   !> now that we have (possibly) created a subset, need to get the
   !> **NATIVE** coordinate bounds so that the intermediate grid file
   !> can be created
   call nc_return_native_coord_bounds(NCFILE)
-
 
 !  write(*,fmt="('iStart: ',10(i6,1x))") NCFILE%iStart
 !  write(*,fmt="('iCount: ',10(i6,1x))") NCFILE%iCount
@@ -602,13 +597,28 @@ subroutine nc_return_native_coord_bounds(NCFILE)
 
   type (T_NETCDF4_FILE ), pointer :: NCFILE
 
-  NCFILE%rX(LEFT) = minval(NCFILE%rX_Coords) - NCFILE%rGridCellSizeX * dpHALF
-  NCFILE%rX(RIGHT) = maxval(NCFILE%rX_Coords) + NCFILE%rGridCellSizeY * dpHALF
-  NCFILE%rY(TOP) = maxval(NCFILE%rY_Coords) + NCFILE%rGridCellSizeX * dpHALF
-  NCFILE%rY(BOTTOM) = minval(NCFILE%rY_Coords) - NCFILE%rGridCellSizeY * dpHALF
+  ! [ LOCALS ]
+  real (kind=c_double) :: rXmin, rXmax
+  real (kind=c_double) :: rYmin, rYmax
 
-  print *, NCFILE%rX
-  print *, NCFILE%rY
+  rXmin = minval(NCFILE%rX_Coords(NCFILE%iColBounds(FIRST):NCFILE%iColBounds(LAST)) )
+  rXmax = maxval(NCFILE%rX_Coords(NCFILE%iColBounds(FIRST):NCFILE%iColBounds(LAST)) )
+  rYmin = minval(NCFILE%rY_Coords(NCFILE%iRowBounds(FIRST):NCFILE%iRowBounds(LAST)) )
+  rYmax = maxval(NCFILE%rY_Coords(NCFILE%iRowBounds(FIRST):NCFILE%iRowBounds(LAST)) )
+
+  NCFILE%rX(LEFT) = rXmin - NCFILE%rGridCellSizeX * dpHALF
+  NCFILE%rX(RIGHT) = rXmax + NCFILE%rGridCellSizeX * dpHALF
+  NCFILE%rY(TOP) = rYmax + NCFILE%rGridCellSizeY * dpHALF
+  NCFILE%rY(BOTTOM) = rYmin - NCFILE%rGridCellSizeY * dpHALF
+
+  print *, "Grid cell size (X): ", NCFILE%rGridCellSizeX
+  print *, "Grid cell size (Y): ", NCFILE%rGridCellSizeY
+
+  print *, "Bounds of data subset area, in native coordinates"
+  print *, "X (left): ", NCFILE%rX(LEFT)
+  print *, "X (right): ", NCFILE%rX(RIGHT)
+  print *, "Y (top): ", NCFILE%rY(TOP)
+  print *, "Y (bottom): ", NCFILE%rY(BOTTOM)
 
 end subroutine nc_return_native_coord_bounds
 
@@ -622,6 +632,7 @@ subroutine nc_get_x_and_y(NCFILE)
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR_x, pNC_VAR_y
   type (T_NETCDF_DIMENSION), pointer :: pNC_DIM_x, pNC_DIM_y
   integer (kind=c_int) :: iLowerBound, iUpperBound
+  integer (kind=c_int) :: iStat
 
   iVarIndex_x = NCFILE%iVarIndex(NC_X)
   iVarIndex_y = NCFILE%iVarIndex(NC_Y)
@@ -648,20 +659,27 @@ subroutine nc_get_x_and_y(NCFILE)
   pNC_DIM_x => NCFILE%NC_DIM( pNC_VAR_x%iNC_DimID(0) )
   pNC_DIM_y => NCFILE%NC_DIM( pNC_VAR_y%iNC_DimID(0) )
 
-  allocate( NCFILE%rX_Coords( pNC_DIM_x%iNC_DimSize ) )
-  allocate (NCFILE%rY_Coords( pNC_DIM_y%iNC_DimSize  ) )
+  allocate( NCFILE%rX_Coords( pNC_DIM_x%iNC_DimSize ), stat=iStat )
+  call assert(iStat==0, "Failed to allocate memory for X-coordinate values", &
+    trim(__FILE__), __LINE__)
 
-  NCFILE%rX_Coords = nc_get_variable_double(NCFILE=NCFILE, &
+  allocate (NCFILE%rY_Coords( pNC_DIM_y%iNC_DimSize  ), stat=iStat )
+  call assert(iStat==0, "Failed to allocate memory for Y-coordinate values", &
+    trim(__FILE__), __LINE__)
+
+  call nc_get_variable_double(NCFILE=NCFILE, &
        iNC_VarID=pNC_VAR_x%iNC_VarID, &
        iNC_Start=[0_c_size_t], &
        iNC_Count=[pNC_DIM_x%iNC_DimSize], &
-       iNC_Stride=[1_c_size_t])
+       iNC_Stride=[1_c_size_t], &
+       dpNC_Vars=NCFILE%rX_Coords)
 
-  NCFILE%rY_Coords = nc_get_variable_double(NCFILE=NCFILE, &
+  call nc_get_variable_double(NCFILE=NCFILE, &
        iNC_VarID=pNC_VAR_y%iNC_VarID, &
        iNC_Start=[0_c_size_t], &
        iNC_Count=[pNC_DIM_y%iNC_DimSize], &
-       iNC_Stride=[1_c_size_t])
+       iNC_Stride=[1_c_size_t], &
+       dpNC_Vars=NCFILE%rY_Coords)
 
   iLowerBound = lbound(NCFILE%rX_Coords, 1)
   iUpperBound = ubound(NCFILE%rX_Coords, 1)
@@ -1165,22 +1183,20 @@ end subroutine nc_get_variable_short
 
 !----------------------------------------------------------------------
 
-function nc_get_variable_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
-   iNC_Stride )    result(dpNC_Vars)
+subroutine nc_get_variable_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
+   iNC_Stride, dpNC_Vars)
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
   integer (kind=c_int) :: iNC_VarID
   integer (kind=c_size_t), dimension(:) :: iNC_Start
   integer (kind=c_size_t), dimension(:) :: iNC_Count
   integer (kind=c_size_t), dimension(:) :: iNC_Stride
-  real (kind=c_double), dimension(:), allocatable :: dpNC_Vars
+  real (kind=c_double), dimension(:) :: dpNC_Vars
 
   type (c_ptr) :: pCount, pStart, pStride
   integer (kind=c_size_t), dimension(size(iNC_Start)), target :: tNC_Start
   integer (kind=c_size_t), dimension(size(iNC_Count)), target :: tNC_Count
   integer (kind=c_ptrdiff_t), dimension(size(iNC_Stride)), target :: tNC_Stride
-
-  allocate(dpNC_Vars(product(iNC_Count)))
 
   tNC_Start = iNC_Start
   tNC_Count = iNC_Count
@@ -1197,7 +1213,7 @@ function nc_get_variable_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
        stridep=pStride, &
        vars=dpNC_Vars), __FILE__, __LINE__ )
 
-end function nc_get_variable_double
+end subroutine nc_get_variable_double
 
 !----------------------------------------------------------------------
 
@@ -1414,11 +1430,12 @@ function netcdf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
     case (NC_DOUBLE)
 
-      dpValues = nc_get_variable_double(NCFILE=NCFILE, &
+      call nc_get_variable_double(NCFILE=NCFILE, &
         iNC_VarID=pNC_VAR%iNC_VarID, &
         iNC_Start=[0_c_size_t], &
         iNC_Count=[iCount], &
-        iNC_Stride=[iStride] )
+        iNC_Stride=[iStride], &
+        dpNC_Vars=dpValues)
 
     case default
 
