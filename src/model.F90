@@ -3334,6 +3334,8 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
   ! [ LOCAL PARAMETERS ]
 
+  print *, dquote(__FILE__), "  line=",__LINE__
+
   if(pConfig%iConfigureSMCapacity==CONFIG_SM_CAPACITY_CALCULATE) then
     ! Update the soil-water capacity based on land-cover and soil type
     do iRow=1,pGrd%iNY
@@ -3345,6 +3347,19 @@ subroutine model_InitializeSM(pGrd, pConfig )
         do k=1,size(pConfig%LU,1)
           pLU => pConfig%LU(k)
           if ( pLU%iLandUseType == cel%iLandUse ) then
+
+            !> must guard against segfaulting due to illegal values of
+            !> soil type
+            if (cel%iSoilGroup > uBound(pConfig%ROOTING_DEPTH,2) &
+                 .or. cel%iSoilGroup < lBound(pConfig%ROOTING_DEPTH,2) ) then
+
+              call assert(lFALSE, &
+                 "Soil group value is out of bounds: " &
+                 //"col: "//trim(asCharacter(iCol)) &
+                 //"  row: "//trim(asCharacter(iRow)) &
+                 //"  value: "//trim(asCharacter(cel%iSoilGroup)), &
+                 trim(__FILE__), __LINE__)
+            endif
 
             cel%rSoilWaterCap = cel%rSoilWaterCapInput * &
                pConfig%ROOTING_DEPTH(k,cel%iSoilGroup)

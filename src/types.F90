@@ -261,9 +261,9 @@ module types
       real (kind=c_double)    :: rX0, rX1              ! World-coordinate range in X
       real (kind=c_double)    :: rY0, rY1              ! World-coordinate range in Y
       integer (kind=c_int), dimension(:,:), pointer :: iData ! Integer data
-      integer (kind=c_int) :: iNoDataValue = -9999
+      integer (kind=c_int) :: iNoDataValue = -99999
+      real (kind=c_float) :: rNoDataValue = -99999.0
       real (kind=c_float), dimension(:,:), pointer :: rData    ! Real data
-      real (kind=c_float) :: rNoDataValue
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects

@@ -10,7 +10,7 @@ set MINGWBASE=c:\MinGW64
 set MINGW_VERSION=4.8.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 set Fortran_COMPILER_NAME=gfortran
-set R_HOME=C:\Program Files\R\R-2.15.2\bin
+set R_HOME="C:\Program Files\R\R-3.0.1\bin"
 
 :: define where 'make copy' will place executables
 set INSTALL_PREFIX=d:\DOS
@@ -34,9 +34,9 @@ set OPTION__STRICT_DATE_CHECKING="FALSE"
 set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
-set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
-set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -ftree-parallelize-loops=8 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -ftree-parallelize-loops=8 -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
 :: IMPORTANT!! Make sure a valid TEMP directory exists!!
 set TEMP=d:\TEMP
@@ -69,7 +69,8 @@ set LIBRARY_PATH=%MINGWBASE%\lib;%MINGWBASE%\lib\gcc\%COMPILER_TRIPLET%\%MINGW_V
 
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
-set CPPFLAGS="-DgFortran"
+set CFLAGS="-DCURL_STATICLIB"
+set CPPFLAGS="-DgFortran -DCURL_STATICLIB"
 
 set CMAKE_INCLUDE_PATH=%INCLUDE%
 set CMAKE_LIBRARY_PATH=%LIB%

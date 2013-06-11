@@ -359,10 +359,20 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_time = trim(sArgument)
 
+    else if ( str_compare(sItem,"NETCDF_PRECIP_VARIABLE_ORDER") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_variable_order(lowercase_fn(trim(sArgument)))
+
+    else if ( str_compare(sItem,"NETCDF_PRECIP_FLIP_VERTICAL") ) then
+      call DAT(PRECIP_DATA)%set_grid_flip_vertical()
+
+    else if ( str_compare(sItem,"NETCDF_PRECIP_FLIP_HORIZONTAL") ) then
+      call DAT(PRECIP_DATA)%set_grid_flip_horizontal()
+
 #endif
 
     else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
-      call DAT(PRECIP_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(PRECIP_DATA)%set_PROJ4( trim(sRecord) )
 
     elseif (sItem == "PRECIPITATION_MINIMUM_ALLOWED_VALUE") then
       call Chomp ( sRecord, sArgument )
@@ -474,8 +484,8 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
     else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
-      call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
-      call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
+      call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
 
 #ifdef NETCDF_SUPPORT
 
@@ -511,10 +521,30 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
 
+    else if ( str_compare(sItem,"NETCDF_TMIN_VARIABLE_ORDER") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMIN_DATA)%set_variable_order(lowercase_fn(trim(sArgument)))
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_VARIABLE_ORDER") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMAX_DATA)%set_variable_order(lowercase_fn(trim(sArgument)))
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_FLIP_VERTICAL") ) then
+      call DAT(TMAX_DATA)%set_grid_flip_vertical()
+
+    else if ( str_compare(sItem,"NETCDF_TMAX_FLIP_HORIZONTAL") ) then
+      call DAT(TMAX_DATA)%set_grid_flip_horizontal()
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_FLIP_VERTICAL") ) then
+      call DAT(TMIN_DATA)%set_grid_flip_vertical()
+
+    else if ( str_compare(sItem,"NETCDF_TMIN_FLIP_HORIZONTAL") ) then
+      call DAT(TMIN_DATA)%set_grid_flip_horizontal()
+
 #endif
 
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
-      call DAT(TMAX_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
 
     else if ( str_compare(sItem,"TMAX_SCALE") ) then
       call Chomp ( sRecord, sArgument )
@@ -556,7 +586,7 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
     else if (sItem == "TMIN_GRID_PROJECTION_DEFINITION") then
-      call DAT(TMIN_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
 
     else if ( str_compare(sItem,"TMIN_SCALE") ) then
       call Chomp ( sRecord, sArgument )
@@ -668,7 +698,7 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
     else if (sItem == "LANDUSE_PROJECTION_DEFINITION") then
-      call DAT(LANDUSE_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(LANDUSE_DATA)%set_PROJ4( trim(sRecord) )
 
     else if ( sItem == "FLOW_DIRECTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating flow direction grid"
@@ -698,7 +728,7 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
     else if (sItem == "FLOW_DIRECTION_PROJECTION_DEFINITION") then
-      call DAT(FLOWDIR_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(FLOWDIR_DATA)%set_PROJ4( trim(sRecord) )
 
     else if ( sItem == "ROUTING_FRACTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating routing fraction grid"
@@ -1213,7 +1243,7 @@ subroutine control_setModelOptions(sControlFile)
 
     else if (sItem == "SOIL_GROUP_PROJECTION_DEFINITION") then
       pConfig%sSoilGroup_PROJ4 = trim(sRecord)
-      call DAT(SOILS_GROUP_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(SOILS_GROUP_DATA)%set_PROJ4( trim(sRecord) )
 
 
     else if ( sItem == "LAND_USE_LOOKUP_TABLE" ) then
@@ -1310,7 +1340,7 @@ subroutine control_setModelOptions(sControlFile)
       end if
 
     else if (sItem == "WATER_CAPACITY_PROJECTION_DEFINITION") then
-      call DAT(AWC_DATA)%definePROJ4( trim(sRecord) )
+      call DAT(AWC_DATA)%set_PROJ4( trim(sRecord) )
 
     else if ( sItem == "INITIAL_SOIL_MOISTURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating initial moisture grid"

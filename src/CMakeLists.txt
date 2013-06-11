@@ -27,7 +27,7 @@ if(TARGET__SWB_EXECUTABLE)
             stats.F90
             types.F90
             water_balance.F90
-      
+
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -189,8 +189,8 @@ if(TARGET__SWB_EXECUTABLE)
             proj4/proj_rouss.c
             proj4/projects.h
             proj4/rtodms.c
-            proj4/vector1.c             
-           
+            proj4/vector1.c
+
             )
 
   set_target_properties(swb
@@ -230,8 +230,8 @@ if(TARGET__SWB_LIBRARY)
             swb_python_interface.F90
             types.F90
             water_balance.F90
-            
-            
+
+
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -394,8 +394,8 @@ if(TARGET__SWB_LIBRARY)
             proj4/proj_rouss.c
             proj4/projects.h
             proj4/rtodms.c
-            proj4/vector1.c             
-            
+            proj4/vector1.c
+
             )
 
   set_target_properties(swblib
@@ -414,7 +414,172 @@ if(TARGET__SWBSTATS)
             RLE.F90
             stats.F90
             swbstats.F90
-            types.F90)
+            types.F90
+
+            proj4/aasincos.c
+            proj4/adjlon.c
+            proj4/bch2bps.c
+            proj4/bchgen.c
+            proj4/biveval.c
+            proj4/custom_swb_functions.c
+            proj4/dmstor.c
+            proj4/emess.c
+            proj4/emess.h
+            proj4/gen_cheb.c
+            proj4/geocent.c
+            proj4/geocent.h
+            proj4/geod_for.c
+            proj4/geod_inv.c
+            proj4/geod_set.c
+            proj4/geodesic.h
+            proj4/mk_cheby.c
+            proj4/nad_cvt.c
+            proj4/nad_init.c
+            proj4/nad_intr.c
+            proj4/org_proj4_Projections.h
+            proj4/p_series.c
+            proj4/PJ_aea.c
+            proj4/PJ_aeqd.c
+            proj4/PJ_airy.c
+            proj4/PJ_aitoff.c
+            proj4/pj_apply_gridshift.c
+            proj4/pj_apply_vgridshift.c
+            proj4/PJ_august.c
+            proj4/pj_auth.c
+            proj4/PJ_bacon.c
+            proj4/PJ_bipc.c
+            proj4/PJ_boggs.c
+            proj4/PJ_bonne.c
+            proj4/PJ_cass.c
+            proj4/PJ_cc.c
+            proj4/PJ_cea.c
+            proj4/PJ_chamb.c
+            proj4/PJ_collg.c
+            proj4/PJ_crast.c
+            proj4/pj_ctx.c
+            proj4/pj_datum_set.c
+            proj4/pj_datums.c
+            proj4/PJ_denoy.c
+            proj4/pj_deriv.c
+            proj4/PJ_eck1.c
+            proj4/PJ_eck2.c
+            proj4/PJ_eck3.c
+            proj4/PJ_eck4.c
+            proj4/PJ_eck5.c
+            proj4/pj_ell_set.c
+            proj4/pj_ellps.c
+            proj4/PJ_eqc.c
+            proj4/PJ_eqdc.c
+            proj4/pj_errno.c
+            proj4/pj_factors.c
+            proj4/PJ_fahey.c
+            proj4/PJ_fouc_s.c
+            proj4/pj_fwd.c
+            proj4/PJ_gall.c
+            proj4/pj_gauss.c
+            proj4/pj_geocent.c
+            proj4/PJ_geos.c
+            proj4/PJ_gins8.c
+            proj4/PJ_gn_sinu.c
+            proj4/PJ_gnom.c
+            proj4/PJ_goode.c
+            proj4/pj_gridinfo.c
+            proj4/pj_gridlist.c
+            proj4/PJ_gstmerc.c
+            proj4/PJ_hammer.c
+            proj4/PJ_hatano.c
+            proj4/PJ_healpix.c
+            proj4/PJ_igh.c
+            proj4/PJ_imw_p.c
+            proj4/pj_init.c
+            proj4/pj_initcache.c
+            proj4/pj_inv.c
+            proj4/PJ_isea.c
+            proj4/PJ_krovak.c
+            proj4/PJ_labrd.c
+            proj4/PJ_laea.c
+            proj4/PJ_lagrng.c
+            proj4/PJ_larr.c
+            proj4/PJ_lask.c
+            proj4/pj_latlong.c
+            proj4/PJ_lcc.c
+            proj4/PJ_lcca.c
+            proj4/pj_list.c
+            proj4/pj_list.h
+            proj4/pj_log.c
+            proj4/PJ_loxim.c
+            proj4/PJ_lsat.c
+            proj4/pj_malloc.c
+            proj4/PJ_mbt_fps.c
+            proj4/PJ_mbtfpp.c
+            proj4/PJ_mbtfpq.c
+            proj4/PJ_merc.c
+            proj4/PJ_mill.c
+            proj4/pj_mlfn.c
+            proj4/PJ_mod_ster.c
+            proj4/PJ_moll.c
+            proj4/pj_msfn.c
+            proj4/pj_mutex.c
+            proj4/PJ_natearth.c
+            proj4/PJ_nell.c
+            proj4/PJ_nell_h.c
+            proj4/PJ_nocol.c
+            proj4/PJ_nsper.c
+            proj4/PJ_nzmg.c
+            proj4/PJ_ob_tran.c
+            proj4/PJ_ocea.c
+            proj4/PJ_oea.c
+            proj4/PJ_omerc.c
+            proj4/pj_open_lib.c
+            proj4/PJ_ortho.c
+            proj4/pj_param.c
+            proj4/pj_phi2.c
+            proj4/PJ_poly.c
+            proj4/pj_pr_list.c
+            proj4/PJ_putp2.c
+            proj4/PJ_putp3.c
+            proj4/PJ_putp4p.c
+            proj4/PJ_putp5.c
+            proj4/PJ_putp6.c
+            proj4/pj_qsfn.c
+            proj4/pj_release.c
+            proj4/PJ_robin.c
+            proj4/PJ_rpoly.c
+            proj4/PJ_sconics.c
+            proj4/PJ_somerc.c
+            proj4/PJ_stere.c
+            proj4/PJ_sterea.c
+            proj4/pj_strerrno.c
+            proj4/PJ_sts.c
+            proj4/PJ_tcc.c
+            proj4/PJ_tcea.c
+            proj4/PJ_tmerc.c
+            proj4/PJ_tpeqd.c
+            proj4/pj_transform.c
+            proj4/pj_tsfn.c
+            proj4/pj_units.c
+            proj4/PJ_urm5.c
+            proj4/PJ_urmfps.c
+            proj4/pj_utils.c
+            proj4/PJ_vandg.c
+            proj4/PJ_vandg2.c
+            proj4/PJ_vandg4.c
+            proj4/PJ_wag2.c
+            proj4/PJ_wag3.c
+            proj4/PJ_wag7.c
+            proj4/PJ_wink1.c
+            proj4/PJ_wink2.c
+            proj4/pj_zpoly1.c
+            proj4/proj.def
+            proj4/proj_api.h
+            proj4/proj_etmerc.c
+            proj4/proj_mdist.c
+            proj4/proj_rouss.c
+            proj4/projects.h
+            proj4/rtodms.c
+            proj4/vector1.c
+
+            )
 
   set_target_properties(swbstats
             PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")

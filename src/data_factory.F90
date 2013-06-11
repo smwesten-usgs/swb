@@ -41,22 +41,27 @@ module data_factory
     real (kind=c_float) :: rMissingValuesCode = -99999.0
     character (len=2) :: sMissingValuesOperator = "<="
     integer (kind=c_int) :: iMissingValuesAction = 0
-    real (kind=c_float) :: rScale = rONE
-    real (kind=c_float) :: rOffset = rZERO
-    real (kind=c_float) :: rConversionFactor = rONE
+    real (kind=c_double) :: rScaleFactor = 1_c_double
+    real (kind=c_double) :: rAddOffset = 0_c_double
+    real (kind=c_double) :: rConversionFactor = 1_c_double
 
-    logical (kind=c_bool) :: lApplyScaleAndOffset = lFALSE
+    logical (kind=c_bool) :: lUserSuppliedScaleAndOffset = lFALSE
     logical (kind=c_bool) :: lApplyConversionFactor = lFALSE
     logical (kind=c_bool) :: lMissingFilesAreAllowed = lFALSE
+    logical (kind=c_bool) :: lFlipHorizontal = lFALSE
+    logical (kind=c_bool) :: lFlipVertical = lFALSE
 
     integer (kind=c_int) :: iDaysToPadAtYearsEnd = 0
     integer (kind=c_int) :: iDaysToPadIfLeapYear = 1
+    logical (kind=c_bool) :: lPadReplaceWithZero = lFALSE
+    logical (kind=c_bool) :: lPadValues = lFALSE
 
     ! the following are only used if data are being read from a NetCDF file
     character (len=256) :: sVariableName_x = "x"
     character (len=256) :: sVariableName_y = "y"
     character (len=256) :: sVariableName_z = ""
     character (len=256) :: sVariableName_time = "time"
+    character (len=3) :: sVariableOrder = "tyx"
 
     type (T_GRID_BOUNDS) :: GRID_BOUNDS
     ! units?
@@ -96,6 +101,8 @@ module data_factory
 
     procedure :: set_scale => set_scale_sub
     procedure :: set_offset => set_offset_sub
+    procedure :: set_grid_flip_horizontal => set_grid_flip_horizontal_sub
+    procedure :: set_grid_flip_vertical => set_grid_flip_vertical_sub
     procedure :: set_conversion_factor => set_conversion_factor_sub
 
     procedure :: getvalues_constant => getvalues_constant_sub
@@ -121,7 +128,8 @@ module data_factory
     generic :: set_constant => set_const_int, set_const_real
 
     procedure :: make_filename => make_filename_from_template
-    procedure :: definePROJ4 => set_PROJ4_string
+    procedure :: set_PROJ4 => set_PROJ4_string_sub
+    procedure :: set_variable_order => set_variable_order_sub
     procedure :: dump_data_structure => dump_data_structure_sub
     procedure :: transfer_from_native => transform_grid_to_grid
 
@@ -133,6 +141,7 @@ module data_factory
     generic :: handle_missing_values => handle_missing_values_real
 
     procedure :: calc_project_boundaries => calc_project_boundaries
+    procedure :: test_for_file_existence => test_for_file_existence
 
   end type T_DATA_GRID
 
@@ -352,29 +361,6 @@ end subroutine initialize_netcdf_data_object_sub
     elseif ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
       iLocalJulianDay = iJulianDay
-
-      if (this%iNC_FILE_STATUS == NETCDF_FILE_OPEN) then
-
-        iNumDaysToPad = this%iDaysToPadAtYearsEnd
-
-        if(isLeap(iYear)) iNumDaysToPad = iNumDaysToPad + this%iDaysToPadIfLeapYear
-
-        iPadDays = max(iJulianDay - this%NCFILE%iLastDayJD, 0)
-
-        ! if the dataset is missing whole days of data at the end of the
-        ! year, return the values found on the last day; repeat until
-        ! we are legitimately into the next year
-        if (iPadDays <= iNumDaysToPad &
-            .and. iJulianDay > this%NCFILE%iLastDayJD) then
-
-            iLocalJulianDay = this%NCFILE%iLastDayJD
-            call echolog("NetCDF file ends before the calendar year is out:" &
-              //" padding data with values from the last day of valid data")
-
-        endif
-
-      endif
-
       call getvalues_dynamic_netcdf_sub( this, &
                            pGrdBase,  iMonth, iDay, iYear, iLocalJulianDay)
 
@@ -397,14 +383,14 @@ end subroutine initialize_netcdf_data_object_sub
 
     if (present(rValues)) then
 
-       rValues = ( pGrdBase%rData * this%rScale + this%rOffset ) * this%rConversionFactor
+       rValues = ( pGrdBase%rData * this%rScaleFactor + this%rAddOffset ) * this%rConversionFactor
 
     endif
 
     if (present(iValues)) then
 
-        iValues = ( pGrdBase%iData * int(this%rScale, kind=c_int)  &
-                                  + int(this%rOffset,kind=c_int) ) * this%rConversionFactor
+        iValues = ( pGrdBase%iData * int(this%rScaleFactor, kind=c_int)  &
+                                  + int(this%rAddOffset,kind=c_int) ) * this%rConversionFactor
     endif
 
   end subroutine getvalues_sub
@@ -802,14 +788,82 @@ end subroutine set_constant_value_real
 !    this%sSourceFilename = trim(sCWD)//trim(sDelimiter)//trim(sNewFilename)
     this%sSourceFilename = trim(sNewFilename)
 
-    ! does this file actually exist?
-    inquire( file=this%sSourceFilename, exist=lExist )
-
-    call assert(lExist, "The filename created from your template refers to " &
-      //"a nonexistent file. ~ Attempted to open filename "&
-      //dquote(this%sSourceFilename), trim(__FILE__), __LINE__)
-
   end subroutine make_filename_from_template
+
+!----------------------------------------------------------------------
+
+  subroutine test_for_file_existence(this, iMonth, iDay, iYear )
+
+    class (T_DATA_GRID) :: this
+    integer (kind=c_int) :: iMonth, iDay, iYear
+
+    ! [ LOCALS ]
+    logical (kind=c_bool) :: lExist
+    integer (kind=c_int) :: iDaysLeftInMonth
+    integer (kind=c_int) :: iPos
+
+    do
+
+      iPos = scan(string=trim(this%sSourceFilename), set="http://")
+
+      !> if this is a URL, we don't want to test for file existence using
+      !> the Fortran "inquire" function
+      if (this%sSourceFilename(iPos:iPos+6) == "http://") then
+
+        exit
+
+      else
+
+        ! does this file actually exist?
+        inquire( file=this%sSourceFilename, exist=lExist )
+
+        this%lPadValues = lFALSE
+
+        !> if the file exists, don't bother with padding any values
+        if (lExist) exit
+
+        !> if file doesn't exist, and we're close to the end of the year,
+        !> assume that we should pad values at the end of the year
+        if (iMonth == 12 ) then
+
+          iDaysLeftInMonth = 31 - iDay
+
+          if (isLeap(iYear)) then
+
+            if ( iDaysLeftInMonth <= this%iDaysToPadIfLeapYear ) then
+
+              this%lPadValues = lTRUE
+              exit
+
+            endif
+
+          else    ! it's not leap year
+
+            if ( iDaysLeftInMonth <= this%iDaysToPadAtYearsEnd ) then
+
+              this%lPadValues = lTRUE
+              exit
+
+            endif
+
+          endif
+
+        endif
+
+        !> if we've reached this point, we cannot locate the proper file and
+        !> we are not within the proper range of dates to allow for padding.
+        call assert(lExist, "The filename created from your template refers to " &
+          //"a nonexistent file. ~ Attempted to open filename "&
+          //dquote(this%sSourceFilename), trim(__FILE__), __LINE__)
+
+        exit
+
+      endif
+
+    enddo
+
+
+  end subroutine test_for_file_existence
 
 !----------------------------------------------------------------------
 
@@ -824,6 +878,7 @@ end subroutine set_constant_value_real
 
     ! [ LOCALS ]
     integer (kind=c_int) :: iTimeIndex
+    integer (kind=c_int) :: iStat
 
     ! call once at start of run...
     if ( this%iFileCountYear < 0 ) call this%set_filecount(-1, iYear)
@@ -850,109 +905,148 @@ end subroutine set_constant_value_real
 
       call this%make_filename( iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-      if (this%lPerformFullInitialization) then
+      call this%test_for_file_existence(iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-        allocate(this%NCFILE)
+      if (this%lPadValues) then
 
-        !> calculate the project boundaries in the coordinate system of
-        !> the native data file
-        if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+        if (this%lPadReplaceWithZero) then
 
-          call this%calc_project_boundaries(pGrdBase=pGrdBase)
+          this%pGrdNative%rData = 0_c_float
+          this%pGrdNative%iData = 0_c_int
 
-          call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
-             sFilename=this%sSourceFilename, &
-             sVarName_x=this%sVariableName_x, &
-             sVarName_y=this%sVariableName_y, &
-             sVarName_z=this%sVariableName_z, &
-             sVarName_time=this%sVariableName_time, &
-             tGridBounds=this%GRID_BOUNDS, &
-             iLU=LU_LOG)
+        endif
+
+        print *, repeat("=", 60)
+        print *, "  PADDING VALUES  "
+        call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
+          sText=trim(this%NCFILE%sFilename), &
+          rData=this%pGrdNative%rData)
+        print *, repeat("=", 60)
+
+
+      else
+
+        if (this%lPerformFullInitialization ) then
+
+          allocate(this%NCFILE, stat=iStat)
+          call assert(iStat==0, "Problem allocating memory for the NetCDF file" &
+            //" structure associated with ~the file named "//dquote(this%sSourceFilename), &
+            trim(__FILE__), __LINE__)
+
+          if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+
+            !> calculate the project boundaries in the coordinate system of
+            !> the native data file
+            call this%calc_project_boundaries(pGrdBase=pGrdBase)
+
+            call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+              sFilename=this%sSourceFilename, &
+              lFlipHorizontal=this%lFlipHorizontal, &
+              lFlipVertical=this%lFlipVertical, &
+              sVariableOrder=this%sVariableOrder, &
+              sVarName_x=this%sVariableName_x, &
+              sVarName_y=this%sVariableName_y, &
+              sVarName_z=this%sVariableName_z, &
+              sVarName_time=this%sVariableName_time, &
+              tGridBounds=this%GRID_BOUNDS, &
+              iLU=LU_LOG)
+
+          else
+
+            !> assume source NetCDF file is in same projection and
+            !> of same dimensions as base grid
+            call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+              sFilename=this%sSourceFilename, &
+              lFlipHorizontal=this%lFlipHorizontal, &
+              lFlipVertical=this%lFlipVertical, &
+              sVariableOrder=this%sVariableOrder, &
+              sVarName_x=this%sVariableName_x, &
+              sVarName_y=this%sVariableName_y, &
+              sVarName_z=this%sVariableName_z, &
+              sVarName_time=this%sVariableName_time, &
+              iLU=LU_LOG)
+
+            this%NCFILE%iNX = pGrdBase%iNX
+            this%NCFILE%iNY = pGrdBase%iNY
+            this%NCFILE%rX(NC_LEFT) = pGrdBase%rX0
+            this%NCFILE%rY(NC_BOTTOM) = pGrdBase%rY0
+            this%NCFILE%rX(NC_RIGHT) = pGrdBase%rX1
+            this%NCFILE%rY(NC_TOP) = pGrdBase%rY1
+
+          endif
+
+          this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
+
+          this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
+
+          !> if the user has not supplied a scale and offset,
+          !> then populate these values with the scale and offset
+          !> factor included in the NetCDF attribute data, if any.
+          if (.not. this%lUserSuppliedScaleAndOffset) then
+            this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
+            this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
+          endif
+
+          !> Amongst other things, the call to netcdf_open_and_prepare
+          !> finds the nearest column and row that correspond to the
+          !> project bounds, then back-calculates the coordinate values
+          !> of the column and row numbers in the *project* coordinate system
+          this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
+                      iNY=this%NCFILE%iNY, &
+                      rX0=this%NCFILE%rX(NC_LEFT), &
+                      rY0=this%NCFILE%rY(NC_BOTTOM), &
+                      rX1=this%NCFILE%rX(NC_RIGHT), &
+                      rY1=this%NCFILE%rY(NC_TOP), &
+                      iDataType=this%iTargetDataType )
+
+          if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
+            ! ensure that PROJ4 string is associated with the native grid
+            this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+          endif
+
+          this%pGrdNative%sFilename = this%sSourceFilename
+
+          this%lPerformFullInitialization = lFALSE
 
         else
+          !> Projection settings can be left alone; read values from new
+          !> NetCDF file with same grid boundaries, projection, etc.
 
-          !> assume source NetCDF file is in same projection and
-          !> of same dimensions as base grid
-          call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
-             sFilename=this%sSourceFilename, &
-             sVarName_x=this%sVariableName_x, &
-             sVarName_y=this%sVariableName_y, &
-             sVarName_z=this%sVariableName_z, &
-             sVarName_time=this%sVariableName_time, &
-             iLU=LU_LOG)
+          call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
 
-          this%NCFILE%iNX = pGrdBase%iNX
-          this%NCFILE%iNY = pGrdBase%iNY
-          this%NCFILE%rX(LEFT) = pGrdBase%rX0
-          this%NCFILE%rY(BOTTOM) = pGrdBase%rY0
-          this%NCFILE%rX(RIGHT) = pGrdBase%rX1
-          this%NCFILE%rY(TOP) = pGrdBase%rY1
+          this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
 
         endif
 
-        this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
+        if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
 
-        this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
+          call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
+            //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
 
-        !> Amongst other things, the call to netcdf_open_and_prepare
-        !> finds the nearest column and row that correspond to the
-        !> project bounds, then back-calculates the coordinate values
-        !> of the column and row numbers in the *project* coordinate system
-        this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
-                    iNY=this%NCFILE%iNY, &
-                    rX0=this%NCFILE%rX(LEFT), &
-                    rY0=this%NCFILE%rY(BOTTOM), &
-                    rX1=this%NCFILE%rX(RIGHT), &
-                    rY1=this%NCFILE%rY(TOP), &
-                    iDataType=this%iTargetDataType )
+          call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
 
-        if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
-          ! ensure that PROJ4 string is associated with the native grid
-          this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
+          call assert (lFALSE, "Date range for currently open NetCDF file" &
+            //" does not include the present simulation date.", &
+            trim(__FILE__), __LINE__)
+
         endif
-
-        this%pGrdNative%sFilename = this%sSourceFilename
-
-        this%lPerformFullInitialization = lFALSE
-
-      else  !> Projection settings can be left alone; read values from new
-            !> NetCDF file with same grid boundaries, projection, etc.
-
-        call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
-
-        this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
-
-        !> new file likely has different time dimensions at the least
-        call nc_populate_dimension_struct( NCFILE=this%NCFILE )
-        call nc_populate_variable_struct( NCFILE=this%NCFILE )
-
-        call netcdf_update_time_range(NCFILE=this%NCFILE)
 
       endif
 
     endif
 
-    if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
+    if (.not. this%lPadValues)  then
 
-      call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
-        //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
+      call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
+                                         iJulianDay=iJulianDay)
 
-      call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
+      call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
 
-      call assert (lFALSE, "Date range for currently open NetCDF file" &
-         //" does not include the present simulation date.", &
-         trim(__FILE__), __LINE__)
+      call this%handle_missing_values(this%pGrdNative%rData)
+
+      call this%enforce_limits(this%pGrdNative%rData)
 
     endif
-
-    call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
-                                           iJulianDay=iJulianDay)
-
-    call netcdf_get_variable_time_y_x(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
-
-    call this%handle_missing_values(this%pGrdNative%rData)
-
-    call this%enforce_limits(this%pGrdNative%rData)
 
     call this%transfer_from_native( pGrdBase )
 
@@ -992,23 +1086,55 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
-  subroutine set_PROJ4_string(this, sPROJ4_string)
+  subroutine set_PROJ4_string_sub(this, sPROJ4_string)
 
      class (T_DATA_GRID) :: this
      character (len=*), optional :: sPROJ4_string
 
      this%sSourcePROJ4_string = sPROJ4_string
 
-  end subroutine set_PROJ4_string
+  end subroutine set_PROJ4_string_sub
 
 !----------------------------------------------------------------------
 
-subroutine set_scale_sub(this, rScale)
+  subroutine set_grid_flip_horizontal_sub(this)
+
+    class (T_DATA_GRID) :: this
+
+    this%lFlipHorizontal = lTRUE
+
+  end subroutine set_grid_flip_horizontal_sub
+
+!----------------------------------------------------------------------
+
+  subroutine set_grid_flip_vertical_sub(this)
+
+    class (T_DATA_GRID) :: this
+
+    this%lFlipVertical = lTRUE
+
+  end subroutine set_grid_flip_vertical_sub
+
+!----------------------------------------------------------------------
+
+  subroutine set_variable_order_sub(this, sVariableOrder)
+
+    class (T_DATA_GRID) :: this
+    character (len=*) :: sVariableOrder
+
+    this%sVariableOrder = sVariableOrder
+
+  end subroutine set_variable_order_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_scale_sub(this, rScaleFactor)
 
    class (T_DATA_GRID) :: this
-   real (kind=c_float) :: rScale
+   real (kind=c_float) :: rScaleFactor
 
-   this%rScale = rScale
+   this%rScaleFactor = rScaleFactor
+   this%lUserSuppliedScaleAndOffset = lTRUE
 
 end subroutine set_scale_sub
 
@@ -1025,12 +1151,13 @@ end subroutine set_conversion_factor_sub
 
 !----------------------------------------------------------------------
 
-subroutine set_offset_sub(this, rOffset)
+subroutine set_offset_sub(this, rAddOffset)
 
    class (T_DATA_GRID) :: this
-   real (kind=c_float) :: rOffset
+   real (kind=c_float) :: rAddOffset
 
-   this%rOffset = rOffset
+   this%rAddOffset = rAddOffset
+   this%lUserSuppliedScaleAndOffset = lTRUE
 
 end subroutine set_offset_sub
 

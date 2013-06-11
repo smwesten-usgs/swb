@@ -45,9 +45,10 @@ cmake_minimum_required(VERSION 2.8)
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
     ENV R_HOME
+	${PATH_TO_R}
     PATHS
     "c:/Program Files/R"
-    "c:/Program Files (x86)/R"
+    "c:/Program Files/R/R-3.0.1/bin"
     "/usr/bin"
 )
 
@@ -139,12 +140,18 @@ if(CMAKE_HOST_WIN32)
 
        set(SZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libsz.a
          CACHE FILEPATH "Location of szlib library")
+
+       set(CURL_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libcurl.a
+         CACHE FILEPATH "Location of cURL library")
+
        set(ZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libzlib.a
          CACHE FILEPATH "Location of zlib library")
 
        set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/libproj4.a
          CACHE FILEPATH "Location of PROJ4 library")
 
+       set(WS2_32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libws2_32.a
+	       CACHE FILEPATH "Location of Winsock for Windows library" )
 
        set(DISLIN_FORTRAN_LIB ${PROJECT_SOURCE_DIR}/lib/win_x86/gfortran/disgf.a )
        set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/win_x86/gfortran )
@@ -159,10 +166,15 @@ if(CMAKE_HOST_WIN32)
          CACHE FILEPATH "Location of HDF5 library")
        set(HDF5_HL_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libhdf5_hl.a
          CACHE FILEPATH "Location of HDF5_HL library")
+       set(CURL_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libcurl.a
+         CACHE FILEPATH "Location of cURL library")
        set(SZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libsz.a
          CACHE FILEPATH "Location of szlib library")
        set(ZLIB_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libzlib.a
          CACHE FILEPATH "Location of zlib library")
+
+       set(WS2_32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libws2_32.a
+	       CACHE FILEPATH "Location of Winsock for Windows library" )
 
 #       set(PROJ4_LIB ${PROJECT_SOURCE_DIR}/lib/win_x64/gfortran/libproj4.a
 #         CACHE FILEPATH "Location of PROJ4 library")
@@ -179,16 +191,16 @@ if(CMAKE_HOST_WIN32)
      set(GFORTRAN_LIB ${MINGWBASE}/lib/libgfortran.a)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_HL_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${HDF5_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${CURL_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${SZLIB_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${ZLIB_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${NETCDF_C_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${DISLIN_FORTRAN_LIB} )
-     set(EXTRA_LIBS ${EXTRA_LIBS} ${PROJ4_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${USER32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${GDI32_LIB} )
+     set(EXTRA_LIBS ${EXTRA_LIBS} ${WS2_32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
 
      include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
