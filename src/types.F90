@@ -91,6 +91,7 @@ module types
   logical (kind=c_bool), parameter :: lFALSE = .false._c_bool
   integer(kind=c_int), parameter :: iEOF = HUGE(iZERO)
   real (kind=c_float), parameter :: rBIGVAL = HUGE(rZERO)
+  integer(kind=c_int), parameter :: iBIGVAL = HUGE(iZERO)
   character (len=1), parameter :: sTAB = achar(9)
   character (len=2), parameter :: sWHITESPACE = achar(9)//" "
   character (len=1), parameter :: sBACKSLASH = achar(92)
@@ -142,6 +143,7 @@ module types
 !> a grid of T_CELL types. Each variable added to this data type
 !> consumes Ny * Nx * size(c_float) bytes.
   type T_CELL
+      integer (kind=c_int) :: iActive = iACTIVE_CELL
       integer (kind=c_int) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
       integer (kind=c_int) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
       integer (kind=c_int) :: iLandUseIndex       ! Index (row num) of land use table
@@ -149,10 +151,10 @@ module types
       integer (kind=c_int) :: iIrrigationTableIndex = iZERO  ! Index (row num) of irrigation table
       real (kind=c_float) :: rElevation =rZERO            ! Ground elevation
       real (kind=c_float) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
-      real (kind=c_float) :: rSoilWaterCap =rZERO         ! Soil water capacity adjusted for LU/LC
+      real (kind=c_float) :: rSoilWaterCap = rZERO        ! Soil water capacity adjusted for LU/LC
       real (kind=c_float) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
 			real (kind=c_float) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
-			real (kind=c_float) :: rKcb                         ! crop coefficient for this cell
+			real (kind=c_float) :: rKcb = rZERO                 ! crop coefficient for this cell
 			real (kind=c_float) :: rTotalAvailableWater = rZERO
 			real (kind=c_float) :: rReadilyAvailableWater = rZERO
 
@@ -169,21 +171,21 @@ module types
 
 !if_defined STREAM_INTERACTIONS
       integer (kind=c_int) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
-      real (kind=c_float) :: rStreamCapture           ! Amount of water captured by the stream (or fracture)
+      real (kind=c_float) :: rStreamCapture = rZERO           ! Amount of water captured by the stream (or fracture)
 !end_if
 
-      integer (kind=c_int) :: iTgt_Row   ! Row: "i" index of target cell into which runoff flows
-      integer (kind=c_int) :: iTgt_Col   ! Col: "j" index of target cell into which runoff flows
+      integer (kind=c_int) :: iTgt_Row = iZERO  ! Row: "i" index of target cell into which runoff flows
+      integer (kind=c_int) :: iTgt_Col = iZERO  ! Col: "j" index of target cell into which runoff flows
 
-      real (kind=c_float) :: rBaseCN                 ! Curve number from landuse/soil group
-      real (kind=c_float) :: rAdjCN                  ! Curve number, adjusted for antecedent moisture
+      real (kind=c_float) :: rBaseCN = rZERO                 ! Curve number from landuse/soil group
+      real (kind=c_float) :: rAdjCN = rZERO                  ! Curve number, adjusted for antecedent moisture
 !      real (kind=c_float) :: rSMax                   ! S_max parameter from runoff calculation
       real (kind=c_float) :: rInFlow = rZERO         ! flow in from uphill
       real (kind=c_float) :: rOutFlow = rZERO        ! flow out downhill
       real (kind=c_float) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
       real (kind=c_float) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=c_float) :: rGrossPrecip = rZERO    ! Precip - no interception applied
-      real (kind=c_float) :: rNetPrecip
+      real (kind=c_float) :: rNetPrecip = rZERO
       real (kind=c_float) :: rInterception = rZERO   ! Interception term
       real (kind=c_float) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
       real (kind=c_float) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception
@@ -205,10 +207,10 @@ module types
 !      real (kind=c_float) :: rMaximumAllowableDepletion = 100_c_float ! by default, no irrigation
                                                                   ! will be performed
 
-      real (kind=c_float) :: rSnowAlbedo             ! Snow albedo value
+      real (kind=c_float) :: rSnowAlbedo = rZERO      ! Snow albedo value
       integer (kind=c_int) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
 !      real (kind=c_float) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
-      real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf  ! Inflow buffer for moving avg
+      real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf = rZERO  ! Inflow buffer for moving avg
       real (kind=c_float) :: rDailyRecharge = rZERO  ! Daily recharge
       real (kind=c_float) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
       real (kind=c_float) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
@@ -800,19 +802,12 @@ module types
   integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
   !> @}
 
-  !> @name Constants: Soil-moisture calculation
-  !> Configuration information for soil-moisture retention calculations
-  !> @{
-  integer (kind=c_int),parameter :: CONFIG_SM_NONE = 0
-  integer (kind=c_int),parameter :: CONFIG_SM_THORNTHWAITE_MATHER = 1
-  !> @}
-
   !> @name Constants: Thornthwaite-Mather implementation method
   !> Configuration information for Thornthwaite-Mather SM retention
   !> @{
-  integer (kind=c_int),parameter :: CONFIG_TM_NONE = 0
-  integer (kind=c_int),parameter :: CONFIG_TM_LOOKUP_TABLE = 1
-  integer (kind=c_int),parameter :: CONFIG_TM_EQUATIONS = 2
+  integer (kind=c_int),parameter :: CONFIG_SM_NONE = 0
+  integer (kind=c_int),parameter :: CONFIG_SM_TM_LOOKUP_TABLE = 1
+  integer (kind=c_int),parameter :: CONFIG_SM_TM_EQUATIONS = 2
   !> @}
 
   !> @name Constants: FAO56 module
@@ -884,9 +879,6 @@ module types
       !> Soil moisture calculation option
       integer (kind=c_int) :: iConfigureSM = CONFIG_NONE
 
-      !> Thornthwaite-Mather soil moisture retention method
-      integer (kind=c_int) :: iSoilMoistureRetentionMethod = CONFIG_TM_EQUATIONS
-
       !> Snowfall and snowmelt option
       integer (kind=c_int) :: iConfigureSnow = CONFIG_NONE
 
@@ -942,11 +934,11 @@ module types
       logical (kind=c_bool) :: lDownhillRoutingTableExists = lFALSE
 
       ! Prefix of input ARC or SURFER gridded precip time-series files
-      character (len=256) :: sPrecipFilePrefix = repeat(" ", 256)
+      character (len=256) :: sPrecipFilePrefix = ""
 
       ! Prefix of input ARC or SURFER gridded temperature time-series files
-      character (len=256) :: sTMAXFilePrefix = repeat(" ", 256)
-      character (len=256) :: sTMINFilePrefix = repeat(" ", 256)
+      character (len=256) :: sTMAXFilePrefix = ""
+      character (len=256) :: sTMINFilePrefix = ""
 
       ! Prefix of the input ARC of SURFER gridded DYNAMIC LANDUSE files
       character (len=256) :: sDynamicLanduseFilePrefix = repeat(" ", 256)
@@ -974,16 +966,16 @@ module types
       real (kind=c_float) :: rSNWD_denom = 2.6
 
       ! Filename for standard (single-station) time-series file
-      character (len=256) :: sTimeSeriesFilename = repeat(" ", 256)
+      character (len=256) :: sTimeSeriesFilename = ""
 
       ! Filename for land use lookup table
-      character (len=256) :: sLanduseLookupFilename = repeat(" ", 256)
+      character (len=256) :: sLanduseLookupFilename = ""
 
       ! Filename for irrigation lookup table
-      character (len=256) :: sIrrigationLookupFilename = repeat(" ", 256)
+      character (len=256) :: sIrrigationLookupFilename = ""
 
       ! PROJ4 string for BASE Grid
-      character (len=256) :: sBASE_PROJ4 = repeat(" ", 256)
+      character (len=256) :: sBASE_PROJ4 = ""
 
       !> project grid definitions
       real (kind=c_double) :: rX0, rY0          ! Lower-left corner (world coords)
@@ -994,22 +986,22 @@ module types
       integer (kind=c_int) :: iNY            !
 
       ! PROJ4 string for Landuse Grid
-      character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
+!       character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
 
-      ! PROJ4 string for Soil Group Grid
-      character (len=256) :: sSoilGroup_PROJ4 = repeat(" ", 256)
+!       ! PROJ4 string for Soil Group Grid
+!       character (len=256) :: sSoilGroup_PROJ4 = repeat(" ", 256)
 
-      ! PROJ4 string for Soil Available Water Capacity  Grid
-      character (len=256) :: sSoilAWC_PROJ4 = repeat(" ", 256)
+!       ! PROJ4 string for Soil Available Water Capacity  Grid
+!       character (len=256) :: sSoilAWC_PROJ4 = repeat(" ", 256)
 
-      ! PROJ4 string for Flow Direction Grid
-      character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
+!       ! PROJ4 string for Flow Direction Grid
+!       character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
 
-      ! PROJ4 string for PRECIPITATION Grid
-      character (len=256) :: sPrecipitationGrid_PROJ4 = repeat(" ", 256)
+!       ! PROJ4 string for PRECIPITATION Grid
+!       character (len=256) :: sPrecipitationGrid_PROJ4 = repeat(" ", 256)
 
-      ! PROJ4 string for AIR TEMPERATURE Grid
-      character (len=256) :: sTemperatureGrid_PROJ4 = repeat(" ", 256)
+!       ! PROJ4 string for AIR TEMPERATURE Grid
+!       character (len=256) :: sTemperatureGrid_PROJ4 = repeat(" ", 256)
 
       ! Filename for basin mask table
       character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
@@ -1050,8 +1042,8 @@ module types
       logical (kind=c_bool) :: lNorthernHemisphere = lTRUE
 
       ! flags to control output
-      logical (kind=c_bool) :: lReportDaily       !
-      logical (kind=c_bool) :: lWriteToScreen     !
+      logical (kind=c_bool) :: lReportDaily =lTRUE       !
+      logical (kind=c_bool) :: lWriteToScreen = lTRUE    !
 
       integer (kind=c_int) :: iHeaderPrintInterval ! frequency with which to reprint
                                                    ! detailed output header
@@ -1217,6 +1209,7 @@ module types
   end interface assert
 
   interface asCharacter
+    module procedure short2char
     module procedure int2char
     module procedure c_size_t2char
     module procedure real2char
@@ -1228,6 +1221,12 @@ module types
     module procedure int2real
     module procedure dbl2real
   end interface asReal
+
+  interface asInt
+    module procedure char2int
+    module procedure real2int
+    module procedure dbl2int
+  end interface asInt
 
   interface chomp
     module procedure chomp_delim_sub
@@ -1248,7 +1247,6 @@ module types
     module procedure FtoK_sgl_fn
     module procedure FtoK_dbl_fn
   end interface FtoK
-
 
 contains
 
@@ -2638,10 +2636,10 @@ end subroutine writeMultiLine
 !--------------------------------------------------------------------------
 
 !> Convert an integer value into a formatted character string
-function int2char(iValue)  result(sBuf)
+elemental function int2char(iValue)  result(sBuf)
 
-  integer (kind=c_int) :: iValue
-  character (len=256) :: sBuf
+  integer (kind=c_int), intent(in) :: iValue
+  character (len=14) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
   sBuf = ADJUSTL(sBuf)
@@ -2650,10 +2648,59 @@ end function int2char
 
 !--------------------------------------------------------------------------
 
+!> Convert a short integer value into a formatted character string
+elemental function short2char(iValue)  result(sBuf)
+
+  integer (kind=c_short), intent(in) :: iValue
+  character (len=10) :: sBuf
+
+  write(UNIT=sBuf,FMT="(i10)") iValue
+  sBuf = ADJUSTL(sBuf)
+
+end function short2char
+
+!--------------------------------------------------------------------------
+
+!> Convert an character value into a integer
+function char2int(sValue)  result(iValue)
+
+  character (len=256) :: sValue
+  integer (kind=c_int) :: iValue
+
+  read(UNIT=sValue,FMT=*) iValue
+
+end function char2int
+
+!--------------------------------------------------------------------------
+
+!> Convert a real value into a integer
+function real2int(rValue)  result(iValue)
+
+  real (kind=c_float) :: rValue
+  integer (kind=c_int) :: iValue
+
+  iValue = int(rValue, kind=c_int)
+
+end function real2int
+
+!--------------------------------------------------------------------------
+
+!> Convert a double-precision value to an integer
+function dbl2int(rValue)  result(iValue)
+
+  real (kind=c_double) :: rValue
+  integer (kind=c_int) :: iValue
+
+  iValue = int(rValue, kind=c_int)
+
+end function dbl2int
+
+!--------------------------------------------------------------------------
+
 !> Convert an character value into a real
 function char2real(sValue)  result(rValue)
 
-  character (len=256) :: sValue
+  character (len=*) :: sValue
   real (kind=c_float) :: rValue
 
   read(UNIT=sValue,FMT=*) rValue
@@ -2687,10 +2734,10 @@ end function dbl2real
 !--------------------------------------------------------------------------
 
 !> Convert an integer value into a formatted character string
-function c_size_t2char(iValue)  result(sBuf)
+elemental function c_size_t2char(iValue)  result(sBuf)
 
-  integer (kind=c_size_t) :: iValue
-  character (len=256) :: sBuf
+  integer (kind=c_size_t), intent(in) :: iValue
+  character (len=14) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
   sBuf = ADJUSTL(sBuf)
@@ -2700,10 +2747,10 @@ end function c_size_t2char
 !--------------------------------------------------------------------------
 
 !> Convert a real value into a formatted character string
-function real2char(rValue, sFmt)  result(sBuf)
+elemental function real2char(rValue, sFmt)  result(sBuf)
 
-  real (kind=c_float) :: rValue
-  character (len=*), optional :: sFmt
+  real (kind=c_float), intent(in) :: rValue
+  character (len=*), optional, intent(in) :: sFmt
 
   ![ LOCALS ]
   character(len=64) :: sBuf, sFormat
@@ -2720,10 +2767,10 @@ function real2char(rValue, sFmt)  result(sBuf)
 end function real2char
 
 !> Convert a double precision real value into a formatted character string
-function dbl2char(rValue, sFmt)  result(sBuf)
+elemental function dbl2char(rValue, sFmt)  result(sBuf)
 
-  real (kind=c_double) :: rValue
-  character (len=*), optional :: sFmt
+  real (kind=c_double), intent(in) :: rValue
+  character (len=*), optional, intent(in) :: sFmt
 
   ![ LOCALS ]
   character(len=64) :: sBuf, sFormat
@@ -2951,16 +2998,16 @@ function char_ptr_to_fortran_string( cpCharacterPtr )  result(sText)
 
 end function char_ptr_to_fortran_string
 
-function c_to_fortran_string( cCharacterString )  result(sText)
+elemental function c_to_fortran_string( cCharacterString )  result(sText)
 
   use iso_c_binding
   implicit none
 
-  character (len=*) :: cCharacterString
+  character (len=*), intent(in) :: cCharacterString
   character(len=256) :: sText
   integer (kind=c_int) :: iIndex
 
-  sText = repeat(" ", 256)
+  sText = ""
 
   iIndex = index(string=cCharacterString, substring=c_null_char)
 

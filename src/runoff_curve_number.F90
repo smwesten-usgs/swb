@@ -48,6 +48,9 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
       ! look up the curve number
 
 	  cel => pGrd%Cells(iCol,iRow)
+
+    if (cel%iActive == iINACTIVE_CELL) cycle
+
 	  lMatch = lFALSE
 
       ! iterate through all land use types
@@ -119,6 +122,8 @@ function prob_runoff_enhancement(rCFGI, rLL, rUL)    result(rPf)
   return
 
 end function prob_runoff_enhancement
+
+!--------------------------------------------------------------------------
 
 subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   !! Updates the curve numbers for this iteration
@@ -212,7 +217,6 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   cel%rAdjCN = MIN(cel%rAdjCN,rHUNDRED)
   cel%rAdjCN = MAX(cel%rAdjCN,rZERO)
 
-  return
 end subroutine runoff_UpdateCurveNumber
 
 !--------------------------------------------------------------------------

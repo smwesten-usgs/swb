@@ -78,6 +78,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   ! [ LOCALS ]
   real (kind=c_double) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
   integer (kind=c_int) :: iCol, iRow
+  type (T_CELL), pointer :: cel
 
 !  write(UNIT=LU_LOG,FMT=*) iDayOfYear, iNumDaysInYear
 
@@ -100,6 +101,9 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
     do iCol=1,pGrd%iNX
 
+      cel => pGrd%Cells(iCol, iRow)
+
+      if (cel%iActive == iINACTIVE_CELL) cycle
 
       pGrd%Cells(iCol,iRow)%rReferenceET0 = ET0_hargreaves( &
                                            pConfig, &

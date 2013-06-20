@@ -117,6 +117,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     call model_InitializeDataStructures( pGrd, pConfig )
 
+    !> any negative values are interpreted to mean that the cell should be
+    !> inactivated
+    call model_setInactiveCells( pGrd, pConfig )
+
     ! Initialize the model landuse-related parameters
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
@@ -963,6 +967,8 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+
+
       ! allow for correction factor to be applied to precip gage input data
       if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
         lFREEZING = lTRUE
@@ -1405,7 +1411,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   integer (kind=c_int) :: iCol, iRow, iStat, tj, ti, iTgt_Row, iTgt_Col,k,iCumlCount,iCount
   integer (kind=c_int) :: iRowSub, iColSub, iNChange, iUpstreamCount, iPasses
   integer (kind=c_int) :: ic
-  integer (kind=c_int) :: iNumGridCells
+  integer (kind=c_int) :: iNumGridCells, iNumActiveGridCells
   integer (kind=c_int) :: iNumIterationsNochange
   logical (kind=c_bool) :: lExist
   logical (kind=c_bool) :: lCircular = lFALSE
@@ -1415,188 +1421,190 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   ! calculate number of gridcells in model domain
   iNumGridCells = pGrd%iNY * pGrd%iNX
 
+  iNumActiveGridCells = count(pGrd%Cells%iActive == iACTIVE_CELL)
+
   ! set iteration counter
   iNumIterationsNochange = 0
 
   pTempGrid=>grid_Create( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
     pGrd%rX1, pGrd%rY1, DATATYPE_INT )
 
-  allocate(iOrderCol(pGrd%iNY*pGrd%iNX), iOrderRow(pGrd%iNY*pGrd%iNX), stat=iStat)
+  allocate(iOrderCol(iNumActiveGridCells), iOrderRow(iNumActiveGridCells), stat=iStat)
   call Assert( iStat == 0, &
     "Could not allocate order of solution vectors for downhill procedure")
 
   INQUIRE( FILE='swb_routing_table.bin', EXIST=lExist)
+
   EXISTS: if (.not. lExist) then
 
-  iPasses = 0
-  write(UNIT=LU_LOG,FMT=*) "Configuring the downhill routing table..."
-  flush(UNIT=LU_LOG)
-  iOrderCount = 0
-  pGrd%Cells%lDownhillMarked = lFALSE
+    iPasses = 0
+    write(UNIT=LU_LOG,FMT=*) "Configuring the downhill routing table..."
+    flush(UNIT=LU_LOG)
+    iOrderCount = 0
+    pGrd%Cells%lDownhillMarked = lFALSE
 
-  do
-    iNChange = 0
-    do iRow=1,pGrd%iNY
-      do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-        cel => pGrd%Cells(iCol,iRow)
-        if ( cel%lDownhillMarked ) cycle
-        ! Count upstream cells
-        iUpstreamCount = 0
+    do
+      iNChange = 0
+      do iRow=1,pGrd%iNY
+        do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+          cel => pGrd%Cells(iCol,iRow)
+          if (cel%iActive == iINACTIVE_CELL) cycle
+          if ( cel%lDownhillMarked ) cycle
+          ! Count upstream cells
+          iUpstreamCount = 0
 
-  ! now search all adjacent cells which have current cell
-  ! as their target
+          ! now search all adjacent cells which have current cell
+          ! as their target
 
-  lCircular = lFALSE
+          lCircular = lFALSE
 
-  do iRowSub=iRow-1,iRow+1
-    if (iRowSub>=1 .and. iRowSub<=pGrd%iNY) then     ! we're within array bounds
-      do iColSub=iCol-1,iCol+1
-        if (iColSub>=1 .and. iColSub<=pGrd%iNX) then  ! we're within array bounds
-          if (iRow==iRowSub .and. iCol==iColSub) cycle  ! Skip current inquiry cell
-            if (pGrd%Cells(iColSub,iRowSub)%lDownhillMarked) cycle  ! Don't count marked neighbors
-            call model_DownstreamCell(pGrd,iRowSub,iColSub,tj,ti)
-              if (tj==iRow .and. ti==iCol ) then
-                iUpstreamCount = iUpstreamCount+1
-                ! we've found a cell that points to the current model
-                ! cell; does our current model cell point back at it?
-                ! if so, we have circular flow
-                call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
-                if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub ) lCircular = lTRUE
-              end if
-        end if
-      end do
-    end if
-  end do
+          do iRowSub=iRow-1,iRow+1
+            if (iRowSub>=1 .and. iRowSub<=pGrd%iNY) then     ! we're within array bounds
+              do iColSub=iCol-1,iCol+1
+                if (iColSub>=1 .and. iColSub<=pGrd%iNX) then  ! we're within array bounds
+                  if (iRow==iRowSub .and. iCol==iColSub) cycle  ! Skip current inquiry cell
+                  if (pGrd%Cells(iColSub,iRowSub)%lDownhillMarked) cycle  ! Don't count marked neighbors
+                  if (pGrd%Cells(iColSub,iRowSub)%iActive == 0) cycle  ! Don't count inactive neighbors
+                  call model_DownstreamCell(pGrd,iRowSub,iColSub,tj,ti)
+                  if (tj==iRow .and. ti==iCol ) then
+                    iUpstreamCount = iUpstreamCount+1
+                    ! we've found a cell that points to the current model
+                    ! cell; does our current model cell point back at it?
+                    ! if so, we have circular flow
+                    call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
+                    if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub ) lCircular = lTRUE
+                  end if
+                end if
+              end do
+            end if
+          end do
 
-  ! If there are none, we can mark this cell
-  ! If we have circular flow (a points to b, b points to a),
-  ! we can mark the current cell; both a and b will be set to
-  ! closed depressions in subsequent processing
-  if ( iUpstreamCount == 0  &
-    .or. (iUpstreamCount == 1 .and. lCircular)) then
-    iNChange = iNChange+1
-    cel%lDownhillMarked = lTRUE
-    iOrderCount = iOrderCount+1
-    iOrderCol(iOrderCount) = iCol
-    iOrderRow(iOrderCount) = iRow
-    !write(UNIT=LU_LOG,FMT=*) 'found ',iOrderCount, iRow, iCol
-  elseif ( iNumIterationsNochange > 10 ) then
-    ! convert offending cell into a depression
-    ! we've gotten to this point because flow paths are circular;
-    ! this is likely in a flat area of the DEM, and is in reality
-    ! likely to be a depression
-    iNChange = iNChange+1
-    cel%lDownhillMarked = lTRUE
-    cel%iFlowDir = 0
-    iOrderCount = iOrderCount+1
-    iOrderCol(iOrderCount) = iCol
-    iOrderRow(iOrderCount) = iRow
-    !write(UNIT=LU_LOG,FMT=*) 'found ',iOrderCount, iRow, iCol
-  end if
+          ! If there are none, we can mark this cell
+          ! If we have circular flow (a points to b, b points to a),
+          ! we can mark the current cell; both a and b will be set to
+          ! closed depressions in subsequent processing
+          if ( iUpstreamCount == 0  &
+            .or. (iUpstreamCount == 1 .and. lCircular)) then
+            iNChange = iNChange+1
+            cel%lDownhillMarked = lTRUE
+            iOrderCount = iOrderCount+1
+            iOrderCol(iOrderCount) = iCol
+            iOrderRow(iOrderCount) = iRow
+            !write(UNIT=LU_LOG,FMT=*) 'found ',iOrderCount, iRow, iCol
+          elseif ( iNumIterationsNochange > 10 ) then
+            ! convert offending cell into a depression
+            ! we've gotten to this point because flow paths are circular;
+            ! this is likely in a flat area of the DEM, and is in reality
+            ! likely to be a depression
+            iNChange = iNChange+1
+            cel%lDownhillMarked = lTRUE
+            cel%iFlowDir = 0
+            iOrderCount = iOrderCount+1
+            iOrderCol(iOrderCount) = iCol
+            iOrderRow(iOrderCount) = iRow
+            !write(UNIT=LU_LOG,FMT=*) 'found ',iOrderCount, iRow, iCol
+          end if
 
-  end do  ! loop over rows
-end do  ! loop over columns
+        end do  ! loop over rows
+      end do  ! loop over columns
 
-  if ( iNChange==0 ) then
+      if ( iNChange==0 ) then
 
-  iNumIterationsNochange = iNumIterationsNochange + 1
+        iNumIterationsNochange = iNumIterationsNochange + 1
 
-  iCumlCount = 0
-  write(LU_LOG,"(/,1x,'Summary of remaining unmarked cells')")
+        iCumlCount = 0
+        write(LU_LOG,"(/,1x,'Summary of remaining unmarked cells')")
 
-  ! loop over possible (legal) values of ther flow direction grid
-  do k=0,128
-    iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
-      .and.pGrd%Cells%iFlowDir==k)
-    if(iCount>0) then
-      iCumlCount = iCumlCount + iCount
-      write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
-        iCount, k
-    end if
-  end do
+        ! loop over possible (legal) values of the flow direction grid
+        do k=0,128
+          iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
+            .and.pGrd%Cells%iFlowDir==k .and. pGrd%Cells%iActive == 0)
+          if(iCount>0) then
+            iCumlCount = iCumlCount + iCount
+            write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
+              iCount, k
+          end if
+        end do
 
-  write(LU_LOG,FMT="(3x,a)") repeat("-",60)
-  write(LU_LOG,FMT="(3x,i8,' Total cells with nonzero flow " &
-    //"direction values')") iCumlCount
+        write(LU_LOG,FMT="(3x,a)") repeat("-",60)
+        write(LU_LOG,FMT="(3x,i8,' Total cells with nonzero flow " &
+          //"direction values')") iCumlCount
 
-  where( pGrd%Cells%lDownHillMarked )
-    pTempGrid%iData = iROUTE_CELL_MARKED
-  elsewhere
-    pTempGrid%iData = pGrd%Cells%iFlowDir
-  end where
+#ifdef DEBUG_PRINT
+
+        where( pGrd%Cells%lDownHillMarked .or.  pGrd%Cells%iActive /= 0)
+          pTempGrid%iData = iROUTE_CELL_MARKED
+        elsewhere
+          pTempGrid%iData = pGrd%Cells%iFlowDir
+        end where
 
 !#ifdef GRAPHICS_SUPPORT
 !        call genericgraph(pTempGrid)
 !#endif
 
-#ifdef DEBUG_PRINT
-
-  call grid_WriteArcGrid("iteration"//TRIM(int2char(iPasses))// &
-    "problem_gridcells.asc", &
-    pTempGrid%rX0,pTempGrid%rX1,pTempGrid%rY0,pTempGrid%rY1, &
-    REAL(pTempGrid%iData,kind=c_float))
-
+        call grid_WriteArcGrid("iteration"//TRIM(int2char(iPasses))// &
+          "problem_gridcells.asc", &
+          pTempGrid%rX0,pTempGrid%rX1,pTempGrid%rY0,pTempGrid%rY1, &
+          REAL(pTempGrid%iData,kind=c_float))
 #endif
 
-  else
-    ! reset iteration counter
-    iNumIterationsNochange = 0
-  end if
+      else
+        ! reset iteration counter
+        iNumIterationsNochange = 0
+      end if
 
-  if(iOrderCount == iNumGridCells) exit
-  iPasses = iPasses+1
-  write(UNIT=LU_LOG,FMT=*) 'Iteration ',iPasses,'  ',iOrderCount,&
-    ' of ',iNumGridCells,' cells have been configured'
-end do
+      if(iOrderCount == iNumActiveGridCells) exit
+      iPasses = iPasses+1
+      write(UNIT=LU_LOG,FMT=*) 'Iteration ',iPasses,'  ',iOrderCount,&
+        ' of ',iNumGridCells,' cells have been configured'
 
-  write(UNIT=LU_LOG,FMT=*) "  Number of passes required: ",iPasses
-  write(UNIT=LU_LOG,FMT=*) ""
-  flush(UNIT=LU_LOG)
+    end do
 
-  open( LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', &
-    status='REPLACE',ACCESS='STREAM')
-  write(LU_ROUTING) iOrderCount
+    write(UNIT=LU_LOG,FMT=*) "  Number of passes required: ",iPasses
+    write(UNIT=LU_LOG,FMT=*) ""
+    flush(UNIT=LU_LOG)
 
-  do ic=1,iOrderCount
-    write(LU_ROUTING) iOrderCol(ic),iOrderRow(ic)
-  end do
-  flush(UNIT=LU_ROUTING)
-  close(UNIT=LU_ROUTING)
+    open( LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', &
+      status='REPLACE',ACCESS='STREAM')
+    write(LU_ROUTING) iOrderCount
+
+    do ic=1,iOrderCount
+      write(LU_ROUTING) iOrderCol(ic),iOrderRow(ic)
+    end do
+    flush(UNIT=LU_ROUTING)
+    close(UNIT=LU_ROUTING)
 
   else ! routing table already exists
 
-  pGrd%Cells%lDownhillMarked = lTRUE
-  open(LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', &
-    ACCESS='STREAM')
-  read(LU_ROUTING) iOrderCount
+    pGrd%Cells%lDownhillMarked = lTRUE
+    open(LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', ACCESS='STREAM')
+    read(LU_ROUTING) iOrderCount
 
-  ! crude error checking to see whether the routing table has the right
-  ! number of elements
-  call Assert(LOGICAL(iOrderCount==iNumGridCells,kind=c_bool), &
-    'Problem with existing routing file.  Delete swb_routing.bin and rerun')
+    ! crude error checking to see whether the routing table has the right
+    ! number of elements
+    call Assert(LOGICAL(iOrderCount==iNumActiveGridCells,kind=c_bool), &
+      'Problem with existing routing file.  Delete swb_routing.bin and rerun')
 
-  do ic=1,iOrderCount
-    read(LU_ROUTING) iOrderCol(ic),iOrderRow(ic)
-  end do
+    do ic=1,iOrderCount
+      read(LU_ROUTING) iOrderCol(ic),iOrderRow(ic)
+    end do
 
-  close(UNIT=LU_ROUTING)
+    close(UNIT=LU_ROUTING)
 
-  write(UNIT=LU_LOG,FMT=*) ""
-  write(UNIT=LU_LOG,FMT=*)  "*****************************************************************************"
-  write(UNIT=LU_LOG,FMT=*)  "NOTE: Read in downhill routing information from existing swb_routing.bin file"
-  write(UNIT=LU_LOG,FMT=*)  "*****************************************************************************"
-  write(UNIT=LU_LOG,FMT=*) ""
-  flush(UNIT=LU_LOG)
+    write(UNIT=LU_LOG,FMT=*) ""
+    write(UNIT=LU_LOG,FMT=*)  "*****************************************************************************"
+    write(UNIT=LU_LOG,FMT=*)  "NOTE: Read in downhill routing information from existing swb_routing.bin file"
+    write(UNIT=LU_LOG,FMT=*)  "*****************************************************************************"
+    write(UNIT=LU_LOG,FMT=*) ""
+    flush(UNIT=LU_LOG)
 
-  write(UNIT=LU_STD_OUT,FMT=*)  "*****************************************************************************"
-  write(UNIT=LU_STD_OUT,FMT=*)  "NOTE: Read in downhill routing information from existing swb_routing.bin file"
-  write(UNIT=LU_STD_OUT,FMT=*)  "*****************************************************************************"
+    write(UNIT=LU_STD_OUT,FMT=*)  "*****************************************************************************"
+    write(UNIT=LU_STD_OUT,FMT=*)  "NOTE: Read in downhill routing information from existing swb_routing.bin file"
+    write(UNIT=LU_STD_OUT,FMT=*)  "*****************************************************************************"
 
   end if EXISTS
 
-  return
-
-  end subroutine model_ConfigureRunoffDownhill
+end subroutine model_ConfigureRunoffDownhill
 
 !!***
 
@@ -2041,8 +2049,12 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
 
+  ! [ LOCALS ]
   integer (kind=c_int) :: iRow,iCol
   integer (kind=c_int) :: iTgt_Row,iTgt_Col
+  type (T_CELL),pointer :: cel
+  character (len=256) :: sBuf
+
   ! [ PARAMETERS ]
   integer (kind=c_short),parameter :: DIR_DEPRESSION=0
   integer (kind=c_short),parameter :: DIR_RIGHT=1
@@ -2053,15 +2065,23 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
   integer (kind=c_short),parameter :: DIR_UP_LEFT=32
   integer (kind=c_short),parameter :: DIR_UP=64
   integer (kind=c_short),parameter :: DIR_UP_RIGHT=128
-  character (len=256) :: sBuf
 
   ! no point in doing these calculations unless we're really going to
   ! route water
   if(pConfig%iConfigureRunoffMode==CONFIG_RUNOFF_NO_ROUTING) return
 
-
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
+
+      cel => pGrd%Cells(iCol,iRow)
+
+      if (cel%iActive == iINACTIVE_CELL) then
+
+       cel%iTgt_Row = iROUTE_LEFT_GRID
+       cel%iTgt_Col = iROUTE_LEFT_GRID
+       cycle
+
+     endif
 
   select case (pGrd%Cells(iCol,iRow)%iFlowDir)
     case ( DIR_DEPRESSION )
@@ -2919,106 +2939,6 @@ end subroutine model_ReadIrrigationLookupTable
 
 !--------------------------------------------------------------------------
 
-subroutine model_PopulateSoilGroupArray(pConfig, pGrd, pSoilGroupGrid)
-
-  ! [ ARGUMENTS ]
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pSoilGroupGrid     ! pointer to model grid
-
-  if( len_trim( pConfig%sSoilGroup_PROJ4 ) > 0 ) then
-
-    call echolog(" ")
-    call echolog("Transforming gridded data in file: "//dquote(pSoilGroupGrid%sFilename) )
-    call echolog("  FROM: "//squote(pConfig%sSoilGroup_PROJ4) )
-    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
-
-    call grid_Transform(pGrd=pSoilGroupGrid, &
-                        sFromPROJ4=pConfig%sSoilGroup_PROJ4, &
-                        sToPROJ4=pConfig%sBase_PROJ4 )
-
-    call Assert( grid_CompletelyCover( pGrd, pSoilGroupGrid ), &
-      "Transformed grid doesn't completely cover your model domain.")
-
-    call grid_gridToGrid(pGrdFrom=pSoilGroupGrid,&
-                            iArrayFrom=pSoilGroupGrid%iData, &
-                            pGrdTo=pGrd, &
-                            iArrayTo=pGrd%Cells%iSoilGroup )
-
-  else
-
-    call Assert( grid_Conform( pGrd, pSoilGroupGrid ), &
-                      "Non-conforming HYDROLOGIC SOILS grid. Filename: " &
-                      //dquote(pSoilGroupGrid%sFilename) )
-    pGrd%Cells%iSoilGroup = pSoilGroupGrid%iData
-
-  endif
-
-  call grid_Destroy(pSoilGroupGrid)
-
-  !********************************************************
-  !*** HACK ALERT !!!
-  !********************************************************
-  where (pGrd%Cells%iSoilGroup <= 0) pGrd%Cells%iSoilGroup = 4
-
-  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
-
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Soil_Group" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
-
-end subroutine model_PopulateSoilGroupArray
-
-!--------------------------------------------------------------------------
-
-subroutine model_PopulateFlowDirectionArray(pConfig, pGrd, pFlowDirGrid)
-
-  ! [ ARGUMENTS ]
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-
-  type ( T_GENERAL_GRID ),pointer :: pGrd            ! pointer to model grid
-  type ( T_GENERAL_GRID ),pointer :: pFlowDirGrid     ! pointer to model grid
-
-  if( len_trim( pConfig%sFlowDir_PROJ4 ) > 0 ) then
-
-    call echolog(" ")
-    call echolog("Transforming gridded data in file: "//dquote(pFlowDirGrid%sFilename) )
-    call echolog("  FROM: "//squote(pConfig%sFlowDir_PROJ4) )
-    call echolog("  TO:   "//squote(pConfig%sBase_PROJ4) )
-
-    call grid_Transform(pGrd=pFlowDirGrid, &
-                        sFromPROJ4=pConfig%sFlowDir_PROJ4, &
-                        sToPROJ4=pConfig%sBase_PROJ4 )
-
-    call Assert( grid_CompletelyCover( pGrd, pFlowDirGrid ), &
-      "Transformed grid doesn't completely cover your model domain.")
-
-    call grid_gridToGrid(pGrdFrom=pFlowDirGrid,&
-                            iArrayFrom=pFlowDirGrid%iData, &
-                            pGrdTo=pGrd, &
-                            iArrayTo=pGrd%Cells%iFlowDir )
-
-  else
-
-    call Assert( grid_Conform( pGrd, pFlowDirGrid ), &
-                      "Non-conforming FLOW_DIRECTION grid. Filename: " &
-                      //dquote(pFlowDirGrid%sFilename) )
-    pGrd%Cells%iFlowDir = pFlowDirGrid%iData
-
-  endif
-
-  call grid_Destroy(pFlowDirGrid)
-
-  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_D8_Flow_Direction" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
-
-end subroutine model_PopulateFlowDirectionArray
-
-!--------------------------------------------------------------------------
-
 function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
   !! Looks up the interception value for land-use type iType.
 
@@ -3072,6 +2992,24 @@ end subroutine model_CheckConfigurationSettings
 
 !--------------------------------------------------------------------------
 
+subroutine model_setInactiveCells( pGrd, pConfig )
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+  where ( pGrd%Cells%iSoilGroup < 0 .or. &
+          pGrd%Cells%iFlowDir < 0 .or. &
+          pGrd%Cells%iLandUse < 0)
+
+    pGrd%Cells%iActive = iINACTIVE_CELL
+
+  endwhere
+
+end subroutine model_setInactiveCells
+
+!--------------------------------------------------------------------------
+
 subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   ! [ ARGUMENTS ]
@@ -3081,27 +3019,26 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iFlowDir = pGrd%iData
 
-!  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
-!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+  pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
-!  call make_shaded_contour(pGrd=pGenericGrd_int, &
-!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
-!     sTitleTxt="D8 Flow Direction Grid", &
-!     sAxisTxt="Flow Direction" )
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
+     sTitleTxt="D8 Flow Direction Grid", &
+     sAxisTxt="Flow Direction" )
 
   call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iSoilGroup = pGrd%iData
-  where (pGrd%Cells%iSoilGroup == 0) pGrd%Cells%iSoilGroup = 1
 
-!  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
-!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+  pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
-!  call make_shaded_contour(pGrd=pGenericGrd_int, &
-!      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
-!      sTitleTxt="Hydrologic Soils Group", &
-!      sAxisTxt="HSG" )
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
+      sTitleTxt="Hydrologic Soils Group", &
+      sAxisTxt="HSG" )
 
   call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%rSoilWaterCapInput = pGrd%rData
@@ -3109,29 +3046,28 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   write(LU_LOG, fmt="(a, f14.3)") "  Minimum AWC: ", minval(pGrd%Cells%rSoilWaterCapInput)
   write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
 
-!  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
-!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
+  pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
 
-!  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
-!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
-!     sTitleTxt="Available Water Capacity", &
-!     sAxisTxt="AWC (inches per inch)" )
+  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity.png", &
+     sTitleTxt="Available Water Capacity", &
+     sAxisTxt="AWC (inches per foot)" )
 
-  print *, trim(__FILE__), __LINE__
 
   call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
   pGrd%Cells%iLandUse = pGrd%iData
   pGenericGrd_int%iData = pGrd%Cells%iLandUse
 
   print *, trim(__FILE__), __LINE__
-!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
-!  call make_shaded_contour(pGrd=pGenericGrd_int, &
-!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
-!     sTitleTxt="Landuse / Landcover", &
-!     sAxisTxt="LULC Code" )
+  call make_shaded_contour(pGrd=pGenericGrd_int, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
+     sTitleTxt="Landuse / Landcover", &
+     sAxisTxt="LULC Code" )
 
 end subroutine model_InitializeDataStructures
 
@@ -3334,8 +3270,6 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
   ! [ LOCAL PARAMETERS ]
 
-  print *, dquote(__FILE__), "  line=",__LINE__
-
   if(pConfig%iConfigureSMCapacity==CONFIG_SM_CAPACITY_CALCULATE) then
     ! Update the soil-water capacity based on land-cover and soil type
     do iRow=1,pGrd%iNY
@@ -3343,6 +3277,9 @@ subroutine model_InitializeSM(pGrd, pConfig )
 
         lMatch = lFALSE
         cel => pGrd%Cells(iCol,iRow)
+
+        if (cel%iActive == iINACTIVE_CELL) cycle
+
         ! loop over all LAND use types...
         do k=1,size(pConfig%LU,1)
           pLU => pConfig%LU(k)
@@ -3379,13 +3316,17 @@ subroutine model_InitializeSM(pGrd, pConfig )
   end if
 
   select case ( pConfig%iConfigureSM )
+
     case ( CONFIG_SM_NONE )
       call Assert( lFALSE, "No soil moisture calculation method was specified" )
-    case ( CONFIG_SM_THORNTHWAITE_MATHER )
+    case ( CONFIG_SM_TM_LOOKUP_TABLE )
       call sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
+    case ( CONFIG_SM_TM_EQUATIONS )
+      call sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
+    case default
+
   end select
 
-  return
 end subroutine model_InitializeSM
 
 !--------------------------------------------------------------------------
@@ -3408,7 +3349,7 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
 
-!      if ( cel%iActive == iINACTIVE_CELL ) cycle
+      if ( cel%iActive == iINACTIVE_CELL ) cycle
 
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
@@ -3427,7 +3368,8 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
         end if
       end do
       if(.not. lMATCH) then
-        write(UNIT=LU_LOG,FMT=*) "iRow: ",iRow,"  iCol: ",iCol,"  cell LU: ", cel%iLandUse
+        call echolog ("iRow: "//trim(asCharacter(iRow))//"  iCol: "//trim(asCharacter(iCol)) &
+          //"  cell LU: "//trim(asCharacter( cel%iLandUse )) )
         call Assert(lFALSE,&
           "Failed to match landuse grid with landuse table during creation of landuse indices", &
           trim(__FILE__),__LINE__)

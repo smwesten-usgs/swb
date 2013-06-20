@@ -79,14 +79,14 @@ module netcdf_c_api_interfaces
   end interface
 
   interface
-    function nc_def_dim(ncid, name, nlen, idp) bind(c)
+    function nc_def_dim(ncid, name, lenv, dimidp) bind(c)
 
       import :: c_int, c_size_t, c_char
 
       integer (kind=c_int),    value       :: ncid
       character (kind=c_char), intent(in)  :: name(*)
-      integer (kind=c_size_t), value       :: nlen
-      integer (kind=c_int),    intent(out) :: idp
+      integer (kind=c_size_t), value       :: lenv
+      integer (kind=c_int),    intent(out) :: dimidp
 
       integer (kind=c_int)                 :: nc_def_dim
 
@@ -354,13 +354,13 @@ module netcdf_c_api_interfaces
   interface
     function nc_put_vars_double(ncid, varid, startp, countp, stridep, vars) bind(c)
 
-      import :: c_int, c_double, c_ptrdiff_t, c_size_t
+      import :: c_int, c_double, c_ptrdiff_t, c_size_t,c_ptr
 
       integer (kind=c_int), value      :: ncid, varid
 !      type(c_ptr),         value      :: startp, countp, stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (kind=c_size_t)          :: startp(*)
+      integer (kind=c_size_t)          :: countp(*)
+      integer (kind=c_ptrdiff_t)       :: stridep(*)
 
       real (kind=c_double), intent(in) :: vars(*)
 

@@ -21,6 +21,9 @@ module data_factory
   implicit none
   private
 
+  integer (kind=c_int), parameter :: NETCDF_FILE_OPEN = 27
+  integer (kind=c_int), parameter :: NETCDF_FILE_CLOSED = 42
+
   !> @class T_DATA_GRID
   type, public :: T_DATA_GRID
     integer (kind=c_int) :: iSourceDataForm  ! constant, static grid, dynamic grid
@@ -38,7 +41,10 @@ module data_factory
     logical (kind=c_bool) :: lProjectionDiffersFromBase = lFALSE
     real (kind=c_float) :: rMinAllowedValue = -rBIGVAL     ! default condition is to impose
     real (kind=c_float) :: rMaxAllowedValue = rBIGVAL      ! no bounds on data
-    real (kind=c_float) :: rMissingValuesCode = -99999.0
+    integer (kind=c_int) :: iMinAllowedValue = -iBIGVAL     ! default condition is to impose
+    integer (kind=c_int) :: iMaxAllowedValue = iBIGVAL      ! no bounds on data
+    real (kind=c_float) :: rMissingValuesCode = -rBIGVAL
+    integer (kind=c_int) :: iMissingValuesCode = -iBIGVAL
     character (len=2) :: sMissingValuesOperator = "<="
     integer (kind=c_int) :: iMissingValuesAction = 0
     real (kind=c_double) :: rScaleFactor = 1_c_double
@@ -68,10 +74,11 @@ module data_factory
     ! conversion factor?
 
 #ifdef NETCDF_SUPPORT
+    integer (kind=c_int) :: iNC_FILE_STATUS = NETCDF_FILE_CLOSED
+    type (T_NETCDF4_FILE) :: NCFILE
 
-    integer (kind=c_int) :: iNC_FILE_STATUS
-    type (T_NETCDF4_FILE), pointer :: NCFILE
-
+    integer (kind=c_int) :: iNC_ARCHIVE_STATUS = NETCDF_FILE_CLOSED
+    type (T_NETCDF4_FILE) :: NCFILE_ARCHIVE
 #endif
 
     integer (kind=c_int) :: iConstantValue
@@ -84,6 +91,7 @@ module data_factory
     logical (kind=c_bool) :: lGridIsPersistent = lFALSE
     logical (kind=c_bool) :: lGridHasChanged = lFALSE
     logical (kind=c_bool) :: lPerformFullInitialization = lTRUE
+    logical (kind=c_bool) :: lCreateLocalNetCDFArchive = lFALSE
 
   contains
 
@@ -101,6 +109,16 @@ module data_factory
 
     procedure :: set_scale => set_scale_sub
     procedure :: set_offset => set_offset_sub
+
+    procedure :: set_minimum_allowable_value_int_sub
+    procedure :: set_minimum_allowable_value_real_sub
+    procedure :: set_maximum_allowable_value_int_sub
+    procedure :: set_maximum_allowable_value_real_sub
+    generic :: set_valid_minimum => set_minimum_allowable_value_int_sub, &
+                                    set_minimum_allowable_value_real_sub
+    generic :: set_valid_maximum => set_maximum_allowable_value_int_sub, &
+                                    set_maximum_allowable_value_real_sub
+
     procedure :: set_grid_flip_horizontal => set_grid_flip_horizontal_sub
     procedure :: set_grid_flip_vertical => set_grid_flip_vertical_sub
     procedure :: set_conversion_factor => set_conversion_factor_sub
@@ -131,6 +149,8 @@ module data_factory
     procedure :: set_PROJ4 => set_PROJ4_string_sub
     procedure :: set_variable_order => set_variable_order_sub
     procedure :: dump_data_structure => dump_data_structure_sub
+    procedure :: set_make_local_archive => set_archive_local_sub
+    procedure :: put_values_to_archive => put_values_to_local_NetCDF_sub
     procedure :: transfer_from_native => transform_grid_to_grid
 
     procedure :: enforce_limits_real => data_GridEnforceLimits_real
@@ -138,7 +158,9 @@ module data_factory
     generic :: enforce_limits => enforce_limits_real, enforce_limits_int
 
     procedure :: handle_missing_values_real => data_GridHandleMissingData_real
-    generic :: handle_missing_values => handle_missing_values_real
+    procedure :: handle_missing_values_int => data_GridHandleMissingData_int
+    generic :: handle_missing_values => handle_missing_values_real, &
+                                        handle_missing_values_int
 
     procedure :: calc_project_boundaries => calc_project_boundaries
     procedure :: test_for_file_existence => test_for_file_existence
@@ -157,9 +179,6 @@ module data_factory
   integer (kind=c_int), parameter, public :: REL_HUM_DATA = 8
   integer (kind=c_int), parameter, public :: SOL_RAD_DATA = 9
   integer (kind=c_int), parameter, public :: WIND_VEL_DATA = 10
-
-  integer (kind=c_int), parameter :: NETCDF_FILE_OPEN = 27
-  integer (kind=c_int), parameter :: NETCDF_FILE_CLOSED = 42
 
   integer (kind=c_int), parameter, public :: MISSING_VALUES_ZERO_OUT = 0
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
@@ -376,7 +395,7 @@ end subroutine initialize_netcdf_data_object_sub
 
     else
 
-      call assert(lFALSE, "Unsupported data source sepecified", &
+      call assert(lFALSE, "Unsupported data source specified", &
         trim(__FILE__), __LINE__)
 
     endif
@@ -514,8 +533,25 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
       this%lGridHasChanged = lTRUE
 
-      call this%handle_missing_values(pGrdBase%rData)
-      call this%enforce_limits(pGrdBase%rData)
+      select case (this%iTargetDataType)
+
+        case ( GRID_DATATYPE_REAL )
+
+          call this%handle_missing_values(this%pGrdNative%rData)
+          call this%enforce_limits(this%pGrdNative%rData)
+
+        case ( GRID_DATATYPE_INT )
+
+!          call this%handle_missing_values(this%pGrdNative%iData)
+!          call this%enforce_limits(this%pGrdNative%iData)
+
+        case default
+
+          call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
+            //trim(asCharacter(this%iSourceDataType)), &
+            trim(__FILE__), __LINE__)
+
+      end select
 
       call this%transfer_from_native( pGrdBase )
 
@@ -928,18 +964,13 @@ end subroutine set_constant_value_real
 
         if (this%lPerformFullInitialization ) then
 
-          allocate(this%NCFILE, stat=iStat)
-          call assert(iStat==0, "Problem allocating memory for the NetCDF file" &
-            //" structure associated with ~the file named "//dquote(this%sSourceFilename), &
-            trim(__FILE__), __LINE__)
-
           if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 
             !> calculate the project boundaries in the coordinate system of
             !> the native data file
             call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
-            call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+            call netcdf_open_and_prepare_as_input(NCFILE=this%NCFILE, &
               sFilename=this%sSourceFilename, &
               lFlipHorizontal=this%lFlipHorizontal, &
               lFlipVertical=this%lFlipVertical, &
@@ -955,7 +986,7 @@ end subroutine set_constant_value_real
 
             !> assume source NetCDF file is in same projection and
             !> of same dimensions as base grid
-            call netcdf_open_and_prepare(NCFILE=this%NCFILE, &
+            call netcdf_open_and_prepare_as_input(NCFILE=this%NCFILE, &
               sFilename=this%sSourceFilename, &
               lFlipHorizontal=this%lFlipHorizontal, &
               lFlipVertical=this%lFlipVertical, &
@@ -1048,11 +1079,35 @@ end subroutine set_constant_value_real
 
     endif
 
+    if (this%lCreateLocalNetCDFArchive) &
+             call this%put_values_to_archive()
+
     call this%transfer_from_native( pGrdBase )
 
   end subroutine getvalues_dynamic_netcdf_sub
 
 #endif
+
+!----------------------------------------------------------------------
+
+  subroutine put_values_to_local_NetCDF_sub(this)
+
+    class (T_DATA_GRID) :: this
+
+    if (this%iNC_ARCHIVE_STATUS == NETCDF_FILE_CLOSED) then
+
+      call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
+                           NCFILE_ARCHIVE=this%NCFILE_ARCHIVE)
+
+      this%iNC_ARCHIVE_STATUS = NETCDF_FILE_OPEN
+
+    else
+
+
+
+    endif
+
+  end subroutine put_values_to_local_NetCDF_sub
 
 !----------------------------------------------------------------------
 
@@ -1151,6 +1206,17 @@ end subroutine set_conversion_factor_sub
 
 !----------------------------------------------------------------------
 
+subroutine set_archive_local_sub(this, lValue)
+
+   class (T_DATA_GRID) :: this
+   logical (kind=c_bool) :: lValue
+
+   this%lCreateLocalNetCDFArchive = lValue
+
+end subroutine set_archive_local_sub
+
+!----------------------------------------------------------------------
+
 subroutine set_offset_sub(this, rAddOffset)
 
    class (T_DATA_GRID) :: this
@@ -1163,6 +1229,72 @@ end subroutine set_offset_sub
 
 !----------------------------------------------------------------------
 
+subroutine set_missing_value_int_sub(this, iMissingVal)
+
+  class (T_DATA_GRID) :: this
+  integer (kind=c_int) :: iMissingVal
+
+  this%iMissingValuesCode = iMissingVal
+
+end subroutine set_missing_value_int_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_missing_value_real_sub(this, rMissingVal)
+
+  class (T_DATA_GRID) :: this
+  integer (kind=c_int) :: rMissingVal
+
+  this%rMissingValuesCode = rMissingVal
+
+end subroutine set_missing_value_real_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_minimum_allowable_value_int_sub(this, iMinVal)
+
+  class (T_DATA_GRID) :: this
+  integer (kind=c_int) :: iMinVal
+
+  this%iMinAllowedValue = iMinVal
+
+end subroutine set_minimum_allowable_value_int_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_maximum_allowable_value_int_sub(this, iMaxVal)
+
+  class (T_DATA_GRID) :: this
+  integer (kind=c_int) :: iMaxVal
+
+  this%iMaxAllowedValue = iMaxVal
+
+end subroutine set_maximum_allowable_value_int_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_minimum_allowable_value_real_sub(this, rMinVal)
+
+  class (T_DATA_GRID) :: this
+  real (kind=c_float) :: rMinVal
+
+  this%rMinAllowedValue = rMinVal
+
+end subroutine set_minimum_allowable_value_real_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_maximum_allowable_value_real_sub(this, rMaxVal)
+
+  class (T_DATA_GRID) :: this
+  real (kind=c_float) :: rMaxVal
+
+  this%rMaxAllowedValue = rMaxVal
+
+end subroutine set_maximum_allowable_value_real_sub
+
+!----------------------------------------------------------------------
+
   subroutine calc_project_boundaries(this, pGrdBase)
 
     class (T_DATA_GRID) :: this
@@ -1170,7 +1302,7 @@ end subroutine set_offset_sub
 
     ! [ LOCALS ]
     integer (kind=c_int) :: iRetVal
-    real (kind=c_float) :: rMultiplier = 1.5
+    real (kind=c_float) :: rMultiplier = 0.
     real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid
@@ -1210,7 +1342,7 @@ end subroutine set_offset_sub
    this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
    this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
 
-
+#ifdef DEBUG_PRINT
    print *, " "
    print *, "--  BASE GRID BOUNDS projected to DATA NATIVE COORDS"
    print *, "FROM: ", dquote(pGrdBase%sPROJ4_string)
@@ -1221,6 +1353,7 @@ end subroutine set_offset_sub
    print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
    print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
    print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
+#endif
 
   end subroutine calc_project_boundaries
 
@@ -1234,8 +1367,8 @@ end subroutine set_offset_sub
     ! [ LOCALS ]
     integer (kind=c_int) :: iMin, iMax
 
-    iMin = int(this%rMinAllowedValue, kind=c_int)
-    iMax = int(this%rMaxAllowedValue, kind=c_int)
+    iMin = this%iMinAllowedValue
+    iMax = this%iMaxAllowedValue
 
     where ( iValues < iMin )  iValues = iMin
     where ( iValues > iMax )  iValues = iMax
@@ -1328,5 +1461,74 @@ end subroutine set_offset_sub
     end select
 
   end subroutine data_GridHandleMissingData_real
+
+!----------------------------------------------------------------------
+
+  subroutine data_GridHandleMissingData_int(this, iValues)
+
+    class (T_DATA_GRID) :: this
+    integer (kind=c_int), dimension(:,:), intent(inout) :: iValues
+
+    ! [ LOCALS ]
+    integer (kind=c_int) :: iMissing, iMean
+
+    iMissing = this%iMissingValuesCode
+
+    select case (this%iMissingValuesAction)
+
+      case (MISSING_VALUES_ZERO_OUT)
+
+        select case (this%sMissingValuesOperator)
+
+          case ("<=")
+
+            where (iValues <= iMissing) iValues = iZERO
+
+          case (">=")
+
+            where (iValues >= iMissing) iValues = iZERO
+
+          case default
+
+            call assert(lFALSE, "Unknown missing values code was supplied " &
+              //"for processing data "//squote(this%sDescription)//": " &
+              //dquote(this%sMissingValuesOperator) )
+
+          end select
+
+      case (MISSING_VALUES_REPLACE_WITH_MEAN)
+
+        select case (this%sMissingValuesOperator)
+
+          case ("<=")
+
+            iMean = sum(iValues, iValues > iMissing ) &
+               / count(iValues > iMissing )
+
+            where (iValues <= iMissing) iValues = iMean
+
+          case (">=")
+
+            iMean = sum(iValues, iValues < iMissing ) &
+               / count(iValues < iMissing )
+
+            where (iValues >= iMissing) iValues = iMean
+
+          case default
+
+            call assert(lFALSE, "Unknown missing values code was supplied " &
+              //"for processing data "//squote(this%sDescription)//": " &
+              //dquote(this%sMissingValuesOperator) )
+
+          end select
+
+      case default
+
+        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - unhandled iMissingValuesAction", &
+        trim(__FILE__), __LINE__)
+
+    end select
+
+  end subroutine data_GridHandleMissingData_int
 
 end module data_factory

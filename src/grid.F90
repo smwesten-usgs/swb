@@ -594,12 +594,12 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
       end if
     end do
 
-    write(LU_LOG,FMT="(1x,a,t45,i12)") "Total number of grid cells with value NODATA: ", &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
       COUNT(pGrd%iData == pGrd%iNoDataValue )
 
-    write(LU_LOG,FMT="(1x,a,t45,i12)") "Total number of grid cells: ", &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
       size(pGrd%iData)
-    write(LU_LOG,FMT="(1x,a,t45,i12)") &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") &
       "Total number of grid cells with value >= 0: ",iCumlCount
     flush(LU_LOG)
 !    call Assert(size(pGrd%iData)==iCumlCount, &
@@ -754,12 +754,12 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
       end if
     end do
 
-    write(LU_LOG,FMT="(1x,a,t45,i12)") "Total number of grid cells with value NODATA: ", &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
       COUNT(pGrd%iData == pGrd%iNoDataValue )
 
-    write(LU_LOG,FMT="(1x,a,t45,i12)") "Total number of grid cells: ", &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
       size(pGrd%iData)
-    write(LU_LOG,FMT="(1x,a,t45,i12)") &
+    write(LU_LOG,FMT="(1x,a,t48,i12)") &
       "Total number of grid cells with value >= 0: ",iCumlCount
     flush(LU_LOG)
     call Assert(LOGICAL(size(pGrd%iData)==iCumlCount,kind=c_bool), &
@@ -770,7 +770,6 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
 
-  return
 end subroutine grid_ReadArcGrid_sub
 
 !!***
@@ -1209,7 +1208,8 @@ function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompl
   real (kind=c_float) :: rTol
   real (kind=c_float) :: rDEFAULT_TOLERANCE
 
-  rDEFAULT_TOLERANCE = pBaseGrd%rGridCellSize / 2.
+!  rDEFAULT_TOLERANCE = pBaseGrd%rGridCellSize / 2.
+  rDEFAULT_TOLERANCE = rZERO
 
   if ( present ( rTolerance ) ) then
       rTol = rTolerance
@@ -2254,14 +2254,15 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
 !       else
 !         print *, "iCol, iRow, iValue, iMask: ", iCol, iRow, "[", iValues(iCol, iRow), "]", iMask(iCellNum)
 !       endif
-!
+
      enddo
    enddo
 !
 !   print *, "values: ", iValue
 !   print *, "counts: ", iCount
 !
-   iIndex = MAXLOC(iCount, mask=(iValue /= iNoDataValue), dim=1)
+!   iIndex = MAXLOC(iCount, mask=(iValue /= iNoDataValue), dim=1)
+   iIndex = MAXLOC(iCount, dim=1)
 !
 !   print *, "index: ", iIndex
 !   print *, "return value: ", iValue(iIndex)

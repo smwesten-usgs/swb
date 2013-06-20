@@ -204,6 +204,8 @@ subroutine control_setModelOptions(sControlFile)
       read ( unit=sItem, fmt=*, iostat=iStat ) rTemp
       call Assert ( iStat == 0, "Failed to read X1 (or grid cell size)" )
 
+      !> if there is no additional information in this line, we assume that
+      !> the user wants to skip defining the upper right coordinates
       if( len_trim(sRecord) == 0 ) then
 
         rGridCellSize = rTemp
@@ -368,6 +370,9 @@ subroutine control_setModelOptions(sControlFile)
 
     else if ( str_compare(sItem,"NETCDF_PRECIP_FLIP_HORIZONTAL") ) then
       call DAT(PRECIP_DATA)%set_grid_flip_horizontal()
+
+    elseif (str_compare(sItem, "NETCDF_PRECIP_MAKE_LOCAL_ARCHIVE") ) then
+      call DAT(PRECIP_DATA)%set_make_local_archive(lTRUE)
 
 #endif
 
@@ -628,7 +633,7 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
 
-    else if ( sItem == "LAND_USE" ) then
+    else if ( sItem == "LAND_USE" .or. sItem == "LANDUSE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating land use grid"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
@@ -700,6 +705,12 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "LANDUSE_PROJECTION_DEFINITION") then
       call DAT(LANDUSE_DATA)%set_PROJ4( trim(sRecord) )
 
+    elseif (sItem == "LANDUSE_SET_MINIMUM_ALLOWED" ) then
+      call DAT(LANDUSE_DATA)%set_valid_minimum(asInt(sRecord))
+
+    elseif (sItem == "LANDUSE_SET_MAXIMUM_ALLOWED" ) then
+      call DAT(LANDUSE_DATA)%set_valid_maximum(asInt(sRecord))
+
     else if ( sItem == "FLOW_DIRECTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating flow direction grid"
       call Chomp ( sRecord, sOption )
@@ -729,6 +740,13 @@ subroutine control_setModelOptions(sControlFile)
 
     else if (sItem == "FLOW_DIRECTION_PROJECTION_DEFINITION") then
       call DAT(FLOWDIR_DATA)%set_PROJ4( trim(sRecord) )
+
+    elseif (sItem == "FLOW_DIRECTION_SET_MINIMUM_ALLOWED" ) then
+      call DAT(FLOWDIR_DATA)%set_valid_minimum(asInt(sRecord))
+
+    elseif (sItem == "FLOW_DIRECTION_SET_MAXIMUM_ALLOWED" ) then
+      call DAT(FLOWDIR_DATA)%set_valid_maximum(asInt(sRecord))
+
 
     else if ( sItem == "ROUTING_FRACTION" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating routing fraction grid"
@@ -1242,8 +1260,14 @@ subroutine control_setModelOptions(sControlFile)
       flush(UNIT=LU_LOG)
 
     else if (sItem == "SOIL_GROUP_PROJECTION_DEFINITION") then
-      pConfig%sSoilGroup_PROJ4 = trim(sRecord)
+!      pConfig%sSoilGroup_PROJ4 = trim(sRecord)
       call DAT(SOILS_GROUP_DATA)%set_PROJ4( trim(sRecord) )
+
+    elseif (sItem == "SOIL_GROUP_SET_MINIMUM_ALLOWED" ) then
+      call DAT(SOILS_GROUP_DATA)%set_valid_minimum(asInt(sRecord))
+
+    elseif (sItem == "SOIL_GROUP_SET_MAXIMUM_ALLOWED" ) then
+      call DAT(SOILS_GROUP_DATA)%set_valid_maximum(asInt(sRecord))
 
 
     else if ( sItem == "LAND_USE_LOOKUP_TABLE" ) then
@@ -1275,6 +1299,7 @@ subroutine control_setModelOptions(sControlFile)
       call model_ReadBasinMaskTable( pConfig )
       flush(UNIT=LU_LOG)
 
+!        iSoilMoistureRetentionMethod
     else if ( sItem == "ADJUSTED_WATER_CAPACITY" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating adjusted water capacity grid"
       call Chomp ( sRecord, sOption )
@@ -1341,6 +1366,13 @@ subroutine control_setModelOptions(sControlFile)
 
     else if (sItem == "WATER_CAPACITY_PROJECTION_DEFINITION") then
       call DAT(AWC_DATA)%set_PROJ4( trim(sRecord) )
+
+    elseif (sItem == "WATER_CAPACITY_SET_MINIMUM_ALLOWED" ) then
+      call DAT(AWC_DATA)%set_valid_minimum(asReal(sRecord))
+
+    elseif (sItem == "WATER_CAPACITY_SET_MAXIMUM_ALLOWED" ) then
+      call DAT(AWC_DATA)%set_valid_maximum(asReal(sRecord))
+
 
     else if ( sItem == "INITIAL_SOIL_MOISTURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating initial moisture grid"
@@ -1778,8 +1810,19 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
       if ( trim(sOption) == "T-M" .or. trim(sOption) == "THORNTHWAITE-MATHER") then
-        pConfig%iConfigureSM = CONFIG_SM_THORNTHWAITE_MATHER
-        call sm_thornthwaite_mather_Configure( sRecord )
+        call Chomp ( sRecord, sOption )
+
+        if ( trim(sOption) == "EQUATIONS" .or. trim(sOption) == "EQUATION") then
+          pConfig%iConfigureSM = CONFIG_SM_TM_EQUATIONS
+        elseif (len_trim(sRecord) == 0) then
+          pConfig%iConfigureSM = CONFIG_SM_TM_LOOKUP_TABLE
+          call sm_thornthwaite_mather_Configure( sOption )
+        elseif (trim(sOption) == "TABLE" ) then
+          pConfig%iConfigureSM = CONFIG_SM_TM_LOOKUP_TABLE
+          call sm_thornthwaite_mather_Configure( sRecord )
+        else
+          call Assert( lFALSE, "Illegal Thornthwaite-Mather soil-moisture retention option specified" )
+        endif
       else
         call Assert( lFALSE, "Illegal soil-moisture option specified" )
       end if
