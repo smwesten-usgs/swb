@@ -115,22 +115,23 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     call model_InitializeInputAndOutput( pGrd, pConfig )
 
+    !> read in flow direction, soil group, and AWC grids
     call model_InitializeDataStructures( pGrd, pConfig )
 
     !> any negative values are interpreted to mean that the cell should be
     !> inactivated
-    call model_setInactiveCells( pGrd, pConfig )
+!    call model_setInactiveCells( pGrd, pConfig )
 
     ! Initialize the model landuse-related parameters
-    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
+!    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
 
-    call model_InitializeProcesses( pGrd, pConfig )
+!    call model_InitializeRunoff( pGrd, pConfig )
 
-    if (pConfig%lEnableIrrigation .and. &
-      ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
-        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
-      call model_CreateIrrigationTableIndex(pGrd, pConfig )
-    endif
+!    if (pConfig%lEnableIrrigation .and. &
+!      ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+!        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+!      call model_CreateIrrigationTableIndex(pGrd, pConfig )
+!    endif
 
     ! calculate number of gridcells here.
     iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -195,19 +196,31 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call LookupMonth(pConfig%iMonth,pConfig%iDay,pConfig%iYear, &
     pConfig%iDayOfYear,sMonthName,lMonthEnd)
 
-  ! initialize landuse-associated variables; must be done each year if
-  ! dynamic landuse is being used
+  ! initialize (or re-initialize) landuse-associated variables;
+  ! must be done whenever a new landuse grid is provided
 
-  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd, iMonth=pConfig%iMonth, &
+    iDay=pConfig%iDay, iYear=pConfig%iYear )
 
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
     pGrd%Cells%iLandUse = pGrd%iData
     DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
 
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+    call model_setInactiveCells( pGrd, pConfig )
 
     ! (Re)-initialize the model
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
+    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+    if (pConfig%lEnableIrrigation .and. &
+      ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+      call model_CreateIrrigationTableIndex(pGrd, pConfig )
+    endif
+
+    write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
+    flush(unit=LU_LOG)
+    call model_InitializeET( pGrd, pConfig )
 
   endif
 
@@ -441,17 +454,17 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
     ! DISLIN plots
 
   ![LOCALS]
-  integer (kind=c_int) :: k
+  integer (kind=c_int) :: iIndex
 
   ! finalize and close any open NetCDF or binary output files
-  do k=1,iNUM_VARIABLES
+  do iIndex=1,iNUM_VARIABLES
 
     ! write the end date of the simulation into the header of
     ! the binary file (*.bin)
-    if(STAT_INFO(k)%iDailyOutput > iNONE &
-      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-      write(UNIT=STAT_INFO(k)%iLU,POS=iENDDATE_POS) &
+    if(STAT_INFO(iIndex)%iDailyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
+      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
         pConfig%iMonth,pConfig%iDay, pConfig%iYear
     end if
 
@@ -481,6 +494,13 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   call grid_Destroy(pGenericGrd_int)
   call grid_Destroy(pGenericGrd_sgl)
 !  call grid_Destroy(pGenericGrd_short)
+
+  do iIndex=1,size(DAT, 1)
+    if (DAT(iIndex)%iNC_ARCHIVE_STATUS == NETCDF_FILE_OPEN ) then
+      call netcdf_close_file(NCFILE=DAT(iIndex)%NCFILE_ARCHIVE)
+      call netcdf_deallocate_data_struct(NCFILE=DAT(iIndex)%NCFILE_ARCHIVE)
+    endif
+  enddo
 
   ! how long did all this take, anyway?
   call cpu_time(rEndTime)
@@ -648,16 +668,19 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
   iCount = 0
 
+!$OMP PARALLEL SECTIONS
+!$OMP SECTION
   call DAT(TMAX_DATA)%set_constant(rMaxT)
-  call DAT(TMIN_DATA)%set_constant(rMinT)
-
   call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMax)
-
+!OMP SECTION
+  call DAT(TMIN_DATA)%set_constant(rMinT)
   call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
+!$OMP END PARALLEL SECTIONS
+
 
 #ifdef STREAM_INTERACTIONS
   !! Adjust cell-by-cell temperature
@@ -774,6 +797,9 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
+
+      if (cel%iActive == iINACTIVE_CELL) cycle
+
       rTAvg_C = FtoC(cel%rTAvg)
       ! assuming snow depth is 10 times the water content of the snow in inches
       rSnowDepthCM = cel%rSnowCover * 10.0_c_float * rCM_PER_INCH
@@ -967,75 +993,88 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+      if (cel%iActive == iINACTIVE_CELL) then
 
+        dpChgInSnowCover = dpZERO
+        dpSnowCover = dpZERO
+        dpPreviousSnowCover = dpZERO
+        dpNetRainfall = dpZERO
 
-      ! allow for correction factor to be applied to precip gage input data
-      if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
-        lFREEZING = lTRUE
-        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
       else
-        lFREEZING = lFALSE
-        cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
-      end if
 
-      ! this simply retrieves the table value for the given landuse
-      dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
-
-      ! save the current snowcover value, create local copy as well
-      dpPreviousSnowCover = real(cel%rSnowCover, kind=c_double)
-      dpSnowCover = real(cel%rSnowCover, kind=c_double)
-
-      ! calculate NET PRECIPITATION; assign value of zero if all of the
-      ! GROSS PRECIP is captured by the INTERCEPTION process
-      dpNetPrecip = real(cel%rGrossPrecip, kind=c_double) - dpPotentialInterception
-
-      if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
-
-      dpInterception = real(cel%rGrossPrecip, kind=c_double) - dpNetPrecip
-
-      ! negative interception can only be generated if the user has supplied
-      ! *negative* values for GROSS PRECIPITATION; this has happened,
-      ! mostly due to interpolation schemes that generate pockets
-      ! of negative precip values
-      if(dpInterception < dpZERO) &
-        call Assert(lFALSE, &
-          "Negative value for interception was calculated on day " &
-          //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
-          //"  iCol: "//trim(int2char(iCol)), &
-          trim(__FILE__), __LINE__)
-
-      cel%rInterception = real(dpInterception, kind=c_double)
-!      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
-
-      ! NOW we're through with INTERCEPTION calculations
-      ! Next, we partition between snow and rain
-
-      ! Assume that all precipitation is rain, for now
-      dpNetRainfall = dpNetPrecip
-
-      ! Is it snowing?
-      if (lFREEZING ) then
-        dpSnowCover = dpSnowCover + dpNetPrecip
-        cel%rSnowFall_SWE = dpNetPrecip
-        dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
-      end if
-
-      ! Is there any melting?
-      if ( cel%rTAvg > rFREEZING ) then
-        dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
-                            * dpC_PER_F / rMM_PER_INCH
-
-        if(dpSnowCover > dpPotentialMelt) then
-          cel%rSnowMelt = dpPotentialMelt
-          dpSnowCover = dpSnowCover - dpPotentialMelt
-        else   ! not enough snowcover to satisfy the amount that *could* melt
-          cel%rSnowMelt = dpSnowCover
-          dpSnowCover = dpZERO
+        ! allow for correction factor to be applied to precip gage input data
+        if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
+          lFREEZING = lTRUE
+          cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+        else
+          lFREEZING = lFALSE
+          cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
         end if
 
-      end if
+        ! this simply retrieves the table value for the given landuse
+        dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
 
-      dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
+        ! save the current snowcover value, create local copy as well
+        dpPreviousSnowCover = real(cel%rSnowCover, kind=c_double)
+        dpSnowCover = real(cel%rSnowCover, kind=c_double)
+
+        ! calculate NET PRECIPITATION; assign value of zero if all of the
+        ! GROSS PRECIP is captured by the INTERCEPTION process
+        dpNetPrecip = real(cel%rGrossPrecip, kind=c_double) - dpPotentialInterception
+
+        if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
+
+        dpInterception = real(cel%rGrossPrecip, kind=c_double) - dpNetPrecip
+
+        ! negative interception can only be generated if the user has supplied
+        ! *negative* values for GROSS PRECIPITATION; this has happened,
+        ! mostly due to interpolation schemes that generate pockets
+        ! of negative precip values
+        if(dpInterception < dpZERO) &
+          call Assert(lFALSE, &
+            "Negative value for interception was calculated on day " &
+            //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
+            //"  iCol: "//trim(int2char(iCol)), &
+            trim(__FILE__), __LINE__)
+
+        cel%rInterception = real(dpInterception, kind=c_double)
+!      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
+
+        ! NOW we're through with INTERCEPTION calculations
+        ! Next, we partition between snow and rain
+
+        ! Assume that all precipitation is rain, for now
+        dpNetRainfall = dpNetPrecip
+
+        ! Is it snowing?
+        if (lFREEZING ) then
+          dpSnowCover = dpSnowCover + dpNetPrecip
+          cel%rSnowFall_SWE = dpNetPrecip
+          dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
+        end if
+
+        ! Is there any melting?
+        if ( cel%rTAvg > rFREEZING ) then
+          dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
+                            * dpC_PER_F / rMM_PER_INCH
+
+          if(dpSnowCover > dpPotentialMelt) then
+            cel%rSnowMelt = dpPotentialMelt
+            dpSnowCover = dpSnowCover - dpPotentialMelt
+          else   ! not enough snowcover to satisfy the amount that *could* melt
+            cel%rSnowMelt = dpSnowCover
+            dpSnowCover = dpZERO
+          end if
+
+        end if
+
+        dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
+
+        ! copy temporary double-precision values back to single-precision
+        cel%rSnowCover = real(dpSnowCover, kind=c_float)
+        cel%rNetRainfall = real(dpNetRainfall, kind=c_float)
+
+      endif
 
       call stats_UpdateAllAccumulatorsByCell( &
         REAL(dpChgInSnowCover,kind=c_double), iCHG_IN_SNOW_COV,iMonth,iZERO)
@@ -1051,10 +1090,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       call stats_UpdateAllAccumulatorsByCell( &
         dpSnowCover,iSNOWCOVER,iMonth,iZERO)
-
-      ! copy temporary double-precision values back to single-precision
-      cel%rSnowCover = real(dpSnowCover, kind=c_float)
-      cel%rNetRainfall = real(dpNetRainfall, kind=c_float)
 
     end do
 
@@ -2964,8 +2999,14 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
     rIntRate = pLU%rIntercept_NonGrowingSeason
   end if
 
-  call Assert(LOGICAL(rIntRate >= rZERO,kind=c_bool), &
-    "Negative value was determined for interception. Check your lookup tables.")
+  if (rIntRate < rZero) then
+
+    call echolog("Negative interception value encountered. Check your lookup tables." &
+      //"~landuse code: "//trim(asCharacter(pLU%iLanduseType)) &
+      //"~landuse description: "//trim(pLU%sLanduseDescription) )
+
+    call Assert(lFALSE, "")
+  endif
 
 end function rf_model_GetInterception
 
@@ -3056,18 +3097,18 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
      sAxisTxt="AWC (inches per foot)" )
 
 
-  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
-  pGrd%Cells%iLandUse = pGrd%iData
-  pGenericGrd_int%iData = pGrd%Cells%iLandUse
+!  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
+!  pGrd%Cells%iLandUse = pGrd%iData
+!  pGenericGrd_int%iData = pGrd%Cells%iLandUse
 
-  print *, trim(__FILE__), __LINE__
-  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
-    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+!  print *, trim(__FILE__), __LINE__
+!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
+!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
-  call make_shaded_contour(pGrd=pGenericGrd_int, &
-     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
-     sTitleTxt="Landuse / Landcover", &
-     sAxisTxt="LULC Code" )
+!  call make_shaded_contour(pGrd=pGenericGrd_int, &
+!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
+!     sTitleTxt="Landuse / Landcover", &
+!     sAxisTxt="LULC Code" )
 
 end subroutine model_InitializeDataStructures
 
@@ -3122,7 +3163,7 @@ end subroutine model_InitializeInputAndOutput
 
 !----------------------------------------------------------------------
 
-subroutine model_InitializeProcesses( pGrd, pConfig )
+subroutine model_InitializeRunoff( pGrd, pConfig )
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
@@ -3142,11 +3183,7 @@ subroutine model_InitializeProcesses( pGrd, pConfig )
     call model_InitializeFlowDirection( pGrd , pConfig)
   end if
 
-  write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
-  flush(unit=LU_LOG)
-  call model_InitializeET( pGrd, pConfig )
-
-end subroutine model_InitializeProcesses
+end subroutine model_InitializeRunoff
 
 !----------------------------------------------------------------------
 

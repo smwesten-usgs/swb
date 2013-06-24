@@ -1,10 +1,4 @@
-googleVis
-RJSONIO
-knitr
-stats
-graphics
-grDevices
-utils
-datasets
-methods
 base
+googleVis
+knitr
+RJSONIO

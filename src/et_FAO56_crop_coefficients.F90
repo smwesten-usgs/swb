@@ -243,10 +243,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
      do iCol=1,pGrd%iNX  ! last index in a Fortran array should be the slowest changing
        cel => pGrd%Cells(iCol, iRow)
 
-!       if ( cel%iActive == iINACTIVE_CELL ) cycle
+       if ( cel%iActive == iINACTIVE_CELL ) cycle
 !       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
-!       if(cel%rSoilWaterCap <= rNear_ZERO &
-!            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
+       if(cel%rSoilWaterCap <= rNear_ZERO &
+            .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
 
        pIRRIGATION => pConfig%IRRIGATION(cel%iIrrigationTableIndex)
 			 cel%rKcb = pIRRIGATION%rKcb

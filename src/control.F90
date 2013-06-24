@@ -546,6 +546,12 @@ subroutine control_setModelOptions(sControlFile)
     else if ( str_compare(sItem,"NETCDF_TMIN_FLIP_HORIZONTAL") ) then
       call DAT(TMIN_DATA)%set_grid_flip_horizontal()
 
+    elseif (str_compare(sItem, "NETCDF_TMAX_MAKE_LOCAL_ARCHIVE") ) then
+      call DAT(TMAX_DATA)%set_make_local_archive(lTRUE)
+
+    elseif (str_compare(sItem, "NETCDF_TMIN_MAKE_LOCAL_ARCHIVE") ) then
+      call DAT(TMIN_DATA)%set_make_local_archive(lTRUE)
+
 #endif
 
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then

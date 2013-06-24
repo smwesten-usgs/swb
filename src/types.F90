@@ -3023,13 +3023,14 @@ elemental function c_to_fortran_string( cCharacterString )  result(sText)
 
 end function c_to_fortran_string
 
-function fortran_to_c_string( sText )  result(cCharacterString)
+
+elemental function fortran_to_c_string( sText )  result(cCharacterString)
 
   use iso_c_binding
   implicit none
 
-  character (len=*) :: sText
-  character(len=len_trim(sText)+1) :: cCharacterString
+  character (len=*), intent(in) :: sText
+  character(len=256) :: cCharacterString
   integer (kind=c_int) :: iIndex
 
   iIndex = index(string=sText, substring=c_null_char)

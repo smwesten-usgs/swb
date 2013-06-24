@@ -24,6 +24,8 @@ module data_factory
   integer (kind=c_int), parameter :: NETCDF_FILE_OPEN = 27
   integer (kind=c_int), parameter :: NETCDF_FILE_CLOSED = 42
 
+  public :: NETCDF_FILE_OPEN, NETCDF_FILE_CLOSED
+
   !> @class T_DATA_GRID
   type, public :: T_DATA_GRID
     integer (kind=c_int) :: iSourceDataForm  ! constant, static grid, dynamic grid
@@ -79,6 +81,7 @@ module data_factory
 
     integer (kind=c_int) :: iNC_ARCHIVE_STATUS = NETCDF_FILE_CLOSED
     type (T_NETCDF4_FILE) :: NCFILE_ARCHIVE
+    integer (kind=c_size_t) :: iNCFILE_RECNUM = 0
 #endif
 
     integer (kind=c_int) :: iConstantValue
@@ -201,25 +204,31 @@ contains
      this%iTargetDataType = DATATYPE_REAL
      this%iSourceFileType = FILETYPE_NONE
 
+    call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
+    call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
+
   end subroutine initialize_constant_real_data_object_sub
 
 !----------------------------------------------------------------------
 
   subroutine initialize_constant_int_data_object_sub( &
-     this, &
-     sDescription, &
-     iConstant )
+    this, &
+    sDescription, &
+    iConstant )
 
-     class (T_DATA_GRID) :: this
-     character (len=*) :: sDescription
-     integer (kind=c_int), intent(in) :: iConstant
+    class (T_DATA_GRID) :: this
+    character (len=*) :: sDescription
+    integer (kind=c_int), intent(in) :: iConstant
 
-     this%iConstantValue = iConstant
-     this%sDescription = trim(sDescription)
-     this%iSourceDataForm = CONSTANT_GRID
-     this%iSourceDataType = DATATYPE_INT
-     this%iTargetDataType = DATATYPE_INT
-     this%iSourceFileType = FILETYPE_NONE
+    this%iConstantValue = iConstant
+    this%sDescription = trim(sDescription)
+    this%iSourceDataForm = CONSTANT_GRID
+    this%iSourceDataType = DATATYPE_INT
+    this%iTargetDataType = DATATYPE_INT
+    this%iSourceFileType = FILETYPE_NONE
+
+    call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
+    call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
 
   end subroutine initialize_constant_int_data_object_sub
 
@@ -292,6 +301,8 @@ subroutine initialize_gridded_data_object_sub( &
     trim(__FILE__), __LINE__)
 
   nullify(this%pGrdNative)
+  call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
+  call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
 
 end subroutine initialize_gridded_data_object_sub
 
@@ -350,6 +361,9 @@ subroutine initialize_netcdf_data_object_sub( &
 
    this%iTargetDataType = iDataType
    this%iNC_FILE_STATUS = NETCDF_FILE_CLOSED
+
+   call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
+   call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
 
 end subroutine initialize_netcdf_data_object_sub
 
@@ -1080,7 +1094,7 @@ end subroutine set_constant_value_real
     endif
 
     if (this%lCreateLocalNetCDFArchive) &
-             call this%put_values_to_archive()
+             call this%put_values_to_archive(iMonth, iDay, iYear)
 
     call this%transfer_from_native( pGrdBase )
 
@@ -1090,22 +1104,45 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
-  subroutine put_values_to_local_NetCDF_sub(this)
+  subroutine put_values_to_local_NetCDF_sub(this, iMonth, iDay, iYear)
 
     class (T_DATA_GRID) :: this
+    integer (kind=c_int) :: iMonth
+    integer (kind=c_int) :: iDay
+    integer (kind=c_int) :: iYear
+
+    ! [ LOCALS ]
+    integer (kind=c_size_t) :: iNumRows, iNumCols, iNumRecs
 
     if (this%iNC_ARCHIVE_STATUS == NETCDF_FILE_CLOSED) then
 
       call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
-                           NCFILE_ARCHIVE=this%NCFILE_ARCHIVE)
+               NCFILE_ARCHIVE=this%NCFILE_ARCHIVE, &
+               iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear)
 
       this%iNC_ARCHIVE_STATUS = NETCDF_FILE_OPEN
 
-    else
-
-
-
     endif
+
+    iNumRows = int(size(this%pGrdNative%rData, 2), kind=c_size_t)
+    iNumCols = int(size(this%pGrdNative%rData, 1), kind=c_size_t)
+    iNumRecs = this%iNCFILE_RECNUM
+
+    call netcdf_put_variable_array(NCFILE=this%NCFILE_ARCHIVE, &
+       iVarID=this%NCFILE_ARCHIVE%iVarID(NC_Z), &
+       iStart=[iNumRecs, 0_c_size_t, 0_c_size_t], &
+       iCount=[1_c_size_t, iNumRows, iNumCols], &
+       iStride=[1_c_ptrdiff_t,1_c_ptrdiff_t,1_c_ptrdiff_t], &
+       rValues=this%pGrdNative%rData)
+
+    call netcdf_put_variable_vector(NCFILE=this%NCFILE_ARCHIVE, &
+       iVarID=this%NCFILE_ARCHIVE%iVarID(NC_TIME), &
+       iStart=[this%iNCFILE_RECNUM], &
+       iCount=[1_c_size_t], &
+       iStride=[1_c_size_t], &
+       dpValues=[real(this%iNCFILE_RECNUM, kind=c_double)])
+
+    this%iNCFILE_RECNUM = this%iNCFILE_RECNUM + 1
 
   end subroutine put_values_to_local_NetCDF_sub
 
@@ -1409,15 +1446,23 @@ end subroutine set_maximum_allowable_value_real_sub
 
       case (MISSING_VALUES_ZERO_OUT)
 
-        select case (this%sMissingValuesOperator)
+        select case (trim(this%sMissingValuesOperator))
 
           case ("<=")
 
             where (rValues <= rMissing) rValues = rZERO
 
+          case ("<")
+
+            where (rValues < rMissing) rValues = rZERO
+
           case (">=")
 
             where (rValues >= rMissing) rValues = rZERO
+
+          case (">")
+
+            where (rValues > rMissing) rValues = rZERO
 
           case default
 
@@ -1438,12 +1483,26 @@ end subroutine set_maximum_allowable_value_real_sub
 
             where (rValues <= rMissing) rValues = rMean
 
+          case ("<")
+
+            rMean = sum(rValues, rValues >= rMissing ) &
+               / count(rValues >= rMissing )
+
+            where (rValues < rMissing) rValues = rMean
+
           case (">=")
 
             rMean = sum(rValues, rValues < rMissing ) &
                / count(rValues < rMissing )
 
             where (rValues >= rMissing) rValues = rMean
+
+          case (">")
+
+            rMean = sum(rValues, rValues <= rMissing ) &
+               / count(rValues <= rMissing )
+
+            where (rValues > rMissing) rValues = rMean
 
           case default
 
@@ -1478,15 +1537,23 @@ end subroutine set_maximum_allowable_value_real_sub
 
       case (MISSING_VALUES_ZERO_OUT)
 
-        select case (this%sMissingValuesOperator)
+        select case (trim(this%sMissingValuesOperator))
 
           case ("<=")
 
             where (iValues <= iMissing) iValues = iZERO
 
+          case ("<")
+
+            where (iValues < iMissing) iValues = iZERO
+
           case (">=")
 
             where (iValues >= iMissing) iValues = iZERO
+
+          case (">")
+
+            where (iValues > iMissing) iValues = iZERO
 
           case default
 
@@ -1507,12 +1574,26 @@ end subroutine set_maximum_allowable_value_real_sub
 
             where (iValues <= iMissing) iValues = iMean
 
+          case ("<")
+
+            iMean = sum(iValues, iValues >= iMissing ) &
+               / count(iValues >= iMissing )
+
+            where (iValues < iMissing) iValues = iMean
+
           case (">=")
 
             iMean = sum(iValues, iValues < iMissing ) &
                / count(iValues < iMissing )
 
             where (iValues >= iMissing) iValues = iMean
+
+          case (">")
+
+            iMean = sum(iValues, iValues <= iMissing ) &
+               / count(iValues <= iMissing )
+
+            where (iValues > iMissing) iValues = iMean
 
           case default
 

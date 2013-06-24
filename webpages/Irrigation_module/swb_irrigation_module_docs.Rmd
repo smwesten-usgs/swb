@@ -317,7 +317,7 @@ legend(x="left",inset=c(0.02,0.02),legend=c("swb soil mois","swb irr amnt",
 4. DUAL COEFFICIENT UNDER NONSTANDARD CONDITIONS
 -----------------------
 
-The last option for application of the FAO-56 methodology uses the dual-coefficient approach discussed in the last section. Further, this option **disables** the Thornethwaite-Mather soil moisture retention tables and **enables** the reduction of crop evaportanspiration due to water stress. 
+The last option for application of the FAO-56 methodology uses the dual-coefficient approach discussed in the last section. Further, this option **disables** the Thornthwaite-Mather soil moisture retention tables and **enables** the reduction of crop evaportanspiration due to water stress. 
 
 ```{r, echo=FALSE, fig.width=14, fig.height=7}
 sm <- read.table("two_factor_nonstandard/SOIL_MOISTURE_2_2.ssf", colClasses=c("character","character","character","numeric"))

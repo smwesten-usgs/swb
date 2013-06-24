@@ -62,6 +62,22 @@ module netcdf_c_api_interfaces
   end interface
 
   interface
+    function nc_def_var_deflate(ncid, varid, shuffle, deflate, deflate_level) bind(c)
+
+      import :: c_int
+
+      integer (kind=c_int), value :: ncid
+      integer (kind=c_int), value :: varid
+      integer (kind=c_int), value :: shuffle
+      integer (kind=c_int), value :: deflate
+      integer (kind=c_int), value :: deflate_level
+
+      integer (kind=c_int)        :: nc_def_var_deflate
+
+    end function nc_def_var_deflate
+  end interface
+
+  interface
     function nc_def_var(ncid, name, xtype, ndims, dimidsp, varidp) bind(c)
 
       import :: c_int, c_char
@@ -298,16 +314,16 @@ module netcdf_c_api_interfaces
   interface
     function nc_get_vars_float(ncid, varid, startp, countp, stridep, vars) bind(c)
 
-      import :: c_int, c_ptrdiff_t, c_size_t, c_float
+      import :: c_int, c_ptrdiff_t, c_size_t, c_float, c_ptr
 
       integer (kind=c_int), value             :: ncid, varid
-!      type (c_ptr), value                     :: startp
-!      type (c_ptr), value                     :: countp
-!      type (c_ptr), value                     :: stridep
+      type (c_ptr), value                     :: startp
+      type (c_ptr), value                     :: countp
+      type (c_ptr), value                     :: stridep
 
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+!      integer (kind=c_size_t)                            :: startp(*)
+!      integer (kind=c_size_t)                            :: countp(*)
+!      integer (kind=c_ptrdiff_t)                         :: stridep(*)
 
       real (kind=c_float), intent(out)        :: vars(*)
 

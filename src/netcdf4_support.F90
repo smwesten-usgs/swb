@@ -77,6 +77,15 @@ module netcdf4_support
   integer(kind=c_int), parameter :: NC_MAX_VARS     = 8192
   integer(kind=c_int), parameter :: NC_MAX_NAME     = 256
 
+  integer (kind=c_int), parameter :: NC_SHUFFLE_YES = 1
+  integer (kind=c_int), parameter :: NC_SHUFFLE_NO = 0
+  integer (kind=c_int), parameter :: NC_DEFLATE_YES = 1
+  integer (kind=c_int), parameter :: NC_DEFLATE_NO = 0
+
+  integer(kind=c_int), parameter :: NC_NETCDF4        = 4096
+  integer(kind=c_int), parameter :: NC_CLASSIC_MODEL  = 256
+
+
   integer(kind=c_int),  parameter :: NC_UNLIMITED = 0
   integer(kind=c_int),  parameter :: NC_GLOBAL    = -1
 
@@ -212,11 +221,15 @@ module netcdf4_support
   public :: netcdf_open_and_prepare_as_input
   public :: netcdf_open_and_prepare_as_output
   public :: netcdf_date_within_range
+  public :: netcdf_deallocate_data_struct
+  public :: netcdf_nullify_data_struct
   public :: netcdf_dump_cdl
   public :: netcdf_open_file
   public :: netcdf_close_file
   public :: netcdf_get_variable_slice
   public :: netcdf_update_time_starting_index
+  public :: netcdf_put_variable_array
+  public :: netcdf_put_variable_vector
 
 contains
 
@@ -513,6 +526,7 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
       iVarIndex=NCFILE%iVarIndex(NC_TIME) )
 
   call nf_get_time_units(NCFILE=NCFILE)
+  call nf_get_xyz_units(NCFILE=NCFILE)
 
   !> establish scale_factor and add_offset values, if present
   call nf_get_scale_and_offset(NCFILE=NCFILE)
@@ -554,20 +568,20 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
 #endif
 
     NCFILE%iColBounds(NC_LEFT) = &
-      max( min( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) - 4, &
+      max( min( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) - 0, &
                 lbound(NCFILE%rX_Coords,1) )
 
     NCFILE%iColBounds(NC_RIGHT) = &
-      min( max( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) + 4, &
+      min( max( iColRow_ul(COLUMN), iColRow_ur(COLUMN), iColRow_ll(COLUMN), iColRow_lr(COLUMN) ) + 0, &
                 ubound(NCFILE%rX_Coords,1) )
 
 
       NCFILE%iRowBounds(NC_TOP) = &
-        max( min( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) - 4, &
+        max( min( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) - 0, &
                   lbound(NCFILE%rY_Coords,1) )
 
       NCFILE%iRowBounds(NC_BOTTOM) = &
-        min( max( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) + 4, &
+        min( max( iColRow_ul(ROW), iColRow_ur(ROW), iColRow_ll(ROW), iColRow_lr(ROW) ) + 0, &
                   ubound(NCFILE%rY_Coords,1) )
 
   else
@@ -598,10 +612,14 @@ end subroutine netcdf_open_and_prepare_as_input
 
 !----------------------------------------------------------------------
 
-subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE)
+subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
+   iOriginMonth, iOriginDay, iOriginYear)
 
   type (T_NETCDF4_FILE ) :: NCFILE
   type (T_NETCDF4_FILE ) :: NCFILE_ARCHIVE
+  integer (kind=c_int) :: iOriginMonth
+  integer (kind=c_int) :: iOriginDay
+  integer (kind=c_int) :: iOriginYear
 
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
@@ -611,6 +629,10 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE)
   integer (kind=c_int) :: iMinCol, iMaxCol
   integer (kind=c_int) :: iMinRow, iMaxRow
   real (kind=c_double), dimension(:), allocatable :: rX, rY
+  character (len=10) :: sOriginText
+
+  write(sOriginText, fmt="(i4.4,'-',i2.2,'-',i2.2)") iOriginYear, &
+    iOriginMonth, iOriginDay
 
   iMaxRow = maxval(NCFILE%iRowBounds)
   iMinRow = minval(NCFILE%iRowBounds)
@@ -634,24 +656,48 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE)
                        iNX=iNumCols, &
                        iNY=iNumRows)
 
+  NCFILE_ARCHIVE%sVarUnits(NC_X) =   NCFILE%sVarUnits(NC_X)
+  NCFILE_ARCHIVE%sVarUnits(NC_Y) =   NCFILE%sVarUnits(NC_Y)
+  NCFILE_ARCHIVE%sVarUnits(NC_Z) =   NCFILE%sVarUnits(NC_Z)
+
   !> transfer dimension values to NetCDF file
   call nf_define_dimensions( NCFILE=NCFILE_ARCHIVE )
 
   !> set variable values in the NCFILE struct
   call nf_set_standard_variables(NCFILE=NCFILE_ARCHIVE, &
        sVarName_z = trim(NCFILE%sVarName(NC_Z)) )
+
   !> transfer variable values to NetCDF file
   call nf_define_variables(NCFILE=NCFILE_ARCHIVE)
+
+  call nf_get_variable_id_and_type( NCFILE=NCFILE_ARCHIVE )
+
+  call nf_set_standard_attributes(NCFILE=NCFILE_ARCHIVE, &
+    sOriginText=sOriginText)
+
+  call nf_set_global_attributes(NCFILE=NCFILE_ARCHIVE, &
+     sDataType=trim(NCFILE%sVarName(NC_Z)), &
+     sSourceFile=trim(NCFILE%sFilename))
+
+  call nf_put_attributes(NCFILE=NCFILE_ARCHIVE)
+
+  !> enable a low level of data compression for the
+  !> variable of interest
+  call nf_define_deflate(NCFILE=NCFILE_ARCHIVE, &
+     iVarID=NCFILE_ARCHIVE%iVarID(NC_Z), &
+     iShuffle=NC_SHUFFLE_YES, &
+     iDeflate=NC_DEFLATE_YES, &
+     iDeflate_level=2 )
 
   call nf_enddef(NCFILE=NCFILE_ARCHIVE)
 
   call nf_put_x_and_y(NCFILE=NCFILE_ARCHIVE, &
-!       dpX=NCFILE%rX_Coords(iMinCol:iMaxCol), &
-!       dpY=NCFILE%rY_Coords(iMinRow:iMaxRow) )
-       dpX=rX, &
-       dpY=rY )
+       dpX=NCFILE%rX_Coords(iMinCol:iMaxCol), &
+       dpY=NCFILE%rY_Coords(iMinRow:iMaxRow) )
+!       dpX=rX, &
+!       dpY=rY )
 
-  call netcdf_close_file(NCFILE_ARCHIVE)
+!  call netcdf_close_file(NCFILE_ARCHIVE)
 
 end subroutine netcdf_open_and_prepare_as_output
 
@@ -765,6 +811,7 @@ subroutine nf_return_native_coord_bounds(NCFILE)
   NCFILE%rY(NC_TOP) = rYmax + NCFILE%rGridCellSizeY * dpHALF
   NCFILE%rY(NC_BOTTOM) = rYmin - NCFILE%rGridCellSizeY * dpHALF
 
+#ifdef DEBUG_PRINT
   print *, "Grid cell size (X): ", NCFILE%rGridCellSizeX
   print *, "Grid cell size (Y): ", NCFILE%rGridCellSizeY
 
@@ -773,6 +820,7 @@ subroutine nf_return_native_coord_bounds(NCFILE)
   print *, "X (right): ", NCFILE%rX(NC_RIGHT)
   print *, "Y (top): ", NCFILE%rY(NC_TOP)
   print *, "Y (bottom): ", NCFILE%rY(NC_BOTTOM)
+#endif
 
 end subroutine nf_return_native_coord_bounds
 
@@ -1000,11 +1048,13 @@ subroutine netcdf_close_file( NCFILE)
   call echolog("Closing NetCDF file with name: "//dquote(NCFILE%sFilename))
   call nf_trap( nc_close(NCFILE%iNCID), __FILE__, __LINE__ )
 
+!  call nf_deallocate_data_struct( NCFILE=NCFILE )
+
 end subroutine netcdf_close_file
 
 !----------------------------------------------------------------------
 
-subroutine nf_deallocate_data_struct( NCFILE )
+subroutine netcdf_deallocate_data_struct( NCFILE )
 
   type (T_NETCDF4_FILE ) :: NCFILE
 
@@ -1019,6 +1069,7 @@ subroutine nf_deallocate_data_struct( NCFILE )
     if (pNC_VAR%iNumberOfAttributes == 0 ) cycle
 
     if (associated( pNC_VAR%pNC_ATT ))  deallocate( pNC_VAR%pNC_ATT )
+    pNC_VAR%pNC_ATT => null()
 
   enddo
 
@@ -1026,7 +1077,25 @@ subroutine nf_deallocate_data_struct( NCFILE )
   if (associated( NCFILE%pNC_ATT ))  deallocate( NCFILE%pNC_ATT )
   if (associated( NCFILE%pNC_DIM ))  deallocate( NCFILE%pNC_DIM )
 
-end subroutine nf_deallocate_data_struct
+  NCFILE%pNC_VAR => null()
+  NCFILE%pNC_ATT => null()
+  NCFILE%pNC_DIM => null()
+
+end subroutine netcdf_deallocate_data_struct
+
+!----------------------------------------------------------------------
+
+subroutine netcdf_nullify_data_struct( NCFILE )
+
+  type (T_NETCDF4_FILE ) :: NCFILE
+
+  ! [ LOCALS ]
+
+  NCFILE%pNC_VAR => null()
+  NCFILE%pNC_ATT => null()
+  NCFILE%pNC_DIM => null()
+
+end subroutine netcdf_nullify_data_struct
 
 !----------------------------------------------------------------------
 
@@ -1037,9 +1106,11 @@ subroutine nf_populate_dimension_struct( NCFILE )
   integer (kind=c_int) :: iIndex
   character (len=256) :: sDimName
 
+
   call nf_trap( nc_inq_ndims(ncid=NCFILE%iNCID, ndimsp=NCFILE%iNumberOfDimensions), &
                 __FILE__, __LINE__ )
 
+  iStat = 0
   if (associated(NCFILE%pNC_DIM) ) deallocate(NCFILE%pNC_DIM, stat=iStat)
   call assert(iStat == 0, "Could not deallocate memory for NC_DIM member in NC_FILE defined type", &
     trim(__FILE__), __LINE__)
@@ -1085,6 +1156,7 @@ subroutine nf_populate_variable_struct( NCFILE )
   call nf_trap( nc_inq_nvars(ncid=NCFILE%iNCID, nvarsp=NCFILE%iNumberOfVariables), &
        __FILE__, __LINE__ )
 
+  iStat = 0
   if (associated(NCFILE%pNC_VAR) ) deallocate(NCFILE%pNC_VAR, stat=iStat)
   call assert(iStat == 0, "Could not deallocate memory for NC_VAR member in NC_FILE defined type", &
     trim(__FILE__), __LINE__)
@@ -1184,7 +1256,10 @@ subroutine nf_populate_attribute_struct( NCFILE, pNC_ATT, iNC_VarID, iAttNum )
 
   iLength = pNC_ATT%iNC_AttSize
 
+  iStat = 0
   allocate(pNC_ATT%sAttValue(0:iLength-1), stat=iStat )
+  call assert(iStat==0, "INTERNAL PROGRAMMING ERROR - problem allocating memory", &
+    trim(__FILE__), __LINE__)
   pNC_ATT%sAttValue = ""
 
   select case(pNC_ATT%iNC_AttType)
@@ -1201,6 +1276,9 @@ subroutine nf_populate_attribute_struct( NCFILE, pNC_ATT, iNC_VarID, iAttNum )
     case (NC_SHORT)
 
       allocate(pNC_ATT%i2AttValue(0:iLength-1), stat=iStat )
+      call assert(iStat==0, "INTERNAL PROGRAMMING ERROR - problem allocating memory", &
+        trim(__FILE__), __LINE__)
+
 
       call nf_trap( nc_get_att_short(ncid=NCFILE%iNCID, &
         varid=iNC_VarID, &
@@ -1212,6 +1290,8 @@ subroutine nf_populate_attribute_struct( NCFILE, pNC_ATT, iNC_VarID, iAttNum )
     case (NC_INT)
 
       allocate(pNC_ATT%iAttValue(0:iLength-1), stat=iStat )
+      call assert(iStat==0, "INTERNAL PROGRAMMING ERROR - problem allocating memory", &
+        trim(__FILE__), __LINE__)
 
       call nf_trap( nc_get_att_int(ncid=NCFILE%iNCID, &
         varid=iNC_VarID, &
@@ -1223,6 +1303,9 @@ subroutine nf_populate_attribute_struct( NCFILE, pNC_ATT, iNC_VarID, iAttNum )
     case (NC_FLOAT)
 
       allocate(pNC_ATT%rAttValue(0:iLength-1), stat=iStat )
+      call assert(iStat==0, "INTERNAL PROGRAMMING ERROR - problem allocating memory", &
+        trim(__FILE__), __LINE__)
+
 
       call nf_trap( nc_get_att_float(ncid=NCFILE%iNCID, &
         varid=iNC_VarID, &
@@ -1234,6 +1317,8 @@ subroutine nf_populate_attribute_struct( NCFILE, pNC_ATT, iNC_VarID, iAttNum )
     case (NC_DOUBLE)
 
       allocate(pNC_ATT%dpAttValue(0:iLength-1), stat=iStat )
+      call assert(iStat==0, "INTERNAL PROGRAMMING ERROR - problem allocating memory", &
+        trim(__FILE__), __LINE__)
 
       call nf_trap( nc_get_att_double(ncid=NCFILE%iNCID, &
         varid=iNC_VarID, &
@@ -1685,24 +1770,24 @@ subroutine nf_get_variable_vector_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
   integer (kind=c_ptrdiff_t) :: iNC_Stride
   real (kind=c_float), dimension(:) :: rNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), target :: tNC_Start
-!  integer (kind=c_size_t), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), target :: tNC_Stride
+  type (c_ptr) :: pCount, pStart, pStride
+  integer (kind=c_size_t), target :: tNC_Start
+  integer (kind=c_size_t), target :: tNC_Count
+  integer (kind=c_ptrdiff_t), target :: tNC_Stride
 
-!  tNC_Start = iNC_Start
-!  tNC_Count = iNC_Count
-!  tNC_Stride = iNC_Stride
+  tNC_Start = iNC_Start
+  tNC_Count = iNC_Count
+  tNC_Stride = iNC_Stride
 
-!  pStart = c_loc(tNC_Start)
-!  pCount = c_loc(tNC_Count)
-!  pStride = c_loc(tNC_Stride)
+  pStart = c_loc(tNC_Start)
+  pCount = c_loc(tNC_Count)
+  pStride = c_loc(tNC_Stride)
 
   call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
        varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
+       startp=[pStart], &
+       countp=[pCount], &
+       stridep=[pStride], &
        vars=rNC_Vars), __FILE__, __LINE__ )
 
 end subroutine nf_get_variable_vector_float
@@ -1719,24 +1804,24 @@ subroutine nf_get_variable_array_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count, 
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   real (kind=c_float), dimension(:,:) :: rNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), dimension(size(iNC_Start)), target :: tNC_Start
-!  integer (kind=c_size_t), dimension(size(iNC_Count)), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), dimension(size(iNC_Stride)), target :: tNC_Stride
+  type (c_ptr) :: pCount, pStart, pStride
+  integer (kind=c_size_t), dimension(size(iNC_Start)), target :: tNC_Start
+  integer (kind=c_size_t), dimension(size(iNC_Count)), target :: tNC_Count
+  integer (kind=c_ptrdiff_t), dimension(size(iNC_Stride)), target :: tNC_Stride
 
-!  tNC_Start = iNC_Start
-!  tNC_Count = iNC_Count
-!  tNC_Stride = iNC_Stride
+  tNC_Start = iNC_Start
+  tNC_Count = iNC_Count
+  tNC_Stride = iNC_Stride
 
-!  pStart = c_loc(tNC_Start(1))
-!  pCount = c_loc(tNC_Count(1))
-!  pStride = c_loc(tNC_Stride(1))
+  pStart = c_loc(tNC_Start(1))
+  pCount = c_loc(tNC_Count(1))
+  pStride = c_loc(tNC_Stride(1))
 
   call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
        varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
+       startp=[pStart], &
+       countp=[pCount], &
+       stridep=[pStride], &
        vars=rNC_Vars), __FILE__, __LINE__ )
 
 end subroutine nf_get_variable_array_float
@@ -1753,24 +1838,24 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   real (kind=c_float), dimension(:) :: rNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), dimension(size(iNC_Start)), target :: tNC_Start
-!  integer (kind=c_size_t), dimension(size(iNC_Count)), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), dimension(size(iNC_Stride)), target :: tNC_Stride
+  type (c_ptr) :: pCount, pStart, pStride
+  integer (kind=c_size_t), dimension(size(iNC_Start)), target :: tNC_Start
+  integer (kind=c_size_t), dimension(size(iNC_Count)), target :: tNC_Count
+  integer (kind=c_ptrdiff_t), dimension(size(iNC_Stride)), target :: tNC_Stride
 
-!  tNC_Start = iNC_Start
-!  tNC_Count = iNC_Count
-!  tNC_Stride = iNC_Stride
+  tNC_Start = iNC_Start
+  tNC_Count = iNC_Count
+  tNC_Stride = iNC_Stride
 
-!  pStart = c_loc(tNC_Start(1))
-!  pCount = c_loc(tNC_Count(1))
-!  pStride = c_loc(tNC_Stride(1))
+  pStart = c_loc(tNC_Start(1))
+  pCount = c_loc(tNC_Count(1))
+  pStride = c_loc(tNC_Stride(1))
 
   call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
        varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
+       startp=[pStart], &
+       countp=[pCount], &
+       stridep=[pStride], &
        vars=rNC_Vars), __FILE__, __LINE__ )
 
 end subroutine nf_get_variable_array_as_vector_float
@@ -2041,64 +2126,6 @@ end subroutine nf_get_time_units
 
 !----------------------------------------------------------------------
 
-subroutine nf_put_time_units(NCFILE)
-
-  type (T_NETCDF4_FILE), intent(inout) :: NCFILE
-
-  ! [ LOCALS ]
-  type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
-  character (len=256) :: sDateTime
-  character (len=256) :: sItem
-  integer (kind=c_int) :: iIndex
-  logical (kind=c_bool) :: lFound
-  integer (kind=c_int) :: iStat
-
-  call assert(NCFILE%iVarID(NC_TIME) >= 0, "INTERNAL PROGRAMMING ERROR -- " &
-    //"nf_get_time_units must be called only after a call is made to ~" &
-    //"netcdf_get_variable_ids", trim(__FILE__), __LINE__)
-
-  pNC_VAR => NCFILE%pNC_VAR(NCFILE%iVarID(NC_TIME) )
-
-  lFound = lFALSE
-
-  do iIndex=0, pNC_VAR%iNumberOfAttributes - 1
-
-    if ( str_compare(pNC_VAR%pNC_ATT(iIndex)%sAttributeName, "units") ) then
-      lFound = lTRUE
-      exit
-    endif
-
-  enddo
-
-  call assert (lFound, "Failed to find the 'units' attribute associated " &
-    //"with time variable "//dquote(pNC_VAR%sVariableName), &
-    trim(__FILE__), __LINE__)
-
-  sDateTime = pNC_VAR%pNC_ATT(iIndex)%sAttValue(0)
-
-  call chomp(sDateTime, sItem)    !> should be "days"
-  call chomp(sDateTime, sItem)    !> should be "since"
-
-  call chomp(sDateTime, sItem, "/-")
-  read(sItem, *) NCFILE%iOriginYear
-
-  call chomp(sDateTime, sItem, "/-")
-  read(sItem, *) NCFILE%iOriginMonth
-
-  read(sDateTime, *) NCFILE%iOriginDay
-
-  call chomp(sDateTime, sItem, ":")
-  read(sItem, *) NCFILE%iOriginHH
-
-  call chomp(sDateTime, sItem, ":")
-  read(sItem, *) NCFILE%iOriginMM
-
-  read(sDateTime, *) NCFILE%iOriginSS
-
-end subroutine nf_put_time_units
-
-!----------------------------------------------------------------------
-
 subroutine nf_get_xyz_units(NCFILE)
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
@@ -2109,7 +2136,7 @@ subroutine nf_get_xyz_units(NCFILE)
   logical (kind=c_bool) :: lFound
   integer (kind=c_int) :: iStat
 
-  do iIndex = NC_X, NC_Z
+  do iIndex = NC_Y, NC_Z
 
     call assert(NCFILE%iVarID(iIndex) >= 0, "INTERNAL PROGRAMMING ERROR -- " &
     //"nc_get_XYZ_units must be called only after a call is made to ~" &
@@ -2294,11 +2321,6 @@ function nf_coord_to_col_row(NCFILE, rX, rY)  result(iColRow)
   ! [ LOCALS ]
   integer (kind=c_int) :: iColNum, iRowNum
 
-  print *, rX, rY
-  print *, "X range = ",minval(NCFILE%rX_Coords), maxval(NCFILE%rX_Coords)
-  print *, "Y range = ",minval(NCFILE%rY_Coords), maxval(NCFILE%rY_Coords)
-  print *, ""
-
   iColNum = nf_return_index_double(NCFILE%rX_Coords, rX)
   iRowNum = nf_return_index_double(NCFILE%rY_Coords, rY)
 
@@ -2346,11 +2368,8 @@ subroutine nf_create(NCFILE, sFilename, iLU)
   character (len=256) :: sBuf
   call getcwd(sBuf)
 
-  print *, dquote(sBuf)
-  print *, dquote(c_to_fortran_string(sFilename))
-
-  call nf_trap(nc_create(path=fortran_to_c_string(sFilename), &
-                 cmode=NC_FORMAT_NETCDF4, &
+  call nf_trap(nc_create(path=trim(fortran_to_c_string(sFilename)), &
+                 cmode=NC_NETCDF4, &
                  ncidp=NCFILE%iNCID), &
                  __FILE__, __LINE__)
 
@@ -2363,6 +2382,25 @@ subroutine nf_create(NCFILE, sFilename, iLU)
   endif
 
 end subroutine nf_create
+
+!----------------------------------------------------------------------
+
+subroutine nf_define_deflate(NCFILE, iVarID, iShuffle, iDeflate, iDeflate_level)
+
+  type (T_NETCDF4_FILE ) :: NCFILE
+  integer (kind=c_int) :: iVarID
+  integer (kind=c_int) :: iShuffle
+  integer (kind=c_int) :: iDeflate
+  integer (kind=c_int) :: iDeflate_level
+
+  call nf_trap(nc_def_var_deflate(ncid=NCFILE%iNCID, &
+          varid=iVarID, &
+          shuffle=iShuffle, &
+          deflate=iDeflate, &
+          deflate_level=iDeflate_level), &
+          __FILE__, __LINE__)
+
+end subroutine nf_define_deflate
 
 !----------------------------------------------------------------------
 
@@ -2390,7 +2428,7 @@ function nf_define_dimension(NCFILE, sDimensionName, iDimensionSize) &
   iDimSize = int(iDimensionSize, kind=c_size_t)
 
   call nf_trap(nc_def_dim(ncid=NCFILE%iNCID, &
-                          name=fortran_to_c_string(sDimensionName), &
+                          name=trim(sDimensionName)//c_null_char, &
                           lenv=iDimSize, &
                           dimidp=iDimID), &
                           __FILE__, __LINE__)
@@ -2414,7 +2452,7 @@ subroutine nf_define_dimensions( NCFILE )
     pNC_DIM => NCFILE%pNC_DIM(iIndex)
 
     call nf_trap(nc_def_dim(ncid=NCFILE%iNCID, &
-      name=fortran_to_c_string(pNC_DIM%sDimensionName), &
+      name=trim(pNC_DIM%sDimensionName)//c_null_char, &
       lenv=pNC_DIM%iNC_DimSize, &
       dimidp=pNC_DIM%iNC_DimID), &
       __FILE__, __LINE__ )
@@ -2434,6 +2472,8 @@ subroutine nf_set_standard_dimensions(NCFILE, iNX, iNY)
   ! [ LOCALS ]
   integer (kind=c_int) :: iStat
 
+  iStat = 0
+
   NCFILE%iNumberOfDimensions = 3
 
   if (associated(NCFILE%pNC_DIM) ) deallocate(NCFILE%pNC_DIM, stat=iStat)
@@ -2445,23 +2485,14 @@ subroutine nf_set_standard_dimensions(NCFILE, iNX, iNY)
     trim(__FILE__), __LINE__)
 
   !> define the time dimension;
-!  NCFILE%pNC_DIM(NC_TIME)%iNC_DimID =  nf_define_dimension(NCFILE=NCFILE, &
-!            sDimensionName=fortran_to_c_string("time"), &
-!            iDimensionSize=NC_UNLIMITED)
   NCFILE%pNC_DIM(NC_TIME)%sDimensionName = "time"
   NCFILE%pNC_DIM(NC_TIME)%iNC_DimSize = NC_UNLIMITED
 
   !> define the y dimension;
-!  NCFILE%pNC_DIM(NC_Y)%iNC_DimID = nf_define_dimension(NCFILE=NCFILE, &
-!            sDimensionName=fortran_to_c_string("y"), &
-!            iDimensionSize=iNY)
   NCFILE%pNC_DIM(NC_Y)%sDimensionName = "y"
   NCFILE%pNC_DIM(NC_Y)%iNC_DimSize = iNY
 
   !> define the x dimension;
-!  NCFILE%pNC_DIM(NC_X)%iNC_DimID = nf_define_dimension(NCFILE=NCFILE, &
-!            sDimensionName=fortran_to_c_string("x"), &
-!            iDimensionSize=iNX)
   NCFILE%pNC_DIM(NC_X)%sDimensionName = "x"
   NCFILE%pNC_DIM(NC_X)%iNC_DimSize = iNX
 
@@ -2477,6 +2508,8 @@ subroutine nf_set_standard_variables(NCFILE, sVarName_z)
   ! [ LOCALS ]
   integer (kind=c_int) :: iStat
 
+  iStat = 0
+
   NCFILE%iNumberOfVariables = 4
 
   if (associated(NCFILE%pNC_VAR) ) deallocate(NCFILE%pNC_VAR, stat=iStat)
@@ -2486,17 +2519,6 @@ subroutine nf_set_standard_variables(NCFILE, sVarName_z)
   allocate(NCFILE%pNC_VAR( 0 : NCFILE%iNumberOfVariables-1), stat=iStat )
   call assert(iStat == 0, "Could not allocate memory for NC_VAR member in NC_FILE defined type", &
     trim(__FILE__), __LINE__)
-
-
-!    character (len=64) :: sVariableName
-!    integer (kind=c_int) :: iNC_VarID = -9999
-!    integer (kind=c_int) :: iNC_VarType
-!    integer (kind=c_int) :: iNumberOfDimensions
-!    integer (kind=c_int), dimension(0:3) :: iNC_DimID = -9999
-!    integer (kind=c_int) :: iNumberOfAttributes
-!    type (T_NETCDF_ATTRIBUTE), dimension(:), pointer :: pNC_ATT => null()
-
-
 
   NCFILE%pNC_VAR(NC_TIME)%sVariableName = "time"
   NCFILE%pNC_VAR(NC_TIME)%iNC_VarType = NC_DOUBLE
@@ -2520,6 +2542,8 @@ subroutine nf_set_standard_variables(NCFILE, sVarName_z)
                                  NCFILE%pNC_DIM(NC_Y)%iNC_DimID, &
                                  NCFILE%pNC_DIM(NC_X)%iNC_DimID,0]
 
+  NCFILE%sVarName(NC_Z) = trim(sVarName_z)
+
 end subroutine nf_set_standard_variables
 
 !----------------------------------------------------------------------
@@ -2541,7 +2565,8 @@ subroutine nf_set_global_attributes(NCFILE, sDataType, sSourceFile)
   block
 
     NCFILE%pNC_ATT(0)%sAttributeName = "source"
-    NCFILE%pNC_ATT(0)%sAttValue(0) = squote(sDataType)//" data from file "//squote(sSourceFile)
+    allocate(NCFILE%pNC_ATT(0)%sAttValue(0:0))
+    NCFILE%pNC_ATT(0)%sAttValue(0) = trim(sDataType)//" data from file "//trim(sSourceFile)
     NCFILE%pNC_ATT(0)%iNC_AttType = NC_CHAR
     NCFILE%pNC_ATT(0)%iNC_AttSize = 1_c_size_t
 
@@ -2551,34 +2576,41 @@ end subroutine nf_set_global_attributes
 
 !----------------------------------------------------------------------
 
-subroutine nf_set_standard_attributes(NCFILE)
+subroutine nf_set_standard_attributes(NCFILE, sOriginText)
 
   type (T_NETCDF4_FILE ) :: NCFILE
+  character (len=*) :: sOriginText
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iStat
+  integer (kind=c_int) :: iNumAttributes
   type (T_NETCDF_ATTRIBUTE), dimension(:), pointer :: pNC_ATT
 
 
-  allocate( NCFILE%pNC_VAR(NC_TIME)%pNC_ATT(0:2), stat=iStat)
+  iNumAttributes = 3
+  allocate( NCFILE%pNC_VAR(NC_TIME)%pNC_ATT(0:iNumAttributes-1), stat=iStat)
   call assert(iStat == 0, "Could not allocate memory for NC_ATT member in NC_VAR struct of NC_FILE", &
     trim(__FILE__), __LINE__)
+  NCFILE%pNC_VAR(NC_TIME)%iNumberOfAttributes = iNumAttributes
 
   pNC_ATT => NCFILE%pNC_VAR(NC_TIME)%pNC_ATT
 
   block
 
     pNC_ATT(0)%sAttributeName = "units"
-    pNC_ATT(0)%sAttValue(0) = "days since 0000-00-00"
+    allocate(pNC_ATT(0)%sAttValue(0:0))
+    pNC_ATT(0)%sAttValue(0) = "days since "//trim(sOriginText)//" 00:00:00"
     pNC_ATT(0)%iNC_AttType = NC_CHAR
     pNC_ATT(0)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(1)%sAttributeName = "calendar"
+    allocate(pNC_ATT(1)%sAttValue(0:0))
     pNC_ATT(1)%sAttValue(0) = "standard"
     pNC_ATT(1)%iNC_AttType = NC_CHAR
     pNC_ATT(1)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(2)%sAttributeName = "long_name"
+    allocate(pNC_ATT(2)%sAttValue(0:0))
     pNC_ATT(2)%sAttValue(0) = "time"
     pNC_ATT(2)%iNC_AttType = NC_CHAR
     pNC_ATT(2)%iNC_AttSize = 1_c_size_t
@@ -2586,25 +2618,29 @@ subroutine nf_set_standard_attributes(NCFILE)
 
   end block
 
-  allocate( NCFILE%pNC_VAR(NC_Z)%pNC_ATT(0:2), stat=iStat)
+  allocate( NCFILE%pNC_VAR(NC_Z)%pNC_ATT(0:iNumAttributes-1), stat=iStat)
   call assert(iStat == 0, "Could not allocate memory for NC_ATT member in NC_VAR struct of NC_FILE", &
     trim(__FILE__), __LINE__)
+  NCFILE%pNC_VAR(NC_Z)%iNumberOfAttributes = iNumAttributes
 
   pNC_ATT => NCFILE%pNC_VAR(NC_Z)%pNC_ATT
 
   block
 
     pNC_ATT(0)%sAttributeName = "units"
+    allocate(pNC_ATT(0)%sAttValue(0:0))
     pNC_ATT(0)%sAttValue(0) = NCFILE%sVarUnits(NC_Z)
     pNC_ATT(0)%iNC_AttType = NC_CHAR
     pNC_ATT(0)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(1)%sAttributeName = "calendar"
+    allocate(pNC_ATT(1)%sAttValue(0:0))
     pNC_ATT(1)%sAttValue(0) = "standard"
     pNC_ATT(1)%iNC_AttType = NC_CHAR
     pNC_ATT(1)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(2)%sAttributeName = "long_name"
+    allocate(pNC_ATT(2)%sAttValue(0:0))
     pNC_ATT(2)%sAttValue(0) = "time"
     pNC_ATT(2)%iNC_AttType = NC_CHAR
     pNC_ATT(2)%iNC_AttSize = 1_c_size_t
@@ -2613,25 +2649,29 @@ subroutine nf_set_standard_attributes(NCFILE)
   end block
 
 
-  allocate( NCFILE%pNC_VAR(NC_Y)%pNC_ATT(0:2), stat=iStat)
+  allocate( NCFILE%pNC_VAR(NC_Y)%pNC_ATT(0:iNumAttributes-1), stat=iStat)
   call assert(iStat == 0, "Could not allocate memory for NC_ATT member in NC_VAR struct of NC_FILE", &
     trim(__FILE__), __LINE__)
+  NCFILE%pNC_VAR(NC_Y)%iNumberOfAttributes = iNumAttributes
 
   pNC_ATT => NCFILE%pNC_VAR(NC_Y)%pNC_ATT
 
   block
 
     pNC_ATT(0)%sAttributeName = "units"
+    allocate(pNC_ATT(0)%sAttValue(0:0))
     pNC_ATT(0)%sAttValue(0) = NCFILE%sVarUnits(NC_Y)
     pNC_ATT(0)%iNC_AttType = NC_CHAR
     pNC_ATT(0)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(1)%sAttributeName = "long_name"
+    allocate(pNC_ATT(1)%sAttValue(0:0))
     pNC_ATT(1)%sAttValue(0) = "y coordinate of projection"
     pNC_ATT(1)%iNC_AttType = NC_CHAR
     pNC_ATT(1)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(2)%sAttributeName = "standard_name"
+    allocate(pNC_ATT(2)%sAttValue(0:0))
     pNC_ATT(2)%sAttValue(0) = "projection_y_coordinate"
     pNC_ATT(2)%iNC_AttType = NC_CHAR
     pNC_ATT(2)%iNC_AttSize = 1_c_size_t
@@ -2639,25 +2679,29 @@ subroutine nf_set_standard_attributes(NCFILE)
 
   end block
 
-  allocate( NCFILE%pNC_VAR(NC_X)%pNC_ATT(0:2), stat=iStat)
+  allocate( NCFILE%pNC_VAR(NC_X)%pNC_ATT(0:iNumAttributes-1), stat=iStat)
   call assert(iStat == 0, "Could not allocate memory for NC_ATT member in NC_VAR struct of NC_FILE", &
     trim(__FILE__), __LINE__)
+  NCFILE%pNC_VAR(NC_X)%iNumberOfAttributes = iNumAttributes
 
   pNC_ATT => NCFILE%pNC_VAR(NC_X)%pNC_ATT
 
   block
 
     pNC_ATT(0)%sAttributeName = "units"
+    allocate(pNC_ATT(0)%sAttValue(0:0))
     pNC_ATT(0)%sAttValue(0) = NCFILE%sVarUnits(NC_X)
     pNC_ATT(0)%iNC_AttType = NC_CHAR
     pNC_ATT(0)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(1)%sAttributeName = "long_name"
+    allocate(pNC_ATT(1)%sAttValue(0:0))
     pNC_ATT(1)%sAttValue(0) = "x coordinate of projection"
     pNC_ATT(1)%iNC_AttType = NC_CHAR
     pNC_ATT(1)%iNC_AttSize = 1_c_size_t
 
     pNC_ATT(2)%sAttributeName = "standard_name"
+    allocate(pNC_ATT(2)%sAttValue(0:0))
     pNC_ATT(2)%sAttValue(0) = "projection_x_coordinate"
     pNC_ATT(2)%iNC_AttType = NC_CHAR
     pNC_ATT(2)%iNC_AttSize = 1_c_size_t
@@ -2683,7 +2727,7 @@ subroutine nf_put_x_and_y(NCFILE, dpX, dpY)
 
   iLength = int(size(dpX, 1), kind=c_size_t)
 
-  call netcdf_put_variables(NCFILE=NCFILE, &
+  call netcdf_put_variable_vector(NCFILE=NCFILE, &
                    iVarID=NCFILE%pNC_VAR(NC_X)%iNC_VarID, &
                    iStart=[0_c_size_t], &
                    iCount=[iLength], &
@@ -2692,7 +2736,7 @@ subroutine nf_put_x_and_y(NCFILE, dpX, dpY)
 
   iLength = int(size(dpY, 1), kind=c_size_t)
 
-  call netcdf_put_variables(NCFILE=NCFILE, &
+  call netcdf_put_variable_vector(NCFILE=NCFILE, &
                    iVarID=NCFILE%pNC_VAR(NC_Y)%iNC_VarID, &
                    iStart=[0_c_size_t], &
                    iCount=[iLength], &
@@ -2713,10 +2757,8 @@ function nf_define_variable(NCFILE, sVariableName, iVariableType, &
   integer (kind=c_int), dimension(:) :: iDimIDs
   integer (kind=c_int) :: iVarID
 
-  print *, dquote(fortran_to_c_string(sVariableName))
-
   call nf_trap( nc_def_var(ncid=NCFILE%iNCID,&
-                           name=fortran_to_c_string(sVariableName), &
+                           name=trim(fortran_to_c_string(sVariableName)), &
                            xtype=iVariableType, &
                            ndims=iNumberOfDimensions, &
                            dimidsp=iDimIDs, &
@@ -2741,10 +2783,8 @@ subroutine nf_define_variables( NCFILE )
 
     pNC_VAR => NCFILE%pNC_VAR(iIndex)
 
-    print *, iIndex, dquote(fortran_to_c_string(pNC_VAR%sVariableName))
-
     call nf_trap( nc_def_var(ncid=NCFILE%iNCID,&
-                             name=fortran_to_c_string(pNC_VAR%sVariableName), &
+                             name=trim(fortran_to_c_string(pNC_VAR%sVariableName)), &
                              xtype=pNC_VAR%iNC_VarType, &
                              ndims=pNC_VAR%iNumberOfDimensions, &
                              dimidsp=pNC_VAR%iNC_DimID, &
@@ -2774,12 +2814,13 @@ subroutine nf_put_attribute(NCFILE, iVarID, sAttributeName, &
   if (present(sAttributeValue) ) then
 
     iNumberOfAttributes = size( sAttributeValue, 1)
+    iNumberOfAttributes = int(len_trim(sAttributeValue(1)), kind=c_size_t)
 
     call nf_trap( nc_put_att_text(ncid=NCFILE%iNCID, &
                     varid=iVarID, &
-                    name=fortran_to_c_string(sAttributeName), &
+                    name=trim(sAttributeName), &
                     nlen=iNumberOfAttributes, &
-                    tp=sAttributeValue), &
+                    tp=trim(sAttributeValue(1))), &
                     __FILE__, __LINE__)
 
   elseif (present(iAttributeValue) ) then
@@ -2788,7 +2829,7 @@ subroutine nf_put_attribute(NCFILE, iVarID, sAttributeName, &
 
     call nf_trap( nc_put_att_int(ncid=NCFILE%iNCID, &
                     varid=iVarID, &
-                    name=fortran_to_c_string(sAttributeName), &
+                    name=trim(sAttributeName), &
                     xtype=NC_INT, &
                     nlen=iNumberOfAttributes, &
                      ip=iAttributeValue), &
@@ -2800,7 +2841,7 @@ subroutine nf_put_attribute(NCFILE, iVarID, sAttributeName, &
 
     call nf_trap( nc_put_att_float(ncid=NCFILE%iNCID, &
                     varid=iVarID, &
-                    name=fortran_to_c_string(sAttributeName), &
+                    name=trim(sAttributeName), &
                     xtype=NC_FLOAT, &
                     nlen=iNumberOfAttributes, &
                     fp=rAttributeValue), &
@@ -2812,7 +2853,7 @@ subroutine nf_put_attribute(NCFILE, iVarID, sAttributeName, &
 
     call nf_trap( nc_put_att_double(ncid=NCFILE%iNCID, &
                        varid=iVarID, &
-                       name=fortran_to_c_string(sAttributeName), &
+                       name=trim(sAttributeName), &
                        xtype=NC_DOUBLE, &
                        nlen=iNumberOfAttributes, &
                        dp=dpAttributeValue), &
@@ -2841,7 +2882,7 @@ subroutine nf_put_attributes(NCFILE)
 
     pNC_VAR => NCFILE%pNC_VAR(iIndex)
 
-    do iIndex2 = 0, pNC_VAR%iNumberOfAttributes
+    do iIndex2 = 0, pNC_VAR%iNumberOfAttributes-1
 
       pNC_ATT => pNC_VAR%pNC_ATT(iIndex2)
 
@@ -2849,31 +2890,47 @@ subroutine nf_put_attributes(NCFILE)
 
           case (NC_DOUBLE)
 
+            call assert(allocated(pNC_ATT%dpAttValue), &
+              "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+              trim(__FILE__), __LINE__)
+
             call nf_put_attribute(NCFILE=NCFILE, &
                 iVarID=pNC_VAR%iNC_VarID, &
-                sAttributeName=pNC_ATT%sAttributeName, &
+                sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
                 dpAttributeValue=pNC_ATT%dpAttValue)
 
           case (NC_INT)
 
+            call assert(allocated(pNC_ATT%iAttValue), &
+              "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+              trim(__FILE__), __LINE__)
+
             call nf_put_attribute(NCFILE=NCFILE, &
                 iVarID=pNC_VAR%iNC_VarID, &
-                sAttributeName=pNC_ATT%sAttributeName, &
+                sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
                 iAttributeValue=pNC_ATT%iAttValue)
 
           case (NC_FLOAT)
 
+            call assert(allocated(pNC_ATT%rAttValue), &
+              "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+              trim(__FILE__), __LINE__)
+
             call nf_put_attribute(NCFILE=NCFILE, &
                 iVarID=pNC_VAR%iNC_VarID, &
-                sAttributeName=pNC_ATT%sAttributeName, &
+                sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
                 rAttributeValue=pNC_ATT%rAttValue)
 
           case (NC_CHAR)
 
+            call assert(allocated(pNC_ATT%sAttValue), &
+              "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+              trim(__FILE__), __LINE__)
+
             call nf_put_attribute(NCFILE=NCFILE, &
                 iVarID=pNC_VAR%iNC_VarID, &
-                sAttributeName=pNC_ATT%sAttributeName, &
-                sAttributeValue=pNC_ATT%sAttValue)
+                sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
+                sAttributeValue=[trim(pNC_ATT%sAttValue(0))//c_null_char])
 
         end select
 
@@ -2882,7 +2939,7 @@ subroutine nf_put_attributes(NCFILE)
   enddo
 
 
-  do iIndex2 = 0, NCFILE%iNumberOfAttributes
+  do iIndex2 = 0, NCFILE%iNumberOfAttributes-1
 
     pNC_ATT => NCFILE%pNC_ATT(iIndex2)
 
@@ -2890,31 +2947,47 @@ subroutine nf_put_attributes(NCFILE)
 
       case (NC_DOUBLE)
 
+        call assert(allocated(pNC_ATT%dpAttValue), &
+          "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+          trim(__FILE__), __LINE__)
+
         call nf_put_attribute(NCFILE=NCFILE, &
-            iVarID=pNC_VAR%iNC_VarID, &
-            sAttributeName=pNC_ATT%sAttributeName, &
+            iVarID=NC_GLOBAL, &
+            sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
             dpAttributeValue=pNC_ATT%dpAttValue)
 
       case (NC_INT)
 
+        call assert(allocated(pNC_ATT%iAttValue), &
+          "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+          trim(__FILE__), __LINE__)
+
         call nf_put_attribute(NCFILE=NCFILE, &
-            iVarID=pNC_VAR%iNC_VarID, &
-            sAttributeName=pNC_ATT%sAttributeName, &
+            iVarID=NC_GLOBAL, &
+            sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
             iAttributeValue=pNC_ATT%iAttValue)
 
       case (NC_FLOAT)
 
+        call assert(allocated(pNC_ATT%rAttValue), &
+          "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+          trim(__FILE__), __LINE__)
+
         call nf_put_attribute(NCFILE=NCFILE, &
-            iVarID=pNC_VAR%iNC_VarID, &
-            sAttributeName=pNC_ATT%sAttributeName, &
+            iVarID=NC_GLOBAL, &
+            sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
             rAttributeValue=pNC_ATT%rAttValue)
 
       case (NC_CHAR)
 
+        call assert(allocated(pNC_ATT%sAttValue), &
+          "INTERNAL PROGRAMMING ERROR - attempt to use unallocated variable", &
+          trim(__FILE__), __LINE__)
+
         call nf_put_attribute(NCFILE=NCFILE, &
-            iVarID=pNC_VAR%iNC_VarID, &
-            sAttributeName=pNC_ATT%sAttributeName, &
-            sAttributeValue=pNC_ATT%sAttValue)
+            iVarID=NC_GLOBAL, &
+            sAttributeName=trim(pNC_ATT%sAttributeName)//c_null_char, &
+            sAttributeValue=[trim(pNC_ATT%sAttValue(0))//c_null_char])
 
     end select
 
@@ -2924,17 +2997,18 @@ end subroutine nf_put_attributes
 
 !----------------------------------------------------------------------
 
-subroutine netcdf_put_variables(NCFILE, iVarID, iStart, iCount, iStride, &
-   iValues, rValues, dpValues)
+subroutine netcdf_put_variable_array(NCFILE, iVarID, iStart, iCount, iStride, &
+   iValues, i2Values, rValues, dpValues)
 
   type (T_NETCDF4_FILE ) :: NCFILE
   integer (kind=c_int) :: iVarID
   integer (kind=c_size_t), dimension(:) :: iStart
   integer (kind=c_size_t), dimension(:) :: iCount
   integer (kind=c_ptrdiff_t), dimension(:) :: iStride
-  integer (kind=c_int), dimension(:), optional :: iValues
-  real (kind=c_float), dimension(:), optional :: rValues
-  real (kind=c_double), dimension(:), optional :: dpValues
+  integer (kind=c_int), dimension(:,:), optional :: iValues
+  integer (kind=c_short), dimension(:,:), optional :: i2Values
+  real (kind=c_float), dimension(:,:), optional :: rValues
+  real (kind=c_double), dimension(:,:), optional :: dpValues
 
   if (present(iValues) ) then
 
@@ -2944,6 +3018,16 @@ subroutine netcdf_put_variables(NCFILE, iVarID, iStart, iCount, iStride, &
                        countp=iCount, &
                        stridep=iStride, &
                        vars=iValues), &
+                       __FILE__, __LINE__)
+
+  elseif (present(i2Values) ) then
+
+    call nf_trap(nc_put_vars_short(ncid=NCFILE%iNCID, &
+                       varid=iVarID, &
+                       startp=iStart, &
+                       countp=iCount, &
+                       stridep=iStride, &
+                       vars=i2Values), &
                        __FILE__, __LINE__)
 
   elseif (present(rValues) ) then
@@ -2970,7 +3054,67 @@ subroutine netcdf_put_variables(NCFILE, iVarID, iStart, iCount, iStride, &
 
   endif
 
-end subroutine netcdf_put_variables
+end subroutine netcdf_put_variable_array
+
+
+subroutine netcdf_put_variable_vector(NCFILE, iVarID, iStart, iCount, iStride, &
+   iValues, i2Values, rValues, dpValues)
+
+  type (T_NETCDF4_FILE ) :: NCFILE
+  integer (kind=c_int) :: iVarID
+  integer (kind=c_size_t), dimension(:) :: iStart
+  integer (kind=c_size_t), dimension(:) :: iCount
+  integer (kind=c_ptrdiff_t), dimension(:) :: iStride
+  integer (kind=c_int), dimension(:), optional :: iValues
+  integer (kind=c_short), dimension(:), optional :: i2Values
+  real (kind=c_float), dimension(:), optional :: rValues
+  real (kind=c_double), dimension(:), optional :: dpValues
+
+  if (present(iValues) ) then
+
+    call nf_trap(nc_put_vars_int(ncid=NCFILE%iNCID, &
+                       varid=iVarID, &
+                       startp=iStart, &
+                       countp=iCount, &
+                       stridep=iStride, &
+                       vars=iValues), &
+                       __FILE__, __LINE__)
+
+  elseif (present(i2Values) ) then
+
+    call nf_trap(nc_put_vars_short(ncid=NCFILE%iNCID, &
+                       varid=iVarID, &
+                       startp=iStart, &
+                       countp=iCount, &
+                       stridep=iStride, &
+                       vars=i2Values), &
+                       __FILE__, __LINE__)
+
+  elseif (present(rValues) ) then
+
+   call nf_trap(nc_put_vars_float(ncid=NCFILE%iNCID, &
+                       varid=iVarID, &
+                       startp=iStart, &
+                       countp=iCount, &
+                       stridep=iStride, &
+                       vars=rValues), &
+                       __FILE__, __LINE__)
+
+  elseif (present(dpValues) ) then
+
+
+
+    call nf_trap(nc_put_vars_double(ncid=NCFILE%iNCID, &
+                       varid=iVarID, &
+                       startp=iStart, &
+                       countp=iCount, &
+                       stridep=iStride, &
+                       vars=dpValues), &
+                       __FILE__, __LINE__)
+
+  endif
+
+end subroutine netcdf_put_variable_vector
 
 #endif
 

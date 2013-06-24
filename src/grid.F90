@@ -1217,10 +1217,10 @@ function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompl
       rTol = rDEFAULT_TOLERANCE
   end if
 
-  if ( (pBaseGrd%rX0 - pOtherGrd%rX0 > rTol) .and. &
-       (pBaseGrd%rY0 - pOtherGrd%rY0 > rTol) .and. &
-       (pOtherGrd%rX1 - pBaseGrd%rX1 > rTol) .and. &
-       (pOtherGrd%rY1 - pBaseGrd%rY1 > rTol) ) then
+  if ( (pBaseGrd%rX0 - pOtherGrd%rX0 >= rTol) .and. &
+       (pBaseGrd%rY0 - pOtherGrd%rY0 >= rTol) .and. &
+       (pOtherGrd%rX1 - pBaseGrd%rX1 >= rTol) .and. &
+       (pOtherGrd%rY1 - pBaseGrd%rY1 >= rTol) ) then
       lCompletelyCover = lTRUE
   else
       lCompletelyCover = lFALSE
