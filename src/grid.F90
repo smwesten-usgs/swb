@@ -2157,12 +2157,12 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
           "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
           trim(__FILE__), __LINE__)
 
-!        rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+        rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
 
-         rArrayTo(iCol,iRow) = grid_Convolve_sgl(rValues=rArrayFrom, &
-           iTargetCol=iColRow(COLUMN), &
-           iTargetRow=iColRow(ROW), &
-           rKernel=rKernel)
+!         rArrayTo(iCol,iRow) = grid_Convolve_sgl(rValues=rArrayFrom, &
+!           iTargetCol=iColRow(COLUMN), &
+!           iTargetRow=iColRow(ROW), &
+!           rKernel=rKernel)
 
       enddo
     enddo

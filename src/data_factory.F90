@@ -7,7 +7,7 @@
 
 !> @namespace data_factory
 !> @brief  Provide a uniform way from within the main SWB code to access data,
-!> for example, call mydata$getvalues(), which will retrieve data from the
+!> for example, call mydata%getvalues(), which will retrieve data from the
 !> appropriate underlying source, whether that is a series of ARC ASCII grids,
 !> a single NetCDF file, or a series of NetCDF files.
 module data_factory
@@ -61,6 +61,8 @@ module data_factory
 
     integer (kind=c_int) :: iDaysToPadAtYearsEnd = 0
     integer (kind=c_int) :: iDaysToPadIfLeapYear = 1
+    integer (kind=c_int) :: iStartYear = -9999
+    integer (kind=c_int) :: iEndYear = -9999
     logical (kind=c_bool) :: lPadReplaceWithZero = lFALSE
     logical (kind=c_bool) :: lPadValues = lFALSE
 
@@ -166,7 +168,7 @@ module data_factory
                                         handle_missing_values_int
 
     procedure :: calc_project_boundaries => calc_project_boundaries
-    procedure :: test_for_file_existence => test_for_file_existence
+    procedure :: test_for_need_to_pad_values => test_for_need_to_pad_values
 
   end type T_DATA_GRID
 
@@ -842,7 +844,8 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
-  subroutine test_for_file_existence(this, iMonth, iDay, iYear )
+  function test_for_need_to_pad_values(this, iMonth, iDay, iYear ) &
+                                            result(lNeedToPadData)
 
     class (T_DATA_GRID) :: this
     integer (kind=c_int) :: iMonth, iDay, iYear
@@ -851,8 +854,11 @@ end subroutine set_constant_value_real
     logical (kind=c_bool) :: lExist
     integer (kind=c_int) :: iDaysLeftInMonth
     integer (kind=c_int) :: iPos
+    logical (kind=c_bool) :: lNeedToPadData
 
     do
+
+      lNeedToPadData = lFALSE
 
       iPos = scan(string=trim(this%sSourceFilename), set="http://")
 
@@ -867,8 +873,6 @@ end subroutine set_constant_value_real
         ! does this file actually exist?
         inquire( file=this%sSourceFilename, exist=lExist )
 
-        this%lPadValues = lFALSE
-
         !> if the file exists, don't bother with padding any values
         if (lExist) exit
 
@@ -882,7 +886,7 @@ end subroutine set_constant_value_real
 
             if ( iDaysLeftInMonth <= this%iDaysToPadIfLeapYear ) then
 
-              this%lPadValues = lTRUE
+              lNeedToPadData = lTRUE
               exit
 
             endif
@@ -891,7 +895,7 @@ end subroutine set_constant_value_real
 
             if ( iDaysLeftInMonth <= this%iDaysToPadAtYearsEnd ) then
 
-              this%lPadValues = lTRUE
+              lNeedToPadData = lTRUE
               exit
 
             endif
@@ -913,7 +917,7 @@ end subroutine set_constant_value_real
     enddo
 
 
-  end subroutine test_for_file_existence
+  end function test_for_need_to_pad_values
 
 !----------------------------------------------------------------------
 
@@ -929,6 +933,9 @@ end subroutine set_constant_value_real
     ! [ LOCALS ]
     integer (kind=c_int) :: iTimeIndex
     integer (kind=c_int) :: iStat
+    logical (kind=c_bool) :: lDateTimeFound
+
+    this%lPadValues = lFALSE
 
     ! call once at start of run...
     if ( this%iFileCountYear < 0 ) call this%set_filecount(-1, iYear)
@@ -955,26 +962,14 @@ end subroutine set_constant_value_real
 
       call this%make_filename( iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-      call this%test_for_file_existence(iMonth=iMonth, iYear=iYear, iDay=iDay)
+      this%lPadValues = this%test_for_need_to_pad_values(iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-      if (this%lPadValues) then
+       !> call to test_for_need_to_pad_values return value of "TRUE" if
+      !> if attempts to open a nonexistent file within the last few days of a year.
+      !> The assumption is that values missing at the end of a calendar year
+      !> translates into a missing file at the year's end
 
-        if (this%lPadReplaceWithZero) then
-
-          this%pGrdNative%rData = 0_c_float
-          this%pGrdNative%iData = 0_c_int
-
-        endif
-
-        print *, repeat("=", 60)
-        print *, "  PADDING VALUES  "
-        call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
-          sText=trim(this%NCFILE%sFilename), &
-          rData=this%pGrdNative%rData)
-        print *, repeat("=", 60)
-
-
-      else
+      if (.not. this%lPadValues) then
 
         if (this%lPerformFullInitialization ) then
 
@@ -996,7 +991,7 @@ end subroutine set_constant_value_real
               tGridBounds=this%GRID_BOUNDS, &
               iLU=LU_LOG)
 
-          else
+          else  ! PROJ4 string is blank
 
             !> assume source NetCDF file is in same projection and
             !> of same dimensions as base grid
@@ -1035,14 +1030,14 @@ end subroutine set_constant_value_real
           !> Amongst other things, the call to netcdf_open_and_prepare
           !> finds the nearest column and row that correspond to the
           !> project bounds, then back-calculates the coordinate values
-          !> of the column and row numbers in the *project* coordinate system
+          !> of the column and row numbers in the *NATIVE* coordinate system
           this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
-                      iNY=this%NCFILE%iNY, &
-                      rX0=this%NCFILE%rX(NC_LEFT), &
-                      rY0=this%NCFILE%rY(NC_BOTTOM), &
-                      rX1=this%NCFILE%rX(NC_RIGHT), &
-                      rY1=this%NCFILE%rY(NC_TOP), &
-                      iDataType=this%iTargetDataType )
+                    iNY=this%NCFILE%iNY, &
+                    rX0=this%NCFILE%rX(NC_LEFT), &
+                    rY0=this%NCFILE%rY(NC_BOTTOM), &
+                    rX1=this%NCFILE%rX(NC_RIGHT), &
+                    rY1=this%NCFILE%rY(NC_TOP), &
+                    iDataType=this%iTargetDataType )
 
           if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
             ! ensure that PROJ4 string is associated with the native grid
@@ -1076,20 +1071,47 @@ end subroutine set_constant_value_real
 
         endif
 
-      endif
+      endif   ! if(lPadValues)
+
+    endif  ! If (NC_FILE_STATUS == NETCDF_CLOSED)
+
+    if (.not. this%lPadValues) then
+
+      do
+        lDateTimeFound = netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
+                                         iJulianDay=iJulianDay)
+
+        if (.not. lDateTimeFound) then
+          this%lPadValues = lTRUE
+          exit
+        endif
+
+        call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+        call this%handle_missing_values(this%pGrdNative%rData)
+        call this%enforce_limits(this%pGrdNative%rData)
+        exit
+      enddo
 
     endif
 
-    if (.not. this%lPadValues)  then
+    if (this%lPadValues) then
 
-      call netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
-                                         iJulianDay=iJulianDay)
+      if (this%lPadReplaceWithZero) then
 
-      call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+        this%pGrdNative%rData = 0_c_float
+        this%pGrdNative%iData = 0_c_int
 
-      call this%handle_missing_values(this%pGrdNative%rData)
+      endif
 
-      call this%enforce_limits(this%pGrdNative%rData)
+      call echolog( repeat("=", 60) )
+      call echolog( "Missing day found in NetCDF file - padding values" )
+      call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
+        sText=trim(this%NCFILE%sFilename), &
+        rData=this%pGrdNative%rData)
+      call stats_WriteMinMeanMax( iLU=LU_LOG, &
+        sText=trim(this%NCFILE%sFilename), &
+        rData=this%pGrdNative%rData)
+      call echolog( repeat("=", 60) )
 
     endif
 
@@ -1118,7 +1140,8 @@ end subroutine set_constant_value_real
 
       call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
                NCFILE_ARCHIVE=this%NCFILE_ARCHIVE, &
-               iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear)
+               iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear, &
+               iStartYear=this%iStartYear, iEndYear=this%iEndYear)
 
       this%iNC_ARCHIVE_STATUS = NETCDF_FILE_OPEN
 
@@ -1339,7 +1362,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
     ! [ LOCALS ]
     integer (kind=c_int) :: iRetVal
-    real (kind=c_float) :: rMultiplier = 0.
+    real (kind=c_float) :: rMultiplier = 1.5
     real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid

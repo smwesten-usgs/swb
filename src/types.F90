@@ -348,6 +348,9 @@ module types
     !> Crop coefficient, MINIMUM allowed value (Kc_min)
     real (kind=c_float) :: rKcb_min = 0.1
 
+    !> Crop coefficient, basal, maximum (Kcb_max)
+    real (kind=c_float) :: rKcb_max = 1.3
+
     !> Day of year (or GDD) for initial planting
     integer (kind=c_int) :: iL_plant = 50
 

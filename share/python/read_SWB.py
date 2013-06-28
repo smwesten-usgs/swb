@@ -26,6 +26,8 @@ def writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npVals):
 def readSWBbinary(ifp):
     """
     RLE routine ported from FORTRAN SWB code. 
+    
+    Each subsequent call to this routine returns a grid associated with 
     """
     iCurr = np.fromfile(ifp,dtype='i',count=1)
     lRun = False
@@ -118,6 +120,8 @@ iNumElements = iNX * iNY
 iEndDate = date(2100, 02, 28)
 
 while True:
+    
+    # read in the current day, month, year, and day of year from file
     iDD, iMM, iYYYY, iDOY = np.fromfile(ifp,dtype='i',count=4)
 
     iCurrDate = date(iYYYY, iMM, iDD)

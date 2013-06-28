@@ -1956,6 +1956,12 @@ subroutine control_setModelOptions(sControlFile)
       call gregorian_date(pConfig%iStartJulianDay, pConfig%iYear, &
          pConfig%iMonth, pConfig%iDay)
 
+      DAT(:)%iStartYear = pConfig%iStartYear
+      DAT(:)%iEndYear = pConfig%iEndYear
+
+      !> ** THIS IS ESSENTIALLY THE TIME CONTROL LOOP FOR USE
+      !>    WITH GRIDDED DATA
+      !> @TODO incorporate this into a proper time control module
       do i=pConfig%iStartYear,pConfig%iEndYear
         pConfig%iYear = i
         pConfig%iCurrentJulianDay = julian_day ( i, 1, 1)

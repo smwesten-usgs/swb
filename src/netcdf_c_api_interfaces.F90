@@ -314,16 +314,16 @@ module netcdf_c_api_interfaces
   interface
     function nc_get_vars_float(ncid, varid, startp, countp, stridep, vars) bind(c)
 
-      import :: c_int, c_ptrdiff_t, c_size_t, c_float, c_ptr
+      import :: c_int, c_ptrdiff_t, c_size_t, c_float
 
       integer (kind=c_int), value             :: ncid, varid
-      type (c_ptr), value                     :: startp
-      type (c_ptr), value                     :: countp
-      type (c_ptr), value                     :: stridep
+!      type (c_ptr), value                     :: startp
+!      type (c_ptr), value                     :: countp
+!      type (c_ptr), value                     :: stridep
 
-!      integer (kind=c_size_t)                            :: startp(*)
-!      integer (kind=c_size_t)                            :: countp(*)
-!      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (kind=c_size_t)                            :: startp(*)
+      integer (kind=c_size_t)                            :: countp(*)
+      integer (kind=c_ptrdiff_t)                         :: stridep(*)
 
       real (kind=c_float), intent(out)        :: vars(*)
 
@@ -354,12 +354,16 @@ module netcdf_c_api_interfaces
   interface
     function nc_get_vars_double(ncid, varid, startp, countp, stridep, vars) bind(c)
 
-      import :: c_int, c_ptr, c_double
+      import :: c_int, c_double, c_size_t, c_ptrdiff_t
 
       integer (kind=c_int), value             :: ncid, varid
-      type (c_ptr), value                     :: startp
-      type (c_ptr), value                     :: countp
-      type (c_ptr), value                     :: stridep
+!      type (c_ptr), value                     :: startp
+!      type (c_ptr), value                     :: countp
+!      type (c_ptr), value                     :: stridep
+      integer (kind=c_size_t)                            :: startp(*)
+      integer (kind=c_size_t)                            :: countp(*)
+      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+
       real (kind=c_double), intent(out)       :: vars(*)
 
       integer (kind=c_int)                    :: nc_get_vars_double
@@ -370,7 +374,7 @@ module netcdf_c_api_interfaces
   interface
     function nc_put_vars_double(ncid, varid, startp, countp, stridep, vars) bind(c)
 
-      import :: c_int, c_double, c_ptrdiff_t, c_size_t,c_ptr
+      import :: c_int, c_double, c_ptrdiff_t, c_size_t
 
       integer (kind=c_int), value      :: ncid, varid
 !      type(c_ptr),         value      :: startp, countp, stridep

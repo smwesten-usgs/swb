@@ -153,7 +153,7 @@ end function et_kc_CalcEffectiveRootDepth
 
 !------------------------------------------------------------------------------
 
-!> @brief This function estimates Kr, the bare surface evaporation
+!> @brief This function estimates Ke, the bare surface evaporation
 !> coefficient
 !> @note Implemented as equation 71, FAO-56, Allen and others
 function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
@@ -166,7 +166,7 @@ function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
   ! [ RESULT ]
   real (kind=c_float) :: rKe
 
-  rKe = rKr * ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb )
+  rKe = rKr * ( pIRRIGATION%rKcb_max - pIRRIGATION%rKcb )
 
 end function et_kc_CalcSurfaceEvaporationCoefficient
 
@@ -298,6 +298,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
          rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
+
+         if (rKe < 0) print *, "rKe < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKe
+         if (rKr < 0) print *, "rKr < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKr
+         if (r_few < 0) print *, "r_few < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, r_few
 
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 

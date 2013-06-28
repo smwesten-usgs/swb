@@ -2777,6 +2777,14 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
     write(UNIT=LU_LOG,FMT=*)  "  end-growth basal crop coefficient (Kcb_end) ", &
       pConfig%IRRIGATION(iLandUseIndex)%rKcb_end
 
+    pConfig%IRRIGATION(iLandUseIndex)%rKcb_max = &
+       max( pConfig%IRRIGATION(iLandUseIndex)%rKcb_ini, &
+       pConfig%IRRIGATION(iLandUseIndex)%rKcb_mid, &
+       pConfig%IRRIGATION(iLandUseIndex)%rKcb_end )
+
+    write(UNIT=LU_LOG,FMT=*)  "  maximum basal crop coefficient (Kcb_max) ", &
+      pConfig%IRRIGATION(iLandUseIndex)%rKcb_max
+
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rKcb_min
     call Assert( iStat == 0, &
