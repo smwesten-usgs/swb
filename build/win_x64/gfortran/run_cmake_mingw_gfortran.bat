@@ -55,8 +55,8 @@ set PATH=%PATH%;c:\Program Files (x86)\Zeus
 set PATH=%PATH%;D:\DOS\gnuwin32\bin
 
 :: set important environment variables
-set FC=%MINGWBASE%\bin\gfortran
-set CC=%MINGWBASE%\bin\gcc
+set FC=%MINGWBASE%\bin\gfortran.exe
+set CC=%MINGWBASE%\bin\gcc.exe
 set CXX=%MINGWBASE%\bin\g++.exe
 set AR=%MINGWBASE%\bin\ar.exe
 set NM=%MINGWBASE%\bin\nm.exe
@@ -87,7 +87,7 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^
--DCMAKE_MAKE_PROGRAM=%MINGWBASE%\bin\make.exe ^
+-DCMAKE_MAKE_PROGRAM:FILEPATH=%MINGWBASE%\bin\make.exe ^
 -DCMAKE_RANLIB:FILEPATH=%MINGWBASE%\bin\ranlib.exe ^
 -DCMAKE_C_COMPILER:FILEPATH=%MINGWBASE%\bin\gcc.exe ^
 -DCMAKE_Fortran_COMPILER:FILEPATH=%MINGWBASE%\bin\gfortran.exe ^

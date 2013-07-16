@@ -26,7 +26,7 @@ module netcdf4_support
 
   use iso_c_binding
   use types
-  use stats, only : stats_WriteMinMeanMax
+
   use swb_grid
 !  use typesizes
   use netcdf_c_api_interfaces
@@ -193,7 +193,7 @@ module netcdf4_support
 
     real (kind=c_double), allocatable, dimension(:) :: rX_Coords
     real (kind=c_double), allocatable, dimension(:) :: rY_Coords
-    real (kind=c_double), allocatable, dimension(:) :: rTimeValues
+    real (kind=c_double), allocatable, dimension(:) :: rDateTimeValues
     real (kind=c_double) :: rGridCellSizeX
     real (kind=c_double) :: rGridCellSizeY
 
@@ -257,42 +257,100 @@ end function netcdf_date_within_range
 
 !----------------------------------------------------------------------
 
-function nf_date_to_index( NCFILE, iJulianDay )  result(iStart)
+!> This was so clear the other day. Basically, I think we need
+!> two functions to convert from index to timeval, and timeval to JD;
+!> note that timeval refers to the number of days from the origin
+!> of the NetCDF file
+
+!> return the day value (number of days since origin
+
+function nf_julian_day_to_index(NCFILE, rJulianDay)  result (iIndex)
+
+  type (T_NETCDF4_FILE) :: NCFILE
+  real (kind=c_double) :: rJulianDay
+  integer (kind=c_int) :: iIndex
+
+  iIndex = aint(rJulianDay) - NCFILE%iFirstDayJD
+
+end function nf_julian_day_to_index
+
+
+function nf_index_to_dayvalue(NCFILE, iIndex)   result(rDayValue)
+
+  type (T_NETCDF4_FILE) :: NCFILE
+  integer (kind=c_int) :: iIndex
+  real (kind=c_double) :: rDayValue
+
+  call assert(iIndex >= lbound(NCFILE%rDateTimeValues, 1) &
+  .and. iIndex <= ubound(NCFILE%rDateTimeValues, 1),&
+  "Dimension out of bounds", &
+  trim(__FILE__), __LINE__)
+  rDayValue = NCFILE%rDateTimeValues(iIndex)
+
+end function nf_index_to_dayvalue
+
+
+function nf_dayvalue_to_julian_day(NCFILE, rDayValue)   result(rJulianDay)
+
+  type (T_NETCDF4_FILE) :: NCFILE
+  real (kind=c_double) :: rDayValue
+  real (kind=c_double) :: rJulianDay
+
+  rJulianDay = real(NCFILE%iOriginJD, kind=c_double) &
+    + real(NCFILE%iOriginHH, kind=c_double) / 24_c_double &
+    + real(NCFILE%iOriginMM, kind=c_double) / 1440_c_double &
+    + real(NCFILE%iOriginSS, kind=c_double) / 86400_c_double &
+    + rDayValue
+
+end function nf_dayvalue_to_julian_day
+
+
+function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
   type (T_NETCDF4_FILE ) :: NCFILE
-  integer (kind=c_int) :: iJulianDay
+  real (kind=c_double) :: rJulianDay
   integer (kind=c_size_t) :: iStart
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iMinDiff, iDiff
-  integer (kind=c_int) :: iCandidateStart, iLastCandidate
-  integer (kind=c_int) :: iEstimatedDayValue
+  integer (kind=c_int) :: iCandidateIndex, iLastCandidate
+  integer (kind=c_int) :: iInitialCandidateIndex
+  integer (kind=c_int) :: iTestIndex
+  real (kind=c_double) :: rTestJD
   integer (kind=c_int) :: iIndexLower, iIndexUpper, iIndex
   logical (kind=c_bool) :: lChanged
 
   iStart = -9999
   iMinDiff = iBIGVAL
-  iCandidateStart = int(iJulianDay - NCFILE%iFirstDayJD, kind=c_size_t)
-  iEstimatedDayValue = iCandidateStart
+  !> First guess at what the appropriate index value should be.
+  !> Current JD minus the Origin JD is a good guess.
+  iCandidateIndex = nf_julian_day_to_index(NCFILE, rJulianDay)
 
-  call assert(iCandidateStart >=0, "Problem finding the index number of the time " &
+  call assert(iCandidateIndex >=0, "Problem finding the index number of the time " &
     //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+
+  iInitialCandidateIndex = iCandidateIndex
 
   do
 
-    iIndexLower = max( lbound(NCFILE%rTimeValues,1), iCandidateStart - 1)
-    iIndexUpper = min( ubound(NCFILE%rTimeValues,1), iCandidateStart + 1)
+    !> calculate the range of *INDEX* values to search over
+    iIndexLower = max( lbound(NCFILE%rDateTimeValues, 1), iCandidateIndex - 1)
+    iIndexUpper = min( ubound(NCFILE%rDateTimeValues, 1), iCandidateIndex + 1)
 
     lChanged = lFALSE
 
     do iIndex=iIndexLower,iIndexUpper
 
-      iDiff = abs(aint(NCFILE%rTimeValues(iIndex)) - iEstimatedDayValue)
+      rTestJD = nf_dayvalue_to_julian_day(NCFILE=NCFILE, &
+          rDayValue=NCFILE%rDateTimeValues(iIndex))
+
+      iTestIndex = aint(rTestJD) - NCFILE%iFirstDayJD
+      iDiff = abs(iTestIndex - iInitialCandidateIndex)
 
       if (iDiff < iMinDiff ) then
 
         iMinDiff = iDiff
-        iCandidateStart = iIndex
+        iCandidateIndex = iIndex
         lChanged = lTRUE
 
       endif
@@ -303,9 +361,9 @@ function nf_date_to_index( NCFILE, iJulianDay )  result(iStart)
 
   enddo
 
-  if (iMinDiff == 0) iStart = iCandidateStart
+  if (iMinDiff == 0) iStart = iCandidateIndex
 
-end function nf_date_to_index
+end function nf_julian_day_to_index_adj
 
 !----------------------------------------------------------------------
 
@@ -896,7 +954,11 @@ subroutine nf_get_time_vals(NCFILE)
   pNC_VAR_time => NCFILE%pNC_VAR(iVarIndex_time)
   pNC_DIM_time => NCFILE%pNC_DIM( pNC_VAR_time%iNC_DimID(0) )
 
-  allocate( NCFILE%rTimeValues(0 : pNC_DIM_time%iNC_DimSize ), stat=iStat )
+  if (allocated(NCFILE%rDateTimeValues) ) deallocate(NCFILE%rDateTimeValues, stat=iStat)
+  call assert(iStat==0, "Failed to deallocate memory for time values", &
+    trim(__FILE__), __LINE__)
+
+  allocate( NCFILE%rDateTimeValues(0 : pNC_DIM_time%iNC_DimSize-1 ), stat=iStat )
   call assert(iStat==0, "Failed to allocate memory for time values", &
     trim(__FILE__), __LINE__)
 
@@ -907,7 +969,7 @@ subroutine nf_get_time_vals(NCFILE)
        iNC_Start=0_c_size_t, &
        iNC_Count=pNC_DIM_time%iNC_DimSize, &
        iNC_Stride=1_c_size_t, &
-       dpNC_Vars=NCFILE%rTimeValues)
+       dpNC_Vars=NCFILE%rDateTimeValues)
 
 end subroutine nf_get_time_vals
 
@@ -1076,7 +1138,11 @@ subroutine netcdf_open_file(NCFILE, sFilename, iLU)
   NCFILE%dpFirstAndLastTimeValues = nf_get_first_and_last(NCFILE=NCFILE, &
       iVarIndex=NCFILE%iVarIndex(NC_TIME) )
 
+  !> retrieve the origin for the time units associated with this file
   call nf_get_time_units(NCFILE=NCFILE)
+
+  !> retrieve the time value specific to this file
+  call nf_get_time_vals(NCFILE)
 
   !> establish scale_factor and add_offset values, if present
   call nf_get_scale_and_offset(NCFILE=NCFILE)
@@ -1431,8 +1497,8 @@ function netcdf_update_time_starting_index(NCFILE, iJulianDay)  result(lDateTime
   ! [ LOCALS ]
   real (kind=c_double) :: rNC_DateTime
 
-  NCFILE%iStart(NC_TIME) = nf_date_to_index( NCFILE=NCFILE, &
-                                     iJulianDay=iJulianDay )
+  NCFILE%iStart(NC_TIME) = nf_julian_day_to_index_adj( NCFILE=NCFILE, &
+                                     rJulianDay=real(iJulianDay, kind=c_double ) )
 
   if (NCFILE%iStart(NC_TIME) < 0) then
     NCFILE%iStart(NC_TIME) = 0
@@ -1530,10 +1596,6 @@ subroutine nf_get_variable_slice_short(NCFILE, rValues)
 
   end select
 
-  call stats_WriteMinMeanMax( iLU=LU_LOG, &
-    sText=trim(NCFILE%sFilename), &
-    rData=rValues)
-
 end subroutine nf_get_variable_slice_short
 
 !----------------------------------------------------------------------
@@ -1598,10 +1660,6 @@ subroutine nf_get_variable_slice_float(NCFILE, rValues)
       enddo
 
   end select
-
-  call stats_WriteMinMeanMax( iLU=LU_LOG, &
-     sText=trim(NCFILE%sFilename), &
-     rData=rValues)
 
 end subroutine nf_get_variable_slice_float
 
@@ -2079,14 +2137,6 @@ subroutine nf_calculate_time_range(NCFILE)
 
   NCFILE%iFirstDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(NC_FIRST)
   NCFILE%iLastDayJD = NCFILE%iOriginJD + NCFILE%dpFirstAndLastTimeValues(NC_LAST)
-
-  print *, repeat("$",60)
-  print *, NCFILE%iOriginJD, NCFILE%iOriginYear, &
-    NCFILE%iOriginMonth, NCFILE%iOriginDay
-  print *, NCFILE%iFirstDayJD
-  print *, NCFILE%iLastDayJD
-  print *, NCFILE%dpFirstAndLastTimeValues
-  print *, repeat("$",60)
 
 end subroutine nf_calculate_time_range
 

@@ -761,31 +761,28 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       if ( trim(sOption) == "CONSTANT" ) then
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-        call Assert( iStat == 0, &
-          "Cannot read real data value" )
-        pGrd%Cells%rRouteFraction = rValue
+        call Assert( iStat == 0, "Cannot read real data value" )
+
+        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
+           rConstant=rValue )
+
       else
-        input_grd => grid_Read( sArgument, sOption, DATATYPE_REAL )
-        call Assert( grid_Conform( pGrd, input_grd ), &
-                      "Non-conforming grid" )
-        pGrd%Cells%rRouteFraction = input_grd%rData
-        call grid_Destroy( input_grd )
-        call Assert(LOGICAL(MAXVAL(pGrd%Cells%rRouteFraction)<=rONE,&
-            kind=c_bool), &
-            "One or mode values in routing fraction grid exceed 1.0")
-        call Assert(LOGICAL(MINVAL(pGrd%Cells%rRouteFraction)>=rZERO,&
-            kind=c_bool), &
-            "One or mode values in routing fraction grid are less than 0.0")
-      end if
-      write(UNIT=LU_LOG, &
-        FMT="('  Number of cells with normal routing: ',i8)") &
-        COUNT(pGrd%Cells%rRouteFraction > &
-        (rONE - rNEAR_ZERO))
-      write(UNIT=LU_LOG, &
-        FMT="('  Number of cells with fractional routing: ',i8)") &
-        COUNT(pGrd%Cells%rRouteFraction <= &
-        (rONE - rNEAR_ZERO))
-      flush(UNIT=LU_LOG)
+
+        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
+
+      endif
+
+    else if (sItem == "ROUTING_FRACTION_PROJECTION_DEFINITION") then
+      call DAT(ROUTING_FRAC_DATA)%set_PROJ4( trim(sRecord) )
+
+    elseif (sItem == "ROUTING_FRACTION_SET_MINIMUM_ALLOWED" ) then
+      call DAT(ROUTING_FRAC_DATA)%set_valid_minimum(asReal(sRecord))
+
+    elseif (sItem == "ROUTING_FRACTION_SET_MAXIMUM_ALLOWED" ) then
+      call DAT(ROUTING_FRAC_DATA)%set_valid_maximum(asReal(sRecord))
 
     else if ( sItem == "INITIAL_FROZEN_GROUND_INDEX" ) then
       write(UNIT=LU_LOG,FMT=*) "Initializing continuous frozen ground index"
@@ -1300,10 +1297,18 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask lookup table"
       call Chomp ( sRecord, pConfig%sBasinMaskFilename )
       if ( len_trim(pConfig%sBasinMaskFilename) == 0 ) then
-        call Assert( .false._c_bool, "No basin mask table specified" )
+        call Assert( lFALSE, "No basin mask table specified" )
       end if
       call model_ReadBasinMaskTable( pConfig )
       flush(UNIT=LU_LOG)
+
+    else if (sItem == "BASIN_MASK_PROJECTION_DEFINITION") then
+      write(UNIT=LU_LOG,FMT=*) "Reading basin mask projection definition"
+      call Chomp ( sRecord, pConfig%sBasinMaskPROJ4String )
+      if ( len_trim(pConfig%sBasinMaskPROJ4String) == 0 ) then
+        call Assert( lFALSE, "No basin mask projection definition specified" )
+      end if
+
 
 !        iSoilMoistureRetentionMethod
     else if ( sItem == "ADJUSTED_WATER_CAPACITY" ) then

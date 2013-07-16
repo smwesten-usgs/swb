@@ -118,7 +118,19 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     !> read in flow direction, soil group, and AWC grids
     call model_InitializeDataStructures( pGrd, pConfig )
 
-    !> any negative values are interpreted to mean that the cell should be
+   ! Are we solving using the downhill algorithm?
+    if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
+      ! if a routing table exists, read it in; else initialize and
+      ! save the routing table for future use
+      write(UNIT=LU_LOG,FMT=*) "Configuring runoff for the downhill flow routing option..."
+      call model_ConfigureRunoffDownhill( pGrd, pConfig)
+    end if
+
+    ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
+    if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
+      write(UNIT=LU_LOG,FMT=*) "Initializing flow direction..."
+      call model_InitializeFlowDirection( pGrd , pConfig)
+    end if    !> any negative values are interpreted to mean that the cell should be
     !> inactivated
 !    call model_setInactiveCells( pGrd, pConfig )
 
@@ -205,6 +217,20 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
     pGrd%Cells%iLandUse = pGrd%iData
     DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
+
+    pGenericGrd_int%iData = pGrd%Cells%iLandUse
+    call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
+      trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
+      //"_"//trim(asCharacter(pConfig%iYear))// &
+      "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+
+    call make_shaded_contour(pGrd=pGenericGrd_int, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
+      trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
+      //"_"//trim(asCharacter(pConfig%iYear))//".png", &
+      sTitleTxt="Landuse Grid", &
+      sAxisTxt="Landuse Code" )
+
 
     call model_setInactiveCells( pGrd, pConfig )
 
@@ -1372,6 +1398,7 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rFlowOutOfGrid = rZERO
 
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_ITERATIVE ) then
+
     do
       iCount = if_model_RunoffIteration( pGrd, pConfig, iDayOfYear, iMonth )
       if ( iCount == 0 ) then
@@ -1380,6 +1407,7 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
     end do
 
   else if (pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
+
     call model_RunoffDownhill( pGrd, pConfig, iDayOfYear, iMonth )
 
   else if (pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_NO_ROUTING ) then
@@ -1448,6 +1476,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   integer (kind=c_int) :: ic
   integer (kind=c_int) :: iNumGridCells, iNumActiveGridCells
   integer (kind=c_int) :: iNumIterationsNochange
+  integer (kind=c_int) :: LU_TEMP
   logical (kind=c_bool) :: lExist
   logical (kind=c_bool) :: lCircular = lFALSE
   type( T_GENERAL_GRID ), pointer :: pTempGrid
@@ -1496,18 +1525,25 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
           do iRowSub=iRow-1,iRow+1
             if (iRowSub>=1 .and. iRowSub<=pGrd%iNY) then     ! we're within array bounds
               do iColSub=iCol-1,iCol+1
-                if (iColSub>=1 .and. iColSub<=pGrd%iNX) then  ! we're within array bounds
-                  if (iRow==iRowSub .and. iCol==iColSub) cycle  ! Skip current inquiry cell
+                if (iColSub>=1 .and. iColSub<=pGrd%iNX) then              ! we're within array bounds
+                  if (iRow==iRowSub .and. iCol==iColSub) cycle            ! Skip current inquiry cell
                   if (pGrd%Cells(iColSub,iRowSub)%lDownhillMarked) cycle  ! Don't count marked neighbors
-                  if (pGrd%Cells(iColSub,iRowSub)%iActive == 0) cycle  ! Don't count inactive neighbors
-                  call model_DownstreamCell(pGrd,iRowSub,iColSub,tj,ti)
-                  if (tj==iRow .and. ti==iCol ) then
+                  if (pGrd%Cells(iColSub,iRowSub)%iActive == 0) cycle     ! Don't count inactive neighbors
+                  call model_DownstreamCell(pGrd,iRowSub,iColSub,iTgt_Row,iTgt_Col)
+                  if (iTgt_Row==iRow .and. iTgt_Col==iCol ) then          ! target cell points at current inquiry cell
                     iUpstreamCount = iUpstreamCount+1
                     ! we've found a cell that points to the current model
                     ! cell; does our current model cell point back at it?
                     ! if so, we have circular flow
                     call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
-                    if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub ) lCircular = lTRUE
+                    if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub ) then
+                      lCircular = lTRUE
+                    else
+                      cel%iSumUpslopeCells = cel%iSumUpslopeCells &
+                         + pGrd%Cells(iColSub,iRowSub)%iSumUpslopeCells
+                       cel%iNumUpslopeConnections = cel%iNumUpslopeConnections + 1
+                    endif
+
                   end if
                 end if
               end do
@@ -1599,15 +1635,25 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     write(UNIT=LU_LOG,FMT=*) ""
     flush(UNIT=LU_LOG)
 
-    open( LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', &
+    open ( LU_ROUTING, FILE='swb_routing.bin',FORM='UNFORMATTED', &
       status='REPLACE',ACCESS='STREAM')
+
+    open (unit=newunit(LU_TEMP), FILE='swb_routing_log.csv', FORM='FORMATTED', &
+      status='REPLACE')
+    write (LU_TEMP,fmt="(a)") "Row number, Col number, Num contributing cells, Num upslope connections"
+
     write(LU_ROUTING) iOrderCount
+    write(LU_TEMP, fmt="(i12)") iOrderCount
 
     do ic=1,iOrderCount
       write(LU_ROUTING) iOrderCol(ic),iOrderRow(ic)
+      write(LU_TEMP, fmt="(i12,',',i12,',',i12,',',i12)") iOrderRow(ic),iOrderCol(ic), &
+         pGrd%Cells(iOrderCol(ic),iOrderRow(ic))%iSumUpslopeCells, &
+         pGrd%Cells(iOrderCol(ic),iOrderRow(ic))%iNumUpslopeConnections
     end do
     flush(UNIT=LU_ROUTING)
     close(UNIT=LU_ROUTING)
+    close(UNIT=LU_TEMP)
 
   else ! routing table already exists
 
@@ -1686,7 +1732,6 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   type (T_CELL),pointer :: cel
   type (T_CELL),pointer :: target_cel
 
-
   ! Reset the upstream flows (note that iOrderCount, iOrderCol, and iOrderRow are globals)
   do ic=1,iOrderCount
 
@@ -1701,11 +1746,11 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
   ! Now, route the water
-  if ( iTgt_Row == iROUTE_LEFT_GRID ) then
+  if ( iTgt_Row == iROUTE_LEFT_GRID .or. iTgt_Col == iROUTE_LEFT_GRID ) then
     cel%rFlowOutOfGrid = cel%rOutflow
     cel%rOutFlow = rZERO
     cycle
-  elseif ( iTgt_Row == iROUTE_DEPRESSION ) then
+  elseif ( iTgt_Row == iROUTE_DEPRESSION  .or. iTgt_Col == iROUTE_DEPRESSION ) then
     ! Don't route any further; the water pools here.
     cel%rOutFlow = rZERO
     cycle
@@ -1748,8 +1793,7 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     ! add cell outflow to target cell inflow
       target_cel%rInFlow = &
         target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
-      cel%rFlowOutOfGrid = cel%rOutflow * &
-        (rONE - cel%rRouteFraction)
+      cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
       cel%rOutflow = cel%rOutflow * cel%rRouteFraction
   end if
 
@@ -3104,6 +3148,24 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
      sTitleTxt="Available Water Capacity", &
      sAxisTxt="AWC (inches per foot)" )
 
+  if (DAT(ROUTING_FRAC_DATA)%iSourceDataType /= DATATYPE_NA) then
+
+    call DAT(ROUTING_FRAC_DATA)%getvalues( pGrdBase=pGrd)
+    pGrd%Cells%rRouteFraction = pGrd%rData
+
+    write(LU_LOG, fmt="(a, f14.3)") "  Minimum routing fraction: ", minval(pGrd%Cells%rRouteFraction)
+    write(LU_LOG, fmt="(a, f14.3)") "  Maximum routing fraction: ", maxval(pGrd%Cells%rRouteFraction)
+
+    pGenericGrd_sgl%rData = pGrd%Cells%rRouteFraction
+    call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Routing_Fraction" // &
+      "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
+
+    call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+       sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Routing_Fraction.png", &
+       sTitleTxt="Routing Fraction", &
+       sAxisTxt="Routing Fraction (unitless)" )
+
+  endif
 
 !  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
 !  pGrd%Cells%iLandUse = pGrd%iData

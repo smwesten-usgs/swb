@@ -16,6 +16,7 @@ module stats
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
+  use data_factory
   use swb_grid
   use graph
   use RLE
@@ -1084,6 +1085,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
+  type (T_DATA_GRID) :: TEMP_DAT
 
   type ( T_GENERAL_GRID ),pointer :: pTmpGrd
 
@@ -1092,8 +1094,6 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
   real (kind=c_float) :: rSum, rAvg, rMin, rMax
 
   character (len=256) :: sBuf
-
-  type (T_GENERAL_GRID),pointer :: input_grd    ! Pointer to temporary grid for I/O
 
   call assert(associated(pConfig%BMASK), "Cannot calculate basin statistics; " &
     //"must supply a basin mask file to use this feature", &
@@ -1143,18 +1143,21 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
 
     write(UNIT=LU_LOG,FMT=*) k," : Attempting to read mask file: ", &
        TRIM(pConfig%BMASK(k)%sBasinMaskFilename)
-    input_grd => grid_Read(TRIM(pConfig%BMASK(k)%sBasinMaskFilename), &
-       "ARC_GRID", DATATYPE_REAL )
-    call Assert( grid_Conform( pGrd, input_grd ), &
-              "Non-conforming grid - filename: " &
-              // TRIM(pConfig%BMASK(k)%sBasinMaskFilename))
 
-    iCount = COUNT(input_grd%rData>0)
+    call TEMP_DAT%initialize(sDescription= &
+       "Basin mask derived from file: "//trim(pConfig%BMASK(k)%sBasinMaskFilename), &
+       sFileType="ARC_GRID", &
+       sFilename=trim(pConfig%BMASK(k)%sBasinMaskFilename), &
+       iDataType=DATATYPE_REAL )
+
+    call TEMP_DAT%getvalues( pGrdBase=pGrd )
+
+    iCount = COUNT(TEMP_DAT%pGrdNative%rData>0)
 
     ! sum of the sum of annual recharge values
-    rSum = SUM(pGrd%Cells%rSUM_Recharge,MASK=input_grd%rData>0)
-    rMax = MAXVAL(pGrd%Cells%rSUM_Recharge,MASK=input_grd%rData>0) / n
-    rMin = MINVAL(pGrd%Cells%rSUM_Recharge,MASK=input_grd%rData>0) / n
+    rSum = SUM(pGrd%Cells%rSUM_Recharge,MASK=TEMP_DAT%pGrdNative%rData>0)
+    rMax = MAXVAL(pGrd%Cells%rSUM_Recharge,MASK=TEMP_DAT%pGrdNative%rData>0) / n
+    rMin = MINVAL(pGrd%Cells%rSUM_Recharge,MASK=TEMP_DAT%pGrdNative%rData>0) / n
 
     rAvg = rSum / iCount / n
 
@@ -1169,7 +1172,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
         ! establish number of cells in model grid
         iNumGridCells = COUNT( &
           INT(pGrd%Cells%iLanduse,kind=c_int)==pConfig%LU(j)%iLandUseType &
-          .and. input_grd%rData>0 )
+          .and. TEMP_DAT%pGrdNative%rData>0 )
 
         if(iNumGridCells>iLU_Max) then
           iLU_Max = iNumGridCells
@@ -1183,7 +1186,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
       ! establish number of cells in model grid for THIS combination
       iNumGridCells = COUNT( &
         INT(pGrd%Cells%iSoilGroup,kind=c_int)==j &
-          .and. input_grd%rData>0 )
+          .and. TEMP_DAT%pGrdNative%rData > 0 )
 
         if(iNumGridCells>iSoil_Max) then
           iSoil_Max = iNumGridCells
@@ -1589,6 +1592,8 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
       write(UNIT=STAT_INFO(i)%iLU) pConfig%rRLE_OFFSET  ! RLE Offset
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rX0, pGrd%rX1   ! World-coordinate range in X
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rY0, pGrd%rY1   ! World-coordinate range in Y
+      write(UNIT=STAT_INFO(i)%iLU) len_trim(pConfig%sBASE_PROJ4)  ! number of characters in PROJ4 string
+      write(UNIT=STAT_INFO(i)%iLU) trim(pConfig%sBASE_PROJ4)      ! PROJ4 string
 
       inquire(UNIT=STAT_INFO(i)%iLU,POS=iSTARTDATE_POS)  ! establish location to return to
       ! write placeholders for MM/DD/YYYY of start and end of file
@@ -1645,8 +1650,10 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   real (kind=c_float)    :: rRLE_OFFSET
   real (kind=c_double)    :: rX0, rX1
   real (kind=c_double)    :: rY0, rY1
+  integer (kind=c_int) :: iTemp
   integer (kind=c_int) :: iStartMM, iStartDD, iStartYYYY
   integer (kind=c_int) :: iEndMM, iEndDD, iEndYYYY
+  character (len=len_trim(pConfig%sBASE_PROJ4)) :: sPROJ4_string
 
   do i=1,iNUM_VARIABLES
 
@@ -1677,6 +1684,8 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
       read(UNIT=STAT_INFO(i)%iLU) rRLE_OFFSET     ! RLE Offset
       read(UNIT=STAT_INFO(i)%iLU) rX0, rX1        ! World-coordinate range in X
       read(UNIT=STAT_INFO(i)%iLU) rY0, rY1        ! World-coordinate range in Y
+      read(UNIT=STAT_INFO(i)%iLU) iTemp           ! # characters in the PROJ4 string
+      read(UNIT=STAT_INFO(i)%iLU) sPROJ4_string   ! PROJ4 string
       read(UNIT=STAT_INFO(i)%iLU) iStartMM, iStartDD, iStartYYYY
       read(UNIT=STAT_INFO(i)%iLU) iEndMM, iEndDD, iEndYYYY
       inquire(UNIT=STAT_INFO(i)%iLU,POS=iENDHEADER_POS)  ! establish location to return to

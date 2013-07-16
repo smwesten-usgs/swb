@@ -15,7 +15,7 @@ module data_factory
   use types
 
   use swb_grid
-  use stats
+
   use netcdf4_support
   use iso_c_binding
   implicit none
@@ -28,10 +28,10 @@ module data_factory
 
   !> @class T_DATA_GRID
   type, public :: T_DATA_GRID
-    integer (kind=c_int) :: iSourceDataForm  ! constant, static grid, dynamic grid
-    integer (kind=c_int) :: iSourceDataType  ! real, short, integer, etc.
+    integer (kind=c_int) :: iSourceDataForm    ! constant, static grid, dynamic grid
+    integer (kind=c_int) :: iSourceDataType = DATATYPE_NA  ! real, short, integer, etc.
     integer (kind=c_int) :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF
-    integer (kind=c_int) :: iTargetDataType  ! Fortran real, integer, etc.
+    integer (kind=c_int) :: iTargetDataType = DATATYPE_NA  ! Fortran real, integer, etc.
     character (len=256) :: sDescription
     character (len=256) :: sSourcePROJ4_string
     character (len=256) :: sSourceFileType
@@ -172,18 +172,19 @@ module data_factory
 
   end type T_DATA_GRID
 
-  type (T_DATA_GRID), dimension(10), public, target :: DAT
+  type (T_DATA_GRID), dimension(11), public, target :: DAT
 
   integer (kind=c_int), parameter, public :: LANDUSE_DATA = 1
   integer (kind=c_int), parameter, public :: AWC_DATA = 2
   integer (kind=c_int), parameter, public :: SOILS_GROUP_DATA = 3
   integer (kind=c_int), parameter, public :: FLOWDIR_DATA = 4
-  integer (kind=c_int), parameter, public :: PRECIP_DATA = 5
-  integer (kind=c_int), parameter, public :: TMIN_DATA = 6
-  integer (kind=c_int), parameter, public :: TMAX_DATA = 7
-  integer (kind=c_int), parameter, public :: REL_HUM_DATA = 8
-  integer (kind=c_int), parameter, public :: SOL_RAD_DATA = 9
-  integer (kind=c_int), parameter, public :: WIND_VEL_DATA = 10
+  integer (kind=c_int), parameter, public :: ROUTING_FRAC_DATA = 5
+  integer (kind=c_int), parameter, public :: PRECIP_DATA = 6
+  integer (kind=c_int), parameter, public :: TMIN_DATA = 7
+  integer (kind=c_int), parameter, public :: TMAX_DATA = 8
+  integer (kind=c_int), parameter, public :: REL_HUM_DATA = 9
+  integer (kind=c_int), parameter, public :: SOL_RAD_DATA = 10
+  integer (kind=c_int), parameter, public :: WIND_VEL_DATA = 11
 
   integer (kind=c_int), parameter, public :: MISSING_VALUES_ZERO_OUT = 0
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
@@ -1105,12 +1106,12 @@ end subroutine set_constant_value_real
 
       call echolog( repeat("=", 60) )
       call echolog( "Missing day found in NetCDF file - padding values" )
-      call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
-        sText=trim(this%NCFILE%sFilename), &
-        rData=this%pGrdNative%rData)
-      call stats_WriteMinMeanMax( iLU=LU_LOG, &
-        sText=trim(this%NCFILE%sFilename), &
-        rData=this%pGrdNative%rData)
+!      call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
+!        sText=trim(this%NCFILE%sFilename), &
+!        rData=this%pGrdNative%rData)
+!      call stats_WriteMinMeanMax( iLU=LU_LOG, &
+!        sText=trim(this%NCFILE%sFilename), &
+!        rData=this%pGrdNative%rData)
       call echolog( repeat("=", 60) )
 
     endif

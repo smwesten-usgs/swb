@@ -672,6 +672,8 @@ implicit none
   real (kind=c_double)    :: rY0_cntr, rY1_cntr
   integer (kind=c_int) :: iStartMM, iStartDD, iStartYYYY
   integer (kind=c_int) :: iEndMM, iEndDD, iEndYYYY
+  integer (kind=c_int) :: iPROJ4_length
+  character (len=256) :: sPROJ4_string
 
   integer (kind=c_int) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD, iTemp
   integer (kind=c_int) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
@@ -719,6 +721,7 @@ implicit none
   logical (kind=c_bool) :: lPrematureEOF = lFALSE
   integer (kind=c_int) :: iMonthCount, iYearCount, iPeriodCount
   integer (kind=c_int) :: iGridCellValue
+  character (len=1) :: sSingleChar
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -784,6 +787,7 @@ implicit none
   call Assert(iStat==0,"Failed to open input binary file: "//&
     TRIM(sBinFile),TRIM(__FILE__),__LINE__)
 
+  sPROJ4_string = ""
   read(UNIT=LU_SWBSTATS) iNX             ! Number of cells in the x-direction
   read(UNIT=LU_SWBSTATS) iNY             ! Number of cells in the y-direction
   read(UNIT=LU_SWBSTATS) iDataType       ! Type of the grid
@@ -794,6 +798,13 @@ implicit none
   read(UNIT=LU_SWBSTATS) rRLE_OFFSET     ! RLE Offset
   read(UNIT=LU_SWBSTATS) rX0, rX1        ! World-coordinate range in X
   read(UNIT=LU_SWBSTATS) rY0, rY1        ! World-coordinate range in Y
+  read (unit=LU_SWBSTATS) iPROJ4_length
+
+  do i=1, iPROJ4_length
+    read (unit=LU_SWBSTATS) sSingleChar
+    sPROJ4_string = trim(sPROJ4_string)//sSingleChar
+  enddo
+
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
   read(UNIT=LU_SWBSTATS) iEndMM, iEndDD, iEndYYYY
 
@@ -851,7 +862,9 @@ implicit none
       write(unit=LU_STD_OUT,fmt="('feet',/)")
     endif
     write(unit=LU_STD_OUT,fmt="('  Grid data type: ',t28,a)") trim(int2char(iDataType))
-    write(unit=LU_STD_OUT,fmt="('  Length units code: ',t28,a)") trim(int2char(iLengthUnits))
+    write(unit=LU_STD_OUT,fmt="('  Length units code: ',t28,a,/)") trim(int2char(iLengthUnits))
+    if (iPROJ4_length > 0) &
+      write(unit=LU_STD_OUT,fmt="('  PROJ4 string: ',/,'  ',a,/)") trim(sPROJ4_string)
 
     stop
 

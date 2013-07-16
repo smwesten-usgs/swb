@@ -176,6 +176,8 @@ module types
 
       integer (kind=c_int) :: iTgt_Row = iZERO  ! Row: "i" index of target cell into which runoff flows
       integer (kind=c_int) :: iTgt_Col = iZERO  ! Col: "j" index of target cell into which runoff flows
+      integer (kind=c_int) :: iSumUpslopeCells = iZERO
+      integer (kind=c_int) :: iNumUpslopeConnections = iZERO
 
       real (kind=c_float) :: rBaseCN = rZERO                 ! Curve number from landuse/soil group
       real (kind=c_float) :: rAdjCN = rZERO                  ! Curve number, adjusted for antecedent moisture
@@ -232,6 +234,7 @@ module types
   integer (kind=c_int), parameter :: DATATYPE_CELL_GRID = 2
   integer (kind=c_int), parameter :: DATATYPE_SHORT = 3
   integer (kind=c_int), parameter :: DATATYPE_DOUBLE = 4
+  integer (kind=c_int), parameter :: DATATYPE_NA = -9999
 
   integer (kind=c_int), parameter :: FILETYPE_ARC_ASCII = 0
   integer (kind=c_int), parameter :: FILETYPE_SURFER = 1
@@ -880,10 +883,10 @@ module types
       integer (kind=c_int) :: iConfigureLanduse = CONFIG_NONE
 
       !> Soil moisture calculation option
-      integer (kind=c_int) :: iConfigureSM = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureSM = CONFIG_SM_NONE
 
       !> Snowfall and snowmelt option
-      integer (kind=c_int) :: iConfigureSnow = CONFIG_NONE
+      integer (kind=c_int) :: iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
 
       !> Maximum soil water capacity option
       integer (kind=c_int) :: iConfigureSMCapacity = CONFIG_NONE
@@ -988,26 +991,9 @@ module types
       integer (kind=c_int) :: iNX            !
       integer (kind=c_int) :: iNY            !
 
-      ! PROJ4 string for Landuse Grid
-!       character (len=256) :: sLandUse_PROJ4 = repeat(" ", 256)
-
-!       ! PROJ4 string for Soil Group Grid
-!       character (len=256) :: sSoilGroup_PROJ4 = repeat(" ", 256)
-
-!       ! PROJ4 string for Soil Available Water Capacity  Grid
-!       character (len=256) :: sSoilAWC_PROJ4 = repeat(" ", 256)
-
-!       ! PROJ4 string for Flow Direction Grid
-!       character (len=256) :: sFlowDir_PROJ4 = repeat(" ", 256)
-
-!       ! PROJ4 string for PRECIPITATION Grid
-!       character (len=256) :: sPrecipitationGrid_PROJ4 = repeat(" ", 256)
-
-!       ! PROJ4 string for AIR TEMPERATURE Grid
-!       character (len=256) :: sTemperatureGrid_PROJ4 = repeat(" ", 256)
-
       ! Filename for basin mask table
-      character (len=256) :: sBasinMaskFilename = repeat(" ", 256)
+      character (len=256) :: sBasinMaskFilename = ""
+      character (len=256) :: sBasinMaskPROJ4String = ""
 
       ! Target prefixes for output files
       character (len=256) :: sOutputFilePath = "output/"
@@ -2009,8 +1995,9 @@ subroutine CleanUpSlash ( s )
 
 end subroutine CleanUpSlash
 
-
-
+! poseted by AnonymousCoward on the Fortran Wiki
+! http://fortranwiki.org/fortran/show/newunit
+!
 ! This is a simple function to search for an available unit.
 ! LUN_MIN and LUN_MAX define the range of possible LUNs to check.
 ! The UNIT value is returned by the function, and also by the optional
