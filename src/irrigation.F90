@@ -58,17 +58,21 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
           rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
-          cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW, &
-                                      kind=c_double ) &
-                                  * rDepletionAmount &
-                                  * REAL(pIRRIGATION%rIrrigationEfficiency_GW, &
-                                  kind=c_double )
-          cel%rIrrigationFromSW = real(1.0 - pIRRIGATION%rFractionOfIrrigationFromGW, &
-                                      kind=c_double ) &
-                                  * rDepletionAmount &
-                                  * real(pIRRIGATION%rIrrigationEfficiency_SW, &
-                                      kind=c_double )
+          cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
+                                      * rDepletionAmount, kind=c_double )
+
+          cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
+                                      * rDepletionAmount, kind=c_double )
+
+          ! NOTE: we are assuming that the inefficiencies in delivery are *not*
+          ! added to the soil moisture reservoir
           cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
+
+          cel%rIrrigationFromGW = cel%rIrrigationFromGW &
+             * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+          cel%rIrrigationFromSW = cel%rIrrigationFromSW &
+             * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
         else
           cel%rIrrigationAmount = rZERO
           cel%rIrrigationFromGW = rZERO

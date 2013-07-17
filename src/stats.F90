@@ -1486,7 +1486,7 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
         TRIM(__FILE__),__LINE__)
 
     write(unit=pSSF%iLU,fmt="(a,2x,i2.2,'/',i2.2,'/',i4.4,2x," &
-        //"'23:59:59',2x,f14.4)") &
+        //"'12:00:00',2x,f14.4)") &
         TRIM(int2char(pSSF%iColNum))//"_"//TRIM(int2char(pSSF%iRowNum)), &
         iMonth, iDay, iYear, &
         rValue

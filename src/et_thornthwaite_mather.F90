@@ -94,6 +94,11 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   real (kind=c_double),parameter :: rExp=1.514_c_double
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
+
+  !> @TODO Fix T-M routine: broken now if using tabular data since
+  !> by the time this routine is called, the tabular data file is already
+  !> open
+
   open ( LU_TEMP, file=trim(sFileName), iostat=iStat )
   call Assert ( iStat == 0, "Could not open time series file " // trim(sFileName), &
     trim(__FILE__),__LINE__)

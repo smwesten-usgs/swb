@@ -111,8 +111,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     call model_CheckConfigurationSettings( pGrd, pConfig )
 
-    call stats_InitializeVolumeConversion(pGrd)
-
     call model_InitializeInputAndOutput( pGrd, pConfig )
 
     !> read in flow direction, soil group, and AWC grids
@@ -334,9 +332,9 @@ end if
       TRIM(__FILE__),__LINE__)
   end if
 
-  if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
+  !if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
 
-  call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
+  !call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
 
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
@@ -346,6 +344,11 @@ end if
     call model_UpdateGrowingDegreeDay( pGrd , pConfig)
     call et_kc_ApplyCropCoefficients(pGrd, pConfig)
   endif
+
+  if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
+
+  call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
+
 
   call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
@@ -1517,6 +1520,9 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
           ! Count upstream cells
           iUpstreamCount = 0
 
+          cel%iSumUpslopeCells = 0
+          cel%iNumUpslopeConnections = 0
+
           ! now search all adjacent cells which have current cell
           ! as their target
 
@@ -1527,21 +1533,25 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
               do iColSub=iCol-1,iCol+1
                 if (iColSub>=1 .and. iColSub<=pGrd%iNX) then              ! we're within array bounds
                   if (iRow==iRowSub .and. iCol==iColSub) cycle            ! Skip current inquiry cell
-                  if (pGrd%Cells(iColSub,iRowSub)%lDownhillMarked) cycle  ! Don't count marked neighbors
                   if (pGrd%Cells(iColSub,iRowSub)%iActive == 0) cycle     ! Don't count inactive neighbors
                   call model_DownstreamCell(pGrd,iRowSub,iColSub,iTgt_Row,iTgt_Col)
+
                   if (iTgt_Row==iRow .and. iTgt_Col==iCol ) then          ! target cell points at current inquiry cell
-                    iUpstreamCount = iUpstreamCount+1
-                    ! we've found a cell that points to the current model
-                    ! cell; does our current model cell point back at it?
-                    ! if so, we have circular flow
-                    call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
-                    if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub ) then
-                      lCircular = lTRUE
-                    else
+                    if (pGrd%Cells(iColSub,iRowSub)%lDownhillMarked) then
+
                       cel%iSumUpslopeCells = cel%iSumUpslopeCells &
-                         + pGrd%Cells(iColSub,iRowSub)%iSumUpslopeCells
+                         + pGrd%Cells(iColSub,iRowSub)%iSumUpslopeCells + 1
                        cel%iNumUpslopeConnections = cel%iNumUpslopeConnections + 1
+
+                    else
+
+                      iUpstreamCount = iUpstreamCount+1
+                      ! we've found a cell that points to the current model
+                      ! cell; does our current model cell point back at it?
+                      ! if so, we have circular flow
+                      call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
+                      if (iTgt_Row==iRowSub .and. iTgt_Col==iColSub )  lCircular = lTRUE
+
                     endif
 
                   end if
@@ -1654,6 +1664,20 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
     flush(UNIT=LU_ROUTING)
     close(UNIT=LU_ROUTING)
     close(UNIT=LU_TEMP)
+
+    pTempGrid%iData = pGrd%Cells%iSumUpslopeCells
+
+    call make_shaded_contour(pGrd=pTempGrid, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "CALC_Upslope_Contributing_Area.png", &
+      sTitleTxt="Upslope Contributing Area", &
+      sAxisTxt="Number of Cells" )
+
+    pTempGrid%iData = pGrd%Cells%iNumUpslopeConnections
+
+    call make_shaded_contour(pGrd=pTempGrid, &
+      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "CALC_Num_Upslope_Connections.png", &
+      sTitleTxt="Number of Upslope Connecting Cells", &
+      sAxisTxt="Number of Cells" )
 
   else ! routing table already exists
 

@@ -148,43 +148,63 @@ module graph
      ! set to 2/3 of the screen size, and the resolution of
      ! image formats is 853 x 603 pixels.
 
+    ! Allow scaling up to full page size
+    CALL SCLMOD('FULL')
+
     ! A output image filename can be set with SETFIL
     call SETFIL(TRIM(pGraph(iVarNum)%cSETFIL))
 
     ! Set options specific to the desired output type
     ! ==> LEVEL 0 <==
-    if(TRIM(pGraph(iVarNum)%cCDEV)=="PNG") then
-      ! The routine PNGMOD enables transparency for PNG files.
+
+    select case(TRIM(pGraph(iVarNum)%cCDEV))
+
+      case("PNG")
+
+        ! The routine PNGMOD enables transparency for PNG files.
 !       call PNGMOD('ON','TRANSPARENCY')
-      call PAGE(iNXP,iNYP)
-      call WINSIZ(iNXW/2,iNYW/2)
+        call PAGE(iNXP,iNYP)
+        call WINSIZ(iNXW/2,iNYW/2)
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="PDF") then
-      call SETPAG(TRIM(sPaperSize))
+      case("PDF")
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="GIF") then
-      ! The routine GIFMOD enables transparency for GIF files.
-      call GIFMOD('ON','TRANSPARENCY')
-      call WINSIZ(iNXW,iNYW)
+        call SETPAG(TRIM(sPaperSize))
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="WMF") then
+      case("GIF")
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="TIFF") then
-      call WINSIZ(iNXW,iNYW)
+        ! The routine GIFMOD enables transparency for GIF files.
+        call GIFMOD('ON','TRANSPARENCY')
+        call WINSIZ(iNXW,iNYW)
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="BMP") then
-      call WINSIZ(iNXW,iNYW)
+      case("WMF")
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="PS") then
-      call SETPAG(TRIM(sPaperSize))
+      case("TIFF")
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="EPS") then
-      call SETPAG(TRIM(sPaperSize))
+        call WINSIZ(iNXW,iNYW)
 
-    elseif(TRIM(pGraph(iVarNum)%cCDEV)=="SVG") then
-      call SETPAG(TRIM(sPaperSize))
+      case("BMP")
 
-    endif
+        call WINSIZ(iNXW,iNYW)
+
+      case("PS")
+
+        call SETPAG(TRIM(sPaperSize))
+
+      case("EPS")
+
+        call SETPAG(TRIM(sPaperSize))
+
+      case("SVG")
+
+        call SETPAG(TRIM(sPaperSize))
+
+      case default
+
+        call assert(lFALSE, "Unknown device specified for output plots." &
+          //" Device: "//trim(pGraph(iVarNum)%cCDEV))
+
+    end select
+
 
     ! WINSIZ: This routine defines the size of windows and the
     ! resolution of DISLIN image formats such as TIFF, PNG, BMP,
@@ -329,7 +349,7 @@ module graph
                ZSTEP)
 
     ! CRVMAT: plots a coloured surface according to a matrix
-    CALL CRVMAT(ZMAT,iX,iY,2,2)
+    CALL CRVMAT(ZMAT,iX,iY,1,1)
 
     ! HEIGHT: defines the character height.
     CALL HEIGHT(50)
@@ -487,10 +507,6 @@ module graph
       ! A output image filename can be set with SETFIL
       call SETFIL(TRIM(sOutputFilename))
 
-      ! The routine FILMOD determines if a new plot file name is
-      ! created for existing files.
-      CALL FILMOD('DELETE')
-
       ! PAGE determines the size of the page.
       call PAGE(iPtHRes,iPtVRes)
 !       call SETPAG('da4p')
@@ -500,6 +516,10 @@ module graph
 
       ! DISINI initializes DISLIN by setting default parameters and creating a plotfile.
       CALL DISINI()
+
+      ! The routine FILMOD determines if a new plot file name is
+      ! created for existing files.
+      CALL FILMOD('DELETE')
 
       ! The printing of warnings and the output of the protocol in DISFIN
       ! can be disabled with the routine ERRMOD.
@@ -597,7 +617,6 @@ module graph
     CALL TITLE()
 
     CALL DISFIN()
-    return
 
   end subroutine make_shaded_contour
 

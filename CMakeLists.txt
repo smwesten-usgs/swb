@@ -206,8 +206,8 @@ if(CMAKE_HOST_WIN32)
      set(EXTRA_LIBS ${EXTRA_LIBS} ${WS2_32_LIB} )
      set(EXTRA_LIBS ${EXTRA_LIBS} ${OPENGL32_LIB} )
 
-	 
-	 
+
+
      include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
 
      SET(CMAKE_INSTALL_PREFIX "d:/dos" CACHE PATHFILE "Installation directory")
@@ -465,3 +465,4 @@ message("--------------------------------------------------------------------")
 enable_testing()
 add_subdirectory(src)
 add_subdirectory(tests/general)
+add_subdirectory(tests/irrigation)

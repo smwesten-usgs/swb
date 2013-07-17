@@ -49,7 +49,7 @@ module et_crop_coefficients
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
                            + pIRRIGATION%rKcb_mid * frac
 
-  elseif ( iThreshold > pIRRIGATION%iL_plant ) then
+  elseif ( iThreshold >= pIRRIGATION%iL_plant ) then
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini
   else
     pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
