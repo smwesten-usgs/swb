@@ -409,7 +409,10 @@ endif()
 if(TARGET__SWBSTATS)
 
   add_executable(swbstats
-            graph.F90
+            data_factory.F90
+			netcdf4_support.F90
+			netcdf_c_api_interfaces.F90
+			graph.F90
             grid.F90
             RLE.F90
             stats.F90

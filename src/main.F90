@@ -149,7 +149,6 @@ program main
 
   end if
 
-  ! warning - calling a Fortran 2003 extension function here
   call GET_COMMAND_ARGUMENT(1,sControlFile)
 
   ! pass control to control module

@@ -17,7 +17,7 @@ set OMP_NUM_THREADS=8
 set INSTALL_PREFIX=d:\DOS
 
 :: define other variables for use in the CMakeList.txt file
-:: options are "Release" or "Debug"
+:: options are "Release", "Profile" or "Debug"
 set BUILD_TYPE="Release"
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set PLATFORM_TYPE="x64"
@@ -36,7 +36,8 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=generic -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
 :: IMPORTANT!! Make sure a valid TEMP directory exists!!
@@ -71,7 +72,7 @@ set LIBRARY_PATH=%MINGWBASE%\lib;%MINGWBASE%\lib\gcc\%COMPILER_TRIPLET%\%MINGW_V
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
 set CFLAGS="-DCURL_STATICLIB"
-set CPPFLAGS="-DgFortran -DCURL_STATICLIB"
+set CPPFLAGS="DgFortran -DCURL_STATICLIB"
 
 set CMAKE_INCLUDE_PATH=%INCLUDE%
 set CMAKE_LIBRARY_PATH=%LIB%
@@ -101,4 +102,5 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DOPTION__STRICT_DATE_CHECKING=%OPTION__STRICT_DATE_CHECKING% ^
 -DOPTION__DEBUG_PRINT=%OPTION__DEBUG_PRINT% ^
 -DCMAKE_Fortran_FLAGS_DEBUG=%CMAKE_Fortran_FLAGS_DEBUG% ^
--DCMAKE_Fortran_FLAGS_RELEASE=%CMAKE_Fortran_FLAGS_RELEASE%
+-DCMAKE_Fortran_FLAGS_RELEASE=%CMAKE_Fortran_FLAGS_RELEASE% ^
+-DCMAKE_Fortran_FLAGS_PROFILE=%CMAKE_Fortran_FLAGS_PROFILE%

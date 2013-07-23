@@ -32,7 +32,7 @@ module data_factory
     integer (kind=c_int) :: iSourceDataType = DATATYPE_NA  ! real, short, integer, etc.
     integer (kind=c_int) :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF
     integer (kind=c_int) :: iTargetDataType = DATATYPE_NA  ! Fortran real, integer, etc.
-    character (len=256) :: sDescription
+    character (len=256) :: sDescription = ""
     character (len=256) :: sSourcePROJ4_string
     character (len=256) :: sSourceFileType
     character (len=256) :: sFilenameTemplate    ! e.g. %Y_%#_prcp.nc
@@ -92,7 +92,7 @@ module data_factory
     ! pGrdNative is a grid created to serve as an intermediary between
     ! the native coordinate of the data source file and the project coordinates
     ! in use by swb
-    type (T_GENERAL_GRID), pointer :: pGrdNative
+    type (T_GENERAL_GRID), pointer :: pGrdNative => NULL()
     logical (kind=c_bool) :: lGridIsPersistent = lFALSE
     logical (kind=c_bool) :: lGridHasChanged = lFALSE
     logical (kind=c_bool) :: lPerformFullInitialization = lTRUE
@@ -450,8 +450,11 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
     case default
 
-      call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
-        //trim(asCharacter(this%iSourceDataType)), &
+      call dump_data_structure_sub(this)
+
+      call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: " &
+        //"name="//dquote(this%sDescription) &
+        //"; value="//trim(asCharacter(this%iSourceDataType)), &
         trim(__FILE__), __LINE__)
 
     end select
@@ -477,7 +480,7 @@ subroutine getvalues_constant_sub( this, pGrdBase )
   call echolog("  filename template: "//trim(this%sFilenameTemplate) )
   call echolog("  source filename: "//trim(this%sSourceFilename) )
 
-  call grid_DumpGridExtent(this%pGrdNative)
+  if (associated(this%pGrdNative))  call grid_DumpGridExtent(this%pGrdNative)
 
   end subroutine dump_data_structure_sub
 

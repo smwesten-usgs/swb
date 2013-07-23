@@ -942,13 +942,6 @@ module types
       ! Prefix of input ARC or SURFER gridded precip time-series files
       character (len=256) :: sPrecipFilePrefix = ""
 
-      ! Prefix of input ARC or SURFER gridded temperature time-series files
-      character (len=256) :: sTMAXFilePrefix = ""
-      character (len=256) :: sTMINFilePrefix = ""
-
-      ! Prefix of the input ARC of SURFER gridded DYNAMIC LANDUSE files
-      character (len=256) :: sDynamicLanduseFilePrefix = repeat(" ", 256)
-
       ! ET parameters
       real (kind=c_float) :: rET_Slope = 0.0023    ! default is for Hargreaves (1985) method
       real (kind=c_float) :: rET_Exponent = 0.5

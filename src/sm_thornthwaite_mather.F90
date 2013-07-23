@@ -85,6 +85,8 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
       cel => pGrd%Cells(iCol,iRow)
 
+      if (cel%iActive == iINACTIVE_CELL) cycle
+
       if ( cel%rSoilWaterCap > rNEAR_ZERO ) then
 
         if (pConfig%iConfigureSM == CONFIG_SM_TM_LOOKUP_TABLE) then

@@ -905,6 +905,8 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
       cel => pGrd%Cells(iCol,iRow)
 
+      if (cel%iActive == iINACTIVE_CELL) cycle
+
       ! cap the maximum value used in GDD calculations on the basis of the value
       ! provided by user...
 
@@ -1759,67 +1761,80 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   ! Reset the upstream flows (note that iOrderCount, iOrderCol, and iOrderRow are globals)
   do ic=1,iOrderCount
 
-  cel => pGrd%Cells(iOrderCol(ic),iOrderRow(ic))
-  call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
+    cel => pGrd%Cells(iOrderCol(ic),iOrderRow(ic))
+
+    if (cel%iActive == iINACTIVE_CELL) cycle
+
+    call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
 
 #ifdef STREAM_INTERACTIONS
-  cel%rStreamCapture = rZERO
+    cel%rStreamCapture = rZERO
 #endif
 
-  ! Compute the runoff
-  cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+    ! Compute the runoff
+    cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-  ! Now, route the water
-  if ( iTgt_Row == iROUTE_LEFT_GRID .or. iTgt_Col == iROUTE_LEFT_GRID ) then
-    cel%rFlowOutOfGrid = cel%rOutflow
-    cel%rOutFlow = rZERO
-    cycle
-  elseif ( iTgt_Row == iROUTE_DEPRESSION  .or. iTgt_Col == iROUTE_DEPRESSION ) then
-    ! Don't route any further; the water pools here.
-    cel%rOutFlow = rZERO
-    cycle
-  endif
+    ! Now, route the water
+    if ( iTgt_Row == iROUTE_LEFT_GRID .or. iTgt_Col == iROUTE_LEFT_GRID ) then
+      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rOutFlow = rZERO
+      cycle
+    elseif ( iTgt_Row == iROUTE_DEPRESSION  .or. iTgt_Col == iROUTE_DEPRESSION ) then
+      ! Don't route any further; the water pools here.
+      cel%rOutFlow = rZERO
+      cycle
+    endif
 
-  ! MUST screen target values to ensure we don't start attempting
-  ! manipulation of memory that is out of bounds!!
-  call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=c_bool), &
-    "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
-    //"  Col = "//int2char(iOrderCol(ic)), &
-    trim(__FILE__),__LINE__)
-  call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=c_bool), &
-    "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
-    //"  Col = "//int2char(iOrderCol(ic)), &
-    trim(__FILE__),__LINE__)
+    ! MUST screen target values to ensure we don't start attempting
+    ! manipulation of memory that is out of bounds!!
+    call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=c_bool), &
+      "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
+      //"  Col = "//int2char(iOrderCol(ic)), &
+      trim(__FILE__),__LINE__)
+    call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=c_bool), &
+      "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
+      //"  Col = "//int2char(iOrderCol(ic)), &
+      trim(__FILE__),__LINE__)
 
-  target_cel => pGrd%Cells(iTgt_Col,iTgt_Row)
+    target_cel => pGrd%Cells(iTgt_Col,iTgt_Row)
+
+    !> if target cell is inactive, assume that the water should be tracked
+    !> as flow out of grid
+    if ( target_cel%iActive == iINACTIVE_CELL) then
+
+      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rOutFlow = rZERO
+      cycle
+
+    endif
 
 #ifdef STREAM_INTERACTIONS
 
-  if(target_cel%iStreamIndex > 0) then
-    ! route outflow to a specific stream or fracture ID
-    cel%rStreamCapture = cel%rOutFlow
-    cel%rOutFlow = rZERO
-  else if &
+    if(target_cel%iStreamIndex > 0) then
+      ! route outflow to a specific stream or fracture ID
+      cel%rStreamCapture = cel%rOutFlow
+      cel%rOutFlow = rZERO
+    else if &
 #else
-  if &
+    if &
 #endif
-  (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
-  .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
-  ! Don't route any further; the water has joined a generic
-  ! surface water feature. We assume that once the water hits a
-  ! surface water feature that the surface water drainage
-  ! network transports the bulk of it
-  ! out of the model domain quite rapidly
-  cel%rFlowOutOfGrid = cel%rOutflow
-  cel%rOutFlow = rZERO
+    (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
+    .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
+      ! Don't route any further; the water has joined a generic
+      ! surface water feature. We assume that once the water hits a
+      ! surface water feature that the surface water drainage
+      ! network transports the bulk of it
+      ! out of the model domain quite rapidly
+      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rOutFlow = rZERO
 
-  else
-    ! add cell outflow to target cell inflow
+    else
+      ! add cell outflow to target cell inflow
       target_cel%rInFlow = &
         target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
       cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
       cel%rOutflow = cel%rOutflow * cel%rRouteFraction
-  end if
+    end if
 
   end do
 
@@ -3095,6 +3110,26 @@ subroutine model_CheckConfigurationSettings( pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
 
+  call assert(DAT(FLOWDIR_DATA)%iSourceDataType /= DATATYPE_NA, &
+    "No flow direction information has been specified. If you are not" &
+    //"~routing flow, add a directive such as 'FLOW_DIRECTION CONSTANT 1'" &
+    //" to your ~control file." )
+
+  call assert(DAT(LANDUSE_DATA)%iSourceDataType /= DATATYPE_NA, &
+    "No landuse data has been specified. If you have only" &
+    //"~a single landuse type, add a directive such as 'LANDUSE CONSTANT 21'" &
+    //"~to your control file." )
+
+  call assert(DAT(AWC_DATA)%iSourceDataType /= DATATYPE_NA, &
+    "No available water capacity grid has been specified. If you do not presently" &
+    //"~have an AWC grid, you may add a directive such as 'WATER_CAPACITY CONSTANT 2.6'" &
+    //"~to your control file in order to run SWB." )
+
+  call assert(DAT(SOILS_GROUP_DATA)%iSourceDataType /= DATATYPE_NA, &
+    "No hydrologic soils group grid has been specified. If you do not presently" &
+    //"~have an HSG grid, you may add a directive such as 'HYDROLOGIC_SOIL_GROUP CONSTANT 1'" &
+    //"~to your control file in order to run SWB." )
+
   if (pConfig%lEnableIrrigation .and. pConfig%iConfigureFAO56 == CONFIG_FAO56_NONE ) then
     call assert( lFALSE, "The irrigation module must be used with one of the FAO-56 crop~" &
       //"coefficient submodels enabled. These can be enabled by adding one of the following~" &
@@ -3122,6 +3157,10 @@ subroutine model_setInactiveCells( pGrd, pConfig )
     pGrd%Cells%iActive = iINACTIVE_CELL
 
   endwhere
+
+  call echolog("Finished converting cells with missing data to inactive cells." &
+    //"~ A total of "//trim(asCharacter(count(pGrd%Cells%iActive==iINACTIVE_CELL))) &
+    //" cells were inactivated.")
 
 end subroutine model_setInactiveCells
 

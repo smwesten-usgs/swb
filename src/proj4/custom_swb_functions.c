@@ -12,6 +12,7 @@
 /* and then makes the call to pj_transform. This hides C pointers from  */
 /* external packages such as those written in fortran.                  */
 /************************************************************************/
+
 int pj_init_and_transform( const char *from_projection, const char *to_projection, \
    long point_count, double *x, double *y) {
 

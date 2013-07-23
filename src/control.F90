@@ -433,26 +433,6 @@ subroutine control_setModelOptions(sControlFile)
           sFilenameTemplate=trim(sArgument), &
           iDataType=DATATYPE_REAL )
 
-!          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
-!           write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of ARC grids"
-!           pConfig%sTMAXFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
-!              TRIM(pConfig%sTMAXFilePrefix)
-!           call Chomp ( sRecord, sArgument )
-!           pConfig%sTMINFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
-!              TRIM(pConfig%sTMINFilePrefix)
-!           pConfig%lGriddedData = lTRUE
-!         else if ( trim(sOption) == "SURFER" ) then
-!           pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
-!           write(UNIT=LU_LOG,FMT=*) "Temperature data will be read as a series of SURFER grids"
-!           pConfig%sTMAXFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Max Temperature data: ", &
-!              TRIM(pConfig%sTMAXFilePrefix)
-!           call Chomp ( sRecord, sArgument )
-!           pConfig%sTMINFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for Min Temperature data: ", &
-!              TRIM(pConfig%sTMINFilePrefix)
           pConfig%lGriddedData = lTRUE
 #ifdef NETCDF_SUPPORT
         else if( trim(sOption) == "NETCDF" ) then
@@ -463,12 +443,6 @@ subroutine control_setModelOptions(sControlFile)
             iDataType=DATATYPE_REAL, &
             pGrdBase=pGrd )
 
-
-!          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
-!          write(UNIT=LU_LOG,FMT=*) &
-!            "Temperature data will be read from a NetCDF file"
-!          pConfig%NC_TMAX_VarName = TRIM(sArgument)
-
           ! read in the NetCDF variable that corresponds to TMIN
           call Chomp ( sRecord, sArgument )
 
@@ -477,8 +451,6 @@ subroutine control_setModelOptions(sControlFile)
             sFilenameTemplate = trim(sArgument), &
             iDataType=DATATYPE_REAL, &
             pGrdBase=pGrd)
-
-!          pConfig%NC_TMIN_VarName = TRIM(sArgument)
 
 #endif
         else
@@ -667,20 +639,6 @@ subroutine control_setModelOptions(sControlFile)
         sFilenameTemplate=trim(sArgument), &
         iDataType=DATATYPE_INT )
 
-!         if ( trim(sOption) == "ARC_GRID" ) then
-!           pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_ARC_GRID
-!           write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of ARC grids"
-!           pConfig%sDynamicLanduseFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
-!              TRIM(pConfig%sDynamicLanduseFilePrefix)
-!         else if ( trim(sOption) == "SURFER" ) then
-!           pConfig%iConfigureLanduse = CONFIG_LANDUSE_DYNAMIC_SURFER
-!           write(UNIT=LU_LOG,FMT=*) "Landuse data will be read as a series of SURFER grids"
-!           pConfig%sDynamicLanduseFilePrefix = sArgument
-!           write(UNIT=LU_LOG,FMT=*)  "  grid file prefix for dynamic landuse data: ", &
-!              TRIM(pConfig%sDynamicLanduseFilePrefix)
-!        endif
-
       elseif( trim(sOption) == "ARC_GRID" &
          .or. trim(sOption) == "SURFER" ) then   ! read in a static gridded landuse file
 
@@ -688,19 +646,6 @@ subroutine control_setModelOptions(sControlFile)
         sFileType=trim(sOption), &
         sFilename=trim(sArgument), &
         iDataType=DATATYPE_INT )
-
-
-
-!        pConfig%iConfigureLanduse = CONFIG_LANDUSE_STATIC_GRID
-!        pConfig%sDynamicLanduseFilePrefix = "none"
-!        pLandUseGrid => grid_Read( sArgument, sOption, DATATYPE_INT )
-!        pLandUseGrid%sFilename = trim(sArgument)
-!        call Assert( grid_Conform( pGrd, input_grd ),  &
-!                      "Non-conforming grid" )
-!        pGrd%Cells%iLandUse = input_grd%iData
-!        call grid_Destroy( input_grd )
-
-
 
       else
         call Assert( lFALSE, "Illegal landuse input option or format specified", &

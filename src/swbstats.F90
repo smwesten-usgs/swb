@@ -23,7 +23,7 @@ module swbstats_support
   integer (kind=c_int) :: iSlcStartDD = 1
   integer (kind=c_int) :: iSlcEndMM = 12
   integer (kind=c_int) :: iSlcEndDD = 31
-  logical (kind=c_bool) :: lPRINT
+  logical (kind=c_bool) :: lDATE_RANGE_ACTIVE
 
   character (len=78), dimension(34), parameter :: sUsageText = &
     [ "Usage: swbstats [binary file name]                                            ", &
@@ -44,25 +44,27 @@ module swbstats_support
       "NOTES:                                                                        ", &
       "                                                                              ", &
       "  1) SWBSTATS will generate output at all frequencies less than               ", &
-      "     that specified; for example, MONTHLY will also generate YEARLY output    ", &
+      "     that specified; for example, MONTHLY will also generate YEARLY output.   ", &
       "  2) If no output frequency is provided, a summary for the entire             ", &
-      "     model simulation period is calculated                                    ", &
-      "  3) SUM: will calculate statistics based on SUMS rather than MEAN values     ", &
-      "  4) VERBOSE: writes daily min, mean, and max values to logfile               ", &
-      "  5) SURFER: directs output to Surfer grids rather than Arc ASCII grids       ", &
-      "  6) BASIN_MASK: specifies a list of basins for which stats will be calculated", &
-      "     each entry in the basin list specifies an ARC ASCII basin mask for which ", &
-      "     statistics will be calculated                                            ", &
-      "  7) MASK: specifies a single mask file; stats are calculated for each        ", &
-      "     distinct integer value present in the mask file                          ", &
+      "     model simulation period is calculated.                                   ", &
+      "  3) SUM: will calculate statistics based on SUMS rather than MEAN values.    ", &
+      "  4) VERBOSE: writes daily min, mean, and max values to logfile.              ", &
+      "  5) SURFER: directs output to Surfer grids rather than Arc ASCII grids.      ", &
+      "  6) BASIN_MASK: specifies a list of basins for which stats will be           ", &
+      "     calculated; each entry in the basin list specifies an ARC ASCII basin    ", &
+      "      mask for which statistics will be calculated.                           ", &
+      "  7) MASK: specifies a *single* mask file; stats are calculated for each      ", &
+      "     distinct integer value present in the mask file.                         ", &
       "  8) CUMULATIVE: specifies that MASK statistics are cumulative;               ", &
-      "     these cumulative statistics are reset at the beginning of each year      ", &
-      "  9) PERIOD_SLICE: calculates stats on a specified subset of days each year   ", &
-      "     for example, 'PERIOD_SLICE 06/01 08/31' will report stats for the        ", &
-      "     subset of output that occurs between June 1st and Aug. 31st of each year " ]
+      "     these cumulative statistics are reset at the beginning of each year.     ", &
+      "  9) PERIOD_SLICE: calculates stats on a specified subset of days each year.  ", &
+      "     For example, 'PERIOD_SLICE 06/01 08/31' will report stats for the        ", &
+      "     subset of output that occurs between June 1st and Aug. 31st of each year." ]
 
 contains
 
+!> @brief This routine is designed to comb through the SWB output and calculate
+!> statistics on the basis of nonzero integer values found in a basin mask file.
 subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
   use types
@@ -168,8 +170,6 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
     endif
 
-    close(UNIT=LU_MASK_FILE)
-
   end do
 
   flush(UNIT=LU_STATS)
@@ -177,8 +177,10 @@ subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
 
 end subroutine CalcBasinStats
 
-!------------------------------------------------------------------------------
+!-----------------------------------------------!------------------------------------------------------------------------------
 
+!> @brief This routine is designed to comb through the SWB output and calculate
+!> statistics on the basis of the unique integer values found in the mask file.
 subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   use types
@@ -212,7 +214,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   integer (kind=c_int), save :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
-
+print *, trim(__FILE__), __LINE__
   if(present(iNumDays)) then
     rDenominator = real(iNumDays, kind=c_double)
   else
@@ -224,24 +226,33 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   else
     rConversionFactor = 27878400_c_double
   endif
-
+    print *, trim(__FILE__), __LINE__
   if(pConfig%lFirstDayOfSimulation) then
 
-    iNumRecs = maxval(pMaskGrd%rData)
+    iNumRecs = maxval(pMaskGrd%iData)
     if(lCUMULATIVE) then
       allocate(rRunningSum(iNumRecs))
       rRunningSum = 0_c_double
     endif
 
+  print *, iNumRecs
+  print *, trim(__FILE__), __LINE__
 
     sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt"
     open(newunit=LU_STATS,FILE=trim(sBuf), &
           iostat=iStat, STATUS='REPLACE')
+
+    print *, trim(__FILE__), __LINE__
+
+
     call Assert ( iStat == 0, &
       "Could not open MASK statistics file "//dquote(sBuf))
 
+    print *, trim(__FILE__), __LINE__
+
     write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
 
+    print *, trim(__FILE__), __LINE__
 
     if(.not. lGAP_DIFFERENCE) then
 
@@ -271,8 +282,9 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   end if
 
+    print *, trim(__FILE__), __LINE__
 
-  if(lPRINT) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
+  if(lDATE_RANGE_ACTIVE) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
   if(lRESET .and. lCUMULATIVE) rRunningSum = 0_c_double
 
@@ -280,12 +292,12 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
     do k = 1,iNumRecs
 
-      iCount = COUNT(pMaskGrd%rData == k)
+      iCount = COUNT(pMaskGrd%iData == k)
 
       ! sum of the sum of values within basin mask boundaries
-      rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
-      rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
-      rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
+      rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
+      rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
 
       rAvg = rSum / iCount
 
@@ -306,7 +318,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
         rRunningSum(k) = rRunningSum(k) + rAvg
 
-        if(lPRINT) then
+        if(lDATE_RANGE_ACTIVE) then
 
           if( k < iNumRecs ) then
 
@@ -322,7 +334,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
       else
 
-        if(lPRINT) then
+        if(lDATE_RANGE_ACTIVE) then
 
           if( k < iNumRecs ) then
 
@@ -340,7 +352,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
     enddo
 
-  else
+  else  ! GAP_DIFFERENCE
 
     iCount = COUNT(pMaskGrd%rData == iNumRecs)
 
@@ -349,7 +361,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
     rBaseAvg = rBaseSum / iCount
 
-    if(lPRINT) &
+    if(lDATE_RANGE_ACTIVE) &
       write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rBaseAvg,sTAB
 
     do k = 1,iNumRecs-1
@@ -374,7 +386,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
         write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
       endif
 
-      if(lPRINT) then
+      if(lDATE_RANGE_ACTIVE) then
 
         if( k < iNumRecs -1 ) then
 
@@ -484,7 +496,7 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
     write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
   endif
 
-  if(lPRINT) write(UNIT=LU_STATS,FMT="(a,3x,g16.8)") TRIM(sLabel), &
+  if(lDATE_RANGE_ACTIVE) write(UNIT=LU_STATS,FMT="(a,3x,g16.8)") TRIM(sLabel), &
      rSum * rGridCellAreaSF / 86400_c_double / 12_c_double
 
   flush(UNIT=LU_STATS)
@@ -623,6 +635,7 @@ subroutine ReadBasinMaskTable ( pConfig , pGrd)
   end do BMASK
 
   flush(UNIT=LU_LOG)
+  close(LU_MASK)
 
 end subroutine ReadBasinMaskTable
 
@@ -948,9 +961,6 @@ implicit none
         read(sItem,*) iSlcEndMM
         read(sBuf,*) iSlcEndDD
 
-        print *, iSlcStartMM, iSlcStartDD
-        print *, iSlcEndMM, iSlcEndDD
-
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_MASK") then
       i = i + 1
       lBASINSTATS = lTRUE
@@ -1147,7 +1157,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       iCurrMM, iCurrDD, iCurrYYYY
 
     ! this logical allows us to output results for a season or period each year
-    lPRINT = (iCurrMM > iSlcStartMM .and. iCurrMM < iSlcEndMM) &
+    lDATE_RANGE_ACTIVE = (iCurrMM > iSlcStartMM .and. iCurrMM < iSlcEndMM) &
              .or. (iCurrMM == iSlcStartMM .and. iCurrDD >= iSlcStartDD) &
              .or. (iCurrMM == iSlcEndMM .and. iCurrDD <= iSlcEndDD)
 
@@ -1166,14 +1176,12 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     !> if current date does not fall within desired date range, keep
     !> reading data, or if current date is after the end of the
     !> desired date range, stop reading and get out
-    if( (iCurrJD < iSWBStatsStartDate .or. .not. lPRINT) .and. .not. lCUMULATIVE ) then
+    if( (iCurrJD < iSWBStatsStartDate .or. .not. lDATE_RANGE_ACTIVE) .and. .not. lCUMULATIVE ) then
 
       do
         read(UNIT=LU_SWBSTATS,iostat=iStat) iTemp
 
         ! skip all of the RLE nonsense if we don't care about the contents
-        ! note that we must subtract 4 to account for the fact that by this
-        ! point in the program execution
         call assert(iStat == 0, "Problem fast-forwarding binary file", &
           trim(__FILE__), __LINE__)
         if(iTemp == iEOF) then
@@ -1184,11 +1192,16 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
       enddo
 
+      !> 'cycle' again: return to top of external do loop and read in the
+      !> next date header
       cycle
 
     elseif(iCurrJD > iSWBStatsEndDate) then
       exit
     endif
+
+    !> we are currently dealing with results that fall within our
+    !> daterange of interest...
 
     ! name "RLE_readByte" is misleading, since the return value (rVal)
     ! is actually a vector of all daily values with dimension (iNY*iNX)
@@ -1218,9 +1231,6 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     iPeriodCount = iPeriodCount + 1
 
     if(lVERBOSE) then
-      call stats_WriteMinMeanMax(LU_LOG, &
-         TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
-         pGrd%rData(:,:))
 
       if(lCUMULATIVE) then
         call stats_WriteMinMeanMax(LU_STD_OUT, &
@@ -1231,13 +1241,17 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
           TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
           pGrd%rData(:,:))
       endif
+
     else
+
       write(LU_STD_OUT, fmt="(a)") TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt)
+
     endif
 
+    !> create output filename for DAILY GRID output
     if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRID &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
-       .and. lPRINT ) then
+       .and. lDATE_RANGE_ACTIVE ) then
 
       write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1254,13 +1268,15 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
 
     if(lBASINSTATS) call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
+    print *, trim(__FILE__), __LINE__
     if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+print *, trim(__FILE__), __LINE__
     if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
        trim(sSiteNumber)//"   "//trim(sLabel)//"    23:59:59 ")
 
     if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
-       .and. lPRINT ) then
+       .and. lDATE_RANGE_ACTIVE ) then
 
       write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'_',i2.2,'.png')") &
         TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1275,7 +1291,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
     end if
 
 !------------------------- MONTHLY ANALYSIS
-    if(lMonthEnd .and. lPRINT) then
+    if(lMonthEnd .and. lDATE_RANGE_ACTIVE) then
 
       pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
 
@@ -1366,7 +1382,7 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   !------------------------- YEARLY ANALYSIS
 
-    if( lYearEnd .and. lPRINT ) then
+    if( lYearEnd .and. lDATE_RANGE_ACTIVE ) then
 
       pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
 

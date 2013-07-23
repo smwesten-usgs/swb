@@ -945,6 +945,8 @@ subroutine nf_get_time_vals(NCFILE)
   integer (kind=c_int) :: iLowerBound, iUpperBound
   integer (kind=c_int) :: iStat
 
+  iStat = 0
+
   iVarIndex_time = NCFILE%iVarIndex(NC_TIME)
 
   call assert(iVarIndex_time >= lbound(NCFILE%pNC_VAR,1) &
