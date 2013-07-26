@@ -172,7 +172,7 @@ module data_factory
 
   end type T_DATA_GRID
 
-  type (T_DATA_GRID), dimension(11), public, target :: DAT
+  type (T_DATA_GRID), dimension(12), public, target :: DAT
 
   integer (kind=c_int), parameter, public :: LANDUSE_DATA = 1
   integer (kind=c_int), parameter, public :: AWC_DATA = 2
@@ -185,6 +185,7 @@ module data_factory
   integer (kind=c_int), parameter, public :: REL_HUM_DATA = 9
   integer (kind=c_int), parameter, public :: SOL_RAD_DATA = 10
   integer (kind=c_int), parameter, public :: WIND_VEL_DATA = 11
+  integer (kind=c_int), parameter, public :: MASK_DATA = 12
 
   integer (kind=c_int), parameter, public :: MISSING_VALUES_ZERO_OUT = 0
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
@@ -589,6 +590,10 @@ subroutine transform_grid_to_grid(this, pGrdBase)
 
     class (T_DATA_GRID) :: this
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
+
+    print *, trim(__FILE__), __LINE__
+    print *, dquote(this%sSourcePROJ4_string)
+    print *, dquote(pGrdBase%sPROJ4_string)
 
     if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 

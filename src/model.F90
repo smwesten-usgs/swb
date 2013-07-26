@@ -431,6 +431,7 @@ end if
 
   end do MAIN_LOOP
 
+
   call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_ANNUAL)
 
   ! model_Solve has been called once... any further calls will not require
@@ -444,6 +445,12 @@ end if
 
   ! update value of last year
   if( .not. pConfig%lGriddedData) pConfig%iEndYear = pConfig%iYear
+
+  ! update current date so all is well when next years file is opened
+  pConfig%iMonth = iTempMonth
+  pConfig%iDay = iTempDay
+  pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
+
 
   DEALLOCATE(pTS, STAT=iStat)
   call Assert( iStat == 0, &
@@ -3674,9 +3681,10 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
     read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
 
     ! check for end-of-file condition
-    if ( iStat<0 ) then
+    if ( is_iostat_end(iStat) ) then
       pTS%lEOF = lTRUE
       ! if we have enabled STRICT_DATE_CHECKING, terminate the run
+
 #ifdef STRICT_DATE_CHECKING
       if(.not. (pConfig%iMonth == 12 .and. pConfig%iDay == 31)) then
         write(unit=LU_LOG,FMT=*) "Time series file ends prematurely:"
@@ -3686,6 +3694,7 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
         call Assert(lFALSE,TRIM(sBuf),TRIM(__FILE__),__LINE__)
       end if
 #endif
+
       exit ! END OF FILE; exit main do loop
     end if
 
@@ -3693,8 +3702,9 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
     call Assert ( iStat == 0, "Problems reading time series file: " &
            //TRIM(pConfig%sTimeSeriesFilename), TRIM(__FILE__),__LINE__)
 
-    ! Ignore comment statements
+    ! Ignore comment statements and blank lines
     if ( sBuf(1:1) == '#' ) cycle
+    if (len_trim(sBuf) == 0 ) cycle
 
     ! eliminate punctuation
     call CleanUpCsv ( sBuf )
@@ -3709,9 +3719,9 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
 
     if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
       .or. pTS%rPrecip < 0.) then
-      write(UNIT=LU_LOG,fmt=*) "Missing or corrupt data in climate file"
-      call Assert(lFALSE, &
-        "Input: "//TRIM(sBuf),TRIM(__FILE__),__LINE__)
+      call echolog( "Missing or corrupt data in climate file. ~" &
+        //"Input: "//TRIM(sBuf))
+      call Assert(lFALSE, "",TRIM(__FILE__),__LINE__)
     end if
 
     if(.not. pConfig%lHaltIfMissingClimateData) then

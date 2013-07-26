@@ -25,13 +25,12 @@ module swbstats_support
   integer (kind=c_int) :: iSlcEndDD = 31
   logical (kind=c_bool) :: lDATE_RANGE_ACTIVE
 
-  character (len=78), dimension(34), parameter :: sUsageText = &
+  character (len=78), dimension(30), parameter :: sUsageText = &
     [ "Usage: swbstats [binary file name]                                            ", &
       "                {YEARLY|MONTHLY|DAILY}                                        ", &
       "                {SUM}                                                         ", &
       "                {SURFER}                                                      ", &
       "                {GRID|PLOT|BOTH|STATS}                                        ", &
-      "                {BASIN_MASK basin mask filename }                             ", &
       "                {MASK mask filename}                                          ", &
       "                {CUMULATIVE}                                                  ", &
       "                {PERIOD_SLICE start date (mm/dd) end date (mm/dd)}            ", &
@@ -50,134 +49,17 @@ module swbstats_support
       "  3) SUM: will calculate statistics based on SUMS rather than MEAN values.    ", &
       "  4) VERBOSE: writes daily min, mean, and max values to logfile.              ", &
       "  5) SURFER: directs output to Surfer grids rather than Arc ASCII grids.      ", &
-      "  6) BASIN_MASK: specifies a list of basins for which stats will be           ", &
-      "     calculated; each entry in the basin list specifies an ARC ASCII basin    ", &
-      "      mask for which statistics will be calculated.                           ", &
-      "  7) MASK: specifies a *single* mask file; stats are calculated for each      ", &
+      "  6) MASK: specifies a *single* mask file; stats are calculated for each      ", &
       "     distinct integer value present in the mask file.                         ", &
-      "  8) CUMULATIVE: specifies that MASK statistics are cumulative;               ", &
+      "  7) CUMULATIVE: specifies that MASK statistics are cumulative;               ", &
       "     these cumulative statistics are reset at the beginning of each year.     ", &
-      "  9) PERIOD_SLICE: calculates stats on a specified subset of days each year.  ", &
+      "  8) PERIOD_SLICE: calculates stats on a specified subset of days each year.  ", &
       "     For example, 'PERIOD_SLICE 06/01 08/31' will report stats for the        ", &
       "     subset of output that occurs between June 1st and Aug. 31st of each year." ]
 
 contains
 
-!> @brief This routine is designed to comb through the SWB output and calculate
-!> statistics on the basis of nonzero integer values found in a basin mask file.
-subroutine CalcBasinStats(pGrd, pConfig, sVarName, sLabel, iNumDays)
-
-  use types
-  use graph
-  use swb_grid
-
-  implicit none
-
-  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-                                                   ! model options, flags, and other settings
-  character(len=*) :: sVarName
-  character (len=*) :: sLabel
-  integer (kind=c_int), optional :: iNumDays
-
-  ![LOCALS]
-  integer (kind=c_int) :: j, k, iStat, iCount
-  integer (kind=c_int) ::   iNumGridCells
-  real (kind=c_float) :: rSum, rAvg, rMin, rMax
-  real (kind=c_float) :: rDenominator
-
-  character (len=256) :: sBuf
-
-  integer (kind=c_int) :: iNumRecs
-
-  type (T_GENERAL_GRID), pointer :: input_grd
-
-  if(present(iNumDays)) then
-    rDenominator = real(iNumDays, kind=c_float)
-  else
-    rDenominator = 1_c_float
-  end if
-
-  call assert(associated(pConfig%BMASK), "A basin mask list must be supplied in order " &
-    //"to use the STATS option", trim(__FILE__), __LINE__)
-
-  iNumRecs = size(pConfig%BMASK,1)
-
-  if(pConfig%lFirstDayOfSimulation) then
-
-    open(newunit=LU_STATS,FILE="SWB_BASIN_STATS_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt", &
-          iostat=iStat, STATUS='REPLACE')
-    call Assert ( iStat == 0, &
-      "Could not open BASIN statistics file")
-
-    write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
-
-    do k=1,iNumRecs-1
-      write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
-          ADJUSTL(TRIM(pConfig%BMASK(k)%sUSGS_UpstreamOrderID)),sTAB
-    end do
-
-    write(UNIT=LU_STATS,FMT="(A)") &
-       ADJUSTL(TRIM(pConfig%BMASK(iNumRecs)%sUSGS_UpstreamOrderID))
-
-    pConfig%lFirstDayOfSimulation = lFALSE
-
-  else   ! append to files
-
-    open(LU_STATS,FILE="SWB_BASIN_STATS_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt", &
-        POSITION='APPEND', STATUS='OLD')
-    call Assert ( iStat == 0, &
-      "Could not open BASIN statistics file")
-
-  end if
-
-  write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
-
-  do k = 1,iNumRecs
-
-    iCount = COUNT(pConfig%BMASK(k)%pGrd%rData>0)
-
-    ! sum of the sum of values within basin mask boundaries
-    rSum = SUM(pGrd%rData,MASK=pConfig%BMASK(k)%pGrd%rData>0) / rDenominator
-    rMax = MAXVAL(pGrd%rData,MASK=pConfig%BMASK(k)%pGrd%rData>0) / rDenominator
-    rMin = MINVAL(pGrd%rData,MASK=pConfig%BMASK(k)%pGrd%rData>0) / rDenominator
-
-    rAvg = rSum / iCount
-
-    if(lVERBOSE) then
-      write(UNIT=LU_LOG,FMT="(A)") ""
-      write(UNIT=LU_LOG,FMT="(5x,A)") TRIM(pConfig%BMASK(k)%sBasinDescription)
-      write(UNIT=LU_LOG,FMT="(5x,A)") "==> "//TRIM(sLabel)
-      write(UNIT=LU_LOG,FMT="(5x,'Drainage area (sq mi):', f14.2)") &
-          pConfig%BMASK(k)%rDrainageArea
-      write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
-      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
-      write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
-      write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
-    endif
-
-    ! convert average value in inches to cubic feet
-    rAvg = real(rAvg,kind=c_double) * real(pConfig%BMASK(k)%rDrainageArea,kind=c_double) &
-               * 4.01449E9_c_double
-
-    if( k < iNumRecs ) then
-
-      write(UNIT=LU_STATS,FMT="(g16.8,a)", advance='NO') rAvg,sTAB
-
-    else
-
-      write(UNIT=LU_STATS,FMT="(g16.8)") rAvg
-
-    endif
-
-  end do
-
-  flush(UNIT=LU_STATS)
-  close(UNIT=LU_STATS)
-
-end subroutine CalcBasinStats
-
-!-----------------------------------------------!------------------------------------------------------------------------------
+!----------------------------------------------------------------------
 
 !> @brief This routine is designed to comb through the SWB output and calculate
 !> statistics on the basis of the unique integer values found in the mask file.
@@ -214,7 +96,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   integer (kind=c_int), save :: iNumRecs
 
   type (T_GENERAL_GRID), pointer :: input_grd
-print *, trim(__FILE__), __LINE__
+
   if(present(iNumDays)) then
     rDenominator = real(iNumDays, kind=c_double)
   else
@@ -226,7 +108,7 @@ print *, trim(__FILE__), __LINE__
   else
     rConversionFactor = 27878400_c_double
   endif
-    print *, trim(__FILE__), __LINE__
+
   if(pConfig%lFirstDayOfSimulation) then
 
     iNumRecs = maxval(pMaskGrd%iData)
@@ -235,24 +117,14 @@ print *, trim(__FILE__), __LINE__
       rRunningSum = 0_c_double
     endif
 
-  print *, iNumRecs
-  print *, trim(__FILE__), __LINE__
-
     sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt"
     open(newunit=LU_STATS,FILE=trim(sBuf), &
           iostat=iStat, STATUS='REPLACE')
 
-    print *, trim(__FILE__), __LINE__
-
-
     call Assert ( iStat == 0, &
       "Could not open MASK statistics file "//dquote(sBuf))
 
-    print *, trim(__FILE__), __LINE__
-
     write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') "Period",sTAB
-
-    print *, trim(__FILE__), __LINE__
 
     if(.not. lGAP_DIFFERENCE) then
 
@@ -281,8 +153,6 @@ print *, trim(__FILE__), __LINE__
     pConfig%lFirstDayOfSimulation = lFALSE
 
   end if
-
-    print *, trim(__FILE__), __LINE__
 
   if(lDATE_RANGE_ACTIVE) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
@@ -354,10 +224,10 @@ print *, trim(__FILE__), __LINE__
 
   else  ! GAP_DIFFERENCE
 
-    iCount = COUNT(pMaskGrd%rData == iNumRecs)
+    iCount = COUNT(pMaskGrd%iData == iNumRecs)
 
     ! sum of the sum of values within basin mask boundaries
-    rBaseSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == iNumRecs) / rDenominator
+    rBaseSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iNumRecs) / rDenominator
 
     rBaseAvg = rBaseSum / iCount
 
@@ -366,10 +236,10 @@ print *, trim(__FILE__), __LINE__
 
     do k = 1,iNumRecs-1
 
-      iCount = COUNT(pMaskGrd%rData == k)
+      iCount = COUNT(pMaskGrd%iData == k)
 
       ! sum of the sum of values within basin mask boundaries
-      rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == k) / rDenominator
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
 
       rAvg = rSum / iCount
 
@@ -471,12 +341,12 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
 
   end if
 
-  iCount = COUNT(pMaskGrd%rData == iGridValue)
+  iCount = COUNT(pMaskGrd%iData == iGridValue)
 
   ! sum of the sum of values within basin mask boundaries
-  rSum = SUM(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
-  rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
-  rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%rData == iGridValue) / rDenominator
+  rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
+  rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
+  rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
 
   rAvg = rSum / iCount
 
@@ -490,9 +360,9 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
        rGridCellAreaSF
     write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "sum cell area:", &
       real(iCount, kind=c_double) * rGridCellAreaSF
-    write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "sum:",rSum
-    write(UNIT=LU_LOG,FMT="(2x,A,t30,f14.3)") "avg:",rAvg
-    write(UNIT=LU_LOG,FMT="(2x,'avg (cfs):',t30,g14.3)") rSum * rGridCellAreaSF / 86400_c_double / 12_c_double
+    write(UNIT=LU_LOG,FMT="(2x,A,t30,g14.4)") "sum:",rSum
+    write(UNIT=LU_LOG,FMT="(2x,A,t30,g14.4)") "avg:",rAvg
+    write(UNIT=LU_LOG,FMT="(2x,'avg (cfs):',t30,g14.4)") rSum * rGridCellAreaSF / 86400_c_double / 12_c_double
     write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
   endif
 
@@ -503,142 +373,6 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
 
 end subroutine CalcMaskStatsSSF
 
-subroutine ReadBasinMaskTable ( pConfig , pGrd)
-
-  use types
-  use graph
-  use swb_grid
-  implicit none
-
-  !! reads the basin catchment data file for subsequent processing
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-                                                   ! model options, flags, and other settings
-  type (T_GENERAL_GRID), pointer :: pGrd            ! pointer to model grid
-
-  ! [ LOCALS ]
-  integer (kind=c_int) :: iStat, iNumMaskFiles, i, iRecNum, iSize
-  character (len=256) :: sRecord                  ! Input file text buffer
-  character (len=256) :: sItem                    ! Key word read from sRecord
-  character (len=256) :: sBuf
-
-  ! open basin mask file
-  open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
-            status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=c_bool), &
-            "Open failed for file: " // pConfig%sBasinMaskFilename )
-
-  ! read first line of file
-  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-  call Assert( iStat == 0, &
-     "Error reading first line of basin mask table" )
-
-  ! read mask file to obtain expected number of basin mask files
-  call chomp( sRecord, sItem, sTAB )
-  call Uppercase( sItem )
-  if ( sItem == "NUM_BASIN_MASK_FILES" ) then
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) iNumMaskFiles
-    call Assert( iStat == 0, "Failed to read number of basin mask files" )
-    write(UNIT=LU_LOG,FMT=*)  "==> allocating memory for",iNumMaskFiles, &
-       " landuse types within basin mask table"
-  else
-    call Assert( lFALSE, &
-       "Unknown option in basin mask table; was expecting NUM_BASIN_MASK_FILES #")
-  end if
-
-  ! read (AND IGNORE) second line of file
-  read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-  call Assert( iStat == 0, &
-     "Error reading second line of basin mask table" )
-
-  ! now allocate memory for BASIN MASK table
-  allocate ( pConfig%BMASK( iNumMaskFiles ), stat=iStat )
-  call Assert ( iStat == 0, &
-    "Could not allocate space for basin mask data structure" )
-
-  iSize = size(pConfig%BMASK,1)
-
-  iRecNum = 1
-
-  BMASK: do
-
-    read ( unit=LU_MASK, fmt="(a256)", iostat=iStat ) sRecord
-    if ( iStat < 0 ) exit     ! EOF mark
-    if ( sRecord(1:1) == "#" ) cycle      ! Ignore comment lines
-
-    if(iRecNum > iSize) then
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  " *** The maximum number of basin mask table elements has"
-      write(UNIT=LU_LOG,FMT=*)  "     been read in before reaching the end of the file."
-      write(UNIT=LU_LOG,FMT=*) ""
-      write(UNIT=LU_LOG,FMT=*)  "     size of allocated memory for BASIN MASK table: ",iSize
-      write(UNIT=LU_LOG,FMT=*)  "     current record number: ", iRecNum
-      exit
-    end if
-
-    write(UNIT=LU_LOG,FMT=*) ""
-    write(UNIT=LU_LOG,FMT=*)  "-----------------------------------------------------------"
-    write(UNIT=LU_LOG,FMT=*)  "Reading basin mask record number ",iRecNum, " of ",iNumMaskFiles
-    write(UNIT=LU_LOG,FMT=*) ""
-
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID
-    call Assert( iStat == 0, &
-      "Error reading upstream order ID in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Upstream order ID = ",TRIM(pConfig%BMASK(iRecNum)%sUSGS_UpstreamOrderID)
-
-    call chomp( sRecord, sItem, sTAB )
-    call Uppercase(sItem)
-    pConfig%BMASK(iRecNum)%sBasinDescription = TRIM(sItem)
-    call Assert( iStat == 0, &
-      "Error reading basin description in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Basin description = ",TRIM(pConfig%BMASK(iRecNum)%sBasinDescription)
-
-    call chomp( sRecord, sItem, sTAB )
-    pConfig%BMASK(iRecNum)%sPestGroup = TRIM(ADJUSTL(sItem))
-    call Assert( iStat == 0, &
-      "Error reading PEST group in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "PEST group = ",TRIM(pConfig%BMASK(iRecNum)%sPestGroup)
-
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%rPestWeight
-    call Assert( iStat == 0, &
-      "Error reading PEST observation weight in basin mask table" )
-    write(sBuf,FMT="(F12.3)") pConfig%BMASK(iRecNum)%rPestWeight
-    write(UNIT=LU_LOG,FMT=*)  "PEST weight = "//TRIM(sBuf)
-
-    call chomp( sRecord, sItem, sTAB )
-!    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sBasinMaskFilename
-    pConfig%BMASK(iRecNum)%sBasinMaskFilename = TRIM(ADJUSTL(sItem))
-    call Assert( iStat == 0, &
-      "Error reading basin mask filename in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Basin mask filename = ",TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
-
-    call chomp( sRecord, sItem, sTAB )
-    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%BMASK(iRecNum)%sFileType
-    call Assert( iStat == 0, &
-      "Error reading basin mask file type in basin mask table" )
-    write(UNIT=LU_LOG,FMT=*)  "Basin mask filetype = ",TRIM(pConfig%BMASK(iRecNum)%sFileType)
-
-    write(UNIT=LU_LOG,FMT=*) " Attempting to read mask file: ", &
-       TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename)
-    pConfig%BMASK(iRecNum)%pGrd => &
-           grid_Read(TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-          "ARC_GRID", GRID_DATATYPE_INT )
-    call Assert( grid_Conform( pGrd, pConfig%BMASK(iRecNum)%pGrd ), &
-              "Non-conforming grid - filename: " &
-              // TRIM(pConfig%BMASK(iRecNum)%sBasinMaskFilename), &
-              TRIM(__FILE__),__LINE__)
-
-    iRecNum = iRecNum + 1
-
-  end do BMASK
-
-  flush(UNIT=LU_LOG)
-  close(LU_MASK)
-
-end subroutine ReadBasinMaskTable
-
 end module swbstats_support
 
 !------------------------------------------------------------------------------
@@ -647,6 +381,7 @@ end module swbstats_support
 program swbstats
 
 use types
+use data_factory
 use graph
 use stats
 use swb_grid
@@ -739,8 +474,6 @@ implicit none
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  type (T_GRID_COLLECTION), pointer :: mask_grd
-  type (T_GENERAL_GRID), pointer :: input_grd
 
   ALLOCATE (pConfig, STAT=iStat)
   call Assert( iStat == 0, &
@@ -845,6 +578,28 @@ implicit none
   STAT_INFO(iVariableNumber)%iAnnualOutput = iNONE
 
   iNumGridCells = iNX * iNY
+
+  allocate(rVal(iNumGridCells))
+  allocate(rValTmp(iNumGridCells))
+  allocate(rValSum(iNumGridCells))
+  allocate(rPad(iNumGridCells))
+
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMaskGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_INT)
+  pMaskGrd%sPROJ4_string = trim(sPROJ4_string)
+  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMonthGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+
+  ! copy some key information into the grid data structure
+  pGrd%iDataType =iDataType              ! Type of the grid
+  pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
+  pGrd%iLengthUnits = iLengthUnits       ! length units code
+
+  rPad = -9999_c_float
 
   if(iNumArgs == 1) then
 
@@ -961,45 +716,49 @@ implicit none
         read(sItem,*) iSlcEndMM
         read(sBuf,*) iSlcEndDD
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "BASIN_MASK") then
-      i = i + 1
-      lBASINSTATS = lTRUE
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
-      iSWBStatsOutputType = iSTATS
-      call GET_COMMAND_ARGUMENT(i,sBuf)
-      pConfig%sBasinMaskFilename = TRIM(ADJUSTL(sBuf))
-      call ReadBasinMaskTable ( pConfig , pGrd)
-      ALLOCATE (pConfig%SSF_FILES(size(pConfig%BMASK)), STAT=iStat)
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK") then
     lMASKSTATS = lTRUE
       STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
       iSWBStatsOutputType = iSTATS
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
-      pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", GRID_DATATYPE_INT )
+
+      call DAT(MASK_DATA)%initialize(sDescription="Mask file: "//dquote(sBuf), &
+        sFileType="ARC_GRID", &
+        sFilename=trim(sBuf), &
+        iDataType=DATATYPE_INT )
+      call DAT(MASK_DATA)%set_PROJ4(trim(sPROJ4_string))
+
+      call DAT(MASK_DATA)%getvalues( pGrdBase=pMaskGrd, iValues=pMaskGrd%iData)
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
         lMASKSSF = lTRUE
         STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
         iSWBStatsOutputType = iSTATS
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        pMaskGrd => grid_Read(TRIM(sBuf), "ARC_GRID", GRID_DATATYPE_INT )
+
+        call DAT(MASK_DATA)%initialize(sDescription="Mask file: "//dquote(sBuf), &
+          sFileType="ARC_GRID", &
+          sFilename=trim(sBuf), &
+          iDataType=DATATYPE_INT )
+
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         sSiteNumber = trim(sBuf)
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         read(sBuf,*) iGridCellValue
+
+        call DAT(MASK_DATA)%set_PROJ4(trim(sPROJ4_string))
+        call DAT(MASK_DATA)%getvalues( pGrdBase=pMaskGrd, iValues=pMaskGrd%iData)
+
     endif
 
     i = i + 1
     if (i > iNumArgs) exit
 
   end do
-
-  call Assert(.not. (lBASINSTATS .and. lMASKSTATS), "Statistics may be generated" &
-    //" for a set of basin masks OR a single mask file, not both!", &
-    trim(__FILE__), __LINE__)
 
   call Assert(iDateNum == 0 .or. iDateNum == 2, &
     "Two dates must be entered in order to perform analysis on a subset of the data", &
@@ -1110,26 +869,6 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
 !  rewind(STAT_INFO(iVariableNumber)%iLU)
 !  write(STAT_INFO(iVariableNumber)%iLU,POS=iENDHEADER_POS)
-
-  allocate(rVal(iNX*iNY))
-  allocate(rValTmp(iNX*iNY))
-  allocate(rValSum(iNX*iNY))
-  allocate(rPad(iNX*iNY))
-
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pMonthGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pYearGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pSummaryGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-
-  ! copy some key information into the grid data structure
-  pGrd%iDataType =iDataType              ! Type of the grid
-  pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
-  pGrd%iLengthUnits = iLengthUnits       ! length units code
-
-  rPad = -9999_c_float
 
   write(LU_LOG, &
      fmt='("CALCULATING STATS for ",A)') &
@@ -1267,12 +1006,10 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
 
-    if(lBASINSTATS) call CalcBasinStats(pGrd, pConfig, sVarName, sLabel)
-    print *, trim(__FILE__), __LINE__
     if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
-print *, trim(__FILE__), __LINE__
+
     if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
-       trim(sSiteNumber)//"   "//trim(sLabel)//"    23:59:59 ")
+       trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
 
     if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
@@ -1294,17 +1031,6 @@ print *, trim(__FILE__), __LINE__
     if(lMonthEnd .and. lDATE_RANGE_ACTIVE) then
 
       pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
-
-      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
-
-        write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
-
-        if(iSWBStatsType == iMEAN) then
-          call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel, iMonthCount)
-        else
-          call CalcBasinStats(pMonthGrd, pConfig, sVarName, sLabel)
-        endif
-      endif
 
       if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
 
@@ -1385,15 +1111,6 @@ print *, trim(__FILE__), __LINE__
     if( lYearEnd .and. lDATE_RANGE_ACTIVE ) then
 
       pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
-
-      if(lBASINSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
-        write(sLabel,FMT="(i4.4)") iCurrYYYY
-        if(iSWBStatsType == iMEAN) then
-          call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel, iYearCount)
-        else
-          call CalcBasinStats(pYearGrd, pConfig, sVarName, sLabel)
-        endif
-      endif
 
       if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
@@ -1500,14 +1217,6 @@ print *, trim(__FILE__), __LINE__
         iSWBStatsStartDD, iSWBStatsStartYYYY, &
         iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
-  endif
-
-  if( iSWBStatsOutputType == iSTATS .and. lBASINSTATS) then
-    if(iSWBStatsType == iMEAN) then
-      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel, iPeriodCount)
-    else
-      call CalcBasinStats(pSummaryGrd, pConfig, sVarName, sLabel)
-    endif
   endif
 
   lRESET = lFALSE
