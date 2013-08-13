@@ -25,32 +25,35 @@ module swbstats_support
   integer (kind=c_int) :: iSlcEndDD = 31
   logical (kind=c_bool) :: lDATE_RANGE_ACTIVE
 
-  character (len=78), dimension(30), parameter :: sUsageText = &
+  character (len=78), dimension(33), parameter :: sUsageText = &
     [ "Usage: swbstats [binary file name]                                            ", &
+      "                {GRID|PLOT|BOTH|STATS}                                        ", &
       "                {YEARLY|MONTHLY|DAILY}                                        ", &
       "                {SUM}                                                         ", &
       "                {SURFER}                                                      ", &
-      "                {GRID|PLOT|BOTH|STATS}                                        ", &
-      "                {MASK mask filename}                                          ", &
+      "                {MASK mask_filename}                                          ", &
+      "                {MASK_SSF mask_filename ssf_site_id mask_value}               ", &
       "                {CUMULATIVE}                                                  ", &
-      "                {PERIOD_SLICE start date (mm/dd) end date (mm/dd)}            ", &
-      "                {start date (mm/dd/yyyy)}                                     ", &
-      "                {end date (mm/dd/yyyy)}                                       ", &
+      "                {PERIOD_SLICE start_date (mm/dd) end_date (mm/dd)}            ", &
+      "                {start_date (mm/dd/yyyy)}                                     ", &
+      "                {end_date (mm/dd/yyyy)}                                       ", &
       "                {VERBOSE}                                                     ", &
       "                                                                              ", &
       "A filename MUST be specified. All other arguments are OPTIONAL.               ", &
       "                                                                              ", &
       "NOTES:                                                                        ", &
       "                                                                              ", &
-      "  1) SWBSTATS will generate output at all frequencies less than               ", &
-      "     that specified; for example, MONTHLY will also generate YEARLY output.   ", &
-      "  2) If no output frequency is provided, a summary for the entire             ", &
+      "  1) If no output frequency is provided, a summary for the entire             ", &
       "     model simulation period is calculated.                                   ", &
-      "  3) SUM: will calculate statistics based on SUMS rather than MEAN values.    ", &
-      "  4) VERBOSE: writes daily min, mean, and max values to logfile.              ", &
-      "  5) SURFER: directs output to Surfer grids rather than Arc ASCII grids.      ", &
-      "  6) MASK: specifies a *single* mask file; stats are calculated for each      ", &
-      "     distinct integer value present in the mask file.                         ", &
+      "  2) SUM: will calculate statistics based on SUMS rather than MEAN values.    ", &
+      "  3) VERBOSE: writes daily min, mean, and max values to logfile.              ", &
+      "  4) SURFER: directs output to Surfer grids rather than Arc ASCII grids.      ", &
+      "  5) MASK: specifies a *single* mask file; stats are calculated for each      ", &
+      "     cell for which the mask file contains an integer greater than zero.      ", &
+      "  6) MASK_SSF: specifies a single mask file; generates a PEST site-sample     ", &
+      "     file (*.SSF). User must specify a site label or id, and a mask value     ", &
+      "     which must be met in order for the grid cell to be included in the       ", &
+      "     calculation.                                                             ", &
       "  7) CUMULATIVE: specifies that MASK statistics are cumulative;               ", &
       "     these cumulative statistics are reset at the beginning of each year.     ", &
       "  8) PERIOD_SLICE: calculates stats on a specified subset of days each year.  ", &
@@ -95,8 +98,6 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   integer (kind=c_int), save :: iNumRecs
 
-  type (T_GENERAL_GRID), pointer :: input_grd
-
   if(present(iNumDays)) then
     rDenominator = real(iNumDays, kind=c_double)
   else
@@ -129,8 +130,12 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     if(.not. lGAP_DIFFERENCE) then
 
       do k=1,iNumRecs - 1
-        write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
-            trim(int2char(k)),sTAB
+
+        iCount = COUNT(pMaskGrd%iData == k)
+
+        if (iCount > 0) &
+          write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
+              trim(int2char(k)),sTAB
       end do
 
       write(UNIT=LU_STATS,FMT="(A)",advance='YES') trim(int2char(iNumRecs))
@@ -141,7 +146,9 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
           trim(int2char(iNumRecs)),sTAB
 
       do k=1,iNumRecs - 2
-        write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
+        iCount = COUNT(pMaskGrd%iData == k)
+        if (iCount > 0) &
+          write(UNIT=LU_STATS,FMT="(A,a)",advance='NO') &
             trim(int2char(k)),sTAB
       end do
 
@@ -163,6 +170,8 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     do k = 1,iNumRecs
 
       iCount = COUNT(pMaskGrd%iData == k)
+
+      if (iCount == 0) cycle
 
       ! sum of the sum of values within basin mask boundaries
       rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
@@ -238,6 +247,8 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
       iCount = COUNT(pMaskGrd%iData == k)
 
+      if (iCount == 0) cycle
+
       ! sum of the sum of values within basin mask boundaries
       rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
 
@@ -311,8 +322,6 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
 
   integer (kind=c_int), save :: iNumRecs
 
-  type (T_GENERAL_GRID), pointer :: input_grd
-
   if(present(iNumDays)) then
     rDenominator = real(iNumDays, kind=c_double)
   else
@@ -358,7 +367,7 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
     write(UNIT=LU_LOG,FMT="(2x,A,t30,i12)") "count:",iCount
     write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "cell area:", &
        rGridCellAreaSF
-    write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "sum cell area:", &
+    write(UNIT=LU_LOG,FMT="(2x,a,t30,f16.3)") "sum cell area (sq ft):", &
       real(iCount, kind=c_double) * rGridCellAreaSF
     write(UNIT=LU_LOG,FMT="(2x,A,t30,g14.4)") "sum:",rSum
     write(UNIT=LU_LOG,FMT="(2x,A,t30,g14.4)") "avg:",rAvg
@@ -495,7 +504,6 @@ implicit none
 
   flush(unit=LU_LOG)
 
-  ! warning - calling a Fortran 2003 extension function here
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
   if(iNumArgs < 1) then
@@ -658,15 +666,18 @@ implicit none
 
     if(TRIM(ADJUSTL(sBuf)) .eq. "GRID") then
       iSWBStatsOutputType = iGRID
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRID
+!      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRID
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "PLOT" &
       .or. TRIM(ADJUSTL(sBuf)) .eq. "GRAPH") then
       iSWBStatsOutputType = iGRAPH
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRAPH
+!      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRAPH
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BOTH") then
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
+!      STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
       iSWBStatsOutputType = iBOTH
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
+    elseif(TRIM(ADJUSTL(sBuf)) .eq. "STATS") then
+!      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
+      iSWBStatsOutputType = iSTATS
+     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
       iSWBStatsType = iSUM
       lSUM = lTRUE
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "F_TO_C") then
@@ -683,11 +694,8 @@ implicit none
       .or. TRIM(ADJUSTL(sBuf)) .eq. "ANNUAL") then
       STAT_INFO(iVariableNumber)%iAnnualOutput = iSWBStatsOutputType
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MONTHLY") then
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSWBStatsOutputType
       STAT_INFO(iVariableNumber)%iMonthlyOutput = iSWBStatsOutputType
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "DAILY") then
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSWBStatsOutputType
-      STAT_INFO(iVariableNumber)%iMonthlyOutput = iSWBStatsOutputType
       STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "VERBOSE") then
       lVERBOSE = lTRUE
@@ -718,7 +726,7 @@ implicit none
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK") then
     lMASKSTATS = lTRUE
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
+!      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
       iSWBStatsOutputType = iSTATS
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
@@ -733,8 +741,9 @@ implicit none
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
         lMASKSSF = lTRUE
-        STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
         iSWBStatsOutputType = iSTATS
+        STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
+
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
 
@@ -746,9 +755,15 @@ implicit none
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
         sSiteNumber = trim(sBuf)
+        call assert (len_trim(sSiteNumber) > 0, "Must supply a site id" &
+        //" name or number to associate with the summarized data.")
+
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
-        read(sBuf,*) iGridCellValue
+        read(sBuf,fmt=*, iostat=iStat) iGridCellValue
+        call assert (iStat == 0, "Must supply an integer value" &
+          //" that represents the mask values you wish to have included in" &
+          //"~summary calculations.")
 
         call DAT(MASK_DATA)%set_PROJ4(trim(sPROJ4_string))
         call DAT(MASK_DATA)%getvalues( pGrdBase=pMaskGrd, iValues=pMaskGrd%iData)
@@ -989,27 +1004,51 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
     !> create output filename for DAILY GRID output
     if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRID &
-       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
+       .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH ) &
        .and. lDATE_RANGE_ACTIVE ) then
 
       write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'_',i2.2,'.',a)") &
-         TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-         iCurrYYYY,iCurrMM,iCurrDD, &
-         trim(sOutputFileSuffix)
+           TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+           iCurrYYYY,iCurrMM,iCurrDD, &
+           trim(sOutputFileSuffix)
 
-      call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+      if (lCUMULATIVE) then
+
+        call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
+                  pGrd=pSummaryGrd, &
+                  iOutputFormat=iOutputFormat)
+
+      else
+
+        call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
                   pGrd=pGrd, &
                   iOutputFormat=iOutputFormat)
 
-    end if
+      endif
 
+    endif
 
-    write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
+    if (STAT_INFO(iVariableNumber)%iDailyOutput==iSTATS) then
 
-    if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+      write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
 
-    if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
-       trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
+      if(lCUMULATIVE) then
+
+        if(lMASKSTATS) call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
+
+        if(lMASKSSF) call CalcMaskStatsSSF(pSummaryGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
+           trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
+
+      else
+
+        if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+
+        if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
+           trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
+
+      endif
+
+    endif
 
     if((STAT_INFO(iVariableNumber)%iDailyOutput==iGRAPH &
        .or. STAT_INFO(iVariableNumber)%iDailyOutput==iBOTH) &
@@ -1022,8 +1061,17 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       sTitleTxt = TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
         '   '//sDateTxt
 
-      call make_shaded_contour(pGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
-        TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+      if (lCUMULATIVE) then
+        sTitleTxt = trim(sTitleTxt)//" (CUMULATIVE)"
+        call make_shaded_contour(pSummaryGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+          TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
+      else
+
+        call make_shaded_contour(pGrd, TRIM(sOutputFilename), TRIM(sTitleTxt), &
+          TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+
+      endif
 
     end if
 
@@ -1037,9 +1085,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
         write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
 
         if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iMonthCount)
+          call CalcMaskStats(pMonthGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iMonthCount)
         else
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+          call CalcMaskStats(pMonthGrd, pMaskGrd, pConfig, sVarName, sLabel)
         endif
       endif
 
@@ -1115,9 +1163,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
         if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
+          call CalcMaskStats(pYearGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
         else
-          call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
+          call CalcMaskStats(pYearGrd, pMaskGrd, pConfig, sVarName, sLabel)
         endif
       endif
 
@@ -1221,13 +1269,13 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   lRESET = lFALSE
 
-  if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
-    if(iSWBStatsType == iMEAN) then
-      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iPeriodCount)
-    else
-      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
-    endif
-  endif
+!  if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
+!    if(iSWBStatsType == iMEAN) then
+!      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iPeriodCount)
+!    else
+!      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
+!    endif
+!  endif
 
   write(sOutputFilename,FMT="(A,'_',a,'.',a)") &
      "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &

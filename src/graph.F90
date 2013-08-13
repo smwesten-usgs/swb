@@ -504,9 +504,6 @@ module graph
       ! The routine PNGMOD enables transparency for PNG files.
 !       CALL PNGMOD('ON','TRANSPARENCY')
 
-      ! A output image filename can be set with SETFIL
-      call SETFIL(TRIM(sOutputFilename))
-
       ! PAGE determines the size of the page.
       call PAGE(iPtHRes,iPtVRes)
 !       call SETPAG('da4p')
@@ -514,12 +511,15 @@ module graph
       ! Allow scaling up to full page size
       CALL SCLMOD('FULL')
 
-      ! DISINI initializes DISLIN by setting default parameters and creating a plotfile.
-      CALL DISINI()
-
       ! The routine FILMOD determines if a new plot file name is
       ! created for existing files.
       CALL FILMOD('DELETE')
+
+      ! A output image filename can be set with SETFIL
+      call SETFIL(TRIM(sOutputFilename))
+
+      ! DISINI initializes DISLIN by setting default parameters and creating a plotfile.
+      CALL DISINI()
 
       ! The printing of warnings and the output of the protocol in DISFIN
       ! can be disabled with the routine ERRMOD.
