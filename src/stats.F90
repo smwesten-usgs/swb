@@ -1588,6 +1588,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
       write(UNIT=STAT_INFO(i)%iLU) DATATYPE_REAL           ! Type of the grid
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rGridCellSize   ! size of one side of a grid cell
       write(UNIT=STAT_INFO(i)%iLU) pGrd%iLengthUnits    ! length units code
+      write(UNIT=STAT_INFO(i)%iLU) COMPILE_DATE         ! Date of SWB compilation
       write(UNIT=STAT_INFO(i)%iLU) i                    ! STAT_INFO variable number
       write(UNIT=STAT_INFO(i)%iLU) pConfig%iRLE_MULT    ! RLE Multiplier
       write(UNIT=STAT_INFO(i)%iLU) pConfig%rRLE_OFFSET  ! RLE Offset
@@ -1646,6 +1647,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   integer (kind=c_int) :: iDataType
   real (kind=c_double)    :: rGridCellSize
   integer (kind=c_int) :: iLengthUnits
+  character (len=15) :: sSWBCompileDate
   integer (kind=c_int) :: iVariableNumber
   integer (kind=c_int) :: iRLE_MULT
   real (kind=c_float)    :: rRLE_OFFSET
@@ -1680,6 +1682,8 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
       read(UNIT=STAT_INFO(i)%iLU) iDataType       ! Type of the grid
       read(UNIT=STAT_INFO(i)%iLU) rGridCellSize   ! size of one side of a grid cell
       read(UNIT=STAT_INFO(i)%iLU) iLengthUnits    ! length units code
+      read(UNIT=STAT_INFO(i)%iLU) sSWBCompileDate ! date of SWB compilation;
+                                                  !   used to ensure matching SBW and SWBSTATS applications
       read(UNIT=STAT_INFO(i)%iLU) iVariableNumber ! STAT_INFO variable number
       read(UNIT=STAT_INFO(i)%iLU) iRLE_MULT       ! RLE Multiplier
       read(UNIT=STAT_INFO(i)%iLU) rRLE_OFFSET     ! RLE Offset

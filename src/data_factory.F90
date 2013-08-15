@@ -591,10 +591,6 @@ subroutine transform_grid_to_grid(this, pGrdBase)
     class (T_DATA_GRID) :: this
     type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
-    print *, trim(__FILE__), __LINE__
-    print *, dquote(this%sSourcePROJ4_string)
-    print *, dquote(pGrdBase%sPROJ4_string)
-
     if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 
       ! only invoke the transform procedure if the PROJ4 strings are different

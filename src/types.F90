@@ -23,11 +23,13 @@ module types
 
   character(len=45), public, parameter :: &
       SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
+  character (len=15) :: COMPILE_DATE = trim(__DATE__)
 
   !> @name Variables: Fortran logical unit numbers
   !> Global logical unit numbers for input and output
   !> @{
   integer (kind=c_int), parameter :: LU_STD_OUT = 6
+  integer (kind=c_int), parameter :: LU_LOG = 7
   integer (kind=c_int), parameter :: LU_CONTROL = 12
   integer (kind=c_int), parameter :: LU_GRID = 14
   integer (kind=c_int), parameter :: LU_LOOKUP = 16
@@ -46,7 +48,6 @@ module types
   integer (kind=c_int), parameter :: LU_PEST_STATS = 42
   integer (kind=c_int), parameter :: LU_PEST_OBS = 44
   integer (kind=c_int), parameter :: LU_PEST_INS = 46
-  integer (kind=c_int), parameter :: LU_LOG = 48
   !> @}
 
   !> @name Constants: General conversion factors and flags
@@ -2647,7 +2648,7 @@ end function short2char
 !> Convert an character value into a integer
 function char2int(sValue)  result(iValue)
 
-  character (len=256) :: sValue
+  character (len=*) :: sValue
   integer (kind=c_int) :: iValue
 
   read(UNIT=sValue,FMT=*) iValue

@@ -15,6 +15,13 @@ module swbstats_support
   logical (kind=c_bool) :: lMASKSTATS = lFALSE
   logical (kind=c_bool) :: lF_TO_C = lFALSE
   logical (kind=c_bool) :: lGAP_DIFFERENCE = lFALSE
+  logical (kind=c_bool) :: lPLOT = lFALSE
+  logical (kind=c_bool) :: lSTATS = lFALSE
+  logical (kind=c_bool) :: lGRID = lFALSE
+  logical (kind=c_bool) :: lBOTH = lFALSE
+  logical (kind=c_bool) :: lANNUAL = lFALSE
+  logical (kind=c_bool) :: lMONTHLY = lFALSE
+  logical (kind=c_bool) :: lDAILY = lFALSE
 
   character (len=256) :: sStatsDescription = ""
   integer (kind=c_int) :: LU_STATS
@@ -43,8 +50,8 @@ module swbstats_support
       "                                                                              ", &
       "NOTES:                                                                        ", &
       "                                                                              ", &
-      "  1) If no output frequency is provided, a summary for the entire             ", &
-      "     model simulation period is calculated.                                   ", &
+      "  1) If no output frequency is provided (e.g. ANNUAL, MONTHLY, DAILY), a      ", &
+      "     summary for the entire model simulation period is calculated.            ", &
       "  2) SUM: will calculate statistics based on SUMS rather than MEAN values.    ", &
       "  3) VERBOSE: writes daily min, mean, and max values to logfile.              ", &
       "  4) SURFER: directs output to Surfer grids rather than Arc ASCII grids.      ", &
@@ -441,13 +448,6 @@ implicit none
 
   integer (kind=c_int) :: LU_SWBSTATS
 
-  integer (kind=c_int) :: iSWBStatsStartDate, iSWBStatsStartMM, &
-                          iSWBStatsStartDD,iSWBStatsStartYYYY
-  integer (kind=c_int) :: iSWBStatsEndDate, iSWBStatsEndMM, &
-                          iSWBStatsEndDD,iSWBStatsEndYYYY
-  integer (kind=c_int) :: iSWBStatsOutputType = iBOTH
-  integer (kind=c_int) :: iSWBStatsType = iMEAN
-
   character (len=256) :: sTitleTxt
   character (len=10) :: sDateTxt
 
@@ -459,6 +459,15 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pYearGrdMean
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrd
   type ( T_GENERAL_GRID ),pointer :: pSummaryGrdMean
+
+  integer (kind=c_int) :: iSWBStatsStartDate, iSWBStatsStartMM, &
+                          iSWBStatsStartDD,iSWBStatsStartYYYY
+  integer (kind=c_int) :: iSWBStatsEndDate, iSWBStatsEndMM, &
+                          iSWBStatsEndDD,iSWBStatsEndYYYY
+!  integer (kind=c_int) :: iSWBStatsType = iNONE
+!  integer (kind=c_int) :: iStatsType = iMEAN
+
+  character (len=15) :: sSWBCompileDate
 
   real(kind=c_float),dimension(:), allocatable :: rVal,rValSum,rPad, rValTmp
 
@@ -479,6 +488,9 @@ implicit none
   integer (kind=c_int) :: iMonthCount, iYearCount, iPeriodCount
   integer (kind=c_int) :: iGridCellValue
   character (len=1) :: sSingleChar
+  character (len=512) :: sCommandText
+  integer (kind=c_int) :: iSWBStatsOutputType = iNONE
+  integer (kind=c_int) :: LU
 
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -489,6 +501,7 @@ implicit none
      "Could not allocate memory for model control data structure")
 
   call date_and_time(sDate,sTime,sTZ)
+  call GET_COMMAND(sCommandText)
 
   write(sBuf,FMT=*) "SWBSTATS_LOGFILE_"//sDate//"_"//sTime(1:6)//".txt"
 
@@ -501,6 +514,8 @@ implicit none
     TRIM(__DATE__) //" "// TRIM(__TIME__)
   write(UNIT=LU_LOG,FMT=*) "SWB reader execution started: "// &
     sDate//"_"//sTime(1:6)
+  write (unit=LU_LOG, fmt="(/,a)") "SWB reader was started with the following command line:"
+  write (unit=LU_LOG, fmt="(a,/)") dquote(sCommandText)
 
   flush(unit=LU_LOG)
 
@@ -547,6 +562,7 @@ implicit none
   read(UNIT=LU_SWBSTATS) iDataType       ! Type of the grid
   read(UNIT=LU_SWBSTATS) rGridCellSize   ! size of one side of a grid cell
   read(UNIT=LU_SWBSTATS) iLengthUnits    ! length units code
+  read(UNIT=LU_SWBSTATS) sSWBCompileDate ! date of SWB compilation;
   read(UNIT=LU_SWBSTATS) iVariableNumber ! STAT_INFO variable number
   read(UNIT=LU_SWBSTATS) iRLE_MULT       ! RLE Multiplier
   read(UNIT=LU_SWBSTATS) rRLE_OFFSET     ! RLE Offset
@@ -554,9 +570,15 @@ implicit none
   read(UNIT=LU_SWBSTATS) rY0, rY1        ! World-coordinate range in Y
   read (unit=LU_SWBSTATS) iPROJ4_length
 
+  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
+    "The SWB compilation date used to create the binary file" &
+     //" is different from the compilation date of the SWBSTATS reader.")
+
+  sPROJ4_string = ""
+
   do i=1, iPROJ4_length
     read (unit=LU_SWBSTATS) sSingleChar
-    sPROJ4_string = trim(sPROJ4_string)//sSingleChar
+    sPROJ4_string(i:i) = sSingleChar
   enddo
 
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
@@ -581,9 +603,6 @@ implicit none
   ! set default values for program options
   iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
   iSWBStatsEndDate = julian_day ( iEndYYYY, iEndMM, iEndDD)
-  STAT_INFO(iVariableNumber)%iDailyOutput = iNONE
-  STAT_INFO(iVariableNumber)%iMonthlyOutput = iNONE
-  STAT_INFO(iVariableNumber)%iAnnualOutput = iNONE
 
   iNumGridCells = iNX * iNY
 
@@ -607,44 +626,55 @@ implicit none
   pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
   pGrd%iLengthUnits = iLengthUnits       ! length units code
 
+  STAT_INFO(iVariableNumber)%iMonthlyOutput = iNONE
+  STAT_INFO(iVariableNumber)%iDailyOutput = iNONE
+  STAT_INFO(iVariableNumber)%iAnnualOutput = iNONE
+
   rPad = -9999_c_float
 
-  if(iNumArgs == 1) then
+  do LU=LU_LOG, LU_STD_OUT, -1
 
-    write(unit=LU_STD_OUT,fmt="(/,/,'Information about binary file ',a)") &
+    write(unit=LU,fmt="(/,'Information about binary file ',a)") &
        TRIM(sBinFile)
 
     if(lPrematureEOF) then
-      write(unit=LU_STD_OUT,fmt="(/,'  File ends prematurely - cannot determine the ending date ')")
-      write(unit=LU_STD_OUT,fmt="(/,'  Starting date is ',i02.2,'/',i02.2,'/',i04.4)") &
+      write(unit=LU,fmt="(/,'  File ends prematurely - cannot determine the ending date ')")
+      write(unit=LU,fmt="(/,'  Starting date is ',i02.2,'/',i02.2,'/',i04.4)") &
         iStartMM, iStartDD, iStartYYYY
     else
-      write(unit=LU_STD_OUT,fmt="(/,'  Dates range from ',i02.2,'/',i02.2,'/',i04.4,"// &
+      write(unit=LU,fmt="(/,'  Dates range from ',i02.2,'/',i02.2,'/',i04.4,"// &
         "' to ',i02.2,'/',i02.2,'/',i04.4)") iStartMM, iStartDD, iStartYYYY, &
         iEndMM, iEndDD, iEndYYYY
     endif
-    write(unit=LU_STD_OUT,fmt="(/,'  Contains SWB output for ',a,': ',a,' (',a,')')") &
+    write(unit=LU,fmt="(/,'  Contains SWB output for ',a,': ',a,' (',a,')')") &
       TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
       TRIM(STAT_INFO(iVariableNumber)%sLongName), &
       TRIM(STAT_INFO(iVariableNumber)%sUNITS)
-    write(unit=LU_STD_OUT,fmt="(/,'  Grid dimensions (x,y): ',t28,a,', ',a)") &
+    write(unit=LU,fmt="(/,'  Grid dimensions (NX, NY): ',t42,a,', ',a)") &
       trim(int2char(iNX)), trim(int2char(iNY))
+    write(unit=LU,fmt="(/,'  Grid bounds (lower left: X0, Y0): ',t42,f14.2,2X,f14.2)") &
+      rX0, rY0
+    write(unit=LU,fmt="('  Grid bounds (lower left: X1, Y1): ',t42,f14.2,2X,f14.2)") &
+      rX1, rY1
     write(sBuf,fmt="(f14.2)") rGridCellSize
-    write(unit=LU_STD_OUT,fmt="('  Grid cell size: ',t28,a)") trim(adjustl(sBuf))
-    write(unit=LU_STD_OUT,fmt="('  Grid cell units: ',t28)", advance="no")
+    write(unit=LU,fmt="(/,'  Grid cell size: ',t28,a)") trim(adjustl(sBuf))
+
     if(iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
-      write(unit=LU_STD_OUT,fmt="('meters',/)")
+      write(unit=LU,fmt="('  Grid cell units: ',t28,'meters')")
     else
-      write(unit=LU_STD_OUT,fmt="('feet',/)")
+      write(unit=LU,fmt="('  Grid cell units: ',t28,'feet')")
     endif
-    write(unit=LU_STD_OUT,fmt="('  Grid data type: ',t28,a)") trim(int2char(iDataType))
-    write(unit=LU_STD_OUT,fmt="('  Length units code: ',t28,a,/)") trim(int2char(iLengthUnits))
+
+    write(unit=LU,fmt="(/,'  Grid data type: ',t28,a)") trim(int2char(iDataType))
+    write(unit=LU,fmt="('  Length units code: ',t28,a,/)") trim(int2char(iLengthUnits))
     if (iPROJ4_length > 0) &
-      write(unit=LU_STD_OUT,fmt="('  PROJ4 string: ',/,'  ',a,/)") trim(sPROJ4_string)
+      write(unit=LU,fmt="('  PROJ4 string: ',/,'  ',a,/)") trim(sPROJ4_string)
 
-    stop
+    if (iNumArgs /= 1) exit
 
-  end if
+  end do
+
+  if (iNumArgs == 1) stop
 
   sVarName = TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)
 
@@ -665,51 +695,55 @@ implicit none
    iLen2 = len_trim(ADJUSTL(sBuf3))
 
     if(TRIM(ADJUSTL(sBuf)) .eq. "GRID") then
-      iSWBStatsOutputType = iGRID
-!      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRID
+      lGRID = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "PLOT" &
       .or. TRIM(ADJUSTL(sBuf)) .eq. "GRAPH") then
-      iSWBStatsOutputType = iGRAPH
-!      STAT_INFO(iVariableNumber)%iAnnualOutput = iGRAPH
+      lPLOT = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "BOTH") then
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
-      iSWBStatsOutputType = iBOTH
+      lBOTH = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "STATS") then
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
-      iSWBStatsOutputType = iSTATS
+      lSTATS = lTRUE
+
      elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
-      iSWBStatsType = iSUM
       lSUM = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "F_TO_C") then
       lF_TO_C = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "GAP_DIFFERENCE") then
       lGAP_DIFFERENCE = lTRUE
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "DEFAULT") then
-      iSWBStatsStartDate = julian_day ( iStartYYYY, iStartMM, iStartDD)
-      iSWBStatsEndDate = julian_day ( iEndYYYY, iEndMM, iEndDD)
-      STAT_INFO(iVariableNumber)%iDailyOutput = iNONE
-      STAT_INFO(iVariableNumber)%iMonthlyOutput = iNONE
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "YEARLY" &
       .or. TRIM(ADJUSTL(sBuf)) .eq. "ANNUAL") then
-      STAT_INFO(iVariableNumber)%iAnnualOutput = iSWBStatsOutputType
+      lANNUAL = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MONTHLY") then
-      STAT_INFO(iVariableNumber)%iMonthlyOutput = iSWBStatsOutputType
+      lMONTHLY = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "DAILY") then
-      STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
+      lDAILY = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "VERBOSE") then
       lVERBOSE = lTRUE
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
         lCUMULATIVE = lTRUE
-        iSWBStatsType = iSUM
+
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SURFER") then
       iOutputFormat = OUTPUT_SURFER
       sOutputFileSuffix = "grd"
+
     elseif(iLen1 /= iLen2) then  ! we have found forward slashes...probably a date
       iDateNum = iDateNum + 1
       call Assert(iDateNum <=2, "Too many dates entered on the command line", &
         TRIM(__FILE__),__LINE__)
       iTempDate(iDateNum) = mmddyyyy2julian(sBuf)
+
     elseif(trim(adjustl(sBuf)) .eq. "PERIOD_SLICE") then
         lPERIOD_SLICE = lTRUE
         i = i + 1
@@ -725,9 +759,9 @@ implicit none
         read(sBuf,*) iSlcEndDD
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK") then
-    lMASKSTATS = lTRUE
+      lMASKSTATS = lTRUE
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
-      iSWBStatsOutputType = iSTATS
+      lSTATS = lTRUE
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
 
@@ -741,8 +775,8 @@ implicit none
 
     elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
         lMASKSSF = lTRUE
-        iSWBStatsOutputType = iSTATS
-        STAT_INFO(iVariableNumber)%iDailyOutput = iSTATS
+        lSTATS = lTRUE
+        lDAILY = lTRUE
 
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
@@ -775,6 +809,18 @@ implicit none
 
   end do
 
+  if (lGRID) iSWBStatsOutputType = iGRID
+  if (lPLOT) iSWBStatsOutputType = iGRAPH
+  if (lBOTH) iSWBStatsOutputType = iBOTH
+  if (lSTATS) iSWBStatsOutputType = iSTATS
+
+  if (lMONTHLY)  STAT_INFO(iVariableNumber)%iMonthlyOutput = iSWBStatsOutputType
+  if (lANNUAL)  STAT_INFO(iVariableNumber)%iAnnualOutput = iSWBStatsOutputType
+  if (lDAILY)  STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
+
+  call assert (iSWBStatsOutputType /= iNONE, &
+    "Output type must be defined as one of: GRID, GRAPH/PLOT, BOTH, of STATS")
+
   call Assert(iDateNum == 0 .or. iDateNum == 2, &
     "Two dates must be entered in order to perform analysis on a subset of the data", &
     TRIM(__FILE__),__LINE__)
@@ -805,6 +851,7 @@ implicit none
       "' to ',i02.2,'/',i02.2,'/',i04.4)") iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
       iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
+
   write(unit=LU_STD_OUT,fmt="(/,a,/)") "  Summary of output to be generated:"
   write(unit=LU_STD_OUT,fmt="(t20,a,t28,a,t36,a,t44,a)") &
     "NONE","PLOT","GRID","STATS"
@@ -829,54 +876,46 @@ implicit none
   if(lMASKSSF) sStatsDescription = trim(sStatsDescription) // "_" &
     //trim(sSiteNumber)
 
-  k = STAT_INFO(iVariableNumber)%iDailyOutput
-  if(k==iNONE) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily"," **","",""
-  if(k==iGRID) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily","",""," **"
-  if(k==iGRAPH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **",""
-  if(k==iBOTH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **"," **"
-  if(k==iSTATS) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Daily",""," ",""," **"
+  print *, lDAILY
+  print *, lMONTHLY
+  print *, lANNUAL
+  print *, lSUM
+  print *, lMASKSTATS
+  print *, lMASKSSF
 
-  k = STAT_INFO(iVariableNumber)%iMonthlyOutput
-  if(k==iNONE) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly"," **","",""
-  if(k==iGRID) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly","",""," **"
-  if(k==iGRAPH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **",""
-  if(k==iBOTH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **"," **"
-  if(k==iSTATS) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Monthly",""," ",""," **"
+  print *, STAT_INFO(iVariableNumber)%iDailyOutput
+  print *, STAT_INFO(iVariableNumber)%iMonthlyOutput
+  print *, STAT_INFO(iVariableNumber)%iAnnualOutput
 
-  k = STAT_INFO(iVariableNumber)%iAnnualOutput
-  if(k==iNONE) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual"," **","",""
-  if(k==iGRID) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual","",""," **"
-  if(k==iGRAPH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **",""
-  if(k==iBOTH) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **"," **"
-  if(k==iSTATS) write(unit=LU_STD_OUT,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Annual",""," ",""," **"
+  do LU=LU_STD_OUT, LU_LOG
 
-write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
+    write(unit=LU,fmt="(/,a,/)") "  Summary of output to be generated:"
 
-  write(unit=LU_LOG,fmt="(t20,a,t28,a,t36,a,t44,a)") &
-    "NONE","PLOT","GRID","STATS"
+    write(unit=LU,fmt="(t20,a,t28,a,t36,a,t44,a)") &
+      "NONE","PLOT","GRID","STATS"
 
-  k = STAT_INFO(iVariableNumber)%iDailyOutput
-  if(k==iNONE) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily"," **","",""
-  if(k==iGRID) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily","",""," **"
-  if(k==iGRAPH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **",""
-  if(k==iBOTH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **"," **"
-  if(k==iSTATS) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Daily",""," ",""," **"
+    k = STAT_INFO(iVariableNumber)%iDailyOutput
+    if(k==iNONE) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily"," **","",""
+    if(k==iGRID) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily","",""," **"
+    if(k==iGRAPH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **",""
+    if(k==iBOTH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Daily",""," **"," **"
+    if(k==iSTATS) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Daily",""," ",""," **"
 
-  k = STAT_INFO(iVariableNumber)%iMonthlyOutput
-  if(k==iNONE) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly"," **","",""
-  if(k==iGRID) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly","",""," **"
-  if(k==iGRAPH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **",""
-  if(k==iBOTH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **"," **"
-  if(k==iSTATS) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Monthly",""," ",""," **"
+    k = STAT_INFO(iVariableNumber)%iMonthlyOutput
+    if(k==iNONE) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly"," **","",""
+    if(k==iGRID) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly","",""," **"
+    if(k==iGRAPH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **",""
+    if(k==iBOTH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Monthly",""," **"," **"
+    if(k==iSTATS) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Monthly",""," ",""," **"
 
-  k = STAT_INFO(iVariableNumber)%iAnnualOutput
-  if(k==iNONE) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual"," **","",""
-  if(k==iGRID) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual","",""," **"
-  if(k==iGRAPH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **",""
-  if(k==iBOTH) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **"," **"
-  if(k==iSTATS) write(unit=LU_LOG,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Annual",""," ",""," **"
+    k = STAT_INFO(iVariableNumber)%iAnnualOutput
+    if(k==iNONE) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual"," **","",""
+    if(k==iGRID) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual","",""," **"
+    if(k==iGRAPH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **",""
+    if(k==iBOTH) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a)") "Annual",""," **"," **"
+    if(k==iSTATS) write(unit=LU,fmt="(t3,a,t20,a,t28,a,t36,a,t44,a)") "Annual",""," ",""," **"
 
-  write(unit=LU_LOG,fmt="(/)")
+  enddo
 
   !------------------------------------------------------------------------------------------
   ! BEGIN writing output
@@ -1080,21 +1119,21 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
       pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
 
-      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput == iSTATS) then
+      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput==iSTATS) then
 
         write(sLabel,FMT="(i2.2,'/',i4.4)") iCurrMM, iCurrYYYY
 
-        if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pMonthGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iMonthCount)
-        else
+        if (lSUM) then
           call CalcMaskStats(pMonthGrd, pMaskGrd, pConfig, sVarName, sLabel)
+        else
+          call CalcMaskStats(pMonthGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iMonthCount)
         endif
       endif
 
-      if((STAT_INFO(iVariableNumber)%iMonthlyOutput==iGRID &
-         .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH)) then
+      if(STAT_INFO(iVariableNumber)%iMonthlyOutput==iGRID &
+         .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH ) then
 
-        if(iSWBStatsType == iSUM) then
+        if(lSUM) then
 
           write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.',a)") &
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1119,9 +1158,9 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       end if
 
       if(STAT_INFO(iVariableNumber)%iMonthlyOutput==iGRAPH &
-         .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH) then
+           .or. STAT_INFO(iVariableNumber)%iMonthlyOutput==iBOTH) then
 
-        if(iSWBStatsType == iSUM) then
+        if(lSUM) then
           write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
              iCurrYYYY,iCurrMM
@@ -1136,14 +1175,14 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
           ! now repeat for MEAN value reporting
           write(sOutputFilename,FMT="(A,'_',i4.4,'_',i2.2,'.png')") &
-             "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
-             iCurrYYYY,iCurrMM
+            "MEAN_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
+            iCurrYYYY,iCurrMM
 
           sTitleTxt = "MEAN of daily "//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)// &
             ' for '//trim(sMonthName)//' '//trim(int2char(iCurrYYYY))
 
           call make_shaded_contour(pMonthGrdMean, TRIM(sOutputFilename), &
-             TRIM(sTitleTxt), TRIM(STAT_INFO(iVariableNumber)%sUNITS))
+            TRIM(sTitleTxt), TRIM(STAT_INFO(iVariableNumber)%sUNITS))
 
         endif
 
@@ -1156,23 +1195,23 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
 
   !------------------------- YEARLY ANALYSIS
 
-    if( lYearEnd .and. lDATE_RANGE_ACTIVE ) then
+    if ( lYearEnd .and. lDATE_RANGE_ACTIVE ) then
 
       pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
 
-      if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput == iSTATS) then
+      if (lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput==iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
-        if(iSWBStatsType == iMEAN) then
-          call CalcMaskStats(pYearGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
-        else
+        if (lSUM) then
           call CalcMaskStats(pYearGrd, pMaskGrd, pConfig, sVarName, sLabel)
+        else
+          call CalcMaskStats(pYearGrdMean, pMaskGrd, pConfig, sVarName, sLabel, iYearCount)
         endif
       endif
 
-      if((STAT_INFO(iVariableNumber)%iAnnualOutput == iGRID &
-         .or. STAT_INFO(iVariableNumber)%iAnnualOutput == iBOTH)) then
+      if(STAT_INFO(iVariableNumber)%iAnnualOutput==iGRID &
+         .or. STAT_INFO(iVariableNumber)%iAnnualOutput==iBOTH ) then
 
-        if(iSWBStatsType == iSUM) then
+        if (lSUM) then
 
           write(sOutputFilename,FMT="(A,'_',i4.4,'.',a)") &
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1198,10 +1237,10 @@ write(unit=LU_LOG,fmt="(/,a,/)") "  Summary of output to be generated:"
       end if
 
       ! now produce ANNUAL PLOTS
-      if(STAT_INFO(iVariableNumber)%iAnnualOutput == iGRAPH &
-         .or. STAT_INFO(iVariableNumber)%iAnnualOutput == iBOTH) then
+      if(STAT_INFO(iVariableNumber)%iAnnualOutput==iGRAPH &
+           .or. STAT_INFO(iVariableNumber)%iAnnualOutput==iBOTH) then
 
-        if(iSWBStatsType == iSUM) then
+        if (lSUM) then
 
           write(sOutputFilename,FMT="(A,'_',i4.4,'.png')") &
              "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &

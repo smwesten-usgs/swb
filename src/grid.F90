@@ -1894,11 +1894,17 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
 
   enddo
 
-  iLastColNum = iCol
-  iLastRowNum = iRow
+!  iLastColNum = iCol
+!  iLastRowNum = iRow
 
-  iColRow(COLUMN) = iCol
-  iColRow(ROW) = iRow
+  iLastColNum = iCandidateCol
+  iLastRowNum = iCandidateRow
+
+!  iColRow(COLUMN) = iCol
+!  iColRow(ROW) = iRow
+  iColRow(COLUMN) = iCandidateCol
+  iColRow(ROW) = iCandidateRow
+
 
 end function grid_GetGridColRowNum
 
