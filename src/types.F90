@@ -84,12 +84,15 @@ module types
   integer (kind=c_int), parameter :: iROUTE_CELL_MARKED = -1
   integer (kind=c_int), parameter :: iROUTE_DEPRESSION = -999
   integer (kind=c_int), parameter :: iROUTE_LEFT_GRID = -1000
+  real (kind=c_float), parameter :: rNO_DATA_NCDC = -99999.
   integer (kind=c_int), parameter :: iNO_DATA_NCDC = -99999
   integer (kind=c_int), parameter :: iNUM_DIGITS = 3
   integer (kind=c_int), parameter :: iFIELD_WIDTH = 10
   integer (kind=c_int), parameter :: iZERO = 0
   logical (kind=c_bool), parameter :: lTRUE = .true._c_bool
   logical (kind=c_bool), parameter :: lFALSE = .false._c_bool
+  character (len=30), parameter :: sPROJ4_LatLon = &
+     "+proj=lonlat +ellps=GRS80 +datum=NAD83 +no_defs"
   integer(kind=c_int), parameter :: iEOF = HUGE(iZERO)
   real (kind=c_float), parameter :: rBIGVAL = HUGE(rZERO)
   integer(kind=c_int), parameter :: iBIGVAL = HUGE(iZERO)
@@ -980,6 +983,9 @@ module types
       !> project grid definitions
       real (kind=c_double) :: rX0, rY0          ! Lower-left corner (world coords)
       real (kind=c_double) :: rX1, rY1          ! Upper-right corner (world coords)
+      real (kind=c_double) :: rX0_LL, rY0_LL    ! Lower-left corner (world coords, latlon)
+      real (kind=c_double) :: rX1_LL, rY1_LL    ! Upper-right corner (world coords, latlon)
+
       integer (kind=c_int) :: iNumGridCells  !
       real (kind=c_float) :: rGridCellSize     !
       integer (kind=c_int) :: iNX            !
@@ -1065,11 +1071,11 @@ module types
       real (kind=c_float) :: rUL_CFGI = 9999.0
 
       ! define the land use category associated with open water
-      integer(kind=c_int) :: iOPEN_WATER_LU = -99999
+      integer(kind=c_int) :: iOPEN_WATER_LU = iNO_DATA_NCDC
 
       ! define southern and northern latitude values bounding the grid
-	  real (kind=c_float) :: rSouthernLatitude
- 	  real (kind=c_float) :: rNorthernLatitude
+  	  real (kind=c_float) :: rSouthernLatitude = rNO_DATA_NCDC
+ 	    real (kind=c_float) :: rNorthernLatitude = rNO_DATA_NCDC
 
 #ifdef STREAM_INTERACTIONS
  	    ! Data for the elevation corrections on temperature

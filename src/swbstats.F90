@@ -413,6 +413,7 @@ implicit none
   integer (kind=c_int) :: iNumGridCells
   integer (kind=c_int) :: iStat
   integer (kind=c_int) :: i, k
+  integer (kind=c_int) :: iIndex
   integer (kind=c_int) :: iDateNum = 0
   integer (kind=c_int) :: iNumDaysInYear
   integer (kind=c_int) :: iLen1, iLen2
@@ -492,6 +493,9 @@ implicit none
   integer (kind=c_int) :: iSWBStatsOutputType = iNONE
   integer (kind=c_int) :: LU
 
+
+  integer (kind=c_int), parameter :: MAX_NUM_RETRIES = 4
+
   !> Global instantiation of a pointer of type T_MODEL_CONFIGURATION
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
@@ -550,8 +554,22 @@ implicit none
 
   call GET_COMMAND_ARGUMENT(1,sBinFile)
 
-  open(nextunit(LU_SWBSTATS), FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
+  iIndex = 1
+
+  !> Open the binary file; attempt to open file MAX_NUM_RETRIES times
+  !> in the event that activity on the CPU and HDD has prevented the output file
+  !> from being opened correctly the first time around
+  do
+
+    open(nextunit(LU_SWBSTATS), FILE=TRIM(sBinFile),FORM='UNFORMATTED', &
        status='OLD',ACCESS='STREAM', ACTION='READWRITE', IOSTAT=iStat )
+
+    if( iIndex > MAX_NUM_RETRIES .or. iStat == 0) exit
+
+    iIndex = iIndex + 1
+    call sleep(5)
+
+  enddo
 
   call Assert(iStat==0,"Failed to open input binary file: "//&
     TRIM(sBinFile),TRIM(__FILE__),__LINE__)
@@ -694,47 +712,47 @@ implicit none
    call Chomp_slash(sBuf2,sBuf3)
    iLen2 = len_trim(ADJUSTL(sBuf3))
 
-    if(TRIM(ADJUSTL(sBuf)) .eq. "GRID") then
+    if( str_compare(sBuf, "GRID") ) then
       lGRID = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "PLOT" &
-      .or. TRIM(ADJUSTL(sBuf)) .eq. "GRAPH") then
+    elseif( str_compare(sBuf, "PLOT") &
+      .or. str_compare(sBuf, "GRID") ) then
       lPLOT = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "BOTH") then
+    elseif( str_compare(sBuf, "BOTH") ) then
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iBOTH
       lBOTH = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "STATS") then
+    elseif( str_compare(sBuf, "STATS") ) then
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
       lSTATS = lTRUE
 
-     elseif(TRIM(ADJUSTL(sBuf)) .eq. "SUM") then
+    elseif( str_compare(sBuf, "SUM") ) then
       lSUM = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "F_TO_C") then
+    elseif( str_compare(sBuf, "F_TO_C") ) then
       lF_TO_C = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "GAP_DIFFERENCE") then
+    elseif( str_compare(sBuf, "GAP_DIFFERENCE") ) then
       lGAP_DIFFERENCE = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "YEARLY" &
-      .or. TRIM(ADJUSTL(sBuf)) .eq. "ANNUAL") then
+    elseif( str_compare(sBuf, "YEARLY") &
+      .or. str_compare(sBuf, "ANNUAL") ) then
       lANNUAL = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "MONTHLY") then
+    elseif( str_compare(sBuf, "MONTHLY") ) then
       lMONTHLY = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "DAILY") then
+    elseif( str_compare(sBuf, "DAILY") ) then
       lDAILY = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "VERBOSE") then
+    elseif( str_compare(sBuf, "VERBOSE") ) then
       lVERBOSE = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "CUMULATIVE") then
+    elseif( str_compare(sBuf, "CUMULATIVE") ) then
         lCUMULATIVE = lTRUE
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "SURFER") then
+    elseif( str_compare(sBuf, "SURFER") ) then
       iOutputFormat = OUTPUT_SURFER
       sOutputFileSuffix = "grd"
 
@@ -744,7 +762,7 @@ implicit none
         TRIM(__FILE__),__LINE__)
       iTempDate(iDateNum) = mmddyyyy2julian(sBuf)
 
-    elseif(trim(adjustl(sBuf)) .eq. "PERIOD_SLICE") then
+    elseif( str_compare(sBuf, "PERIOD_SLICE") ) then
         lPERIOD_SLICE = lTRUE
         i = i + 1
         call GET_COMMAND_ARGUMENT(i,sBuf)
@@ -758,7 +776,7 @@ implicit none
         read(sItem,*) iSlcEndMM
         read(sBuf,*) iSlcEndDD
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK") then
+    elseif( str_compare(sBuf, "MASK") ) then
       lMASKSTATS = lTRUE
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
       lSTATS = lTRUE
@@ -773,7 +791,7 @@ implicit none
 
       call DAT(MASK_DATA)%getvalues( pGrdBase=pMaskGrd, iValues=pMaskGrd%iData)
 
-    elseif(TRIM(ADJUSTL(sBuf)) .eq. "MASK_SSF") then
+    elseif( str_compare(sBuf, "MASK_SSF") ) then
         lMASKSSF = lTRUE
         lSTATS = lTRUE
         lDAILY = lTRUE
@@ -819,7 +837,7 @@ implicit none
   if (lDAILY)  STAT_INFO(iVariableNumber)%iDailyOutput = iSWBStatsOutputType
 
   call assert (iSWBStatsOutputType /= iNONE, &
-    "Output type must be defined as one of: GRID, GRAPH/PLOT, BOTH, of STATS")
+    "Output type must be defined as one of: GRID, GRAPH/PLOT, BOTH, or STATS")
 
   call Assert(iDateNum == 0 .or. iDateNum == 2, &
     "Two dates must be entered in order to perform analysis on a subset of the data", &
