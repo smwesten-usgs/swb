@@ -48,15 +48,20 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Hargreaves PET model"
 
-  call Chomp( sRecord,sOption )
-  read ( unit=sOption, fmt=*, iostat=iStat ) rValue
-  call Assert( iStat == 0, "Could not read the southerly latitude" )
-  pConfig%rSouthernLatitude = dpTWOPI * rValue / 360.0_c_float
+  if (pConfig%rSouthernLatitude <= rNO_DATA_NCDC &
+    .or. pConfig%rNorthernLatitude <= rNO_DATA_NCDC) then
 
-  call Chomp( sRecord,sOption )
-  read ( unit=sOption, fmt=*, iostat=iStat ) rValue
-  call Assert( iStat == 0, "Could not read the northerly latitude" )
-  pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_c_float
+    call Chomp( sRecord,sOption )
+    read ( unit=sOption, fmt=*, iostat=iStat ) rValue
+    call Assert( iStat == 0, "Could not read the southerly latitude" )
+    pConfig%rSouthernLatitude = dpTWOPI * rValue / 360.0_c_float
+
+    call Chomp( sRecord,sOption )
+    read ( unit=sOption, fmt=*, iostat=iStat ) rValue
+    call Assert( iStat == 0, "Could not read the northerly latitude" )
+    pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_c_float
+
+  endif
 
 end subroutine et_hargreaves_configure
 

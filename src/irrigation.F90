@@ -66,14 +66,16 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
           cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
                                       * rDepletionAmount, kind=c_double )
 
-          ! NOTE: we are assuming that the inefficiencies in delivery are *not*
-          ! added to the soil moisture reservoir
-          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
-
+          !> NOTE!! Formerly the assumption was that any inefficiencies in
+          !> delivery were *lost* altogether from the system; changed
+          !> as of 30 AUG 2013 so that the extra water is instead applied
+          !> to the soil moisture reservoir
           cel%rIrrigationFromGW = cel%rIrrigationFromGW &
              * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
           cel%rIrrigationFromSW = cel%rIrrigationFromSW &
              * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
 
         else
           cel%rIrrigationAmount = rZERO

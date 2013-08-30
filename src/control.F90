@@ -68,14 +68,16 @@ subroutine control_setModelOptions(sControlFile)
   integer (kind=c_int) :: iNX                     ! Number of cells in the x-direction
   integer (kind=c_int) :: iNY                     ! Number of cells in the y-direction
   integer (kind=c_int) :: iValue                  ! Temporary value for 'CONSTANT'
+  integer (kind=c_int) :: iRetVal
   integer (kind=c_int) :: iStat                   ! For 'iostat=' checks
   integer (kind=c_int) :: i,iVarNum,iTimeFrame    ! loop counters
-  integer (kind=c_int) :: idx                    ! index counter for STREAM_CAPTURE routines
-  integer (kind=c_int) :: iLU_SSF = 300          ! last LU for SSF file
+  integer (kind=c_int) :: idx                     ! index counter for STREAM_CAPTURE routines
+  integer (kind=c_int) :: iLU_SSF = 300           ! last LU for SSF file
   integer (kind=c_int) :: iCurrentLineNumber
-  real (kind=c_double) :: rX0, rY0                  ! Model grid extent (lower-left)
-  real (kind=c_double) :: rX1, rY1                  ! Model grid extent (upper-right)
-  real (kind=c_double) :: rXp, rYp                  ! Coordinates at a point within a grid
+  real (kind=c_double), dimension(0:1) :: rX_LL, rY_LL ! Model grid extent (lower-left)
+  real (kind=c_double) :: rX0, rY0                     ! Model grid extent (lower-left)
+  real (kind=c_double) :: rX1, rY1                     ! Model grid extent (upper-right)
+  real (kind=c_double) :: rXp, rYp                     ! Coordinates at a point within a grid
   real (kind=c_double) :: rTemp
   real (kind=c_double) :: rGridCellSize             ! Model grid cell size
   real (kind=c_float) :: rValue                    ! Temporary value for 'CONSTANT'
@@ -245,6 +247,8 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%iNX = pGrd%iNX; pConfig%iNY = pGrd%iNY
       pConfig%rX0 = pGrd%rX0; pConfig%rX1 = pGrd%rX1
       pConfig%rY0 = pGrd%rY0; pConfig%rY1 = pGrd%rY1
+      rX_LL(0) = pConfig%rX0; rX_LL(1) = pConfig%rX1
+      rY_LL(0) = pConfig%rY0; rY_LL(1) = pConfig%rY1
       pConfig%rGridCellSize = pGrd%rGridCellSize
       pGrd%sFilename = "[none: base grid]"
       pGrd%sPROJ4_string = ""
@@ -256,6 +260,23 @@ subroutine control_setModelOptions(sControlFile)
         //"before the base grid projection information can be specified.")
       pGrd%sPROJ4_string = trim(sRecord)
       DAT(:)%sSourcePROJ4_string=trim(sRecord)
+
+      iRetVal = pj_init_and_transform(pGrd%sPROJ4_string//C_NULL_CHAR, &
+                trim(sPROJ4_LatLon)//C_NULL_CHAR, &
+                2_c_long, rX_LL, rY_LL)
+      call grid_CheckForPROJ4Error(iRetVal, pGrd%sPROJ4_string, sPROJ4_LatLon)
+
+      pConfig%rX0_LL = rX_LL(0); pConfig%rX1_LL = rX_LL(1)
+      pConfig%rY0_LL = rY_LL(0); pConfig%rY1_LL = rY_LL(1)
+      pConfig%rSouthernLatitude = rY_LL(0)
+      pConfig%rNorthernLatitude = rY_LL(1)
+
+      call echolog("Northern latitude has been set to " &
+        //trim(asCharacter(pConfig%rNorthernLatitude*360./dpTWOPI)) &
+        //" on the basis of the specified grid extents")
+      call echolog("Southern latitude has been set to " &
+        //trim(asCharacter(pConfig%rSouthernLatitude*360./dpTWOPI)) &
+        //" on the basis of the specified grid extents")
 
 #ifdef DEBUG_PRINT
     elseif ( str_compare(sItem,"MEM_TEST") ) then
