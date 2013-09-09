@@ -61,6 +61,12 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
     call Assert( iStat == 0, "Could not read the northerly latitude" )
     pConfig%rNorthernLatitude = dpTWOPI * rValue / 360.0_c_float
 
+  else
+
+    call echolog("Southern and northern latitude values have been determined" &
+      //"~from project grid bounds and projection parameters. The values supplied" &
+      //"~with the Hargreaves PET option will be ignored...")
+
   endif
 
 end subroutine et_hargreaves_configure

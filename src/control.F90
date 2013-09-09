@@ -976,8 +976,8 @@ subroutine control_setModelOptions(sControlFile)
       pConfig%SSF_FILES(iNewSize)%iRowNum = iRowNum
 
       ! increment SSF file counter for this grid cell
-      pGrd%Cells(iRowNum,iColNum)%iNumFilesSSF = &
-        pGrd%Cells(iRowNum,iColNum)%iNumFilesSSF + 1
+      pGrd%Cells(iColNum,iRowNum)%iNumFilesSSF = &
+        pGrd%Cells(iColNum,iRowNum)%iNumFilesSSF + 1
 
       ! check to ensure the file unit is not already open
       do
