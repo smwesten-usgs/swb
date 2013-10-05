@@ -1,0 +1,307 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"fun",
+				"funbo8a"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "/Users/smwesten/SMWData/Source_Code/swb/build/mac_osx/gfortran/run_cmake_gfortran.sh",
+			"settings":
+			{
+				"buffer_size": 2728,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_orig.txt",
+			"settings":
+			{
+				"buffer_size": 19299,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/Users/smwesten/SMWData/Source_Code/swb/CMakeLists.txt",
+			"settings":
+			{
+				"buffer_size": 8353,
+				"line_ending": "Windows"
+			}
+		}
+	],
+	"build_system": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"selected_items":
+		[
+		],
+		"width": 392.0
+	},
+	"console":
+	{
+		"height": 153.0,
+		"history":
+		[
+			"ls"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_orig.txt",
+		"/Users/smwesten/SMWData/Source_Code/swb/build/osx/gfortran/run_cmake_gfortran.sh",
+		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists.txt",
+		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_new.txt",
+		"/Users/smwesten/SMWData/Source_Code/swb/build/win_x64/gfortran/run_cmake_mingw_gfortran.bat",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/netcdf_support.F90",
+		"/Users/smwesten/SMWData/Documents/MMD/test/manuscript.mmd",
+		"/Users/smwesten/SMWData/Documents/MMD/test2/pandoc_readme.mmd",
+		"/Users/smwesten/SMWData/Documents/MMD/test2/sample.lua",
+		"/Users/smwesten/SMWData/Visual_Identity/usgslatexdist_original/latex/scripts/dvtable_example/usgsdvtable_builder.pl",
+		"/Users/smwesten/SMWData/Documents/LaTeX/scripts/csv_to_latex.py",
+		"/Users/smwesten/SMWData/Documents/LaTeX/SWB_Documentation_TM6-A31/tables/LU_LOOKUP_NLCD.txt",
+		"/Users/smwesten/SMWData/Visual_Identity/univers_fontinst/build-funivers-script.perl",
+		"/Users/smwesten/DefaultKeyBinding.dict",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/et_blaney_criddle.F90",
+		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/User/Perl.sublime-settings",
+		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/User/fortran.tmbundle-master/Syntaxes/Fortran - Modern.tmLanguage"
+	],
+	"find":
+	{
+		"height": 23.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"/gfortran/",
+			"MINGW_VERSION",
+			"MINGWBASE",
+			"win_x64",
+			"\\t",
+			"c8a",
+			"pun",
+			"afm"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": true,
+		"replace_history":
+		[
+			"/${Fortran_COMPILER_NAME}/",
+			"COMPILER_VERSION",
+			"COMPILER_DIR",
+			"${OS}",
+			"    ",
+			"8a",
+			"fun",
+			"pfb"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "/Users/smwesten/SMWData/Source_Code/swb/build/mac_osx/gfortran/run_cmake_gfortran.sh",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2728,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								2005,
+								2005
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/ShellScript/Shell-Unix-Generic.tmLanguage"
+						},
+						"translation.x": 0.0,
+						"translation.y": 126.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_orig.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 19299,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 457.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "/Users/smwesten/SMWData/Source_Code/swb/CMakeLists.txt",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8353,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6868,
+								6868
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/Text/Plain text.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 3210.0,
+						"zoom_level": 1.0
+					},
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 23.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"project": "swb_cmake.sublime-project",
+	"replace":
+	{
+		"height": 64.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+			[
+				"",
+				"~/SMWData/Source_Code/swb/src/types.F90"
+			],
+			[
+				"read",
+				"~/SMWData/Source_Code/swb/src/et_blaney_criddle.F90"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": true,
+	"show_tabs": false,
+	"side_bar_visible": true,
+	"side_bar_width": 244.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
