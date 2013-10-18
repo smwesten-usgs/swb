@@ -26,7 +26,7 @@ if(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
   out-of-source build instead.")
   message(FATAL_ERROR "  cd /some/work/dir/build")
   message(FATAL_ERROR "  cmake -i /path/to/source")
-endif(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
+endif()
 
 #------------------------------------------------------------------------
 # Set basic project settings
@@ -51,9 +51,13 @@ set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
+import(cmake/options_and_targets.cmake)
+
 #------------------------------------------------------------------------
 # Locate utility programs
 #------------------------------------------------------------------------
+
+
 
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
@@ -65,72 +69,6 @@ find_program( R_SCRIPT Rscript.exe Rscript
     "/usr/bin"
 )
 
-message("Rscript is defined as: " ${R_SCRIPT})
-
-#------------------------------------------------------------------------
-# Restrict CMAKE_BUILD_TYPE to "Release" or "Debug"
-#------------------------------------------------------------------------
-
-set_property(CACHE CMAKE_BUILD_TYPE
-        PROPERTY STRINGS "Release" "Debug")
-
-set( CMAKE_BUILD_TYPE "Debug" CACHE STRING
-       "Compile in DEBUG or RELEASE mode" )
-
-set_property(CACHE OS
-        PROPERTY STRINGS "win_x86" "win_x64" "mac_osx" "linux")
-
-#------------------------------------------------------------------------
-# Enable or disable compilation TARGETS from the GUI
-#------------------------------------------------------------------------
-
-option (TARGET__SWB_EXECUTABLE
-      "Compile the main SWB executable?" OFF)
-
-option (TARGET__SWB_LIBRARY
-      "Compile SWB as a library?" OFF)
-
-option (TARGET__SWBSTATS
-      "Compile the swbstats application?" OFF)
-
-#------------------------------------------------------------------------
-# Set PREPROCESSOR DEFINES for conditional compilation
-#------------------------------------------------------------------------
-
-option (OPTION__GRAPHICS_SUPPORT
-      "Compile the code with graphics (DISLIN) support?" OFF)
-if(OPTION__GRAPHICS_SUPPORT)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "GRAPHICS_SUPPORT")
-endif()
-
-option (OPTION__STREAM_INTERACTIONS
-      "Compile the code with stream interactions support?" OFF)
-if(OPTION__STREAM_INTERACTIONS)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "STREAM_INTERACTIONS")
-  set(STREAM_INTERACTIONS_VARS 1)
-endif()
-
-option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" OFF)
-if(OPTION__NETCDF_SUPPORT)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "NETCDF_SUPPORT")
-endif()
-
-option (OPTION__STRICT_DATE_CHECKING
-      "Compile the code with strict enforcement of dates?" OFF)
-if(OPTION__STRICT_DATE_CHECKING)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "STRICT_DATE_CHECKING")
-endif()
-
-option (OPTION__DEBUG_PRINT
-      "Compile the code with extra debug print options enabled?" OFF )
-if(OPTION__DEBUG_PRINT)
-  set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "DEBUG_PRINT")
-endif()
-
-
-set_property(CACHE CMAKE_BUILD_TYPE
-        PROPERTY STRINGS "Release" "Debug")
 
 set(LIB_PATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME})
 
@@ -193,28 +131,7 @@ link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
-message("--------------------------------------------------------------------")
-message("   Summary of CMAKE environment variables")
-message("--------------------------------------------------------------------")
-message("BUILD TYPE: " ${CMAKE_BUILD_TYPE})
-message( " ")
-message("CMAKE_HOST_WIN32: " ${CMAKE_HOST_WIN32})
-message("CMAKE_HOST_APPLE: " ${CMAKE_HOST_APPLE})
-message("CMAKE_Fortran_COMPILER full path: " ${CMAKE_Fortran_COMPILER})
-message("Fortran compiler: " ${Fortran_COMPILER_NAME})
-message("CMAKE Fortran flags (Debug):      " ${CMAKE_Fortran_FLAGS_DEBUG})
-message("CMAKE Fortran flags (Profile):      " ${CMAKE_Fortran_FLAGS_PROFILE})
-message("CMAKE Fortran flags (Release):      " ${CMAKE_Fortran_FLAGS_RELEASE})
-message( " ")
-MESSAGE("Install to directory: " ${CMAKE_INSTALL_PREFIX})
-message("NetCDF C library: " ${NETCDF_C_LIB})
-message("Module include directory: " ${MODULE_DIR})
-message("DISLIN library: " ${DISLIN_FORTRAN_LIB})
-message("CMAKE_BINARY_DIR: " ${CMAKE_BINARY_DIR})
-message("CMAKE_CURRENT_SOURCE_DIR: " ${CMAKE_CURRENT_SOURCE_DIR})
-message("PROJECT_SOURCE_DIR: " ${PROJECT_SOURCE_DIR})
-message( " ")
-message("--------------------------------------------------------------------")
+include( cmake/print_summary.cmake )
 
 enable_testing()
 add_subdirectory(src)
