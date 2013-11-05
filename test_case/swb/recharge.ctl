@@ -195,7 +195,7 @@ LOWER_LIMIT_CFGI 55.
 #
 #  A number other than the eight listed above designates a closed depression.
 #
-FLOW_DIRECTION ARC_GRID input\flowdircoarse_esri.asc
+FLOW_DIRECTION ARC_GRID input/flowdircoarse_esri.asc
 #*******************************************************************
 # SOIL GROUP
 #
@@ -217,7 +217,7 @@ FLOW_DIRECTION ARC_GRID input\flowdircoarse_esri.asc
 #                               Soil Group C: 0.13 - 0.38 cm/h
 #                               Soil Group D: < 0.13 cm/h
 #
-SOIL_GROUP ARC_GRID input\hsgCoarse.asc
+SOIL_GROUP ARC_GRID input/hsgCoarse.asc
 #*******************************************************************
 # LAND USE/COVER CLASSIFICATION
 #
@@ -229,7 +229,7 @@ SOIL_GROUP ARC_GRID input\hsgCoarse.asc
 # CONTAINS CURVE NUMBER, INTERCEPTION, AND ROOTING DEPTH DATA FOR EACH
 # LAND USE TYPE CONTAINED IN THE GRID.
 #
-LAND_USE ARC_GRID input\lulcCoarse.asc
+LAND_USE ARC_GRID input/lulcCoarse.asc
 #*******************************************************************
 # SPECIFY OPEN WATER LAND USE
 #
@@ -284,7 +284,7 @@ LAND_USE ARC_GRID input\lulcCoarse.asc
 #
 # * Column numbering will obviously change if more than 4 soil types are used.
 #
-LAND_USE_LOOKUP_TABLE std_input\LU_LOOKUP.txt
+LAND_USE_LOOKUP_TABLE std_input/LU_LOOKUP.txt
 #*******************************************************************
 # BASE SOIL WATER CAPACITY
 #
@@ -316,7 +316,7 @@ LAND_USE_LOOKUP_TABLE std_input\LU_LOOKUP.txt
 #               silty clay                          3.40
 #               clay                                3.60
 #
-WATER_CAPACITY ARC_GRID input\awcCoarse.asc
+WATER_CAPACITY ARC_GRID input/awcCoarse.asc
 #*******************************************************************
 # ADJUSTED WATER CAPACITY
 #
@@ -343,7 +343,7 @@ WATER_CAPACITY ARC_GRID input\awcCoarse.asc
 # tables are ignored, and the polynomials developed by Wes Dripps
 # (based on the same tables) are used instead.
 #
-SM T-M std_input\soil-moisture-retention-extended.grd
+SM T-M std_input/soil-moisture-retention-extended.grd
 #*******************************************************************
 # INITIAL SOIL MOISTURE
 #
@@ -404,9 +404,9 @@ RUNOFF C-N DOWNHILL
 # Only the Thornthwaite-Mather and the Hargreaves options have been
 # extensively tested as of 5/2007
 #
-#ET HARGREAVES 42.89 43.24
+ET HARGREAVES 42.89 43.24
 #ET TURC 43 0.23 0.25 0.75
-ET T-M 43
+#ET T-M 43
 #*******************************************************************
 # PLOTTING CUSTOMIZATION
 #
@@ -525,11 +525,11 @@ OUTPUT_FORMAT ARC_GRID
 #
 # Any fields without data should be filled in with a "-99999"
 #
-SOLVE climate\Coshocton_Climate_1999.txt
-SOLVE climate\Coshocton_Climate_2000.txt
-SOLVE climate\Coshocton_Climate_2001.txt
-SOLVE climate\Coshocton_Climate_2002.txt
-SOLVE climate\Coshocton_Climate_2003.txt
+SOLVE climate/Coshocton_Climate_1999.txt
+SOLVE climate/Coshocton_Climate_2000.txt
+SOLVE climate/Coshocton_Climate_2001.txt
+SOLVE climate/Coshocton_Climate_2002.txt
+SOLVE climate/Coshocton_Climate_2003.txt
 #
 EOJ
 #
