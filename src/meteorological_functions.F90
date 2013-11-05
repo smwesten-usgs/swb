@@ -28,6 +28,15 @@ module meteorological_functions
 
 contains
 
+function capillary_flux(rZgw, rHae, rN, rB, rKs)  result(r_v)
+
+  real (kind=T_SGL) :: rZgw, rhae, rn, rB, rKs
+  real (kind=T_SGL) ::r_v
+
+  r_v = 1000. * rINCH_PER_MM * rB * rKs * ( rHae / rZgw ) ^ rN
+
+end function capillary_flux
+
 !--------------------------------------------------------------------------
 !!****f* meteorological_functions/daylight_hours
 ! NAME
