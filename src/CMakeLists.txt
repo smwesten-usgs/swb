@@ -587,7 +587,7 @@ if(TARGET__SWBSTATS)
   set_target_properties(swbstats
             PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
 
-  target_link_libraries(swbstats ${EXTRA_LIBS})
+  link_libraries(swbstats ${EXTRA_LIBS})
 
 
 endif()

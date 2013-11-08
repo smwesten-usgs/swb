@@ -207,6 +207,9 @@ module types
       real (kind=c_float) :: rCFGI = rZERO           ! Continuous Frozen Ground Index
 
       real (kind=c_float) :: rGDD = rZERO            ! Growing Degree Day
+      real (kind=c_float) :: rGDD_29F                ! GDD, base = 29 F
+      integer (kind=c_int) :: iGDD_Reset_DOY = 1       ! Default GDD reset day of year
+      logical (kind=c_bool) :: lGrowingSeason = lFALSE ! boolean true/false indicating growing season
       real (kind=c_float) :: rIrrigationAmount = rZERO ! total amount of any irrigation
       real (kind=c_float) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
       real (kind=c_float) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any

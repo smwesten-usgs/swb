@@ -119,18 +119,6 @@ program main
     write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS          no"
 #endif
 
-#ifdef GRAPHICS_SUPPORT
-    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT            yes"
-#else
-    write(UNIT=*,FMT="(a)") " GRAPHICS_SUPPORT             no"
-#endif
-
-#ifdef NETCDF_SUPPORT
-    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT              yes"
-#else
-    write(UNIT=*,FMT="(a)") " NETCDF_SUPPORT               no"
-#endif
-
 #ifdef STRICT_DATE_CHECKING
     write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING        yes"
 #else

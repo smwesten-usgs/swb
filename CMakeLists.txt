@@ -51,70 +51,22 @@ set(PACKAGE_VERSION "1.2 BETA")
 
 cmake_minimum_required(VERSION 2.8)
 
-import(cmake/options_and_targets.cmake)
+include( cmake/options_and_targets.cmake )
 
 #------------------------------------------------------------------------
 # Locate utility programs
 #------------------------------------------------------------------------
 
+set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
+set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
+set(LIB_PATH "${COMPILER_DIR}/lib/gcc/${COMPILER_TRIPLET}/${COMPILER_VERSION}" )
+set(LIB_PATH ${LIB_PATH} "${COMPILER_DIR}/${COMPILER_TRIPLET}/lib" )
+set(LIB_PATH ${LIB_PATH} "${COMPILER_DIR}/lib" )
+set(CMAKE_LIBRARY_PATH ${LIB_PATH} ${SWB_PATH})
 
+include( cmake/find_programs_and_libraries.cmake )
 
-find_program( R_SCRIPT Rscript.exe Rscript
-    HINTS
-    ENV R_HOME
-	${PATH_TO_R}
-    PATHS
-    "c:/Program Files/R"
-    "c:/Program Files/R/R-3.0.1/bin"
-    "/usr/bin"
-)
-
-
-set(LIB_PATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME})
-
-#------------------------------------------------------------------------
-# Find all STATIC library files in the appropriate subdirectory beneath
-#    the swb/lib dir structure; add to list of libraries to link against
-#------------------------------------------------------------------------
-
-FILE(GLOB staticLibFiles RELATIVE "${LIB_PATH}" "${LIB_PATH}/*.a")
-#FILE(GLOB staticLibFiles "${LIB_PATH}/*.a")
-
-FOREACH(staticLibFile ${staticLibFiles})
-    MESSAGE(STATUS "==> Adding library to build: ${staticLibFile}")
-
-  set(EXTRA_LIBS ${EXTRA_LIBS} ${staticLibFile} )
-
-ENDFOREACH()
-
-#------------------------------------------------------------------------
-# Find all DYNAMIC library files in the appropriate subdirectory beneath
-#    the swb/lib dir structure; add to list of libraries to link against
-#------------------------------------------------------------------------
-
-FILE(GLOB dynamicLibFiles "${LIB_PATH}/*.dylib")
-#FILE(GLOB dynamicLibFiles RELATIVE "${LIB_PATH}" "${LIB_PATH}/*.dylib")
-
-FOREACH(dynamicLibFile ${dynamicLibFiles})
-    MESSAGE(STATUS "==> Adding shared library to build: ${dynamicLibFile}")
-
-  set(EXTRA_LIBS ${EXTRA_LIBS} ${dynamicLibFile} )
-
-ENDFOREACH()
-
-
-#------------------------------------------------------------------------
-# Add standard compiler libraries to link against
-#------------------------------------------------------------------------
-
-set(GCC_LIB ${COMPILER_DIR}/lib/gcc/${COMPILER_TRIPLET}/${COMPILER_VERSION}/libgcc.a)
-set(GFORTRAN_LIB ${COMPILER_DIR}/lib/libgfortran.a)
-set(EXTRA_LIBS ${EXTRA_LIBS} ${GCC_LIB} )
-set(EXTRA_LIBS ${EXTRA_LIBS} ${GFORTRAN_LIB} )
-
-set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
-
-include_directories( ${MODULE_DIR} ${EXTRA_INCLUDES} "${PROJECT_SOURCE_DIR}/src/proj4")
+#set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
 
 if (${OS} STREQUAL "win_x64" OR ${OS} STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
@@ -125,9 +77,6 @@ else()
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats ${CMAKE_INSTALL_PREFIX}/swbstats
   )
 endif()
-
-include_directories(${INCLUDE_DIR} ${INCLUDE_DISLIN})
-link_libraries( ${EXTRA_LIBS} )
 
 get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 

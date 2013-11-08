@@ -6,8 +6,6 @@
 !> @brief  Creates plots through calls to the DISLIN library.
 module graph
 
-#ifdef GRAPHICS_SUPPORT
-
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use dislin
   use types
@@ -364,12 +362,15 @@ module graph
 
 !----------------------------------------------------------------------------------
 
-  subroutine make_shaded_contour(pGrd, sOutputFilename, sTitleTxt, sAxisTxt)
+  subroutine make_shaded_contour(pGrd, sOutputFilename, sTitleTxt, sAxisTxt, &
+      rMinZVal, rMaxZVal)
 
     type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
     character (len=*) :: sOutputFilename
     character (len=*) :: sTitleTxt
     character (len=*) :: sAxisTxt
+    real (kind=c_float), optional :: rMinZVal
+    real (kind=c_float), optional :: rMaxZVal
 
     ! [ LOCALS ]
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
@@ -441,12 +442,21 @@ module graph
 
       case(DATATYPE_INT)
 
-        if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
-          ZA = maxval(pGrd%iData)
-          ZE = minval(pGrd%iData)
+        if (present(rMinZVal) .and. present(rMaxZVal)) then
+
+          ZA = rMinZVal
+          ZE = rMaxZVal
+
         else
-          ZA = minval(pGrd%iData)
-          ZE = maxval(pGrd%iData)
+
+          if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
+            ZA = maxval(pGrd%iData)
+            ZE = minval(pGrd%iData)
+          else
+            ZA = minval(pGrd%iData)
+            ZE = maxval(pGrd%iData)
+          endif
+
         endif
 
         ZOR = ZA
@@ -460,12 +470,21 @@ module graph
 
       case(DATATYPE_REAL)
 
-        if(minval(pGrd%rData) <= 0. .and. maxval(pGrd%rData) <= 0.) then
-          ZA = maxval(pGrd%rData)
-          ZE = minval(pGrd%rData)
+        if (present(rMinZVal) .and. present(rMaxZVal)) then
+
+          ZA = rMinZVal
+          ZE = rMaxZVal
+
         else
-          ZA = minval(pGrd%rData)
-          ZE = maxval(pGrd%rData)
+
+          if(minval(pGrd%rData) <= 0. .and. maxval(pGrd%rData) <= 0.) then
+            ZA = maxval(pGrd%rData)
+            ZE = minval(pGrd%rData)
+          else
+            ZA = minval(pGrd%rData)
+            ZE = maxval(pGrd%rData)
+          endif
+
         endif
 
         ZOR = ZA
@@ -619,7 +638,5 @@ module graph
     CALL DISFIN()
 
   end subroutine make_shaded_contour
-
-#endif
 
 end module graph

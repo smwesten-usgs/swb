@@ -39,8 +39,6 @@
 
 module netcdf_c_api_interfaces
 
-#ifdef NETCDF_SUPPORT
-
   use iso_c_binding
 
   implicit none
@@ -744,8 +742,5 @@ module netcdf_c_api_interfaces
 
     end function nc_close
   end interface
-
-
-#endif
 
 end module netcdf_c_api_interfaces

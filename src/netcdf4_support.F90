@@ -22,8 +22,6 @@
 
 module netcdf4_support
 
-#ifdef NETCDF_SUPPORT
-
   use iso_c_binding
   use types
 
@@ -3191,7 +3189,5 @@ subroutine netcdf_put_variable_vector(NCFILE, iVarID, iStart, iCount, iStride, &
   endif
 
 end subroutine netcdf_put_variable_vector
-
-#endif
 
 end module netcdf4_support

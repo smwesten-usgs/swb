@@ -320,7 +320,7 @@ end if
 
   call model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
 
-  ! Handle all the processes in turn
+  call model_UpdateGrowingSeason( pGrd, pConfig )
 
   if(pConfig%iConfigureSnow == CONFIG_SNOW_ORIGINAL_SWB) then
     call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
@@ -331,10 +331,6 @@ end if
     call Assert(lFALSE,"Unhandled snow module option specified", &
       TRIM(__FILE__),__LINE__)
   end if
-
-  !if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
-
-  !call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
 
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
@@ -348,7 +344,6 @@ end if
   if( pConfig%lEnableIrrigation )  call irrigation_UpdateAmounts(pGrd, pConfig)
 
   call model_ProcessRunoff(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
-
 
   call calculate_water_balance( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iDay ,pConfig%iMonth, pConfig%iYear)
@@ -375,30 +370,10 @@ end if
 
   end if
 
-  ! write OFFSET VALUE to the unformatted fortran file(s)
-!  do k=1,iNUM_VARIABLES
-!    if(STAT_INFO(k)%iDailyOutput > iNONE &
-!      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-!      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-!      ! get current file position
-!      inquire(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!      ! rewind to location of today's header, at the location
-!      ! where the offset is to be written
-!      write(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
-!      ! write an offset amount at the end of the current header
-!      write(UNIT=STAT_INFO(k)%iLU) iTempval - STAT_INFO(k)%iPos
-!      ! return to last file position
-!      write(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!    end if
-!  end do
-
   call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_DAILY)
 
   ! Write the results at each month-end
   if ( lMonthEnd ) then
-
-!      if ( pConfig%lReportDaily ) call stats_CalcMonthlyMeans(pConfig%iMonth, pConfig%iDay)
-!      call stats_WriteMonthlyReport (LU_STD_OUT, pGrd, sMonthName, iMonth)
 
     call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_MONTHLY)
 
@@ -779,11 +754,17 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
       if( cel%rTMax < cel%rTMin )then
 
         ! swap min and max values to maintain a positive delta T
-         rTempVal = cel%rTMax
+        rTempVal = cel%rTMax
         cel%rTMax = cel%rTMin
         cel%rTMin = cel%rTMax
 
       end if
+
+      if (cel%rTMin > 29.) then
+        cel%rGDD_29F = cel%rGDD_29F + (cel%rTMin - 29.)
+      else
+        cel%rGDD_29F = 0.
+      endif
 
     end do
   end do
@@ -865,6 +846,39 @@ end do
 end subroutine model_UpdateContinuousFrozenGroundIndex
 
 
+subroutine model_UpdateGrowingSeason( pGrd, pConfig )
+
+  implicit none
+
+  ! [ ARGUMENTS ]
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  ! [ LOCALS ]
+  type (T_CELL),pointer :: cel              ! pointer to a particular cell
+  integer (kind=c_int) :: iCol, iRow
+
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+      cel => pGrd%Cells(iCol, iRow)
+
+      if ( cel%lGrowingSeason ) then
+
+        if ( cel%rGDD_29F <= 50. ) cel%lGrowingSeason = lFALSE
+
+      else  ! it is NOT growing season
+
+        if ( cel%rGDD_29F > 50. ) cel%lGrowingSeason = lTRUE
+
+      endif
+
+    enddo
+  enddo
+
+end subroutine model_UpdateGrowingSeason
+
+
 !--------------------------------------------------------------------------
 !!****s* model/model_UpdateGrowingDegreeDay( pGrd )
 ! NAME
@@ -886,7 +900,6 @@ end subroutine model_UpdateContinuousFrozenGroundIndex
 !       of pointers.
 !
 ! SOURCE
-
 subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
 
   implicit none
@@ -906,7 +919,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   logical (kind=c_bool) :: lAssertTest
 
   ! zero out growing degree day at start of calendar year
-  if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
+!  if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
@@ -1628,15 +1641,11 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
           pTempGrid%iData = pGrd%Cells%iFlowDir
         end where
 
-!#ifdef GRAPHICS_SUPPORT
 !        call genericgraph(pTempGrid)
-!#endif
+#endif
 
         call grid_WriteArcGrid("iteration"//TRIM(int2char(iPasses))// &
-          "problem_gridcells.asc", &
-          pTempGrid%rX0,pTempGrid%rX1,pTempGrid%rY0,pTempGrid%rY1, &
-          REAL(pTempGrid%iData,kind=c_float))
-#endif
+          "problem_gridcells.asc", pTempGrid)
 
       else
         ! reset iteration counter
@@ -2657,13 +2666,11 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   call Assert ( iStat == 0, &
     "Could not allocate space for MAX_RECHARGE subtable within landuse data structure" )
 
-#ifdef IRRIGATION_MODULE
   ! now allocate memory for IRRIGATION subtable within landuse table
   ! note that this table is NOT populated in this subroutine, but in "readIrrgationLookupTable"
   allocate ( pConfig%IRRIGATION( iNumLandUses ), stat=iStat )
   call Assert ( iStat == 0, &
     "Could not allocate space for IRRIGATION data structure" )
-#endif
 
   iRecNum = 1
 
@@ -2741,9 +2748,7 @@ read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowi
 
   end do LU_READ
 
-#ifdef IRRIGATION_MODULE
   pConfig%IRRIGATION%iLandUseType = pConfig%LU%iLandUseType
-#endif
 
   ! That's all!
   close ( unit=LU_LOOKUP )
@@ -3091,7 +3096,7 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
 
   ! Default is zero
   rIntRate = rZERO
-  if ( lf_model_GrowingSeason(pConfig, pConfig%iDayOfYear) ) then
+  if ( cel%lGrowingSeason ) then
     rIntRate = pLU%rIntercept_GrowingSeason
   else
     rIntRate = pLU%rIntercept_NonGrowingSeason

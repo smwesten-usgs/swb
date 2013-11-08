@@ -77,14 +77,12 @@ module data_factory
     ! units?
     ! conversion factor?
 
-#ifdef NETCDF_SUPPORT
     integer (kind=c_int) :: iNC_FILE_STATUS = NETCDF_FILE_CLOSED
     type (T_NETCDF4_FILE) :: NCFILE
 
     integer (kind=c_int) :: iNC_ARCHIVE_STATUS = NETCDF_FILE_CLOSED
     type (T_NETCDF4_FILE) :: NCFILE_ARCHIVE
     integer (kind=c_size_t) :: iNCFILE_RECNUM = 0
-#endif
 
     integer (kind=c_int) :: iConstantValue
     real (kind=c_float) :: rConstantValue
@@ -104,9 +102,7 @@ module data_factory
     procedure :: init_const_real => initialize_constant_real_data_object_sub
     procedure :: init_gridded => initialize_gridded_data_object_sub
 
-#ifdef NETCDF_SUPPORT
     procedure :: initialize_netcdf => initialize_netcdf_data_object_sub
-#endif
 
     generic :: initialize => init_const_int, &
                              init_const_real, &
@@ -131,9 +127,7 @@ module data_factory
     procedure :: getvalues_constant => getvalues_constant_sub
     procedure :: getvalues_gridded => getvalues_gridded_sub
 
-#ifdef NETCDF_SUPPORT
     procedure :: getvalues_netcdf => getvalues_dynamic_netcdf_sub
-#endif
 
     procedure :: getvalues => getvalues_sub
 
@@ -312,8 +306,6 @@ end subroutine initialize_gridded_data_object_sub
 
 !----------------------------------------------------------------------
 
-#ifdef NETCDF_SUPPORT
-
 subroutine initialize_netcdf_data_object_sub( &
    this, &
    sDescription, &
@@ -371,8 +363,6 @@ subroutine initialize_netcdf_data_object_sub( &
 
 end subroutine initialize_netcdf_data_object_sub
 
-#endif
-
 !----------------------------------------------------------------------
 
   subroutine getvalues_sub( this, pGrdBase, iMonth, iDay, iYear, iJulianDay, &
@@ -393,7 +383,6 @@ end subroutine initialize_netcdf_data_object_sub
 
       call getvalues_gridded_sub( this, pGrdBase, iMonth, iDay, iYear)
 
-#ifdef NETCDF_SUPPORT
 
     elseif ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
@@ -401,7 +390,6 @@ end subroutine initialize_netcdf_data_object_sub
       call getvalues_dynamic_netcdf_sub( this, &
                            pGrdBase,  iMonth, iDay, iYear, iLocalJulianDay)
 
-#endif
 
     elseif(this%iSourceDataForm == STATIC_GRID ) then
 
@@ -926,8 +914,6 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
-#ifdef NETCDF_SUPPORT
-
   subroutine getvalues_dynamic_netcdf_sub( this, pGrdBase, &
      iMonth, iDay, iYear, iJulianDay)
 
@@ -1126,8 +1112,6 @@ end subroutine set_constant_value_real
     call this%transfer_from_native( pGrdBase )
 
   end subroutine getvalues_dynamic_netcdf_sub
-
-#endif
 
 !----------------------------------------------------------------------
 

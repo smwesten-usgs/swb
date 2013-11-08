@@ -27,7 +27,7 @@ def readSWBbinary(ifp):
     """
     RLE routine ported from FORTRAN SWB code. 
     
-    Each subsequent call to this routine returns a grid associated with 
+    Each subsequent call to this routine returns a grid associated with a days worth of output.
     """
     iCurr = np.fromfile(ifp,dtype='i',count=1)
     lRun = False
@@ -78,7 +78,7 @@ def makePlot(rPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt):
     P.savefig(fileprefix + '.png')
 
     
-#os.chdir('/mnt/DATA/SW2Data/test_cases/bec/output')
+#os.chdir('D:/SMWData/Source_Code/SWB_TEST_CASES/Peterson_June_2013/output')
 
 #
 # ------------------ BEGIN MAIN CODE --------------------
@@ -86,21 +86,31 @@ def makePlot(rPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt):
 
 
 
-ifp = open('swb_CFGI.bin','rb')
+ifp = open('output/swb__RUNOFF_OUTSIDE.bin','rb')
 
 # read in HEADER values from Fortran binary file
 iNX = np.fromfile(ifp,dtype='i',count=1)
 iNY = np.fromfile(ifp,dtype='i',count=1)
 iDataType = np.fromfile(ifp,dtype='i',count=1)
-rGridCellSize = np.fromfile(ifp,dtype='f',count=1)
+rGridCellSize = np.fromfile(ifp,dtype='d',count=1)
 iLengthUnits = np.fromfile(ifp,dtype='i',count=1)
+sSWBCompilationDate = np.fromfile(ifp,dtype='a15',count=1)
 iVariableNumber = np.fromfile(ifp,dtype='i',count=1)
 iRLE_MULT = np.fromfile(ifp,dtype='i',count=1)
 rRLE_OFFSET = np.fromfile(ifp,dtype='f',count=1)
 rX0, rX1 = np.fromfile(ifp,dtype='d',count=2)
 rY0, rY1 = np.fromfile(ifp,dtype='d',count=2)
+
+iLengthOfPROJ4String = np.fromfile(ifp,dtype='i',count=1)
+formatStr = "a{0}".format(iLengthOfPROJ4String[0])
+
+print "'" + formatStr + "'\n"
+
+sPROJ4_string = np.fromfile(ifp,dtype=formatStr,count=1)
+
 iStartMM, iStartDD, iStartYYYY = np.fromfile(ifp,dtype='i',count=3)
 iEndMM, iEndDD, iEndYYYY = np.fromfile(ifp,dtype='i',count=3)
+
 
 #V = np.linspace(0.,0.5,10)
 
@@ -130,18 +140,19 @@ while True:
     sTitleTxt = "current date: {0}/{1}/{2}    day of year = {3}".format(iMM,iDD,iYYYY,iDOY)
     rValues = readSWBbinary(ifp)    
     npPlotVals = np.flipud(rValues.reshape(iNY,iNX,order='C'))
-    print "current date: {0}/{1}/{2} day of year = {3}; min = {4}  mean = {5} max= {6}".format(iMM,iDD,iYYYY,iDOY, 
+    # good reference for new and old Python format specifiers: http://mkaz.com/solog/python/python-string-format.html
+    print "current date: %i/%i/%i day of year = %i; min = %.3f  mean = %.3f max = %.3f" % (iMM,iDD,iYYYY,iDOY, 
                                                                                                npPlotVals.min(), 
                                                                                                npPlotVals.mean(), 
                                                                                                npPlotVals.max())
     
-#    makePlot(npPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt)
+    makePlot(npPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt)
 
-#    filename = fileprefix + '.asc'
-#    ofp = open(filename,'w')    
-#    writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npPlotVals)
-#    ofp.close()    
-#    ofp = file(filename,'a')    
+    filename = fileprefix + '.asc'
+    ofp = open(filename,'w')    
+    writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npPlotVals)
+    ofp.close()    
+    ofp = file(filename,'a')    
             
     if iCurrDate >= iEndDate:
         break

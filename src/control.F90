@@ -327,7 +327,6 @@ subroutine control_setModelOptions(sControlFile)
           iDataType=DATATYPE_REAL )
           pConfig%lGriddedData = lTRUE
 
-#ifdef NETCDF_SUPPORT
       else if( str_compare(sOption,"NETCDF") ) then
 
           ! initialize DAT object for precip data
@@ -346,7 +345,6 @@ subroutine control_setModelOptions(sControlFile)
 !          pConfig%NETCDF_FILE(iGROSS_PRECIP,iNC_INPUT)%sVarName = TRIM(sArgument)
 !          call netcdf_chk_extent(pConfig,iGROSS_PRECIP,iNC_INPUT,pGrd)
           pConfig%lGriddedData = lTRUE
-#endif
       else
         call Assert( lFALSE , "Illegal precipitation input format specified" )
       end if
@@ -363,8 +361,6 @@ subroutine control_setModelOptions(sControlFile)
     else if ( str_compare(sItem,"PRECIPITATION_CONVERSION_FACTOR") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_conversion_factor(asReal(sArgument))
-
-#ifdef NETCDF_SUPPORT
 
     else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
@@ -394,8 +390,6 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (str_compare(sItem, "NETCDF_PRECIP_MAKE_LOCAL_ARCHIVE") ) then
       call DAT(PRECIP_DATA)%set_make_local_archive(lTRUE)
-
-#endif
 
     else if (sItem == "PRECIPITATION_GRID_PROJECTION_DEFINITION") then
       call DAT(PRECIP_DATA)%set_PROJ4( trim(sRecord) )
@@ -455,7 +449,7 @@ subroutine control_setModelOptions(sControlFile)
           iDataType=DATATYPE_REAL )
 
           pConfig%lGriddedData = lTRUE
-#ifdef NETCDF_SUPPORT
+
         else if( trim(sOption) == "NETCDF" ) then
 
           call DAT(TMAX_DATA)%initialize_netcdf( &
@@ -473,7 +467,6 @@ subroutine control_setModelOptions(sControlFile)
             iDataType=DATATYPE_REAL, &
             pGrdBase=pGrd)
 
-#endif
         else
           call Assert( lFALSE, "Illegal temperature input format specified", &
             TRIM(__FILE__),__LINE__)
@@ -484,8 +477,6 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
       call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
-
-#ifdef NETCDF_SUPPORT
 
     else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
@@ -544,8 +535,6 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (str_compare(sItem, "NETCDF_TMIN_MAKE_LOCAL_ARCHIVE") ) then
       call DAT(TMIN_DATA)%set_make_local_archive(lTRUE)
-
-#endif
 
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
@@ -1442,12 +1431,11 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       if (TRIM(sArgument)== "GRID") then
         STAT_INFO(iVarNum)%iDailyOutput = iGRID
-#ifdef GRAPHICS_SUPPORT
+
       else if (TRIM(sArgument)== "GRAPH" .or. TRIM(sArgument)== "PLOT") then
         STAT_INFO(iVarNum)%iDailyOutput = iGRAPH
       else if (TRIM(sArgument)== "BOTH") then
         STAT_INFO(iVarNum)%iDailyOutput = iBOTH
-#endif
       else
         STAT_INFO(iVarNum)%iDailyOutput = iNONE
       end if
@@ -1456,12 +1444,11 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       if (TRIM(sArgument)== "GRID") then
         STAT_INFO(iVarNum)%iMonthlyOutput = iGRID
-#ifdef GRAPHICS_SUPPORT
       else if (TRIM(sArgument)== "GRAPH" .or. TRIM(sArgument)== "PLOT") then
         STAT_INFO(iVarNum)%iMonthlyOutput = iGRAPH
       else if (TRIM(sArgument)== "BOTH") then
         STAT_INFO(iVarNum)%iMonthlyOutput = iBOTH
-#endif
+
       else
         STAT_INFO(iVarNum)%iMonthlyOutput = iNONE
       end if
@@ -1470,17 +1457,14 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       if (TRIM(sArgument)== "GRID") then
         STAT_INFO(iVarNum)%iAnnualOutput = iGRID
-#ifdef GRAPHICS_SUPPORT
       else if (TRIM(sArgument)== "GRAPH" .or. TRIM(sArgument)== "PLOT") then
         STAT_INFO(iVarNum)%iAnnualOutput = iGRAPH
       else if (TRIM(sArgument)== "BOTH") then
         STAT_INFO(iVarNum)%iAnnualOutput = iBOTH
-#endif
       else
         STAT_INFO(iVarNum)%iAnnualOutput = iNONE
       end if
 
-#ifdef NETCDF_SUPPORT
       ! finally repeat for NetCDF output options
       call Chomp ( sRecord, sArgument )
       if (TRIM(sArgument)== "NETCDF") then
@@ -1488,7 +1472,6 @@ subroutine control_setModelOptions(sControlFile)
       else
         STAT_INFO(iVarNum)%iNetCDFOutput = iNONE
       end if
-#endif
 
       write(UNIT=LU_LOG,FMT=*)  "Options have been set for: ", &
          TRIM(STAT_INFO(iVarNum)%sVARIABLE_NAME)
@@ -1499,12 +1482,9 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*)  "STAT_INFO(iVarNum)%iDailyOutput: ",&
          STAT_INFO(iVarNum)%iDailyOutput
 
-#ifdef NETCDF_SUPPORT
       write(UNIT=LU_LOG,FMT=*)  "STAT_INFO(iVarNum)%iNetCDFOutput: ",&
          STAT_INFO(iVarNum)%iNetCDFOutput
-#endif
 
-#ifdef GRAPHICS_SUPPORT
     else if ( sItem == "DISLIN_PARAMETERS" ) then
       call Chomp ( sRecord, sArgument )
       write(UNIT=LU_LOG,FMT=*) "Setting the values for DISLIN parameters"
@@ -1616,7 +1596,6 @@ subroutine control_setModelOptions(sControlFile)
          write(UNIT=LU_LOG,FMT=*)   "  DISLIN variable name has been set and is valid"
       end if
       flush(UNIT=LU_LOG)
-#endif
 
     else if ( sItem == "DRIPPS_COMPATIBILITY" ) then
       write(UNIT=LU_LOG,FMT=*) &

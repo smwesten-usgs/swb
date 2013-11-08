@@ -861,8 +861,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           call grid_WriteGrid(trim(pConfig%sOutputFilePathDaily)//trim(sFilePrefix) &
             //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
-#ifdef GRAPHICS_SUPPORT
-
         if(STAT_INFO(k)%iDailyOutput==iGRAPH &
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
 
@@ -883,8 +881,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           end if
 
         end if
-
-#endif
 
       endif ! produce daily output
 
@@ -909,8 +905,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly)//trim(sFilePrefix)//"_SUM." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
-#ifdef GRAPHICS_SUPPORT
-
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
 
@@ -933,8 +927,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-#endif
-
           pGrd%rData(:,:) = pGrd%rData(:,:) &
              / real(iDaysInMonthCount, kind=c_float)
 
@@ -944,8 +936,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly) &
               //trim(sFilePrefix)//"_MEAN." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
-
-#ifdef GRAPHICS_SUPPORT
 
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
@@ -968,8 +958,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             end if
 
           end if
-
-#endif
 
           rMonthlySum = 0.0; iDaysInMonthCount = 0
 
@@ -1001,8 +989,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
               //trim(sFilePrefix)//"_SUM." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
 
-#ifdef GRAPHICS_SUPPORT
-
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
 
@@ -1025,8 +1011,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-#endif
-
           pGrd%rData(:,:) = pGrd%rData(:,:) &
              / real(iDaysInYearCount, kind=c_float)
 
@@ -1035,8 +1019,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual)//trim(sFilePrefix)//"_MEAN." &
               //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
-
-#ifdef GRAPHICS_SUPPORT
 
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
@@ -1058,8 +1040,6 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             end if
 
           end if
-
-#endif
 
           rAnnualSum = 0.0; iDaysInYearCount = 0
 
@@ -1303,11 +1283,9 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
     "RECHARGE", pConfig%iStartYearforCalculation, &
       pConfig%iEndYearforCalculation
 
-#ifdef GRAPHICS_SUPPORT
   pGraph(iRECHARGE)%cTITLE = TRIM(sBuf)
   pGraph(iRECHARGE)%iTimeFrame = iANNUAL
   call makegraph(pGraph,pTmpGrd,iRECHARGE)
-#endif
 
   write(LU_LOG,FMT=*) REPEAT("-",80)
 
