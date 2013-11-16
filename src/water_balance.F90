@@ -68,7 +68,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
   !! initialize basic grid cell variables
 
-  iNumGridCells = pGrd%iNumGridCells
+  iNumGridCells = count(pGrd%Cells%iActive /= iINACTIVE_CELL )
 
   ! call to "julian_day" includes the optional origin term...
   ! return value will be the number of days *SINCE* that origin term
@@ -487,18 +487,21 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         rChangeInStorage,rDailyRecharge)
 
       ! UPDATE MONTHLY and ANNUAL ACCUMULATORS HERE
-      call output_update_accumulators(cel, iMonth, &
-        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
-        rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-        rChangeInStorage,rDailyRecharge)
+      if (cel%iActive /= iINACTIVE_CELL ) then
+        call output_update_accumulators(cel, iMonth, &
+          rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+          rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
+          rChangeInStorage,rDailyRecharge)
 
-      if(iYear>= pConfig%iStartYearforCalculation .and. &
-           iYear<= pConfig%iEndYearforCalculation) then
+        if(iYear>= pConfig%iStartYearforCalculation .and. &
+             iYear<= pConfig%iEndYearforCalculation) then
 
-        cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
-        cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
+          cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
+          cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
 
-      end if
+        end if
+
+      endif
 
     end do col_idx
 

@@ -1248,6 +1248,28 @@ subroutine control_setModelOptions(sControlFile)
       call model_ReadIrrigationLookupTable( pConfig, pGrd )
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "BASIN_MASK" ) then
+      write(UNIT=LU_LOG,FMT=*) "Populating basin mask grid"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      if ( trim(sOption) == "CONSTANT" ) then
+        read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
+        call Assert( iStat == 0, "Cannot read integer data value" )
+
+        call DAT(MASK_DATA)%initialize(sDescription=trim(sItem), &
+           iConstant=iValue )
+
+      else
+
+        call DAT(MASK_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_INT )
+
+      end if
+      flush(UNIT=LU_LOG)
+
     else if ( sItem == "BASIN_MASK_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask lookup table"
       call Chomp ( sRecord, pConfig%sBasinMaskFilename )
@@ -1259,13 +1281,14 @@ subroutine control_setModelOptions(sControlFile)
 
     else if (sItem == "BASIN_MASK_PROJECTION_DEFINITION") then
       write(UNIT=LU_LOG,FMT=*) "Reading basin mask projection definition"
-      call Chomp ( sRecord, pConfig%sBasinMaskPROJ4String )
+      if (DAT(MASK_DATA)%iSourceDataType /= DATATYPE_NA) then
+        call DAT(MASK_DATA)%set_PROJ4( trim(sRecord) )
+      endif
+      pConfig%sBasinMaskPROJ4String = trim( sRecord )
       if ( len_trim(pConfig%sBasinMaskPROJ4String) == 0 ) then
         call Assert( lFALSE, "No basin mask projection definition specified" )
       end if
 
-
-!        iSoilMoistureRetentionMethod
     else if ( sItem == "ADJUSTED_WATER_CAPACITY" ) then
       write(UNIT=LU_LOG,FMT=*) "Populating adjusted water capacity grid"
       call Chomp ( sRecord, sOption )

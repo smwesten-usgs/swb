@@ -55,6 +55,7 @@ box(lwd=1.5)
 
 # now plot INPUTS
 par(mar=c(3,6,1,3))
+y0 <- mb$Gross.Precip
 y1 <- mb$Net.Rainfall
 y2 <- mb$Snowmelt + y1
 #y3 <- mb$Irrigation + y2
@@ -62,20 +63,21 @@ y3 <- 0 + y2
 
 x<-as.vector(c(mb$Date,rev(mb$Date)))
 ylim.min<-0.
-ylim.max<-max(c(y1,y2,y3))
+ylim.max<-max(c(y0,y1,y2,y3))
 ylim.max<-ylim.max + 0.025 * (ylim.max - ylim.min)
 ylim.min<-ylim.min - 0.025 * (ylim.max - ylim.min)
 
 plot(Mean.Min.Temp ~ Date, data=mb,xlab="",ylab="INPUTS, \nIN ACRE-FEET",
     col="navyblue",type="n", ylim=c(ylim.min,ylim.max),cex.main=cex.main,
     font.lab=2, tcl=0.3)
+polygon(x,c(y0,rep(0,length(y0))),col="green", border=NA)
 polygon(x,c(y1,rep(0,length(y1))),col="lightgreen", border=NA)
 polygon(x,c(y2,rev(y1)),col="dodgerblue", border=NA)
 polygon(x,c(y3,rev(y2)),col="mediumpurple", border=NA)
 axis.Date(mb$Date,side=3,labels=F, tcl=0.3)
 axis(side=4,at=axTicks(side=2),labels=F,tcl=0.3)
-legend("topright",legend=c("NET RAINFALL","SNOWMELT","IRRIGATION"),
-  fill=c("lightgreen","dodgerblue","mediumpurple"),inset=c(0.02,0.05),cex=0.8,lty=NULL)
+legend("topright",legend=c("GROSS PRECIP","NET RAINFALL","SNOWMELT","IRRIGATION"),
+  fill=c("green","lightgreen","dodgerblue","mediumpurple"),inset=c(0.02,0.05),cex=0.8,lty=NULL)
 
 abline(h=0)
 box(lwd=1.5)

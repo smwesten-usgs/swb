@@ -3172,7 +3172,7 @@ subroutine model_setInactiveCells( pGrd, pConfig )
 
   call echolog("Finished converting cells with missing data to inactive cells." &
     //"~ A total of "//trim(asCharacter(count(pGrd%Cells%iActive==iINACTIVE_CELL))) &
-    //" cells were inactivated.")
+    //" cells were inactivated out of "//trim(asCharacter(pConfig%iNumGridCells))//" cells.")
 
 end subroutine model_setInactiveCells
 
@@ -3239,6 +3239,31 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
        sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Routing_Fraction.png", &
        sTitleTxt="Routing Fraction", &
        sAxisTxt="Routing Fraction (unitless)" )
+
+  endif
+
+  if (DAT(MASK_DATA)%iSourceDataType /= DATATYPE_NA) then
+
+    call DAT(MASK_DATA)%getvalues( pGrdBase=pGrd)
+
+    where ( pGrd%iData > 0 )
+
+      pGrd%Cells%iActive = iACTIVE_CELL
+
+    elsewhere
+
+      pGrd%Cells%iActive = iINACTIVE_CELL
+
+    endwhere
+
+    pGenericGrd_int%iData = pGrd%iData
+    call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Basin_Mask" // &
+      "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+
+    call make_shaded_contour(pGrd=pGenericGrd_int, &
+       sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Basin_mask.png", &
+       sTitleTxt="Input Basin Mask", &
+       sAxisTxt="Basin Mask (unitless)" )
 
   endif
 

@@ -574,32 +574,7 @@ subroutine stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iVarNum,iMonth
   rAnnual(iMAX,iVarNum) = rAnnual(iMAX,iVarNum) + rMax
   rAnnual(iSUM,iVarNum) = rAnnual(iSUM,iVarNum) + rSUM
 
-  return
-
 end subroutine stats_UpdateAllAccumulatorsByGrid
-
-!--------------------------------------------------------------------------
-
-!> @brief Calculates and writes out monthly min, max, and mean of 2D variable array.
-!> @par
-!> @param [in] iMonthNum Numerical index (1-12) of the month for which statistics are reported.
-!> @param [in] iDaysInMonth Number of days in the reporting month.
-!> @deprecated This subroutine will be eliminated in future version of SWB.
-subroutine stats_CalcMonthlyMeans(iMonthNum, iDaysInMonth)
-
-  ![ARGUMENTS]
-  integer(kind=c_int), intent(in) :: iMonthNum
-  integer(kind=c_int), intent(in) :: iDaysInMonth
-
-  ![LOCALS]
-  integer(kind=c_int) :: i
-
-!  do i=1,iNUM_VARIABLES
-!    rMonthly(iMonthNum,iMEAN,i) = rMonthly(iMonthNum,iMEAN,i) / iDaysInMonth
-!    write(UNIT=LU_LOG,FMT=*) STAT_INFO(i)%sVARIABLE_NAME, rMonthly(iMonthNum,iMEAN,i),iDaysInMonth
-!  end do
-
-end subroutine stats_CalcMonthlyMeans
 
 !--------------------------------------------------------------------------
 
@@ -609,7 +584,6 @@ end subroutine stats_CalcMonthlyMeans
 !> @param [in] sText Descriptive text associated with the statistics.
 !> @param [in] rData 2-d array of values for which statistics are calculated.
 !> @param [in] iCount <em>{Optional} User-supplied divisor for use in calculating the mean.</em>
-
 subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
 
   ! [ ARGUMENTS ]
@@ -687,7 +661,6 @@ end subroutine stats_OpenMSBReport
 
 !------------------------------------------------------------------------------
 
-
 subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
@@ -695,15 +668,6 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 
   real (kind=c_double) :: rDailyMSB
 
-
-!      rDailyMSB = rDaily(iSUM,iGROSS_PRECIP) &
-!                   - rDaily(iSUM,iINTERCEPTION) &
-!                   - rDaily(iSUM,iCHG_IN_SNOW_COV) &
-!                   - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
-!                   - rDaily(iSUM,iRUNOFF_OUTSIDE) &
-!                   - rDaily(iSUM,iREJECTED_RECHARGE) &
-!                   - rDaily(iSUM,iACT_ET) &
-!                   - rDaily(iSUM,iRECHARGE)
 
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
                   + rDaily(iSUM,iNET_RAINFALL) &
@@ -1345,21 +1309,24 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
 		call Assert(LOGICAL(associated(pLU),kind=c_bool), &
 		   "pointer association failed - stats - CalcMeanRechargebyLU")
 
-      ! establish number of cells in model grid
+      ! establish number of ACTIVE cells in model grid
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType )
+        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+           .and. pGrd%Cells%iActive==iACTIVE_CELL)
 
       if(iNumGridCells>0) then
 
         write(LU_LOG,"(a45,3(f12.2,2x))") &
           adjustl(pLU%sLandUseDescription), &
           minval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType ), &
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+             .and. pGrd%Cells%iActive==iACTIVE_CELL), &
           sum(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType ) &
-             /iNumGridCells, &
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+              .and. pGrd%Cells%iActive==iACTIVE_CELL) / iNumGridCells, &
           maxval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType )
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+             .and. pGrd%Cells%iActive==iACTIVE_CELL)
 
         else
 
