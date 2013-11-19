@@ -202,6 +202,8 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   pGrd%rY1 = rY1
   pGrd%rGridCellSize = (pGrd%rX1 - pGrd%rX0) / real(pGrd%iNX, kind=c_float)
   pGrd%iNumGridCells = iNX * iNY
+  allocate(pGrd%iMask(iNX, iNY))
+  pGrd%iMask = 1
 
 end function grid_CreateComplete
 
@@ -278,6 +280,8 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
   pGrd%rY1 = rY0 + real(iNY, kind=c_double) * rGridCellSize
   pGrd%rGridCellSize = rGridCellSize
   pGrd%iNumGridCells = iNX * iNY
+  allocate(pGrd%iMask(iNX, iNY))
+  pGrd%iMask = 1
 
 end function grid_CreateSimple
 

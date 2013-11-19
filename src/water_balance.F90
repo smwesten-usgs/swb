@@ -68,7 +68,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
   !! initialize basic grid cell variables
 
-  iNumGridCells = count(pGrd%Cells%iActive /= iINACTIVE_CELL )
+  iNumGridCells = count(pGrd%iMask /= iINACTIVE_CELL )
 
   ! call to "julian_day" includes the optional origin term...
   ! return value will be the number of days *SINCE* that origin term
@@ -81,7 +81,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  L0: if (cel%iActive /= iINACTIVE_CELL) then
+  L0: if (pGrd%iMask(iCol, iRow) /= iINACTIVE_CELL) then
 
         rMAXIMUM_RECHARGE = pConfig%MAX_RECHARGE(cel%iLandUseIndex, cel%iSoilGroup)
 
@@ -487,7 +487,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         rChangeInStorage,rDailyRecharge)
 
       ! UPDATE MONTHLY and ANNUAL ACCUMULATORS HERE
-      if (cel%iActive /= iINACTIVE_CELL ) then
+      if (pGrd%iMask(iCol, iRow) /= iINACTIVE_CELL ) then
         call output_update_accumulators(cel, iMonth, &
           rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
           rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &

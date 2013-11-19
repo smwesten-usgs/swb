@@ -8,12 +8,12 @@
 # CMAKE_INSTALL_PREFIX   | ex: "D:/DOS"
 # Fortran_FLAGS_DEBUG
 # Fortran_FLAGS_RELEASE
-# Fortran_FLAGS_PROFILE 
+# Fortran_FLAGS_PROFILE
 # PATH_TO_R
 # OS                     | possible values: "win_x86", "win_x64", "max_osx", "linux"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_TRIPLET       | ex: "x86_64-w64-mingw32", "x86_64-apple-darwin12.4.0"
-# COMPILER_VERSION       | ex: "4.8.0"
+# COMPILER_VERSION       | ex: "4.8.2"
 
 
 message("Processing top-level CMakelists.txt for project swb")
@@ -72,7 +72,7 @@ if (${OS} STREQUAL "win_x64" OR ${OS} STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
   )
-else()  
+else()
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb ${CMAKE_INSTALL_PREFIX}/swb
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats ${CMAKE_INSTALL_PREFIX}/swbstats
   )

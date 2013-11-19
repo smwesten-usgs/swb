@@ -15,7 +15,7 @@ module graph
 
   contains
 
-  subroutine makegraph(pGraph,pGrd, iVarNum)
+  subroutine makegraph(pGraph, pGrd, iVarNum)
 
     type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
     type(T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
@@ -33,10 +33,12 @@ module graph
     integer :: iX, iY, iNXW, iNYW, iNXP, iNYP
     integer , parameter :: iSZ = 1024    ! base graph size
 
+    real (kind=c_float) :: rMin, rMean, rMax
     integer :: iNumGridCells
     character (len=256) :: sPaperSize
     real :: rFG_Color
     integer :: iBG_Color
+    integer (kind=c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
     character (len=256) :: sDislin
 
     ! is the DISLIN environment variable defined? if so, it is OK
@@ -44,7 +46,8 @@ module graph
     call get_environment_variable("DISLIN", sDislin)
 
     ! establish number of cells in model grid
-    iNumGridCells = pGrd%iNY * pGrd%iNX
+!    iNumGridCells = pGrd%iNY * pGrd%iNX
+    iNumGridCells = count(pGrd%iMask == iACTIVE_CELL)
 
     XA = REAL(pGrd%rX0)
     XE = REAL(pGrd%rX1)
@@ -70,6 +73,7 @@ module graph
         do iCol=1,iX
           do iRow=1,iY
             ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)))
+            iMask(iCol, iRow) = pGrd%iMask(iCol,(iY-iRow+1))
           end do
         end do
 
@@ -77,6 +81,7 @@ module graph
         do iCol=1,iX
           do iRow=1,iY
             ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
+            iMask(iCol, iRow) = pGrd%iMask(iCol,(iY-iRow+1))
           end do
         end do
 
@@ -95,10 +100,14 @@ module graph
       ZSTEP = (ZE - ZA) / 10.
     endif
 
+    rMin = minval(ZMAT, iMask == iACTIVE_CELL)
+    rMax = maxval(ZMAT, iMask == iACTIVE_CELL)
+    rMean = sum(ZMAT, iMask == iACTIVE_CELL) / count(iMask == iACTIVE_CELL)
+
     write(sBuf,"(a)") &
-       "min: "//adjustl(trim(asCharacter(minval(ZMAT),sFmt="F9.2"))) &
-       //"  mean: "//adjustl(trim(asCharacter(sum(ZMAT)/iNumGridCells,sFmt="F9.2"))) &
-       //"  max: "//adjustl(trim(asCharacter(maxval(ZMAT),sFmt="F9.2")))
+       "min: "//adjustl(trim(asCharacter(rMin,sFmt="F9.2"))) &
+       //"  mean: "//adjustl(trim(asCharacter(rMean,sFmt="F9.2"))) &
+       //"  max: "//adjustl(trim(asCharacter(rMax,sFmt="F9.2")))
 
     ! METAFL defines the metafile format.
     ! 'PS'     defines a coloured PostScript file.
@@ -160,7 +169,7 @@ module graph
       case("PNG")
 
         ! The routine PNGMOD enables transparency for PNG files.
-!       call PNGMOD('ON','TRANSPARENCY')
+!        call PNGMOD('ON','TRANSPARENCY')
         call PAGE(iNXP,iNYP)
         call WINSIZ(iNXW/2,iNYW/2)
 
@@ -230,17 +239,14 @@ module graph
     ! 'SPEC'     defines 256 colours arranged in a rainbow where 0 means
     ! black and 255 means white. This colour table uses more
     ! violet colours than 'RAIN'.
-    CALL SETVLT(TRIM(pGraph(iVarNum)%cCOLOR_TABLE))
-
-    if(TRIM(pGraph(iVarNum)%cCOLOR_TABLE)=="RRAIN" &
-      .or. TRIM(pGraph(iVarNum)%cCOLOR_TABLE)=="RGREY" &
-      .or. TRIM(pGraph(iVarNum)%cCOLOR_TABLE)=="RSPEC") then
-      rFG_Color = 1.
-      iBG_Color = 255
+    if (TRIM(pGraph(iVarNum)%cCOLOR_TABLE) /= "CUSTOM") then
+      CALL SETVLT(TRIM(pGraph(iVarNum)%cCOLOR_TABLE))
     else
-      rFG_Color = 1.
-      iBG_Color = 0
-    end if
+      call makeColorTable()
+    endif
+
+    rFG_Color = 1.
+    iBG_Color = 0
 
     ! LABELS: The routine LABELS defines contour labels.
     CALL LABELS('FLOAT','Z')
@@ -270,7 +276,10 @@ module graph
       else
         CALL DUPLX()
       endif
+      ! set the foreground color; SETRGB(1., 1., 1.) should set
+      ! background color to "WHITE"
       call SETRGB(rFG_Color, rFG_Color, rFG_Color)
+      ! set the background color
       CALL PAGFLL(iBG_Color)
 
     elseif(TRIM(pGraph(iVarNum)%cCDEV)=="PDF") then
@@ -380,6 +389,7 @@ module graph
     real (kind=c_float) :: rH_V_AspectRatio
     integer (kind=c_int) :: iPixVRes = 1000.
     integer (kind=c_int) :: iPixHRes
+    integer (kind=c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
 
     integer (kind=c_int) :: iPtVRes
     integer (kind=c_int) :: iPtHRes
@@ -408,7 +418,11 @@ module graph
     call get_environment_variable("DISLIN", sDislin)
 
     ! establish number of cells in model grid
-    iNumGridCells = pGrd%iNY * pGrd%iNX
+!    iNumGridCells = pGrd%iNY * pGrd%iNX
+    iNumGridCells = count(pGrd%iMask == iACTIVE_CELL)
+
+    print *, "Number of active cells: ", iNumGridCells
+    print *, "Total number of cells: ", pGrd%iNY * pGrd%iNX
 
     XA = REAL(pGrd%rX0)
     XE = REAL(pGrd%rX1)
@@ -450,11 +464,11 @@ module graph
         else
 
           if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
-            ZA = maxval(pGrd%iData)
-            ZE = minval(pGrd%iData)
+            ZA = maxval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
+            ZE = minval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
           else
-            ZA = minval(pGrd%iData)
-            ZE = maxval(pGrd%iData)
+            ZA = minval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
+            ZE = maxval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
           endif
 
         endif
@@ -478,11 +492,11 @@ module graph
         else
 
           if(minval(pGrd%rData) <= 0. .and. maxval(pGrd%rData) <= 0.) then
-            ZA = maxval(pGrd%rData)
-            ZE = minval(pGrd%rData)
+            ZA = maxval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
+            ZE = minval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
           else
-            ZA = minval(pGrd%rData)
-            ZE = maxval(pGrd%rData)
+            ZA = minval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
+            ZE = maxval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
           endif
 
         endif
@@ -494,6 +508,7 @@ module graph
         do iRow=1,iY
           do iCol=1,iX
             ZMAT(iCol,iRow) = REAL(pGrd%rData(iCol,(iY-iRow+1)))
+            iMask(iCol, iRow) = pGrd%iMask(iCol,(iY-iRow+1))
           end do
         end do
 
@@ -513,9 +528,9 @@ module graph
       endif
 
       write(sSummaryTxt,"(a,f9.2,a,f9.2,a,f9.2)") &
-        "  min: ",minval(ZMAT), &
-        "  mean: ",sum(ZMAT)/iNumGridCells, &
-        "  max: ",maxval(ZMAT)
+        "  min: ",minval(ZMAT,iMask == iACTIVE_CELL), &
+        "  mean: ",sum(ZMAT, iMask == iACTIVE_CELL)/iNumGridCells, &
+        "  max: ",maxval(ZMAT, iMask == iACTIVE_CELL)
 
       ! METAFL defines the metafile format
       CALL METAFL("PNG")
@@ -638,5 +653,35 @@ module graph
     CALL DISFIN()
 
   end subroutine make_shaded_contour
+
+!----------------------------------------------------------------------
+
+  subroutine makeColorTable()
+
+    integer :: iIndex
+    real :: XR, XG, XB, XH, XS, XV
+    real :: rStartHue, rEndHue, rDeltaHue
+
+    rStartHue = 75.
+    rEndHue = 330.
+    rDeltaHue = rEndHue - rStartHue
+
+    XS = 0.9  ! saturation = 0.9 on a scale from 0. to 1.
+    XV = 0.9  ! value (brightness) = 0.9 on a scale from 0. to 1.
+
+    do iIndex=0,255
+
+      XH = rStartHue + real(iIndex) / 255. * rDeltaHue
+
+  		CALL HSVRGB (XH, XS, XV, XR, XG, XB)
+   	  CALL SETIND (iIndex, XR, XG, XB)
+
+		enddo
+
+ 	  CALL SETIND (0, 0., 0., 0.)  !set first color in set to BLACK
+
+  end subroutine makeColorTable
+
+
 
 end module graph

@@ -584,16 +584,18 @@ end subroutine stats_UpdateAllAccumulatorsByGrid
 !> @param [in] sText Descriptive text associated with the statistics.
 !> @param [in] rData 2-d array of values for which statistics are calculated.
 !> @param [in] iCount <em>{Optional} User-supplied divisor for use in calculating the mean.</em>
-subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
+subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount, iMask)
 
   ! [ ARGUMENTS ]
   integer (kind=c_int), intent(in) :: iLU       ! Fortran logical file unit
   character (len=*) :: sText
   real (kind=c_float), dimension(:,:) :: rData   ! Real data
   integer (kind=c_int), optional :: iCount
+  integer (kind=c_int), dimension(:,:), optional :: iMask
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iNumGridCells
+  real (kind=c_float) :: rMin, rMean, rMax
 
   if(present(iCount)) then
     ! establish number of cells in model grid
@@ -603,17 +605,26 @@ subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount)
     iNumGridCells = size(rData)
   end if
 
-  if(iNumGridCells>0) then
-    write(iLU,"(1x,a,t40,f14.2,t55,f14.2,t70,f14.2)") TRIM(ADJUSTL(sText)), &
-       minval(rData),sum(rData)/REAL(iNumGridCells,kind=c_float),maxval(rData)
-  else
-    write(iLU,"(1x,a,t40,f14.2,t55,f14.2,t70,f14.2)") TRIM(ADJUSTL(sText)), &
-       minval(rData),sum(rData),maxval(rData)
+  if (present(iCount) .and. present(iMask) ) then
+    call assert(lFALSE, "This function was not designed to be called with both the " &
+    //dQuote('iCount')//" and "//dQuote('iMask')//" arguments", &
+    trim(__FILE__), __LINE__)
   endif
 
-  flush(iLU)
+  if (present(iMask) ) then
+    rMin = minval(rData, iMask == iACTIVE_CELL)
+    rMax = maxval(rData, iMask == iACTIVE_CELL)
+    rMean = sum(rData, iMask == iACTIVE_CELL) / count(iMask == iACTIVE_CELL)
+  else
+    rMin = minval(rData)
+    rMax = maxval(rData)
+    rMean = sum(rData) / iNumGridCells
+  endif
 
-  return
+  write(iLU,"(1x,a,t40,f14.2,t55,f14.2,t70,f14.2)") TRIM(ADJUSTL(sText)), &
+     rMin, rMean, rMax
+
+  flush(iLU)
 
 end subroutine stats_WriteMinMeanMax
 
@@ -755,7 +766,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
   rPad = -9999_c_float
   iCount = 0; iDaysInMonthCount = 0; iDaysInYearCount = 0
   rMonthlySum = 0.0; rAnnualSum = 0.0; rVal = 0.0
-  iNumGridCells = iNX * iNY
+!  iNumGridCells = iNX * iNY
 
   if(len_trim(pConfig%sOutputFilePrefix)==0) then
     sDelimiter = ""
@@ -768,6 +779,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
   pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_REAL)
 
   call stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
+
+  iNumGridCells = iNX * iNY
 
   do k=1,iNUM_VARIABLES
 
@@ -813,6 +826,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
 
+        where (pGrd%iMask == iINACTIVE_CELL)
+          pGrd%rData = rNO_DATA_NCDC
+        endwhere
+
         write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
           trim(pConfig%sOutputFilePrefix), &
           trim(sDelimiter), &
@@ -857,6 +874,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNX,iNY/),PAD=rPad)
 
+          where (pGrd%iMask == iINACTIVE_CELL)
+            pGrd%rData = rNO_DATA_NCDC
+          endwhere
+
           write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2)") &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
@@ -891,8 +912,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-          pGrd%rData(:,:) = pGrd%rData(:,:) &
-             / real(iDaysInMonthCount, kind=c_float)
+          where (pGrd%iMask == iINACTIVE_CELL)
+            pGrd%rData(:,:) = pGrd%rData(:,:) &
+               / real(iDaysInMonthCount, kind=c_float)
+          endwhere
 
           if(STAT_INFO(k)%iMonthlyOutput==iGRID &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
@@ -940,6 +963,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNX,iNY/),PAD=rPad)
 
+          where (pGrd%iMask == iINACTIVE_CELL)
+            pGrd%rData = rNO_DATA_NCDC
+          endwhere
+
           write(sFilePrefix,FMT="(A,A,A,'_',i4.4)") &
             trim(pConfig%sOutputFilePrefix), &
             trim(sDelimiter), &
@@ -975,8 +1002,13 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-          pGrd%rData(:,:) = pGrd%rData(:,:) &
-             / real(iDaysInYearCount, kind=c_float)
+          where (pGrd%iMask == iINACTIVE_CELL)
+
+            pGrd%rData(:,:) = pGrd%rData(:,:) &
+               / real(iDaysInYearCount, kind=c_float)
+
+          endwhere
+
 
           if(STAT_INFO(k)%iAnnualOutput==iGRID &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
@@ -1312,7 +1344,7 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       ! establish number of ACTIVE cells in model grid
       iNumGridCells = COUNT( &
         INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-           .and. pGrd%Cells%iActive==iACTIVE_CELL)
+           .and. pGrd%iMask==iACTIVE_CELL)
 
       if(iNumGridCells>0) then
 
@@ -1320,13 +1352,13 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
           adjustl(pLU%sLandUseDescription), &
           minval(pTmpGrd%rData, &
             INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-             .and. pGrd%Cells%iActive==iACTIVE_CELL), &
+             .and. pGrd%iMask==iACTIVE_CELL), &
           sum(pTmpGrd%rData, &
             INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-              .and. pGrd%Cells%iActive==iACTIVE_CELL) / iNumGridCells, &
+              .and. pGrd%iMask==iACTIVE_CELL) / iNumGridCells, &
           maxval(pTmpGrd%rData, &
             INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-             .and. pGrd%Cells%iActive==iACTIVE_CELL)
+             .and. pGrd%iMask==iACTIVE_CELL)
 
         else
 
@@ -1513,6 +1545,7 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
   ! [ LOCALS ]
   integer(kind=c_int) :: i
+  integer (kind=c_int) :: iCol, iRow
   character (len=256) :: sFilename
 
   do i=1,iNUM_VARIABLES
@@ -1541,6 +1574,12 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
       write(UNIT=STAT_INFO(i)%iLU) pGrd%rY0, pGrd%rY1   ! World-coordinate range in Y
       write(UNIT=STAT_INFO(i)%iLU) len_trim(pConfig%sBASE_PROJ4)  ! number of characters in PROJ4 string
       write(UNIT=STAT_INFO(i)%iLU) trim(pConfig%sBASE_PROJ4)      ! PROJ4 string
+
+      do iRow=1,pGrd%iNY
+        do iCol=1,pGrd%iNX
+          write(UNIT=STAT_INFO(i)%iLU) pGrd%iMask(iCol, iRow)
+        enddo
+      enddo
 
       inquire(UNIT=STAT_INFO(i)%iLU,POS=iSTARTDATE_POS)  ! establish location to return to
       ! write placeholders for MM/DD/YYYY of start and end of file
@@ -1573,6 +1612,11 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
   end do
 
+  print *, trim(__FILE__), "  ", __LINE__
+  print *, "*** NUMBER OF CELLS: "//trim(asCharacter(pGrd%iNX*pGrd%iNY))
+  print *, "*** Number of __ACTIVE__ CELLS: "//trim(asCharacter(count(pGrd%iMask == iACTIVE_CELL)))
+  print *, " "
+
 end subroutine stats_OpenBinaryFiles
 
 !------------------------------------------------------------------------------
@@ -1601,6 +1645,7 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   integer (kind=c_int) :: iTemp
   integer (kind=c_int) :: iStartMM, iStartDD, iStartYYYY
   integer (kind=c_int) :: iEndMM, iEndDD, iEndYYYY
+  integer (kind=c_int) :: iRow, iCol
   character (len=len_trim(pConfig%sBASE_PROJ4)) :: sPROJ4_string
 
   do i=1,iNUM_VARIABLES
@@ -1636,6 +1681,14 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
       read(UNIT=STAT_INFO(i)%iLU) rY0, rY1        ! World-coordinate range in Y
       read(UNIT=STAT_INFO(i)%iLU) iTemp           ! # characters in the PROJ4 string
       read(UNIT=STAT_INFO(i)%iLU) sPROJ4_string   ! PROJ4 string
+
+      ! this will overwrite values in the pGrd data structure with each iteration
+      do iRow=1, iNY
+        do iCol=1, iNX
+          read(UNIT=STAT_INFO(i)%iLU) pGrd%iMask(iCol, iRow)
+        enddo
+      enddo
+
       read(UNIT=STAT_INFO(i)%iLU) iStartMM, iStartDD, iStartYYYY
       read(UNIT=STAT_INFO(i)%iLU) iEndMM, iEndDD, iEndYYYY
       inquire(UNIT=STAT_INFO(i)%iLU,POS=iENDHEADER_POS)  ! establish location to return to
@@ -1645,6 +1698,10 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
     end if
 
   end do
+
+  print *, "*** NUMBER OF CELLS: "//trim(asCharacter(pGrd%iNX*pGrd%iNY))
+  print *, "*** Number of __ACTIVE__ CELLS: "//trim(asCharacter(count(pGrd%iMask == iACTIVE_CELL)))
+  print *, " "
 
 end subroutine stats_OpenBinaryFilesReadOnly
 

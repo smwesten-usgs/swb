@@ -111,10 +111,12 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
 
     call model_CheckConfigurationSettings( pGrd, pConfig )
 
-    call model_InitializeInputAndOutput( pGrd, pConfig )
+!    call model_InitializeInputAndOutput( pGrd, pConfig )
 
     !> read in flow direction, soil group, and AWC grids
     call model_InitializeDataStructures( pGrd, pConfig )
+
+    call model_InitializeInputAndOutput( pGrd, pConfig )
 
    ! Are we solving using the downhill algorithm?
     if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
@@ -815,7 +817,7 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) cycle
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
       rTAvg_C = FtoC(cel%rTAvg)
       ! assuming snow depth is 10 times the water content of the snow in inches
@@ -925,7 +927,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
       cel => pGrd%Cells(iCol,iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) cycle
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
       ! cap the maximum value used in GDD calculations on the basis of the value
       ! provided by user...
@@ -1044,7 +1046,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) then
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) then
 
         dpChgInSnowCover = dpZERO
         dpSnowCover = dpZERO
@@ -1510,7 +1512,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   ! calculate number of gridcells in model domain
   iNumGridCells = pGrd%iNY * pGrd%iNX
 
-  iNumActiveGridCells = count(pGrd%Cells%iActive == iACTIVE_CELL)
+  iNumActiveGridCells = count(pGrd%iMask == iACTIVE_CELL)
 
   ! set iteration counter
   iNumIterationsNochange = 0
@@ -1537,7 +1539,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
       do iRow=1,pGrd%iNY
         do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
           cel => pGrd%Cells(iCol,iRow)
-          if (cel%iActive == iINACTIVE_CELL) cycle
+          if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
           if ( cel%lDownhillMarked ) cycle
           ! Count upstream cells
           iUpstreamCount = 0
@@ -1555,7 +1557,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
               do iColSub=iCol-1,iCol+1
                 if (iColSub>=1 .and. iColSub<=pGrd%iNX) then              ! we're within array bounds
                   if (iRow==iRowSub .and. iCol==iColSub) cycle            ! Skip current inquiry cell
-                  if (pGrd%Cells(iColSub,iRowSub)%iActive == 0) cycle     ! Don't count inactive neighbors
+                  if (pGrd%iMask(iColSub, iRowSub) == 0) cycle     ! Don't count inactive neighbors
                   call model_DownstreamCell(pGrd,iRowSub,iColSub,iTgt_Row,iTgt_Col)
 
                   if (iTgt_Row==iRow .and. iTgt_Col==iCol ) then          ! target cell points at current inquiry cell
@@ -1621,7 +1623,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
         ! loop over possible (legal) values of the flow direction grid
         do k=0,128
           iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
-            .and.pGrd%Cells%iFlowDir==k .and. pGrd%Cells%iActive == 0)
+            .and.pGrd%Cells%iFlowDir==k .and. pGrd%iMask == 0)
           if(iCount>0) then
             iCumlCount = iCumlCount + iCount
             write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
@@ -1635,7 +1637,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
 
 #ifdef DEBUG_PRINT
 
-        where( pGrd%Cells%lDownHillMarked .or.  pGrd%Cells%iActive /= 0)
+        where( pGrd%Cells%lDownHillMarked .or.  pGrd%iMask /= 0)
           pTempGrid%iData = iROUTE_CELL_MARKED
         elsewhere
           pTempGrid%iData = pGrd%Cells%iFlowDir
@@ -1779,7 +1781,7 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     cel => pGrd%Cells(iOrderCol(ic),iOrderRow(ic))
 
-    if (cel%iActive == iINACTIVE_CELL) cycle
+    if (pGrd%iMask(iOrderCol(ic),iOrderRow(ic)) == iINACTIVE_CELL) cycle
 
     call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
 
@@ -1816,7 +1818,7 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     !> if target cell is inactive, assume that the water should be tracked
     !> as flow out of grid
-    if ( target_cel%iActive == iINACTIVE_CELL) then
+    if ( pGrd%iMask(iTgt_Col,iTgt_Row) == iINACTIVE_CELL) then
 
       cel%rFlowOutOfGrid = cel%rOutflow
       cel%rOutFlow = rZERO
@@ -2209,7 +2211,7 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
 
       cel => pGrd%Cells(iCol,iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) then
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) then
 
        cel%iTgt_Row = iROUTE_LEFT_GRID
        cel%iTgt_Col = iROUTE_LEFT_GRID
@@ -3166,12 +3168,12 @@ subroutine model_setInactiveCells( pGrd, pConfig )
           pGrd%Cells%iFlowDir < 0 .or. &
           pGrd%Cells%iLandUse < 0)
 
-    pGrd%Cells%iActive = iINACTIVE_CELL
+    pGrd%iMask = iINACTIVE_CELL
 
   endwhere
 
   call echolog("Finished converting cells with missing data to inactive cells." &
-    //"~ A total of "//trim(asCharacter(count(pGrd%Cells%iActive==iINACTIVE_CELL))) &
+    //"~ A total of "//trim(asCharacter(count(pGrd%iMask==iINACTIVE_CELL))) &
     //" cells were inactivated out of "//trim(asCharacter(pConfig%iNumGridCells))//" cells.")
 
 end subroutine model_setInactiveCells
@@ -3248,11 +3250,11 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
     where ( pGrd%iData > 0 )
 
-      pGrd%Cells%iActive = iACTIVE_CELL
+      pGrd%iMask = iACTIVE_CELL
 
     elsewhere
 
-      pGrd%Cells%iActive = iINACTIVE_CELL
+      pGrd%iMask = iINACTIVE_CELL
 
     endwhere
 
@@ -3485,7 +3487,7 @@ subroutine model_InitializeSM(pGrd, pConfig )
         lMatch = lFALSE
         cel => pGrd%Cells(iCol,iRow)
 
-        if (cel%iActive == iINACTIVE_CELL) cycle
+        if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
         ! loop over all LAND use types...
         do k=1,size(pConfig%LU,1)
@@ -3556,7 +3558,7 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
 
-      if ( cel%iActive == iINACTIVE_CELL ) cycle
+      if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
 
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)

@@ -147,7 +147,6 @@ module types
 !> a grid of T_CELL types. Each variable added to this data type
 !> consumes Ny * Nx * size(c_float) bytes.
   type T_CELL
-      integer (kind=c_int) :: iActive = iACTIVE_CELL
       integer (kind=c_int) :: iFlowDir = iZERO    ! Flow direction from flow-dir grid
       integer (kind=c_int) :: iSoilGroup = iZERO  ! Soil type from soil-type grid
       integer (kind=c_int) :: iLandUseIndex       ! Index (row num) of land use table
@@ -278,6 +277,7 @@ module types
       real (kind=c_float), dimension(:,:), pointer :: rData    ! Real data
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
+      integer (kind=c_int), dimension(:,:), allocatable :: iMask ! Mask for processing results
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 

@@ -43,7 +43,7 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
       do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
         cel => pGrd%Cells(iCol,iRow)
 
-        if (cel%iActive == iINACTIVE_CELL) cycle
+        if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
         ! now we run the gauntlet of tests to ensure that we really need
         ! to perform all of the irrigation calculations

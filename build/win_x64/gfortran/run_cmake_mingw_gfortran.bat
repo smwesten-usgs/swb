@@ -1,19 +1,19 @@
 REM @echo off
-:: cmake -G "Mi:: remove existing Cmake cache and directories
 :: remove existing Cmake cache and directories
-rem rmdir /S /Q CMakeFiles
-rem rmdir /S /Q src
-rem rmdir /S /Q Testing
-rem rmdir /S /Q test
-rem del /S /Q *.txt
+rmdir /S /Q CMakeFiles
+rmdir /S /Q src
+rmdir /S /Q Testing
+rmdir /S /Q test
+del /S /Q *.txt
 
 :: set CMAKE-related and build-related variables
-set CMAKEROOT=C:/Program Files (x86)/CMake 2.8
-set COMPILER_DIR=C:/MinGW64
-set COMPILER_VERSION=4.8.0
+set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
+set COMPILER_DIR=C:\MinGW64
+set COMPILER_VERSION=4.8.2
 set COMPILER_TRIPLET=x86_64-w64-mingw32
+set MAKE_EXECUTABLE_NAME=mingw32-make.exe
 set Fortran_COMPILER_NAME=gfortran
-set R_HOME=C:/Program Files/R/R-3.0.1/bin
+set R_HOME=C:\Program Files\R\R-3.0.1\bin
 set OMP_NUM_THREADS=8
 
 :: define where 'make copy' will place executables
@@ -22,6 +22,7 @@ set INSTALL_PREFIX=d:/DOS
 :: define other variables for use in the CMakeList.txt file
 :: options are "Release", "Profile" or "Debug"
 set BUILD_TYPE="Release"
+
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set OS="win_x64"
 
@@ -50,6 +51,9 @@ set PATH=%PATH%;%CMAKEROOT%\bin;%CMAKEROOT%\share
 set PATH=%PATH%;C:\MinGW64\bin
 set PATH=%PATH%;C:\MinGW64\include;C:\MinGW64\lib
 
+:: set a useful alias for make
+echo %COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% %%1 > make.bat
+
 :: not every installation will have these; I (SMW) find them useful
 set PATH=%PATH%;c:\Program Files (x86)\Zeus
 set PATH=%PATH%;D:\DOS\gnuwin32\bin
@@ -71,10 +75,10 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DOS=%OS% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^
--DCMAKE_MAKE_PROGRAM:FILEPATH=%COMPILER_DIR%\bin\make.exe ^
+-DCMAKE_MAKE_PROGRAM:FILEPATH=%COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% ^
 -DCMAKE_RANLIB:FILEPATH=%COMPILER_DIR%\bin\ranlib.exe ^
--DCMAKE_C_COMPILER:FILEPATH=%COMPILER_DIR%\bin\gcc.exe ^
--DCMAKE_Fortran_COMPILER:FILEPATH=%COMPILER_DIR%\bin\gfortran.exe ^
+-DCMAKE_C_COMPILER:FILEPATH=%COMPILER_DIR%\bin\%COMPILER_TRIPLET%-gcc.exe ^
+-DCMAKE_Fortran_COMPILER:FILEPATH=%COMPILER_DIR%\bin\%COMPILER_TRIPLET%-gfortran.exe ^
 -DTARGET__SWB_EXECUTABLE:BOOLEAN=%TARGET__SWB_EXECUTABLE% ^
 -DTARGET__SWB_LIBRARY:BOOLEAN=%TARGET__SWB_LIBRARY% ^
 -DTARGET__SWBSTATS:BOOLEAN=%TARGET__SWBSTATS% ^

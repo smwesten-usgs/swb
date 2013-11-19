@@ -85,7 +85,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
       cel => pGrd%Cells(iCol,iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) cycle
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
       if ( cel%rSoilWaterCap > rNEAR_ZERO ) then
 

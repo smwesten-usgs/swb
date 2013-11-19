@@ -114,7 +114,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
       cel => pGrd%Cells(iCol, iRow)
 
-      if (cel%iActive == iINACTIVE_CELL) cycle
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
       pGrd%Cells(iCol,iRow)%rReferenceET0 = ET0_hargreaves( &
                                            pConfig, &

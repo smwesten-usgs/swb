@@ -49,7 +49,7 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
 
 	  cel => pGrd%Cells(iCol,iRow)
 
-    if (cel%iActive == iINACTIVE_CELL) cycle
+    if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
 	  lMatch = lFALSE
 

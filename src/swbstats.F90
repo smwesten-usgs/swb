@@ -491,6 +491,7 @@ implicit none
   character (len=1) :: sSingleChar
   character (len=512) :: sCommandText
   integer (kind=c_int) :: iSWBStatsOutputType = iNONE
+  integer (kind=c_int) :: iRow, iCol
   integer (kind=c_int) :: LU
 
 
@@ -587,17 +588,29 @@ implicit none
   read(UNIT=LU_SWBSTATS) rX0, rX1        ! World-coordinate range in X
   read(UNIT=LU_SWBSTATS) rY0, rY1        ! World-coordinate range in Y
   read (unit=LU_SWBSTATS) iPROJ4_length
-
-  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
-    "The SWB compilation date used to create the binary file" &
-     //" is different from the compilation date of the SWBSTATS reader.")
-
   sPROJ4_string = ""
 
   do i=1, iPROJ4_length
     read (unit=LU_SWBSTATS) sSingleChar
     sPROJ4_string(i:i) = sSingleChar
   enddo
+
+  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  ! copy some key information into the grid data structure
+  pGrd%iDataType =iDataType              ! Type of the grid
+  pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
+  pGrd%iLengthUnits = iLengthUnits       ! length units code
+
+  ! this will overwrite values in the pGrd data structure with each iteration
+  do iRow=1, iNY
+    do iCol=1, iNX
+      read(UNIT=LU_SWBSTATS) pGrd%iMask(iCol, iRow)
+    enddo
+  enddo
+
+  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
+    "The SWB compilation date used to create the binary file" &
+     //" is different from the compilation date of the SWBSTATS reader.")
 
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
   read(UNIT=LU_SWBSTATS) iEndMM, iEndDD, iEndYYYY
@@ -629,20 +642,27 @@ implicit none
   allocate(rValSum(iNumGridCells))
   allocate(rPad(iNumGridCells))
 
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
   pMaskGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_INT)
   pMaskGrd%sPROJ4_string = trim(sPROJ4_string)
-  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pMonthGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pYearGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
-  pSummaryGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMaskGrd%iMask = pGrd%iMask
 
-  ! copy some key information into the grid data structure
-  pGrd%iDataType =iDataType              ! Type of the grid
-  pGrd%rGridCellSize = rGridCellSize     ! size of one side of a grid cell
-  pGrd%iLengthUnits = iLengthUnits       ! length units code
+  pMonthGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMonthGrd%iMask = pGrd%iMask
+
+  pMonthGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pMonthGrdMean%iMask = pGrd%iMask
+
+  pYearGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrd%iMask = pGrd%iMask
+
+  pYearGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pYearGrdMean%iMask = pGrd%iMask
+
+  pSummaryGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrd%iMask = pGrd%iMask
+
+  pSummaryGrdMean => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_REAL)
+  pSummaryGrdMean%iMask = pGrd%iMask
 
   STAT_INFO(iVariableNumber)%iMonthlyOutput = iNONE
   STAT_INFO(iVariableNumber)%iDailyOutput = iNONE
@@ -687,6 +707,9 @@ implicit none
     write(unit=LU,fmt="('  Length units code: ',t28,a,/)") trim(int2char(iLengthUnits))
     if (iPROJ4_length > 0) &
       write(unit=LU,fmt="('  PROJ4 string: ',/,'  ',a,/)") trim(sPROJ4_string)
+    write(unit=LU, fmt="('  ',a, ' cells are inactive (of ',a,' total cells)')") &
+      trim(asCharacter(count(pGrd%iMask == iINACTIVE_CELL))), &
+      trim(asCharacter(iNumGridCells))
 
     if (iNumArgs /= 1) exit
 
@@ -894,17 +917,6 @@ implicit none
   if(lMASKSSF) sStatsDescription = trim(sStatsDescription) // "_" &
     //trim(sSiteNumber)
 
-  print *, lDAILY
-  print *, lMONTHLY
-  print *, lANNUAL
-  print *, lSUM
-  print *, lMASKSTATS
-  print *, lMASKSSF
-
-  print *, STAT_INFO(iVariableNumber)%iDailyOutput
-  print *, STAT_INFO(iVariableNumber)%iMonthlyOutput
-  print *, STAT_INFO(iVariableNumber)%iAnnualOutput
-
   do LU=LU_STD_OUT, LU_LOG
 
     write(unit=LU,fmt="(/,a,/)") "  Summary of output to be generated:"
@@ -1026,31 +1038,49 @@ implicit none
       pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
     endif
 
+    ! if internal grid mask contains inactive cells, nuke any spurious results
+    ! that may have been stored at these locations
+    where (pGrd%iMask == iINACTIVE_CELL)
+      pGrd%rData = rNO_DATA_NCDC
+    endwhere
+
     ! keep track of how many days' worth of results are stored in the month grid
     if(STAT_INFO(iVariableNumber)%iMonthlyOutput /= iNONE) then
+      where (pGrd%iMask == iACTIVE_CELL)
         pMonthGrd%rData = pMonthGrd%rData + pGrd%rData
-        iMonthCount = iMonthCount + 1
+      elsewhere
+        pMonthGrd%rData = rNO_DATA_NCDC
+      endwhere
+      iMonthCount = iMonthCount + 1
     endif
 
     ! keep track of how many days' worth of results are stored in the year grid
     if(STAT_INFO(iVariableNumber)%iAnnualOutput /= iNONE) then
+      where (pGrd%iMask == iACTIVE_CELL)
         pYearGrd%rData = pYearGrd%rData + pGrd%rData
-        iYearCount = iYearCount + 1
+      elsewhere
+        pYearGrd%rData = rNO_DATA_NCDC
+      endwhere
+      iYearCount = iYearCount + 1
     endif
 
-    pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
+    where (pGrd%iMask == iACTIVE_CELL)
+      pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
+    endwhere
     iPeriodCount = iPeriodCount + 1
 
     if(lVERBOSE) then
 
       if(lCUMULATIVE) then
-        call stats_WriteMinMeanMax(LU_STD_OUT, &
-          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
-          pSummaryGrd%rData(:,:))
+        call stats_WriteMinMeanMax(iLU=LU_STD_OUT, &
+          sText=TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
+          rData=pSummaryGrd%rData(:,:), &
+          iMask=pGrd%iMask)
       else
-        call stats_WriteMinMeanMax(LU_STD_OUT, &
-          TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
-          pGrd%rData(:,:))
+        call stats_WriteMinMeanMax(iLU=LU_STD_OUT, &
+          sText=TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME)//": "//trim(sDateTxt), &
+          rData=pGrd%rData(:,:), &
+          iMask=pGrd%iMask)
       endif
 
     else
@@ -1135,7 +1165,11 @@ implicit none
 !------------------------- MONTHLY ANALYSIS
     if(lMonthEnd .and. lDATE_RANGE_ACTIVE) then
 
-      pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
+      where (pMonthGrd%iMask == iACTIVE_CELL)
+        pMonthGrdMean%rData = pMonthGrd%rData / REAL(iMonthCount)
+      elsewhere
+        pMonthGrdMean%rData = rNO_DATA_NCDC
+      endwhere
 
       if(lMASKSTATS .and. STAT_INFO(iVariableNumber)%iMonthlyOutput==iSTATS) then
 
@@ -1215,7 +1249,11 @@ implicit none
 
     if ( lYearEnd .and. lDATE_RANGE_ACTIVE ) then
 
-      pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
+      where (pMonthGrd%iMask == iACTIVE_CELL)
+        pYearGrdMean%rData = pYearGrd%rData / REAL(iYearCount)
+      elsewhere
+        pYearGrdMean%rData = rNO_DATA_NCDC
+      endwhere
 
       if (lMASKSTATS .and. STAT_INFO(iVariableNumber)%iAnnualOutput==iSTATS) then
         write(sLabel,FMT="(i4.4)") iCurrYYYY
@@ -1348,7 +1386,12 @@ implicit none
      trim(sLabel),trim(sOutputFileSuffix)
 
   if (iPeriodCount > 0) then
-    pSummaryGrdMean%rData = pSummaryGrdMean%rData / REAL(iPeriodCount)
+
+    where (pSummaryGrdMean %iMask == iACTIVE_CELL)
+      pSummaryGrdMean%rData = pSummaryGrdMean%rData / REAL(iPeriodCount)
+    elsewhere
+      pSummaryGrdMean%rData = rNO_DATA_NCDC
+    endwhere
 
     call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
             pGrd=pSummaryGrdMean, &
@@ -1400,12 +1443,17 @@ implicit none
   endif
 
   if(iPeriodCount > 0) then
-    pSummaryGrdMean%rData = pSummaryGrd%rData / REAL(iPeriodCount)
+
+    where (pSummaryGrdMean %iMask == iACTIVE_CELL)
+      pSummaryGrdMean%rData = pSummaryGrd%rData / REAL(iPeriodCount)
+    elsewhere
+      pSummaryGrdMean%rData = rNO_DATA_NCDC
+    endwhere
+
   endif
 
   call make_shaded_contour(pSummaryGrdMean, TRIM(sOutputFilename), TRIM(sTitleTxt), &
     TRIM(STAT_INFO(iVariableNumber)%sUNITS))
-
 
   close(unit=LU_LOG)
 
