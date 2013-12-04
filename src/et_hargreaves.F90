@@ -125,6 +125,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
   end do
 
+
 !  write(UNIT=LU_LOG,FMT=*) "=========HARGREAVES POTET CALCULATION==========="
 !  write(UNIT=LU_STD_OUT,FMT="(A)") &
 !       "                                 min          mean           max"

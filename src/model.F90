@@ -747,8 +747,6 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   ! Scan through array of inputs looking for instances where the TMIN > TMAX
   ! (THIS CAN BE RE_WRITTEN USING MATRIX NOTATION)
 
-  !$OMP DO
-
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel=>pGrd%Cells(iCol,iRow)
@@ -770,8 +768,6 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
     end do
   end do
-
-  !$OMP END DO
 
 end subroutine model_GetDailyTemperatureValue
 !!***
@@ -811,7 +807,7 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   real (kind=c_float) :: rTAvg_C              ! temporary variable holding avg temp in C
   real (kind=c_float) :: rSnowDepthCM         ! snow depth in centimeters
 
-  !$OMP DO
+  !$OMP DO ORDERED
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
@@ -1228,8 +1224,6 @@ subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInY
   rRso = clear_sky_solar_radiation_Rso(rRa)
   rZenithAngle = zenith_angle(rLatitude, rDelta)
 
-  !$OMP DO
-
   ! determine the fraction of precip that falls as snow
   do iCol=1,pGrd%iNX
 
@@ -1356,8 +1350,6 @@ end if
 
   end do
 
-  !$OMP END DO
-
   end do
 
   ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
@@ -1415,6 +1407,8 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   real (kind=c_double) :: xmin, xmax, ymin, ymax
   integer (kind=c_int), intent(in) :: iMonth     ! Integer month value (1-12)
   integer (kind=c_int) :: iNumGridCells
+  integer (kind=c_int), parameter :: iMAX_ITERATIONS = 200000
+  integer (kind=c_int) :: iIterationNum
 
   ! calculate number of cells in model grid
   iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -1423,13 +1417,19 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rInFlow = rZERO
   pGrd%Cells(:,:)%rOutFlow = rZERO
   pGrd%Cells(:,:)%rFlowOutOfGrid = rZERO
+  iIterationNum = 0
 
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_ITERATIVE ) then
 
     do
+      iIterationNum = iIterationNum + 1
       iCount = if_model_RunoffIteration( pGrd, pConfig, iDayOfYear, iMonth )
       if ( iCount == 0 ) then
         exit
+      endif
+      if (iIterationNum > iMAX_ITERATIONS) then
+        call assert(lFALSE, "Maximum number of iterations exceeded.", &
+        trim(__FILE__), __LINE__)
       endif
     end do
 
@@ -2005,55 +2005,61 @@ function if_model_RunoffIteration(pGrd, pConfig, iDayOfYear, iMonth) result(iCou
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
+
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
+
       call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
 
-  if ( iTgt_Row == iROUTE_DEPRESSION ) then
-    ! Don't route any further; the water pools here.
-    cel%rOutFlow = rZERO
-!        call stats_UpdateAllAccumulatorsByCell(dpZERO, &
-!            iRUNOFF_OUTSIDE,iMonth,iZERO)
-  cycle
-end if
+      if ( iTgt_Row == iROUTE_DEPRESSION ) then
+        ! Don't route any further; the water pools here.
+        cel%rOutFlow = rZERO
+        cycle
+      end if
 
-  ! Compute the runoff
-  rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+      ! Compute the runoff
+      rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-  if( iTgt_Row == iROUTE_LEFT_GRID ) then
-    rDelta = rR - cel%rFlowOutOfGrid
-    cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
-    cycle
-  end if
+      if( iTgt_Row == iROUTE_LEFT_GRID ) then
+        rDelta = rR - cel%rFlowOutOfGrid
+        cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
+        cycle
+      end if
 
-  call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=c_bool), &
-    "iTgt_Row out of bounds: iRow= "//int2char(iRow)//"  iCol= "//int2char(iCol), &
-    trim(__FILE__),__LINE__)
-  call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=c_bool), &
-    "iTgt_Col out of bounds: iRow= "//int2char(iRow)//"  iCol= "//int2char(iCol), &
-    trim(__FILE__),__LINE__)
+      if ( iTgt_Row < 1 .or. iTgt_Row > pGrd%iNY ) then
+        call Assert(lFALSE, "iTgt_Row out of bounds: iRow= "//int2char(iRow) &
+          //"  iCol= "//int2char(iCol), trim(__FILE__),__LINE__)
+      endif
 
-  tcel => pGrd%Cells(iTgt_Row,iTgt_Col)
+      if ( iTgt_Col < 1 .or. iTgt_Col > pGrd%iNX ) then
+        call Assert(lFALSE, "iTgt_Col out of bounds: iRow= "//int2char(iRow)&
+          //"  iCol= "//int2char(iCol), trim(__FILE__),__LINE__)
+      endif
 
-  if(tcel%iLandUse == pConfig%iOPEN_WATER_LU) then
+      tcel => pGrd%Cells(iTgt_Row,iTgt_Col)
 
-  rDelta = rR - cel%rFlowOutOfGrid
-  cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
+      if (tcel%iLandUse == pConfig%iOPEN_WATER_LU) then
 
-  else  ! route water normally
+        rDelta = rR - cel%rFlowOutOfGrid
+        cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
 
-  rDelta = rR - cel%rOutFlow
-  tcel%rInFlow = tcel%rInFlow + rDelta
-  cel%rOutFlow = cel%rOutFlow + rDelta
-end if
+      else  ! route water normally
 
-  ! Did we make a change?
-  if ( rDelta > pConfig%rIterationTolerance ) then
-    iCount = iCount+1
-  end if
+        rDelta = rR - cel%rOutFlow
+        tcel%rInFlow = tcel%rInFlow + rDelta
+        cel%rOutFlow = cel%rOutFlow + rDelta
 
+      end if
+
+      ! Did we make a change?
+      if ( rDelta > pConfig%rIterationTolerance ) then
+        iCount = iCount+1
+      end if
+
+    end do
   end do
-end do
 
-  return
+  print *, "Number of cells with changes in outflow: ", iCount
+
 end function if_model_RunoffIteration
 
 !!***
@@ -3341,18 +3347,19 @@ subroutine model_InitializeRunoff( pGrd, pConfig )
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
+
+  ! If we are routing water, we *must* call InitializeFlowDirection
+  if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
+    write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeFlowDirection"
+    call model_InitializeFlowDirection( pGrd , pConfig)
+  end if
+
   ! Are we solving using the downhill algorithm?
   if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
     ! if a routing table exists, read it in; else initialize and
     ! save the routing table for future use
     write(UNIT=LU_LOG,FMT=*)  "model.F90: model_ConfigureRunoffDownhill"
     call model_ConfigureRunoffDownhill( pGrd, pConfig)
-  end if
-
-  ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
-  if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
-    write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeFlowDirection"
-    call model_InitializeFlowDirection( pGrd , pConfig)
   end if
 
 end subroutine model_InitializeRunoff

@@ -15,7 +15,6 @@
 # COMPILER_TRIPLET       | ex: "x86_64-w64-mingw32", "x86_64-apple-darwin12.4.0"
 # COMPILER_VERSION       | ex: "4.8.2"
 
-
 message("Processing top-level CMakelists.txt for project swb")
 
 #------------------------------------------------------------------------------------#

@@ -260,7 +260,7 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
       ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
 
 
-	! Equation 8, Hawkins and others, 2002
+	  ! Equation 8, Hawkins and others, 2002
     rSMax = 1.33_c_float * ( rSMax ) ** 1.15_c_float
 
     ! now consider runoff if Ia ~ 0.05S

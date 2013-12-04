@@ -38,11 +38,9 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=generic -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=generic -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-
-
 
 :: recreate clean Windows environment
 set PATH=c:\windows;c:\windows\system32;c:\windows\system32\Wbem
@@ -65,8 +63,7 @@ set CPPFLAGS="DgFortran -DCURL_STATICLIB"
 
 set CTEST_OUTPUT_ON_FAILURE=1
 
-:: add --trace to see copious details re: CMAKE
-
+:: invoke CMake; add --trace to see copious details re: CMAKE
 cmake ..\..\.. -G "MinGW Makefiles" ^
 -DCOMPILER_DIR=%COMPILER_DIR% ^
 -DCOMPILER_VERSION=%COMPILER_VERSION% ^

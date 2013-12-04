@@ -2012,15 +2012,25 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   integer (kind=c_int) :: iCol, iRow
   integer (kind=c_int), dimension(2) :: iColRow
   integer (kind=c_int) :: iSrcCol, iSrcRow
+  integer (kind=c_int) :: iSpread
 
   ! must ensure that there are coordinates associated with the "to" grid...
   ! by default, these are left unpopulated during a "normal" swb run
   if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
+  print *, trim(__FILE__), __LINE__
+  print *, pGrdTo%rGridCellSize
+  print *, pGrdFrom%rGridCellSize
+
+  iSpread = max(1, nint(pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize / 2.))
 
 !  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
   if ( lTRUE ) then
+
+!$OMP PARALLEL DO
+
+  !$OMP ORDERED
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2042,14 +2052,18 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
           iNY=pGrdFrom%iNY, &
           iTargetCol=iColRow(COLUMN), &
           iTargetRow=iColRow(ROW), &
-          iKernel=FOUR_CELLS, &
-          iNoDataValue=pGrdFrom%iNoDataValue)
+          iNoDataValue=pGrdFrom%iNoDataValue, &
+          iSpread=iSpread)
 
       enddo
     enddo
+!$OMP END ORDERED
+
+!$OMP END PARALLEL DO
 
   else
 
+!$OMP PARALLEL DO ORDERED
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
         iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=c_double) )
@@ -2068,11 +2082,12 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
           iNY=pGrdFrom%iNY, &
           iTargetCol=iSrcCol, &
           iTargetRow=iSrcRow, &
-          iKernel=FOUR_CELLS, &
-          iNoDataValue=pGrdFrom%iNoDataValue)
+          iNoDataValue=pGrdFrom%iNoDataValue, &
+          iSpread=iSpread)
 
       enddo
     enddo
+!$OMP END PARALLEL DO
 
   endif
 
@@ -2090,6 +2105,13 @@ subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   ! [ LOCALS ]
   integer (kind=c_int) :: iCol, iRow
   integer (kind=c_int), dimension(2) :: iColRow
+  integer (kind=c_int) :: iSpread
+
+  print *, trim(__FILE__), __LINE__
+  print *, pGrdTo%rGridCellSize
+  print *, pGrdFrom%rGridCellSize
+
+  iSpread = max(1, nint(pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize / 2.))
 
   ! must ensure that there are coordinates associated with the "to" grid...
   ! by default, these are left unpopulated during a "normal" swb run
@@ -2117,8 +2139,8 @@ subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
          iNY=pGrdFrom%iNY, &
          iTargetCol=iColRow(COLUMN), &
          iTargetRow=iColRow(ROW), &
-         iKernel=FOUR_CELLS, &
-         iNoDataValue=pGrdFrom%iNoDataValue)
+         iNoDataValue=pGrdFrom%iNoDataValue, &
+         iSpread=iSpread)
 
     enddo
   enddo
@@ -2203,7 +2225,7 @@ end subroutine grid_GridToGrid_sgl
 !----------------------------------------------------------------------
 
 function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
-   iTargetRow, iKernel, iNoDataValue)  result(iRetVal)
+   iTargetRow, iNoDataValue, iSpread)  result(iRetVal)
 
   ! [ ARGUMENTS ]
   integer (kind=c_int), dimension(iNX, iNY) :: iValues
@@ -2211,17 +2233,17 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
   integer (kind=c_int) :: iNY
   integer (kind=c_int) :: iTargetCol          ! column number of target cell
   integer (kind=c_int) :: iTargetRow          ! row number of target cell
-  integer (kind=c_int) :: iKernel             ! choose four cell or eight cell kernel
   integer (kind=c_int) :: iNoDataValue
   integer (kind=c_int) :: iRetVal
+  integer (kind=c_int) :: iSpread             ! integer representing how many
+                                              ! cells should be searched
 
   ! [ LOCALS ]
-  integer (kind=c_int), dimension(9) :: iValue
-  integer (kind=c_int), dimension(9) :: iCount
+  integer (kind=c_int), dimension(625) :: iValue
+  integer (kind=c_int), dimension(625) :: iCount
   logical (kind=c_bool) :: lMatch
   integer (kind=c_int) :: iRow
   integer (kind=c_int) :: iCol
-  integer (kind=c_int), dimension(9) :: iMask
   integer (kind=c_int) :: i, iSize, iLast, iIndex, iCellNum
 
   iValue = 0
@@ -2229,24 +2251,19 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
   iLast = 0
   iCellNum = 0
 
-   if ( iKernel == FOUR_CELLS ) then
-     iMask = (/0, 1, 0, 1, 1, 1, 0, 1, 0/)
-   else
-     iMask = (/1, 1, 1, 1, 1, 1, 1, 1, 1/)
-   endif
+  ! need to set a reasonable upper bound on the spread to consider
+  iSpread = min(iSpread, 12)
 
-   do iRow=max(1,iTargetRow - 1), min(iNY, iTargetRow + 1)
-     do iCol=max(1,iTargetCol - 1), min(iNX, iTargetCol + 1)
+   do iRow=max(1,iTargetRow - iSpread), min(iNY, iTargetRow + iSpread)
+     do iCol=max(1,iTargetCol - iSpread), min(iNX, iTargetCol + iSpread)
 !
        iCellNum = iCellNum + 1
-!
-       if( iMask(iCellNum) == 0 ) cycle
 !
        lMatch = lFALSE
 !
        do i=1, iLast
          if (iValue(i) == iValues(iCol, iRow) ) then
-           iCount(i) = iCount(i) + iMask(iCellNum)
+           iCount(i) = iCount(i) + 1
            lMatch = lTRUE
            exit
          endif
@@ -2255,7 +2272,7 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
        if (.not. lMatch) then
          iLast = iLast + 1
          iValue(iLast) = iValues(iCol, iRow)
-         iCount(iLast) = iCount(iLast) + iMask(iCellNum)
+         iCount(iLast) = iCount(iLast) + 1
          lMatch = lTRUE
        endif
 !

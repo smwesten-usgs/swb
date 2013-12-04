@@ -77,6 +77,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   ! array is traversed in column-major order (i.e. processed a column
   ! at a time, which should be more efficient in terms of Fortran
   ! memory management)
+
   row_idx: do iRow=1,pGrd%iNY
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
