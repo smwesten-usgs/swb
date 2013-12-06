@@ -219,6 +219,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
 
     pGenericGrd_int%iData = pGrd%Cells%iLandUse
+    pGenericGrd_int%iMask = pGrd%iMask
+
     call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
       trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
       //"_"//trim(asCharacter(pConfig%iYear))// &
@@ -230,7 +232,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
       //"_"//trim(asCharacter(pConfig%iYear))//".png", &
       sTitleTxt="Landuse Grid", &
       sAxisTxt="Landuse Code" )
-
 
     call model_setInactiveCells( pGrd, pConfig )
 

@@ -479,6 +479,7 @@ module graph
         do iRow=1,iY
           do iCol=1,iX
             ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),kind=c_float)
+            iMask(iCol, iRow) = pGrd%iMask(iCol,(iY-iRow+1))
           end do
         end do
 

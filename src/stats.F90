@@ -912,7 +912,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-          where (pGrd%iMask == iINACTIVE_CELL)
+          where (pGrd%iMask == iACTIVE_CELL)
             pGrd%rData(:,:) = pGrd%rData(:,:) &
                / real(iDaysInMonthCount, kind=c_float)
           endwhere
@@ -1002,7 +1002,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
           end if
 
-          where (pGrd%iMask == iINACTIVE_CELL)
+          where (pGrd%iMask == iACTIVE_CELL)
 
             pGrd%rData(:,:) = pGrd%rData(:,:) &
                / real(iDaysInYearCount, kind=c_float)

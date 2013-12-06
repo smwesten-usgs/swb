@@ -2019,9 +2019,8 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
-  print *, trim(__FILE__), __LINE__
-  print *, pGrdTo%rGridCellSize
-  print *, pGrdFrom%rGridCellSize
+  call echolog("Target grid resolution: "//trim(asCharacter( pGrdTo%rGridCellSize )))
+  call echolog("Source grid resolution: "//trim(asCharacter( pGrdFrom%rGridCellSize )))
 
   iSpread = max(1, nint(pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize / 2.))
 
