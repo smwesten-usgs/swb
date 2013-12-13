@@ -3197,6 +3197,13 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   pGrd%Cells%iFlowDir = pGrd%iData
 
   pGenericGrd_int%iData = pGrd%Cells%iFlowDir
+
+  where(pGenericGrd_int%iData< 0)
+    pGenericGrd_int%iMask = iINACTIVE_CELL
+  elsewhere
+    pGenericGrd_int%iMask = iACTIVE_CELL
+  endwhere
+
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
@@ -3207,6 +3214,12 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iSoilGroup = pGrd%iData
+
+  where(pGenericGrd_int%rData< 0)
+    pGenericGrd_int%iMask = iINACTIVE_CELL
+  elsewhere
+    pGenericGrd_int%iMask = iACTIVE_CELL
+  endwhere
 
   pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
@@ -3224,6 +3237,13 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   write(LU_LOG, fmt="(a, f14.3)") "  Maximum AWC: ", maxval(pGrd%Cells%rSoilWaterCapInput)
 
   pGenericGrd_sgl%rData = pGrd%Cells%rSoilWaterCapInput
+
+  where(pGenericGrd_sgl%rData< 0)
+    pGenericGrd_sgl%iMask = iINACTIVE_CELL
+  elsewhere
+    pGenericGrd_sgl%iMask = iACTIVE_CELL
+  endwhere
+
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Available_Water_Capacity" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
 
@@ -3241,6 +3261,13 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
     write(LU_LOG, fmt="(a, f14.3)") "  Maximum routing fraction: ", maxval(pGrd%Cells%rRouteFraction)
 
     pGenericGrd_sgl%rData = pGrd%Cells%rRouteFraction
+
+    where(pGenericGrd_sgl%rData< 0)
+      pGenericGrd_sgl%iMask = iINACTIVE_CELL
+    elsewhere
+      pGenericGrd_sgl%iMask = iACTIVE_CELL
+    endwhere
+
     call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Routing_Fraction" // &
       "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
 
@@ -3256,13 +3283,9 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
     call DAT(MASK_DATA)%getvalues( pGrdBase=pGrd)
 
     where ( pGrd%iData > 0 )
-
       pGrd%iMask = iACTIVE_CELL
-
     elsewhere
-
       pGrd%iMask = iINACTIVE_CELL
-
     endwhere
 
     pGenericGrd_int%iData = pGrd%iData

@@ -1043,7 +1043,8 @@ end subroutine set_constant_value_real
           !> Projection settings can be left alone; read values from new
           !> NetCDF file with same grid boundaries, projection, etc.
 
-          call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
+!          call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
+          call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename)
 
           this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
 
