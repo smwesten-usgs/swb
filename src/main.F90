@@ -34,9 +34,10 @@
 !> http://pubs.usgs.gov/tm/tm6-a31/
 
 !> @page Conventions
-!> In order to make the code more easily understood, a set of rules
-!> for naming variables, subroutines, functions, and parameters
-!> was adopted.
+!> Conventions to follow when developing SWB modules.
+!>
+!> The authors have attempted to follow the conventions described below
+!> in the development of the SWB code.
 !> @section Variables
 !>  - \b integer: names begin with \em i \n
 !>      example: iCount
@@ -58,18 +59,25 @@
 !>    are composed of UPPERCASE letters without a type prefix
 !>  - Constants specifying fortran logical unit numbers (for i/o) have prefix \em LU_
 !>  - Parameters of derived type have prefix \em T_
-
+!> @section Doxygen
+!> Suggested minimum Doxygen elements to be inserted immediately before each
+!> subroutine or function:
+!> - \@brief
+!> - \@details
+!> - \@param[in]
+!> - \@param[out]
+!> - \@param[in/out]
+!> - \@return
 
 !> @file
-!> @brief  Main program which references all other modules; execution begins here.
+!>  Main program which references all other modules; execution begins here.
 
 
-!> @brief  Main program which references all other modules; execution begins here.
+!>  Main program which references all other modules; execution begins here.
 !>
 !> Accepts command-line arguments and makes a single call
 !> to the control_setModelOptions routine in module \ref control.
 program main
-
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
@@ -83,7 +91,6 @@ program main
   character (len=1024) :: sCompilerFlags
   character (len=256) :: sCompilerVersion
 
-  ! warning - calling a Fortran 2003 extension function here
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
   if(iNumArgs/=1) then

@@ -1,8 +1,8 @@
 !> @file
-!> @brief  Contains a single module, @ref meteorological_functions, which
+!>  Contains a single module, @ref meteorological_functions, which
 !>  provides support functions used by evapotranspiration and snow routines.
 
-!> @brief  Provides support functions used by evapotranspiration and snow routines.
+!>  Provides support functions used by evapotranspiration and snow routines.
 !> @note  Many of the routines included here are based on equations given in
 !>   the following reference:
 !> @par
@@ -66,7 +66,7 @@ contains
 !!  \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
 
 
-!> @brief Calculates the number of daylight hours at a location.
+!> Calculates the number of daylight hours at a location.
 !>
 !> @param  rOmega_s The sunset hour angle in Radians.
 !> @return rN The number of daylight hours.

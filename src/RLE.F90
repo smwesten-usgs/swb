@@ -1,5 +1,5 @@
 !> @file
-!> @brief  Contains a single module that
+!>  Contains a single module that
 !>  provides data compression (run-length encoding) for internal data structures.
 module RLE
 
@@ -33,7 +33,7 @@ contains
 !
 ! SOURCE
 
-!> @brief  Converts a real value to an integer, and applies
+!>  Converts a real value to an integer, and applies
 !>  a run-length encoding scheme to compress output data.
 subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
                     iByteTotal, iVarNum)
@@ -164,7 +164,7 @@ end subroutine RLE_writeByte
 !
 ! SOURCE
 
-!> @brief  Converts an integer value to a real value by decompressing a data stream
+!>  Converts an integer value to a real value by decompressing a data stream
 !>  by means of a run-length encoding scheme.
 subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
                         iByteTotal,lEOF)

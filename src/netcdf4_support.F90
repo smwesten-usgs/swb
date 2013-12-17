@@ -1,8 +1,8 @@
 !> @file
-!> @brief  Contains a single module, @ref netcdf4_support, which
+!>  Contains a single module, @ref netcdf4_support, which
 !>  provides support for use of NetCDF files as input or output.
 
-!> @brief Provides support for use of NetCDF files as input for time-varying,
+!> Provides support for use of NetCDF files as input for time-varying,
 !>  gridded meteorlogic data, or output for any SWB-generated variable.
 !>
 !> from the C API:
@@ -962,7 +962,7 @@ subroutine nf_get_time_vals(NCFILE)
   call assert(iStat==0, "Failed to allocate memory for time values", &
     trim(__FILE__), __LINE__)
 
-  !> @TODO allow time to be read in as float, short, or int as well
+  !> @todo allow time to be read in as float, short, or int as well
 
   call nf_get_variable_vector_double(NCFILE=NCFILE, &
        iNC_VarID=pNC_VAR_time%iNC_VarID, &

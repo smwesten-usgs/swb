@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, et_hargreaves, which
+!>  Contains a single module, et_hargreaves, which
 !>  calculates potential evapotranspiration by means of the Hargreaves-Samani (1985) method.
 
 
-!> @brief  Calculates potential evapotranspiration by means of the
+!>  Calculates potential evapotranspiration by means of the
 !>  Hargreaves-Samani (1985) method.
 module et_hargreaves
 !!****h* SWB/et_hargreaves
@@ -31,6 +31,9 @@ module et_hargreaves
   use meteorological_functions
 
   implicit none
+
+  !> @defgroup evapotranspiration Hargreaves-Samani
+  !> @{
 
 contains
 
@@ -190,5 +193,7 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
 end function ET0_hargreaves
 
 !!***
+
+  !> @}
 
 end module et_hargreaves

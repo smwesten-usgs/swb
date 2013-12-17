@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, \ref graph, which
+!>  Contains a single module, \ref graph, which
 !>  creates plots through calls to the DISLIN library
 
 
-!> @brief  Creates plots through calls to the DISLIN library.
+!>  Creates plots through calls to the DISLIN library.
 module graph
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double

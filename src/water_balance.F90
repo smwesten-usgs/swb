@@ -1,8 +1,8 @@
 !> @file
-!> @brief Contains a single module, @ref water_balance, which estimates runoff by
+!> Contains a single module, @ref water_balance, which estimates runoff by
 !> means of the NRCS/SCS curve number method.
 
-!> @brief Performs the actual soil-moisture balance once precip, snowmelt, runoff, and ET have
+!> Performs the actual soil-moisture balance once precip, snowmelt, runoff, and ET have
 !> been calculated. Soil moisture may be calculated either by
 !> 1) Calulated ET and Thornthwaite and Mathers' (1957) tables;
 !> 2) Crop coefficients for all vegetation classes and soil water balance

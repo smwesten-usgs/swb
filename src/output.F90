@@ -1,7 +1,7 @@
 !> @file
-!> @brief The output module contains a collection of routines that
+!> The output module contains a collection of routines that
 !> write output to disk.
-!> @brief The output module centralizes routines that write SSF files,
+!> The output module centralizes routines that write SSF files,
  !> run-length-encoded (RLE) SWB binary files, and statistics files.
 module output
 
@@ -283,7 +283,7 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
   real (kind=c_float), intent(in) :: rChangeInStorage
   real (kind=c_float), intent(in) :: rDailyRecharge
 
-  !@TODO
+  !@todo
   ! figure out why *.SSF files are not written to if they reference the
   ! first column (colnum=1)
 

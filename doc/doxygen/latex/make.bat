@@ -21,3 +21,5 @@ pdflatex refman
 goto :repeat
 :skip
 endlocal
+C:/Program Files (x86)/MiKTeX 2.9/miktex/bin/makeindex.exe refman.idx
+pdflatex refman

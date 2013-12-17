@@ -1,9 +1,9 @@
 !> @file
-!> @brief Contains a single module, @ref snow, which implements an
+!> Contains a single module, @ref snow, which implements an
 !> experimental energy-balance snowmelt routine.
 
 
-!> @brief Implements snow-related calculations (i.e. albedo, snow depth),
+!> Implements snow-related calculations (i.e. albedo, snow depth),
 !> as well as a simple snow energy balance routine.
 !> @note These routines are only invoked when control variable
 !> \c pConfig%iConfigureSnow is set to \c CONFIG_SNOW_NEW_SWB

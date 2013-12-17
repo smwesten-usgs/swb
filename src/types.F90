@@ -1,8 +1,8 @@
 !> @file
-!> @brief Contains a single module, @ref types, which contains types definitions
+!> Contains a single module, @ref types, which contains types definitions
 !>  and general utility functions used by the SWB code.
 
-!> @brief Contains types definitions and general utility functions used by the SWB code.
+!> Contains types definitions and general utility functions used by the SWB code.
 !>
 !> This module defines parameters and derived data types for use throughout
 !> the SWB code.  This module also contains a number of utility functions
@@ -141,7 +141,7 @@ module types
   !> @}
 
 
-!> @brief Type that contains the data for an individual grid cell.
+!> Type that contains the data for an individual grid cell.
 !>
 !> Type that contains data for an individual grid cell. The model uses
 !> a grid of T_CELL types. Each variable added to this data type
@@ -252,7 +252,7 @@ module types
   integer (kind=c_int), parameter :: GRID_DATATYPE_CELL_GRID = 2
   integer (kind=c_int), parameter :: GRID_DATATYPE_ALL = 3
 
-!> @brief Type that contains the data for a grid.
+!> Type that contains the data for a grid.
 !>
 !>   Type that contains the data for a grid. Depending on the need of the
 !>   application code, the grid may contain integer, real, or cell-by-cell
@@ -293,14 +293,14 @@ module types
     character (len=256) :: sPROJ4_string
   end type T_GRID_BOUNDS
 
-!> @brief Type that contains pointers to one or more grid data structures.
+!> Type that contains pointers to one or more grid data structures.
 !>
 !> Type that contains pointers to one or more grid data structures.
   type T_GRID_COLLECTION
     type (T_GENERAL_GRID), dimension(:), pointer :: Grids
   end type T_GRID_COLLECTION
 
-  !> @brief Container for land-use related data
+  !> Container for land-use related data
   !>
   !> Container for land-use related data. Includes curve number
   !> and rooting-depth generalizations.
@@ -324,7 +324,7 @@ module types
 
   end type T_LANDUSE_LOOKUP
 
-  !> @brief Type that contains information needed to calculate irrigation for
+  !> Type that contains information needed to calculate irrigation for
   !> each land use.
   !>
   !> Type that contains information needed to estimate crop coefficients and
@@ -467,7 +467,7 @@ module types
   ! Global buffer for writing log messages
   character (len=256), public :: sLogBuffer
 
-  !> @brief Type that contains parameters for graphings and stats calculations.
+  !> Type that contains parameters for graphings and stats calculations.
   !>
   !> This type contains parameters that determine how the main state variables
   !> and other important ancillary variables are tabulated and graphed.
@@ -864,7 +864,7 @@ module types
 
   !> @}
 
-  !> @brief Type that contains model configuration data.
+  !> Type that contains model configuration data.
   !>
   !> The configuration data structure is passed by pointer throughout
   !> the SWB model modules. Most of the functioning of SWB may be controlled
@@ -1279,7 +1279,7 @@ end function squote
 
 !------------------------------------------------------------------------------
 
-!> @brief Function 'dquote' returns a character string with double quotes
+!> Function 'dquote' returns a character string with double quotes
 !> prepended and appended to the string that is passed.
 function dquote(sString)                                   result(sQuotedString)
 
@@ -1404,7 +1404,7 @@ end subroutine assert_module_details_fl_sub
 
 !-------------------------------------------------------------------------------
 
-!> @brief echo to screen AND write to logfile
+!> echo to screen AND write to logfile
   subroutine echolog(sMessage)
 
     character(len=*), intent(in)             :: sMessage
@@ -2591,7 +2591,7 @@ end function solstice
 
 !--------------------------------------------------------------------------
 
-!> @brief Write multiple lines of output to Fortran logical unit
+!> Write multiple lines of output to Fortran logical unit
 !> @details Writes one or more lines of an input text string to a Fortran
 !> logical unit number. To output multiple lines, insert a tilde (~) at
 !> each point in the text string where a carriage return is desired.
@@ -2809,7 +2809,7 @@ end function rad2deg
 
 !--------------------------------------------------------------------------
 
-!> @brief Return the number of days in the given year.
+!> Return the number of days in the given year.
 !>
 !> This function simply returns the number of days given the current year.
 function num_days_in_year(iYear) result(iNumDaysInYear)

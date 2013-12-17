@@ -1,8 +1,8 @@
 !> @file
-!> @brief Contains a single module, @ref model, which keeps track of the model date and executes
+!> Contains a single module, @ref model, which keeps track of the model date and executes
 !>  necessary process modules.
 
-!> @brief Allocates memory to store intermediate and final calculation results,
+!> Allocates memory to store intermediate and final calculation results,
 !> keeps track of the model date, reads tabular climate data, and calls the
 !> necessary process modules in turn.
 module model
@@ -3722,7 +3722,7 @@ integer (kind=c_int), intent(in) :: iOutputType
 
 end subroutine model_WriteGrids
 
-!> @brief This subroutine reads a single line from a single-station
+!> This subroutine reads a single line from a single-station
 !> climate data file, parses the values, and returns a pointer to a
 !> time-series data object.
 !> @todo Make logic at end of routine more robust; currently the logic

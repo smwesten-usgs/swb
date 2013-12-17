@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, swb_grid, which
+!>  Contains a single module, swb_grid, which
 !>  provides support for gridded ASCII data file and data structure operations
 !> @ingroup grid
 
-!> @brief  Provides support for input and output of gridded ASCII data,
+!>  Provides support for input and output of gridded ASCII data,
 !> as well as for creation and destruction of grid data structures (defined types).
 module swb_grid
 
@@ -107,7 +107,7 @@ contains
 
 !--------------------------------------------------------------------------
 
-!> @brief Creates a grid of a specified type.
+!> Creates a grid of a specified type.
 !>
 !>  Creates a grid pointer object and allocates memory for the data
 !>  associated with the grid (REAL, INTEGER, or T_CELL).
@@ -1388,7 +1388,7 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
 end subroutine grid_LookupRow
 
 
-!> @brief Call PROJ4 to transform coordinates.
+!> Call PROJ4 to transform coordinates.
 !> @details This subroutine calls a Fortran wrapper to the C library
 !> PROJ4. A set of input coordinates is transformed to a different
 !> coordinate system.

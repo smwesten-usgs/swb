@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, \ref et_crop_coefficients, which
+!>  Contains a single module, \ref et_crop_coefficients, which
 !>  provides support for modifying reference ET through the use of
 !> crop coefficients
 
-!> @brief  Provides support for assessing the effect of irrigation on recharge
+!>  Provides support for assessing the effect of irrigation on recharge
 !> values by estimating the irrigation required to maintain soil moisture levels
 !> for specific crop types.
 module et_crop_coefficients
@@ -17,7 +17,7 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
- !> @brief This subroutine updates the current Kcb for a SINGLE irrigation
+ !> This subroutine updates the current Kcb for a SINGLE irrigation
  !> table entry
  subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
 
@@ -82,7 +82,7 @@ end function et_kc_CalcEvaporationReductionCoefficient
 
 !------------------------------------------------------------------------------
 
-!> @brief This function estimates the fraction of the ground covered by
+!> This function estimates the fraction of the ground covered by
 !> vegetation during the growing season
 !> @note Implemented as equation 76, FAO-56, Allen and others
 function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
@@ -115,7 +115,7 @@ end function et_kc_CalcFractionExposedAndWettedSoil
 
 !------------------------------------------------------------------------------
 
-!> @brief This function calculates the effective root zone depth given the
+!> This function calculates the effective root zone depth given the
 !> stage of plant growth, the soil type, and the land cover type.
 !> @note Implemented as equation 8-1 (Annex 8), FAO-56, Allen and others.
 
@@ -153,7 +153,7 @@ end function et_kc_CalcEffectiveRootDepth
 
 !------------------------------------------------------------------------------
 
-!> @brief This function estimates Ke, the bare surface evaporation
+!> This function estimates Ke, the bare surface evaporation
 !> coefficient
 !> @note Implemented as equation 71, FAO-56, Allen and others
 function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
@@ -172,7 +172,7 @@ end function et_kc_CalcSurfaceEvaporationCoefficient
 
 !------------------------------------------------------------------------------
 
-!> @brief This subroutine updates the total available water (TAW)
+!> This subroutine updates the total available water (TAW)
 !> (water within the rootzone) for a gridcell
 subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
 
@@ -187,7 +187,7 @@ subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
 
 !------------------------------------------------------------------------------
 
-!> @brief This function estimates Ks, water stress coefficient
+!> This function estimates Ks, water stress coefficient
 !> @note Implemented as equation 84, FAO-56, Allen and others
 function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
                                            rDeficit, &

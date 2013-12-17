@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, et_turc, which
+!>  Contains a single module, et_turc, which
 !>  calculates potential evapotranspiration by means of the Turc (1961) method.
 
 
-!> @brief  Calculates potential evapotranspiration by means of the
+!>  Calculates potential evapotranspiration by means of the
 !> Turc (1961) method.
 module et_turc
 !!****h* SWB/et_turc

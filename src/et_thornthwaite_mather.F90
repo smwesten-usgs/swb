@@ -1,9 +1,9 @@
 !> @file
-!> @brief  Contains a single module, et_thornthwaite_mather, which
+!>  Contains a single module, et_thornthwaite_mather, which
 !>  calculates potential evapotranspiration by means of the Thornthwaite-Mather (1955, 1957) method.
 
 
-!> @brief  Calculates potential evapotranspiration by means of the
+!>  Calculates potential evapotranspiration by means of the
 !> Thornthwaite-Mather (1955, 1957) method.
 module et_thornthwaite_mather
 !!****h* SWB/et_thornthwaite_mather
@@ -95,7 +95,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
 
-  !> @TODO Fix T-M routine: broken now if using tabular data since
+  !> @todo Fix T-M routine: broken now if using tabular data since
   !> by the time this routine is called, the tabular data file is already
   !> open
 

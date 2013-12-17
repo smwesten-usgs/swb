@@ -1,9 +1,9 @@
 !> @file
-!> @brief Contains a single module, @ref stats, which calculates
+!> Contains a single module, @ref stats, which calculates
 !> daily, monthly, and annual statistics for an SWB model run.
 
-!> @brief Calculates daily, monthly, and annual statistics
-!>    for an SWB model run.
+!> Calculates daily, monthly, and annual statistics
+!>    for a SWB model run.
 !>
 !> @par Calculates daily, monthly, and annual statistics
 !> for an SWB model run. Also contains routines to:
@@ -578,7 +578,7 @@ end subroutine stats_UpdateAllAccumulatorsByGrid
 
 !--------------------------------------------------------------------------
 
-!> @brief Writes out the min, max, and mean of 2D variable array.
+!> Writes out the min, max, and mean of 2D variable array.
 !> @par
 !> @param [in] iLU Fortran logical unit number to write output to.
 !> @param [in] sText Descriptive text associated with the statistics.

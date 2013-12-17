@@ -71,7 +71,7 @@ contains
 
 !----------------------------------------------------------------------
 
-!> @brief This routine is designed to comb through the SWB output and calculate
+!> This routine is designed to comb through the SWB output and calculate
 !> statistics on the basis of the unique integer values found in the mask file.
 subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 

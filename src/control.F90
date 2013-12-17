@@ -1,8 +1,8 @@
 !> @file
-!> @brief Contains a single module, @ref control, which reads program options from
+!> Contains a single module, @ref control, which reads program options from
 !> an SWB control file and sets program configuration flags
 
-!> @brief Reads program options from an SWB control file and sets program configuration flags.
+!> Reads program options from an SWB control file and sets program configuration flags.
 module control
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
@@ -15,7 +15,7 @@ module control
 
   contains
 
-!> @brief  Reads model control file and initializes model configuration
+!>  Reads model control file and initializes model configuration
 !>         parameters and flags.
 !>
 !> Reads model control file and initializes model configuration
@@ -1934,7 +1934,7 @@ subroutine control_setModelOptions(sControlFile)
 
       !> ** THIS IS ESSENTIALLY THE TIME CONTROL LOOP FOR USE
       !>    WITH GRIDDED DATA
-      !> @TODO incorporate this into a proper time control module
+      !> @todo incorporate this into a proper time control module
       do i=pConfig%iStartYear,pConfig%iEndYear
         pConfig%iYear = i
         pConfig%iCurrentJulianDay = julian_day ( i, 1, 1)

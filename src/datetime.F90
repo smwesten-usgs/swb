@@ -1,10 +1,10 @@
 !> @file
-!> @brief  Contains a single module, @ref datetime, which
+!>  Contains a single module, @ref datetime, which
 !> contains all time and date-related routines as well as the
 !> @ref T_DATETIME class.
 
 !> @namespace datetime
-!> @brief  This module contains all time and date-related routines as well as the @ref T_DATETIME class.
+!>  This module contains all time and date-related routines as well as the @ref T_DATETIME class.
 module datetime
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
