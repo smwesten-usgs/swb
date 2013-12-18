@@ -1871,11 +1871,13 @@ function grid_GetGridColRowNum(pGrd, rX, rY)    result(iColRow)
 
   do
 
-    iRowBoundLower = max( 1, iCandidateRow - 1)
-    iRowBoundUpper = min( pGrd%iNY, iCandidateRow + 1)
+    !> need to ensure that whatever bound is calculated
+    !> is within the declared array bounds or we get a segfault
+    iRowBoundLower = min(max( 1, iCandidateRow - 1), pGrd%iNY)
+    iRowBoundUpper = max(min( pGrd%iNY, iCandidateRow + 1), 1)
 
-    iColBoundLower = max( 1, iCandidateCol - 1)
-    iColBoundUpper = min( pGrd%iNX, iCandidateCol + 1)
+    iColBoundLower = min(max( 1, iCandidateCol - 1), pGrd%iNX)
+    iColBoundUpper = max(min( pGrd%iNX, iCandidateCol + 1), 1)
 
     lChanged = lFALSE
 

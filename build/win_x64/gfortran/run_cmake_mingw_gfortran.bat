@@ -21,7 +21,7 @@ set INSTALL_PREFIX=d:/DOS
 
 :: define other variables for use in the CMakeList.txt file
 :: options are "Release", "Profile" or "Debug"
-set BUILD_TYPE="Release"
+set BUILD_TYPE="Debug"
 
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set OS="win_x64"
@@ -61,6 +61,10 @@ set LDFLAGS="-flto"
 set CFLAGS="-DCURL_STATICLIB"
 set CPPFLAGS="DgFortran -DCURL_STATICLIB"
 
+set COMPILER_LIB_PATH1=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION% 
+set COMPILER_LIB_PATH2=%COMPILER_DIR%/%COMPILER_TRIPLET%/lib
+set COMPILER_LIB_PATH3=%COMPILER_DIR%/lib
+
 set CTEST_OUTPUT_ON_FAILURE=1
 
 :: invoke CMake; add --trace to see copious details re: CMAKE
@@ -68,6 +72,9 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DCOMPILER_DIR=%COMPILER_DIR% ^
 -DCOMPILER_VERSION=%COMPILER_VERSION% ^
 -DCOMPILER_TRIPLET=%COMPILER_TRIPLET% ^
+-DCOMPILER_LIB_PATH1=%COMPILER_LIB_PATH1% ^
+-DCOMPILER_LIB_PATH2=%COMPILER_LIB_PATH2% ^
+-DCOMPILER_LIB_PATH3=%COMPILER_LIB_PATH3% ^
 -DFortran_COMPILER_NAME=%Fortran_COMPILER_NAME% ^
 -DOS=%OS% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^

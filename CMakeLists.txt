@@ -12,8 +12,10 @@
 # PATH_TO_R
 # OS                     | possible values: "win_x86", "win_x64", "max_osx", "linux"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
-# COMPILER_TRIPLET       | ex: "x86_64-w64-mingw32", "x86_64-apple-darwin12.4.0"
 # COMPILER_VERSION       | ex: "4.8.2"
+# COMPILER_LIB_PATH1
+# COMPILER_LIB_PATH2
+# COMPILER_LIB_PATH3
 
 message("Processing top-level CMakelists.txt for project swb")
 
@@ -34,8 +36,8 @@ endif()
 # NOTE: must enable CXX as a language in order to use the GNU compiler
 #       toolchain
 #
-project (swb Fortran C CXX)
-enable_language (Fortran C CXX)
+project (swb Fortran C)
+enable_language (Fortran C)
 
 SET(CPACK_GENERATOR "TGZ")
 include(CPack)
@@ -56,12 +58,15 @@ include( cmake/options_and_targets.cmake )
 # Locate utility programs
 #------------------------------------------------------------------------
 
+# search for programs in the build host directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+# for libraries and headers in the target directories
+SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+
 set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
 set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
-set(LIB_PATH "${COMPILER_DIR}/lib/gcc/${COMPILER_TRIPLET}/${COMPILER_VERSION}" )
-set(LIB_PATH ${LIB_PATH} "${COMPILER_DIR}/${COMPILER_TRIPLET}/lib" )
-set(LIB_PATH ${LIB_PATH} "${COMPILER_DIR}/lib" )
-set(CMAKE_LIBRARY_PATH ${LIB_PATH} ${SWB_PATH})
+set(CMAKE_LIBRARY_PATH ${COMPILER_LIB_PATH1} ${COMPILER_LIB_PATH2} ${COMPILER_LIB_PATH3} ${SWB_LIBPATH})
 
 include( cmake/find_programs_and_libraries.cmake )
 
@@ -76,8 +81,6 @@ else()
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats ${CMAKE_INSTALL_PREFIX}/swbstats
   )
 endif()
-
-get_filename_component(COMPILER_NAME ${CMAKE_Fortran_COMPILER} NAME)
 
 include( cmake/print_summary.cmake )
 
