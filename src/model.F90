@@ -3215,7 +3215,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iSoilGroup = pGrd%iData
 
-  where(pGenericGrd_int%rData< 0)
+  where(pGenericGrd_int%iData< 0)
     pGenericGrd_int%iMask = iINACTIVE_CELL
   elsewhere
     pGenericGrd_int%iMask = iACTIVE_CELL
