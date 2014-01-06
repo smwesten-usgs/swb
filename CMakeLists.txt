@@ -64,15 +64,15 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
-set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
-set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
+set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} /usr/local/lib )
+set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} /usr/local/include )
 set(CMAKE_LIBRARY_PATH ${COMPILER_LIB_PATH1} ${COMPILER_LIB_PATH2} ${COMPILER_LIB_PATH3} ${SWB_LIBPATH})
 
 include( cmake/find_programs_and_libraries.cmake )
 
 #set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
 
-if (${OS} STREQUAL "win_x64" OR ${OS} STREQUAL "win_x86")
+if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
   )

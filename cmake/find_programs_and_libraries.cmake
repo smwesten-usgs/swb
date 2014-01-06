@@ -1,6 +1,6 @@
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
 
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
@@ -56,8 +56,12 @@ find_library(LIBCURL
         NAMES curl libcurl libcurl.a
         PATHS ${SWB_LIBPATH} )
 
+find_library(LIBCRYPTO
+        NAMES crypto libcrypto libcrypto.a
+        PATHS ${SWB_LIBPATH} )
+
 find_library(LIBDISLIN
-        NAMES dismg libdismg libdismg.a
+        NAMES dismg libdismg libdismg.a dislin.10 dislin
         PATHS ${SWB_LIBPATH} )
 
 find_library(LIBGCC
@@ -68,30 +72,35 @@ find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
         PATHS ${LIB_PATH} )
 
-find_library(LIBOPENGL
-        NAMES opengl32 libopengl32 libopengl32.a
-		PATHS ${LIB_PATH} )
 
-find_library(LIBGDI32
-        NAMES gdi32 libgdi32 libgdi32.a
-		PATHS ${LIB_PATH} )
 
 #        PATHS "C:/MinGW64/x86_64-w64-mingw32"
 #		PATH_SUFFIXES "lib" )
 
 if (WIN32)
-  find_library(LIBWS2_32
-          NAMES ws2_32 libws2_32 libws2_32.a
+
+  find_library(LIBWINPTHREAD  
+          NAMES libwinpthread.a winpthread winpthread
           PATHS ${LIB_PATH} )
 
-find_library(LIBWINPTHREAD
-        NAMES libwinpthread.a winpthread winpthread
-        PATHS ${LIB_PATH} )
+  find_library(LIBOPENGL
+          NAMES opengl32 libopengl32 libopengl32.a
+          PATHS ${LIB_PATH} )
+
+  find_library(LIBGDI32
+          NAMES gdi32 libgdi32 libgdi32.a
+          PATHS ${LIB_PATH} )        
+
+else()
+
+  find_library(LIBXM
+          NAMES Xm libXm libXm.a
+          PATHS ${LIB_PATH} )
 
 endif()
 
-set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
+set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBCRYPTO} ${LIBZ}
                    ${LIBSZ} ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} ${LIBWS2_32}
-				   ${LIBOPENGL} ${LIBGDI32} ${LIBWINPTHREAD})
+				   ${LIBOPENGL} ${LIBGDI32} ${LIBXM} ${LIBWINPTHREAD})
 
 link_libraries( ${EXTERNAL_LIBS} )
