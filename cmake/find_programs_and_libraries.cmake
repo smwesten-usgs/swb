@@ -106,6 +106,10 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
           NAMES libwinpthread.a winpthread winpthread
           PATHS ${LIB_PATH} )
 
+  find_library(LIBWS2_32
+          NAMES ws2_32 libws2_32 libws2_32.a
+          PATHS ${LIB_PATH} )
+		  
   find_library(LIBOPENGL
           NAMES opengl32 libopengl32 libopengl32.a
           PATHS ${LIB_PATH} )
@@ -114,7 +118,7 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
           NAMES gdi32 libgdi32 libgdi32.a
           PATHS ${LIB_PATH} )        
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBOPENGL} ${LIBGDI32} )
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
 
 else()
 

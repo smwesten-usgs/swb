@@ -130,20 +130,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
       write(UNIT=LU_LOG,FMT=*) "Initializing flow direction..."
       call model_InitializeFlowDirection( pGrd , pConfig)
-    end if    !> any negative values are interpreted to mean that the cell should be
-    !> inactivated
-!    call model_setInactiveCells( pGrd, pConfig )
-
-    ! Initialize the model landuse-related parameters
-!    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
-
-!    call model_InitializeRunoff( pGrd, pConfig )
-
-!    if (pConfig%lEnableIrrigation .and. &
-!      ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
-!        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
-!      call model_CreateIrrigationTableIndex(pGrd, pConfig )
-!    endif
+    end if
 
     ! calculate number of gridcells here.
     iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -3099,7 +3086,15 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
 
   ! [ LOCALS ]
   integer ( kind=c_int ) :: i
+  logical ( kind=c_bool ) :: lAssertTest
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU
+
+  lAssertTest = cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses
+
+  if(.not. lAssertTest) &
+    call assert(lAssertTest, &
+      "Array index out of bounds. Variable is iLandUseIndex with a value of " &
+      //trim(int2char(cel%iLandUseIndex)), trim(__FILE__),__LINE__)
 
   pLU => pConfig%LU(cel%iLandUseIndex)
 
@@ -3298,19 +3293,6 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
        sAxisTxt="Basin Mask (unitless)" )
 
   endif
-
-!  call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd )
-!  pGrd%Cells%iLandUse = pGrd%iData
-!  pGenericGrd_int%iData = pGrd%Cells%iLandUse
-
-!  print *, trim(__FILE__), __LINE__
-!  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Landcover" // &
-!    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
-
-!  call make_shaded_contour(pGrd=pGenericGrd_int, &
-!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Landuse_Landcover.png", &
-!     sTitleTxt="Landuse / Landcover", &
-!     sAxisTxt="LULC Code" )
 
 end subroutine model_InitializeDataStructures
 
@@ -3588,8 +3570,6 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
     do iCol=1,pGrd%iNX
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
-
-      if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
 
       do k=1,size(pConfig%LU,1)
         pLU => pConfig%LU(k)
