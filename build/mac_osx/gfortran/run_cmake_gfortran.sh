@@ -9,8 +9,10 @@ export CMAKEROOT=/usr/bin/cmake
 export COMPILER_VERSION=4.9.0
 export COMPILER_TRIPLET=x86_64-apple-darwin12.4.0
 export COMPILER_DIR=/usr/local
-export COMPILER_LIB_PATH1="/usr/local/lib/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
-export COMPILER_LIB_PATH2=/usr/OpenMotif/lib
+export LIB_PATH1="/usr/local/lib/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
+export LIB_PATH2=/usr/OpenMotif/lib
+export LIB_PATH3=/usr/local/lib
+export LIB_PATH4=/usr/lib
 export Fortran_COMPILER_NAME=gfortran
 export R_HOME=/usr/bin/R
 
@@ -19,7 +21,7 @@ export INSTALL_PREFIX=/usr/local/bin
 
 # define other variables for use in the CMakeList.txt file
 # options are "Release" or "Debug"
-export BUILD_TYPE="Release"
+export BUILD_TYPE="Debug"
 # options are "x86" (32-bit) or "x64" (64-bit)
 export OS="mac_osx"
 
@@ -55,8 +57,10 @@ cmake ../../.. -G "Unix Makefiles" \
 -DCOMPILER_TRIPLET="$COMPILER_TRIPLET " \
 -DFortran_COMPILER_NAME="$Fortran_COMPILER_NAME" \
 -DCOMPILER_VERSION="$COMPILER_VERSION " \
--DCOMPILER_LIB_PATH1="$COMPILER_LIB_PATH1 " \
--DCOMPILER_LIB_PATH2="$COMPILER_LIB_PATH2 " \
+-DLIB_PATH1="$LIB_PATH1 " \
+-DLIB_PATH2="$LIB_PATH2 " \
+-DLIB_PATH3="$LIB_PATH3 " \
+-DLIB_PATH4="$LIB_PATH4 " \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS " \
 -DOS="$OS " \
 -DCMAKE_BUILD_TYPE="$BUILD_TYPE " \

@@ -1,4 +1,4 @@
-library(chron)
+require(chron)
 
 cellclass <- function(RootingDepth, AWC, latitude, grow_start, grow_stop) {
   

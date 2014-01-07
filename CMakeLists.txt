@@ -10,12 +10,13 @@
 # Fortran_FLAGS_RELEASE
 # Fortran_FLAGS_PROFILE
 # PATH_TO_R
-# OS                     | possible values: "win_x86", "win_x64", "max_osx", "linux"
+# OS                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_VERSION       | ex: "4.8.2"
-# COMPILER_LIB_PATH1
-# COMPILER_LIB_PATH2
-# COMPILER_LIB_PATH3
+# LIB_PATH1
+# LIB_PATH2
+# LIB_PATH3
+# LIB_PATH4
 
 message("Processing top-level CMakelists.txt for project swb")
 
@@ -64,9 +65,12 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
-set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} /usr/local/lib )
-set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} /usr/local/include )
-set(CMAKE_LIBRARY_PATH ${COMPILER_LIB_PATH1} ${COMPILER_LIB_PATH2} ${COMPILER_LIB_PATH3} ${SWB_LIBPATH})
+set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
+set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
+
+set(LIB_PATH ${LIB_PATH1} ${LIB_PATH2} ${LIB_PATH3} ${LIB_PATH4} )
+
+set(CMAKE_LIBRARY_PATH ${SWB_LIBPATH} ${LIB_PATH} ) 
 
 include( cmake/find_programs_and_libraries.cmake )
 

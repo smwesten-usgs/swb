@@ -1,5 +1,6 @@
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
+
 set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
 
 find_program( R_SCRIPT Rscript.exe Rscript
@@ -13,6 +14,17 @@ find_program( R_SCRIPT Rscript.exe Rscript
 )
 
 include_directories( ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
+
+if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
+
+  set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb.exe )
+
+else()
+
+  set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
+
+endif()  
+
 
 ################################################################
 ## NOTE: CMAKE_FIND_LIBRARY_SUFFIXES works...
@@ -34,31 +46,42 @@ message("MOD: LIB_PATH = ${LIB_PATH}")
 
 find_library(LIBZ
         NAMES z libz libz.a
-        PATHS ${SWB_LIBPATH} )
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBSZ
         NAMES sz libsz libsz.a
-        PATHS ${SWB_LIBPATH} )
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
+
 
 find_library(LIBNETCDF
         NAMES netcdf libnetcdf libnetcdf.a
-        PATHS ${SWB_LIBPATH} )
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
+
 
 find_library(LIBHDF5
-        NAMES hdf libhdf5 libhdf5.a
-        PATHS ${SWB_LIBPATH} )
+        NAMES hdf5 libhdf5 libhdf5.a
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
+
 
 find_library(LIBHDF5_HL
         NAMES hdf5_hl libhdf5_hl libhdf5_hl.a
-        PATHS ${SWB_LIBPATH} )
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBCURL
         NAMES curl libcurl libcurl.a
-        PATHS ${SWB_LIBPATH} )
-
-find_library(LIBCRYPTO
-        NAMES crypto libcrypto libcrypto.a
-        PATHS ${SWB_LIBPATH} )
+        PATHS ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
         NAMES dismg libdismg libdismg.a dislin.10 dislin
@@ -72,12 +95,12 @@ find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
         PATHS ${LIB_PATH} )
 
+set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
+                   ${LIBSZ} ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} )
 
+# Now, add platform-specific libraries as needed
 
-#        PATHS "C:/MinGW64/x86_64-w64-mingw32"
-#		PATH_SUFFIXES "lib" )
-
-if (WIN32)
+if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
   find_library(LIBWINPTHREAD  
           NAMES libwinpthread.a winpthread winpthread
@@ -91,16 +114,60 @@ if (WIN32)
           NAMES gdi32 libgdi32 libgdi32.a
           PATHS ${LIB_PATH} )        
 
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBOPENGL} ${LIBGDI32} )
+
 else()
 
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" "*.a")
+
   find_library(LIBXM
-          NAMES Xm libXm libXm.a
+          NAMES Xm libXm libXm.dylib
           PATHS ${LIB_PATH} )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")        
+
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBXM} )        
 
 endif()
 
-set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBCRYPTO} ${LIBZ}
-                   ${LIBSZ} ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} ${LIBWS2_32}
-				   ${LIBOPENGL} ${LIBGDI32} ${LIBXM} ${LIBWINPTHREAD})
+if ("${OS}" STREQUAL "mac_osx" )
+
+
+  find_library(LIBCRYPTO
+          NAMES crypto libcrypto libcrypto.a
+          PATHS ${SWB_LIBPATH}
+          ${LIB_PATH} )
+
+  find_library(LIBLDAP  
+          NAMES ldap libldap libldap.a
+          PATHS ${SWB_PATH} 
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBSASL2  
+          NAMES sasl2 libsasl2 libsasl2.a
+          PATHS ${SWB_PATH} 
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBLBER
+          NAMES lber liblber liblber.a
+          PATHS ${SWB_PATH}
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBSSH2  
+          NAMES ssh2 libssh2 libssh2.a
+          PATHS ${SWB_PATH} 
+          ${LIB_PATH})
+
+  find_library(LIBSSL  
+          NAMES ssl libssl libssl.a
+          PATHS ${SWB_PATH} 
+          ${LIB_PATH})
+
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBLDAP} ${LIBSASL2} ${LIBLBER} ${LIBCRYPTO} 
+       ${LIBSSH2} ${LIBSSL})
+
+endif()
+
 
 link_libraries( ${EXTERNAL_LIBS} )
