@@ -1,6 +1,9 @@
 myargs <- commandArgs(trailingOnly = TRUE)
 
-#setwd("d:/SMWData/Source_Code/swb/tests/general")
+if( !require(chron) ) {
+  install.packages("chron", repos="http://cran.us.r-project.org")
+}
+
 source("Thornthwaite_Mather_cell_class.R")
 
 TOLERANCE <- 0.01
@@ -28,7 +31,7 @@ my_control_file <- c(
   "INITIAL_SNOW_COVER CONSTANT 0",
   "RUNOFF C-N DOWNHILL",
   "ET T-M 43",
-  "SM T-M soil-moisture-retention-extended.grd",
+  "SM T-M EQUATIONS",
   "SOLVE Coshocton_Climate_1999.txt test_ future_ T T",
   "EOJ")
 
@@ -36,10 +39,19 @@ writeLines(text=my_control_file,
            con=swb_ctl)
 
 # first run SWB
-retval <- shell(cmd=paste(swb_exe,swb_ctl, " > swb_command_line_echo.txt", sep=" "),
+
+if (.Platform$OS.type == "windows") {
+
+  retval <- shell(cmd=paste(swb_exe,swb_ctl, " > swb_command_line_echo.txt", sep=" "),
                 intern=TRUE,
                 ignore.stdout=FALSE)
 
+} else {
+  
+  retval <- system(command=paste(swb_exe,swb_ctl, " > swb_command_line_echo.txt", sep=" "),
+                  intern=TRUE,
+                  ignore.stdout=FALSE)  
+}
 
 climate_1999 <- read.table("Coshocton_climate_1999.txt", header=FALSE, skip=1)
 colnames(climate_1999) <- c("Month","Day","Year","TMean","Precip","RHMean","TMax","TMin","WindVel","RHMin","PctSun")

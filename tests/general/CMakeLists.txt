@@ -1,13 +1,4 @@
 
-find_program(SWB_EXECUTABLE swb.exe swb
-             PATH
-			 ${CMAKE_BINARY_DIR}
- 			 ${CMAKE_BINARY_DIR}/src
-			 ${CMAKE_CURRENT_BINARY_DIR}
-)
-
-message("SWB LOCATION: " ${SWB_EXECUTABLE} )
-
 # Need input files over in build environment
 file(GLOB infiles
      RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
