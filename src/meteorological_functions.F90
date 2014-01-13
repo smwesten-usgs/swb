@@ -37,92 +37,50 @@ contains
 
 !end function capillary_flux
 
-!--------------------------------------------------------------------------
-!!****f* meteorological_functions/daylight_hours
-! NAME
-!   daylight_hours - Calculates daylight hours at a location.
-! SYNOPSIS
-!   Calculates daylight hours given the sunset hour angle (Omega_s).
-!
-! INPUTS
-!   rOmega_s -
-!
-! OUTPUTS
-!   rN - Daylight hours, in hours.
-!
-! NOTES
-!
-!  Implemented as equation 34, Allen and others (2006).
-!
-!   Reference:
-!   Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
-!    "Crop Evapotranspiration (Guidelines for computing crop water
-!    requirements)", Food and Agriculture Organization, Rome, Italy.
-!
-! SOURCE
 
+  !> Calculate the number of daylight hours at a location.
+  !> 
+  !> @param  [in] rOmega_s The sunset hour angle in Radians.
+  !> @return rN The number of daylight hours.
+  !>
+  !> @note Implemented as equation 34, Allen and others (2006).
+  !>
+  !> @note Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
+  !>       "Crop Evapotranspiration (Guidelines for computing crop water
+  !>       requirements)", Food and Agriculture Organization, Rome, Italy.
+  function daylight_hours(rOmega_s) result(rN)
 
-!!  The distance between \f$(x_1,y_1)\f$ and \f$(x_2,y_2)\f$ is
-!!  \f$\sqrt{(x_2-x_1)^2+(y_2-y_1)^2}\f$.
+    ! [ ARGUMENTS ]
+    real (kind=c_double), intent(in) :: rOmega_s
 
+    ! [ LOCALS ]
+    real (kind=c_double) :: rN
 
-!> Calculates the number of daylight hours at a location.
+    rN = 24_c_double / dpPI * rOmega_s
+
+  end function daylight_hours
+
+!>   Calculate extraterrestrial radiation given latitude and time of year.
 !>
-!> @param  rOmega_s The sunset hour angle in Radians.
-!> @return rN The number of daylight hours.
+!> @param [in]   rLatitude  Latitude of grid cell in RADIANS.
+!> @param [in]   rDelta     Solar declination in RADIANS.
+!> @param [in]   rOmega_s   Sunset hour angle in RADIANS.
+!> @param [in]   rDsubR     Inverse relative distance Earth-Sun.
 !>
-!> @note Implemented as equation 34, Allen and others (2006).
-!> @par
-!>   Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
-!>   "Crop Evapotranspiration (Guidelines for computing crop water
-!>   requirements)", Food and Agriculture Organization, Rome, Italy.
-
-
- function daylight_hours(rOmega_s) result(rN)
-
-  ! [ ARGUMENTS ]
-  real (kind=c_double), intent(in) :: rOmega_s
-
-  ! [ LOCALS ]
-  real (kind=c_double) :: rN
-
-  rN = 24_c_double / dpPI * rOmega_s
-
-end function daylight_hours
-
-!!***
-!--------------------------------------------------------------------------
-!!****f* meteorological_functions/extraterrestrial_radiation_Ra
-! NAME
-!   extraterrestrial_radiation_Ra - Calculates extraterrestrial radiation
-!                                   at a given location and time of year.
-! SYNOPSIS
-!   Calculates extraterrestrial radiation given latitude and time of year.
-!
-! INPUTS
-!   rLatitude - Latitude of grid cell in RADIANS
-!   rDelta - Solar declination in RADIANS
-!   rOmega_s - Sunset hour angle in RADIANS
-!   rDsubR - Inverse relative distance Earth-Sun
-!
-! OUTPUTS
-!   rRa - Extraterrestrial radiation in MJ / m**2 / day
-!
-!  1 MJ = 1e6 Joules
-!  1 Joule = 1 Watt / sec
-!  Therefore, multiply by 1e6 and divide by 86400 to get W/m*2-day
-!
-! NOTES
-!
-!  Implemented as equation 21, Allen and others (2006).
-!
-!   Reference:
-!   Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
-!    "Crop Evapotranspiration (Guidelines for computing crop water
-!    requirements)", Food and Agriculture Organization, Rome, Italy.
-!
-! SOURCE
-
+!> @retval rRa   Extraterrestrial radiation in MJ / m**2 / day.
+!>
+!> @note  1 MJ = 1e6 Joules; 1 Joule = 1 Watt / sec.
+!> @note   Therefore, multiply by 1e6 and divide by 86400 to get W/m*2-day.
+!>
+!> @par Source 
+!>      Equation 21, Allen and others (2006).
+!>
+!> @par Reference
+!>      Allen, R.G., and others, 2006, FAO Irrigation and Drainage Paper No. 56,
+!>      "Crop Evapotranspiration (Guidelines for computing crop water
+!>      requirements)", Food and Agriculture Organization, Rome, Italy.
+!>
+h!> @sa http://www.fao.org/docrep/x0490e/x0490e07.htm#solar%20radiation
 function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(rRa)
 
   ! [ ARGUMENTS ]
