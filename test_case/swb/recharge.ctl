@@ -343,7 +343,7 @@ WATER_CAPACITY ARC_GRID input/awcCoarse.asc
 # tables are ignored, and the polynomials developed by Wes Dripps
 # (based on the same tables) are used instead.
 #
-SM T-M std_input/soil-moisture-retention-extended.grd
+SM T-M EQUATIONS
 #*******************************************************************
 # INITIAL SOIL MOISTURE
 #
