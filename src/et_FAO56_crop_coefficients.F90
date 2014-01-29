@@ -3,7 +3,7 @@
 !>  provides support for modifying reference ET through the use of
 !> crop coefficients
 
-!>  Provides support for assessing the effect of irrigation on recharge
+!>  Provide support for assessing the effect of irrigation on recharge
 !> values by estimating the irrigation required to maintain soil moisture levels
 !> for specific crop types.
 module et_crop_coefficients
@@ -17,8 +17,8 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
- !> This subroutine updates the current Kcb for a SINGLE irrigation
- !> table entry
+ !> Update the current basal crop corfficient (Kcb) for 
+ !> a SINGLE irrigation table entry
  subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
 
   ! [ ARGUMENTS ]
@@ -59,6 +59,7 @@ end subroutine et_kc_UpdateCropCoefficient
 
 !------------------------------------------------------------------------------
 
+!> 
 function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, &
    rDeficit)  result(rKr)
 

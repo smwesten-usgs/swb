@@ -1,12 +1,11 @@
 !> @file
-!>  This module provides a layer of abstraction between the
+!> This module provides a layer of abstraction between the
 !> SWB data structures and the source of the data being accessed. The idea is that
 !> when SWB requests updated grid values, this is the module that requests data
 !> from the appropriate source, whether that is an ARC ASCII grid or NetCDF, etc.
 !> @ingroup data
 
-!> @namespace data_factory
-!>  Provide a uniform way from within the main SWB code to access data,
+!> Provide a uniform way from within the main SWB code to access data,
 !> for example, call mydata%getvalues(), which will retrieve data from the
 !> appropriate underlying source, whether that is a series of ARC ASCII grids,
 !> a single NetCDF file, or a series of NetCDF files.
@@ -25,9 +24,10 @@ module data_factory
   integer (kind=c_int), parameter :: NETCDF_FILE_CLOSED = 42
 
   public :: NETCDF_FILE_OPEN, NETCDF_FILE_CLOSED
+  public :: T_DATA_GRID
 
   !> @class T_DATA_GRID
-  type, public :: T_DATA_GRID
+  type T_DATA_GRID
     integer (kind=c_int) :: iSourceDataForm    ! constant, static grid, dynamic grid
     integer (kind=c_int) :: iSourceDataType = DATATYPE_NA  ! real, short, integer, etc.
     integer (kind=c_int) :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF

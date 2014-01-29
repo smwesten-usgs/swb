@@ -3,7 +3,6 @@
 !> contains all time and date-related routines as well as the
 !> @ref T_DATETIME class.
 
-!> @namespace datetime
 !>  This module contains all time and date-related routines as well as the @ref T_DATETIME class.
 module datetime
 

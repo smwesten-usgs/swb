@@ -2,7 +2,7 @@
 !>  Contains a single module, \ref irrigation, which
 !>  provides support for estimating irrigation amounts
 
-!>  Provides support for assessing the effect of irrigation on recharge
+!> Provides support for assessing the effect of irrigation on recharge
 !> values by estimating the irrigation required to maintain soil moisture levels
 !> for specific crop types.
 module irrigation
@@ -14,8 +14,8 @@ module irrigation
 
   contains
 
-!> This subroutine estimates the amount of water required
-!> to keep soil moisture values above the maximum allowable depletion (MAD)
+!> Estimate the irrigation water required in order to
+!> keep soil moisture values above the maximum allowable depletion (MAD)
 !> for each gridcell.
 subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 !
