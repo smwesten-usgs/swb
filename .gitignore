@@ -4,6 +4,7 @@
 *.ini
 *.csv
 *.orig
+*.DS_Store
 *LOGFILE*.txt
 webpages/styles
 webpages/Templates
