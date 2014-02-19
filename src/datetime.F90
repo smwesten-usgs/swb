@@ -12,8 +12,7 @@ module datetime
   implicit none
   private
 
-  !> @class T_DATETIME
-  type T_DATETIME
+  type, public :: T_DATETIME
 
     integer (kind=c_int) :: iMonth = 1
     integer (kind=c_int) :: iDay = 1

@@ -18,10 +18,12 @@ module et_crop_coefficients
 !------------------------------------------------------------------------------
 
  !> Update the current basal crop corfficient (Kcb) for 
- !> a SINGLE irrigation table entry
+ !! a SINGLE irrigation table entry
+ !!
+ !! @param[inout] pIRRIGATION pointer to a single line of information in the irrigation file.
+ !! @param[in] iThreshold either the current day of year or the number of growing degree days. 
  subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
 
-  ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   integer (kind=c_int) :: iThreshold
 
@@ -284,11 +286,11 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        ! plant root depth
        call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
 
-       !> "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
-       !> "STANDARD" is used to refer to crop ET requirements under
-       !> ideal conditions (i.e. plants not stressed due to scarcity
-       !. of water. "NONSTANDARD" is the term used to describe ET requirements
-       !> when plants are under stress, when water is scarce.
+       ! "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
+       ! "STANDARD" is used to refer to crop ET requirements under
+       ! ideal conditions (i.e. plants not stressed due to scarcity
+       ! of water. "NONSTANDARD" is the term used to describe ET requirements
+       ! when plants are under stress, when water is scarce.
 
        if ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
