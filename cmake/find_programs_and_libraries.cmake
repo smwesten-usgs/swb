@@ -1,7 +1,7 @@
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a")
 
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
@@ -46,15 +46,18 @@ message("MOD: LIB_PATH = ${LIB_PATH}")
 
 find_library(LIBZ
         NAMES z libz libz.a
-        PATHS ${SWB_LIBPATH}
+        PATHS 
+        /usr/local/opt/zlib/lib 
+        ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBSZ
         NAMES sz libsz libsz.a
-        PATHS ${SWB_LIBPATH}
-        ${LIB_PATH}
-        NO_CMAKE_SYSTEM_PATH )
+        PATHS
+        /usr/local/opt/szip/lib
+#        ${SWB_LIBPATH}
+        ${LIB_PATH} )
 
 
 find_library(LIBNETCDF
@@ -66,30 +69,36 @@ find_library(LIBNETCDF
 
 find_library(LIBHDF5
         NAMES hdf5 libhdf5 libhdf5.a
-        PATHS ${SWB_LIBPATH}
+        PATHS /usr/local/opt/hdf5/lib
+        ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 
 find_library(LIBHDF5_HL
         NAMES hdf5_hl libhdf5_hl libhdf5_hl.a
-        PATHS ${SWB_LIBPATH}
+        PATHS /usr/local/opt/hdf5/lib
+        ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBCURL
         NAMES curl libcurl libcurl.a
-        PATHS ${SWB_LIBPATH}
+        PATHS /usr/local/opt/curl/lib 
+        ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
         NAMES dismg libdismg libdismg.a dislin.10.4.0 dislin
-        PATHS ${SWB_LIBPATH} )
+        PATHS 
+        /usr/local/lib
+        ${SWB_LIBPATH} )
 
 find_library(LIBGCC
         NAMES gcc libgcc libgcc.a
-        PATHS ${LIB_PATH} )
+        PATHS /usr/local/opt/gcc48/lib/gcc/x86_64-apple-darwin13.0.0/4.8.2
+        ${LIB_PATH} )
 
 find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
@@ -143,33 +152,38 @@ if ("${OS}" STREQUAL "mac_osx" )
           ${LIB_PATH} )
 
   find_library(LIBLDAP  
-          NAMES ldap libldap libldap.a
-          PATHS ${SWB_PATH} 
+          NAMES ldap libldap libldap.dylib
+          PATHS /usr/local/opt/openldap/lib
           NO_CMAKE_SYSTEM_PATH )
 
   find_library(LIBSASL2  
-          NAMES sasl2 libsasl2 libsasl2.a
-          PATHS ${SWB_PATH} 
+          NAMES gsasl libgsasl sasl2 libsasl2 libsasl2.dylib
+          PATHS /usr/local/opt/gsasl/lib
+#          ${SWB_PATH} 
           NO_CMAKE_SYSTEM_PATH )
 
   find_library(LIBLBER
-          NAMES lber liblber liblber.a
-          PATHS ${SWB_PATH}
+          NAMES lber liblber liblber.dylib
+#          PATHS ${SWB_PATH}
           ${LIB_PATH}
           NO_CMAKE_SYSTEM_PATH )
 
   find_library(LIBSSH2  
-          NAMES ssh2 libssh2 libssh2.a
-          PATHS ${SWB_PATH} 
+          NAMES ssh2 libssh2 libssh2.dylib
+          PATHS 
+          /usr/local/opt/libssh2/lib 
+#          ${SWB_PATH}
           ${LIB_PATH})
 
   find_library(LIBSSL  
-          NAMES ssl libssl libssl.a
-          PATHS ${SWB_PATH} 
-          ${LIB_PATH})
+          NAMES ssl libssl libssl.dylib
+          PATHS 
+          /usr/local/opt/openssl/lib
+#          ${SWB_PATH} 
+          ${LIB_PATH} )
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBLDAP} ${LIBSASL2} ${LIBLBER} ${LIBCRYPTO} 
-       ${LIBSSH2} ${LIBSSL})
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS}  ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}  
+        ${LIBSSH2} ${LIBSASL2} )
 
 endif()
 
