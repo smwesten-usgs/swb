@@ -1,25 +1,27 @@
 !> @file
-!>  Contains a single module, @ref netcdf4_support, which
-!>  provides support for use of NetCDF files as input or output.
+!!  Contains a single module, @ref netcdf4_support, which
+!!  provides support for use of NetCDF files as input or output.
+!!
+!! Supports use of NetCDF files as input for time-varying,
+!! gridded meteorlogic data, or output for any SWB-generated variable.
+!!
+!! from the C API:
+!! The @c nc_get_vars_ type family of functions read a subsampled (strided)
+!! array section of values from a netCDF variable of an open netCDF dataset.
+!! The subsampled array section is specified by giving a corner,
+!! a vector of edge lengths, and a stride vector. The values are read
+!! with the last dimension of the netCDF variable varying fastest.
+!!          ^^^^                                  ^^^^^^^ ^^^^^^^
+!!
+!! from the Fortran 90 API:
+!! The values to be read are associated with the netCDF variable by
+!! assuming that the first dimension of the netCDF variable
+!!                   ^^^^^
+!! varies fastest in the Fortran 90 interface.
+!! ^^^^^^ ^^^^^^^
 
-!> Provides support for use of NetCDF files as input for time-varying,
-!>  gridded meteorlogic data, or output for any SWB-generated variable.
-!>
-!> from the C API:
-!> The nc_get_vars_ type family of functions read a subsampled (strided)
-!> array section of values from a netCDF variable of an open netCDF dataset.
-!> The subsampled array section is specified by giving a corner,
-!> a vector of edge lengths, and a stride vector. The values are read
-!> with the last dimension of the netCDF variable varying fastest.
-!>          ^^^^                                  ^^^^^^^ ^^^^^^^
-
-!> from the Fortran 90 API:
-!> The values to be read are associated with the netCDF variable by
-!> assuming that the first dimension of the netCDF variable
-!>                   ^^^^^
-!> varies fastest in the Fortran 90 interface.
-!> ^^^^^^ ^^^^^^^
-
+!> Provide support for use of NetCDF files as input for time-varying,
+!! gridded meteorlogic data, or output for any SWB-generated variable.
 module netcdf4_support
 
   use iso_c_binding

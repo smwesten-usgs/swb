@@ -36,6 +36,7 @@ message("     SSL       ${LIBSSL}")
 message("     LDAP      ${LIBLDAP}")
 message("     LBER      ${LIBLBER}")
 message("     SSH2      ${LIBSSH2}")
+message("     GSASL     ${LIBSASL2}")
 
 message("  Windows only:")
 message("    WS2_32    ${LIBWS2_32}")

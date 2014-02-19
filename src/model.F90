@@ -570,39 +570,44 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
 
 !  pGrd%Cells%rGrossPrecip = pGrd%rData
 
-  iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
+  iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip &
+                .and. pGrd%iMask == iACTIVE_CELL )
 
   ! convert values less than the minimum valid amount to zero
   where (pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip)
     pGrd%Cells%rGrossPrecip = rZERO
   end where
 
-!  pGenericGrd_sgl%rData = pGrd%Cells%rGrossPrecip
-!
-!  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
-!     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "Precip_"//trim(sBuf)//".png", &
-!     sTitleTxt="Precip: "//trim(sBuf), &
-!     sAxisTxt="mm per day" )
+  pGenericGrd_sgl%rData = pGrd%Cells%rGrossPrecip
+
+  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "Precip_"//trim(sBuf)//".png", &
+     sTitleTxt="Precip: "//trim(sBuf), &
+     sAxisTxt="in per day" )
+
+
+  rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL )
+  rMax = maxval(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL)
+  rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL)
+  iCount = count( pGrd%iMask == iACTIVE_CELL )
+
+  ! We are ignoring any missing or bogus values in this calculation
+  rMean = rSum / iCount
 
   if(pConfig%lHaltIfMissingClimateData) then
-    call Assert(rMin >= rZERO,"Precipitation values less than " &
-      //real2char(pConfig%rMinValidPrecip)//" are not allowed. " &
+    print *, rMin
+    print *, pConfig%rMinValidPrecip
+    print *, rMin >= pConfig%rMinValidPrecip
+    call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
+      //trim(real2char(pConfig%rMinValidPrecip))//" are not allowed. " &
       //"("//trim(int2char(iNegCount))//" cells with values < " &
-      //real2char(pConfig%rMinValidPrecip)//")",TRIM(__FILE__),__LINE__)
+      //trim(real2char(pConfig%rMinValidPrecip))//")",TRIM(__FILE__),__LINE__)
   elseif(iNegCount > 0) then
     write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iNegCount, &
       "Missing PRECIPITATION values detected: ", iMonth, iDay, iYear
     call echolog(sBuf)
     call echolog("  ==> Missing precipitation values will be set to zero")
   endif
-
-  rMin = minval(pGrd%Cells%rGrossPrecip)
-  rMax = maxval(pGrd%Cells%rGrossPrecip)
-  rSum = sum(pGrd%Cells%rGrossPrecip)
-  iCount = size(pGrd%Cells%rGrossPrecip)
-
-  ! We are ignoring any missing or bogus values in this calculation
-  rMean = rSum / iCount
 
   call stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iGROSS_PRECIP,iMonth)
 
