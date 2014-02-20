@@ -1,28 +1,14 @@
-!> @file
-!! This module provides a layer of abstraction between the
-!! SWB data structures and the source of the data being accessed. The idea is that
-!! when SWB requests updated grid values, this is the module that requests data
-!! from the appropriate source, whether that is an ARC ASCII grid or NetCDF, etc.
-
-!> Provide a uniform way from within the main SWB code to access data,
-!! for example, call mydata%getvalues(), which will retrieve data from the
-!! appropriate underlying source, whether that is a series of ARC ASCII grids,
-!! a single NetCDF file, or a series of NetCDF files.
 module data_factory
 
   use types
-
   use swb_grid
-
   use netcdf4_support
-  use iso_c_binding
+  use iso_c_binding, only : c_int, c_bool, c_float, c_double
   implicit none
   private
 
-  integer (kind=c_int), parameter :: NETCDF_FILE_OPEN = 27
-  integer (kind=c_int), parameter :: NETCDF_FILE_CLOSED = 42
-
-  public :: NETCDF_FILE_OPEN, NETCDF_FILE_CLOSED
+  integer (kind=c_int), public, parameter :: NETCDF_FILE_OPEN = 27
+  integer (kind=c_int), public, parameter :: NETCDF_FILE_CLOSED = 42
 
   type, public :: T_DATA_GRID
     integer (kind=c_int) :: iSourceDataForm    ! constant, static grid, dynamic grid
@@ -32,7 +18,7 @@ module data_factory
     character (len=256) :: sDescription = ""
     character (len=256) :: sSourcePROJ4_string
     character (len=256) :: sSourceFileType
-    character (len=256) :: sFilenameTemplate    ! e.g. %Y_%#_prcp.nc
+    character (len=256) :: sFilenameTemplate
     character (len=256) :: sSourceFilename      ! e.g. 1980_00_prcp.nc
     character (len=256) :: sOldFilename = "NA"  ! e.g. 1980_00_prcp.nc
     integer (kind=c_int) :: iFileCount = -1
@@ -71,8 +57,6 @@ module data_factory
     character (len=3) :: sVariableOrder = "tyx"
 
     type (T_GRID_BOUNDS) :: GRID_BOUNDS
-    ! units?
-    ! conversion factor?
 
     integer (kind=c_int) :: iNC_FILE_STATUS = NETCDF_FILE_CLOSED
     type (T_NETCDF4_FILE) :: NCFILE
@@ -95,71 +79,71 @@ module data_factory
 
   contains
 
-    procedure :: init_const_int => initialize_constant_int_data_object_sub
-    procedure :: init_const_real => initialize_constant_real_data_object_sub
-    procedure :: init_gridded => initialize_gridded_data_object_sub
+    procedure, private :: init_const_int => initialize_constant_int_data_object_sub
+    procedure, private :: init_const_real => initialize_constant_real_data_object_sub
+    procedure, private :: init_gridded => initialize_gridded_data_object_sub
 
-    procedure :: initialize_netcdf => initialize_netcdf_data_object_sub
+    procedure, public  :: initialize_netcdf => initialize_netcdf_data_object_sub
 
-    generic :: initialize => init_const_int, &
+    generic, public :: initialize => init_const_int, &
                              init_const_real, &
                              init_gridded
 
-    procedure :: set_scale => set_scale_sub
-    procedure :: set_offset => set_offset_sub
+    procedure, public :: set_scale => set_scale_sub
+    procedure, public :: set_offset => set_offset_sub
 
-    procedure :: set_minimum_allowable_value_int_sub
-    procedure :: set_minimum_allowable_value_real_sub
-    procedure :: set_maximum_allowable_value_int_sub
-    procedure :: set_maximum_allowable_value_real_sub
+    procedure, private :: set_minimum_allowable_value_int_sub
+    procedure, private :: set_minimum_allowable_value_real_sub
+    procedure, private :: set_maximum_allowable_value_int_sub
+    procedure, private :: set_maximum_allowable_value_real_sub
     generic :: set_valid_minimum => set_minimum_allowable_value_int_sub, &
                                     set_minimum_allowable_value_real_sub
     generic :: set_valid_maximum => set_maximum_allowable_value_int_sub, &
                                     set_maximum_allowable_value_real_sub
 
-    procedure :: set_grid_flip_horizontal => set_grid_flip_horizontal_sub
-    procedure :: set_grid_flip_vertical => set_grid_flip_vertical_sub
-    procedure :: set_conversion_factor => set_conversion_factor_sub
+    procedure, public :: set_grid_flip_horizontal => set_grid_flip_horizontal_sub
+    procedure, public :: set_grid_flip_vertical => set_grid_flip_vertical_sub
+    procedure, public :: set_conversion_factor => set_conversion_factor_sub
 
-    procedure :: getvalues_constant => getvalues_constant_sub
-    procedure :: getvalues_gridded => getvalues_gridded_sub
+    procedure, public :: getvalues_constant => getvalues_constant_sub
+    procedure, public :: getvalues_gridded => getvalues_gridded_sub
 
-    procedure :: getvalues_netcdf => getvalues_dynamic_netcdf_sub
+    procedure, public :: getvalues_netcdf => getvalues_dynamic_netcdf_sub
 
-    procedure :: getvalues => getvalues_sub
+    procedure, public :: getvalues => getvalues_sub
 
  !   procedure :: update => update_data_object_sub
  !   procedure :: destroy => create_data_object_sub
     procedure :: get_filetype => get_source_filetype_fn
 
-    procedure :: set_filecount => set_filecount
-    procedure :: reset_filecount => reset_filecount
-    procedure :: reset_at_yearend_filecount => reset_at_yearend_filecount
-    procedure :: increment_filecount => increment_filecount
+    procedure, public :: set_filecount => set_filecount
+    procedure, public :: reset_filecount => reset_filecount
+    procedure, public :: reset_at_yearend_filecount => reset_at_yearend_filecount
+    procedure, public :: increment_filecount => increment_filecount
 
-    procedure :: set_const_int => set_constant_value_int
-    procedure :: set_const_real => set_constant_value_real
-    generic :: set_constant => set_const_int, set_const_real
+    procedure, private :: set_const_int => set_constant_value_int
+    procedure, private :: set_const_real => set_constant_value_real
+    generic, public :: set_constant => set_const_int, set_const_real
 
-    procedure :: make_filename => make_filename_from_template
-    procedure :: set_PROJ4 => set_PROJ4_string_sub
-    procedure :: set_variable_order => set_variable_order_sub
-    procedure :: dump_data_structure => dump_data_structure_sub
-    procedure :: set_make_local_archive => set_archive_local_sub
-    procedure :: put_values_to_archive => put_values_to_local_NetCDF_sub
-    procedure :: transfer_from_native => transform_grid_to_grid
+    procedure, public :: make_filename => make_filename_from_template
+    procedure, public :: set_PROJ4 => set_PROJ4_string_sub
+    procedure, public :: set_variable_order => set_variable_order_sub
+    procedure, public :: dump_data_structure => dump_data_structure_sub
+    procedure, public :: set_make_local_archive => set_archive_local_sub
+    procedure, public :: put_values_to_archive => put_values_to_local_NetCDF_sub
+    procedure, public :: transfer_from_native => transform_grid_to_grid
 
-    procedure :: enforce_limits_real => data_GridEnforceLimits_real
-    procedure :: enforce_limits_int => data_GridEnforceLimits_int
-    generic :: enforce_limits => enforce_limits_real, enforce_limits_int
+    procedure, private :: enforce_limits_real => data_GridEnforceLimits_real
+    procedure, private :: enforce_limits_int => data_GridEnforceLimits_int
+    generic, public :: enforce_limits => enforce_limits_real, enforce_limits_int
 
-    procedure :: handle_missing_values_real => data_GridHandleMissingData_real
-    procedure :: handle_missing_values_int => data_GridHandleMissingData_int
-    generic :: handle_missing_values => handle_missing_values_real, &
+    procedure, private :: handle_missing_values_real => data_GridHandleMissingData_real
+    procedure, private :: handle_missing_values_int => data_GridHandleMissingData_int
+    generic, public :: handle_missing_values => handle_missing_values_real, &
                                         handle_missing_values_int
 
-    procedure :: calc_project_boundaries => calc_project_boundaries
-    procedure :: test_for_need_to_pad_values => test_for_need_to_pad_values
+    procedure, public :: calc_project_boundaries => calc_project_boundaries
+    procedure, public :: test_for_need_to_pad_values => test_for_need_to_pad_values
 
   end type T_DATA_GRID
 
@@ -183,8 +167,7 @@ module data_factory
 
 contains
 
-  subroutine initialize_constant_real_data_object_sub( &
-     this, &
+  subroutine initialize_constant_real_data_object_sub( this, &
      sDescription, &
      rConstant )
 
@@ -206,8 +189,7 @@ contains
 
 !----------------------------------------------------------------------
 
-  subroutine initialize_constant_int_data_object_sub( &
-    this, &
+  subroutine initialize_constant_int_data_object_sub( this, &
     sDescription, &
     iConstant )
 
@@ -229,8 +211,7 @@ contains
 
 !----------------------------------------------------------------------
 
-subroutine initialize_gridded_data_object_sub( &
-   this, &
+subroutine initialize_gridded_data_object_sub( this, &
    sDescription, &
    sFileType, &
    iDataType, &
@@ -275,7 +256,7 @@ subroutine initialize_gridded_data_object_sub( &
       .and. len_trim(this%sFilenameTemplate) > 0), &
       "INTERNAL PROGRAMMING ERROR - values may be assigned to either " &
       //dquote("Filename")//" or the "//dquote("sFilenameTemplate") &
-      //" -- NOT BOTH!", trim(__FILE__), __LINE__)
+      //" -- NOT BOTH", trim(__FILE__), __LINE__)
 
    this%sSourceFileType = sFileType
    this%iSourceFileType = this%get_filetype()
@@ -303,8 +284,7 @@ end subroutine initialize_gridded_data_object_sub
 
 !----------------------------------------------------------------------
 
-subroutine initialize_netcdf_data_object_sub( &
-   this, &
+subroutine initialize_netcdf_data_object_sub( this, &
    sDescription, &
    iDataType, &
    pGrdBase, &
@@ -347,7 +327,7 @@ subroutine initialize_netcdf_data_object_sub( &
       .and. len_trim(this%sFilenameTemplate) > 0), &
       "INTERNAL PROGRAMMING ERROR - values may be assigned to either " &
       //dquote("Filename")//" or the "//dquote("sFilenameTemplate") &
-      //" -- NOT BOTH!", trim(__FILE__), __LINE__)
+      //" -- NOT BOTH", trim(__FILE__), __LINE__)
 
    this%sSourceFileType = "NETCDF"
    this%iSourceFileType = this%get_filetype()
@@ -505,7 +485,7 @@ subroutine getvalues_constant_sub( this, pGrdBase )
       this%sOldFilename = this%sSourceFilename
 
       inquire(file=this%sSourceFilename, exist=lExist, opened=lOpened)
-      !!! if the file doesn't exist, EXIT!
+      ! if the file doesn't exist, EXIT
       if (.not. lExist ) then
         if ( this%lMissingFilesAreAllowed ) then
          exit
@@ -821,10 +801,10 @@ end subroutine set_constant_value_real
 
     enddo
 
-    if( index(string=sCWD, substring="/") > 0 ) then
-      sDelimiter = "/"
+    if( index(string=sCWD, substring=sFORWARDSLASH) > 0 ) then
+      sDelimiter = sFORWARDSLASH
     else
-      sDelimiter = "\"
+      sDelimiter = sBACKSLASH
     endif
 
 !    this%sSourceFilename = trim(sCWD)//trim(sDelimiter)//trim(sNewFilename)
@@ -852,8 +832,8 @@ end subroutine set_constant_value_real
 
       iPos = scan(string=trim(this%sSourceFilename), set="http://")
 
-      !> if this is a URL, we don't want to test for file existence using
-      !> the Fortran "inquire" function
+      ! if this is a URL, we don't want to test for file existence using
+      ! the Fortran "inquire" function
       if (this%sSourceFilename(iPos:iPos+6) == "http://") then
 
         exit
@@ -863,11 +843,11 @@ end subroutine set_constant_value_real
         ! does this file actually exist?
         inquire( file=this%sSourceFilename, exist=lExist )
 
-        !> if the file exists, don't bother with padding any values
+        ! if the file exists, don't bother with padding any values
         if (lExist) exit
 
-        !> if file doesn't exist, and we're close to the end of the year,
-        !> assume that we should pad values at the end of the year
+        ! if file doesn't exist, and we're close to the end of the year,
+        ! assume that we should pad values at the end of the year
         if (iMonth == 12 ) then
 
           iDaysLeftInMonth = 31 - iDay
@@ -894,8 +874,8 @@ end subroutine set_constant_value_real
 
         endif
 
-        !> if we've reached this point, we cannot locate the proper file and
-        !> we are not within the proper range of dates to allow for padding.
+        ! if we've reached this point, we cannot locate the proper file and
+        ! we are not within the proper range of dates to allow for padding.
         call assert(lExist, "The filename created from your template refers to " &
           //"a nonexistent file. ~ Attempted to open filename "&
           //dquote(this%sSourceFilename), trim(__FILE__), __LINE__)
@@ -952,10 +932,10 @@ end subroutine set_constant_value_real
 
       this%lPadValues = this%test_for_need_to_pad_values(iMonth=iMonth, iYear=iYear, iDay=iDay)
 
-       !> call to test_for_need_to_pad_values return value of "TRUE" if
-      !> if attempts to open a nonexistent file within the last few days of a year.
-      !> The assumption is that values missing at the end of a calendar year
-      !> translates into a missing file at the year's end
+      ! call to test_for_need_to_pad_values return value of "TRUE" if
+      ! if attempts to open a nonexistent file within the last few days of a year.
+      ! The assumption is that values missing at the end of a calendar year
+      ! translates into a missing file at the year's end
 
       if (.not. this%lPadValues) then
 
@@ -963,8 +943,8 @@ end subroutine set_constant_value_real
 
           if( len_trim( this%sSourcePROJ4_string ) > 0 ) then
 
-            !> calculate the project boundaries in the coordinate system of
-            !> the native data file
+            ! calculate the project boundaries in the coordinate system of
+            ! the native data file
             call this%calc_project_boundaries(pGrdBase=pGrdBase)
 
             call netcdf_open_and_prepare_as_input(NCFILE=this%NCFILE, &
@@ -981,8 +961,8 @@ end subroutine set_constant_value_real
 
           else  ! PROJ4 string is blank
 
-            !> assume source NetCDF file is in same projection and
-            !> of same dimensions as base grid
+            ! assume source NetCDF file is in same projection and
+            ! of same dimensions as base grid
             call netcdf_open_and_prepare_as_input(NCFILE=this%NCFILE, &
               sFilename=this%sSourceFilename, &
               lFlipHorizontal=this%lFlipHorizontal, &
@@ -1007,18 +987,18 @@ end subroutine set_constant_value_real
 
           this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
 
-          !> if the user has not supplied a scale and offset,
-          !> then populate these values with the scale and offset
-          !> factor included in the NetCDF attribute data, if any.
+          ! if the user has not supplied a scale and offset,
+          ! then populate these values with the scale and offset
+          ! factor included in the NetCDF attribute data, if any.
           if (.not. this%lUserSuppliedScaleAndOffset) then
             this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
             this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
           endif
 
-          !> Amongst other things, the call to netcdf_open_and_prepare
-          !> finds the nearest column and row that correspond to the
-          !> project bounds, then back-calculates the coordinate values
-          !> of the column and row numbers in the *NATIVE* coordinate system
+          ! Amongst other things, the call to netcdf_open_and_prepare
+          ! finds the nearest column and row that correspond to the
+          ! project bounds, then back-calculates the coordinate values
+          ! of the column and row numbers in the *NATIVE* coordinate system
           this%pGrdNative => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
                     iNY=this%NCFILE%iNY, &
                     rX0=this%NCFILE%rX(NC_LEFT), &
@@ -1037,8 +1017,8 @@ end subroutine set_constant_value_real
           this%lPerformFullInitialization = lFALSE
 
         else
-          !> Projection settings can be left alone; read values from new
-          !> NetCDF file with same grid boundaries, projection, etc.
+          ! Projection settings can be left alone; read values from new
+          ! NetCDF file with same grid boundaries, projection, etc.
 
 !          call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename, iLU=LU_LOG)
           call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename)
@@ -1373,9 +1353,9 @@ end subroutine set_maximum_allowable_value_real_sub
      sFromPROJ4=trim(pGrdBase%sPROJ4_string), &
      sToPROJ4=trim(this%sSourcePROJ4_string))
 
-  !> because PROJ4 works in RADIANS if data are unprojected (i.e. GEOGRAPHIC),
-  !> we need to convert back to degrees on the assumption that the coordinates
-  !> referenced in the file will also be i degrees
+  ! because PROJ4 works in RADIANS if data are unprojected (i.e. GEOGRAPHIC),
+  ! we need to convert back to degrees on the assumption that the coordinates
+  ! referenced in the file will also be i degrees
   if( index(string=trim(this%sSourcePROJ4_string), substring="latlon") > 0 &
       .or. index(string=trim(this%sSourcePROJ4_string), substring="lonlat") > 0 ) then
 

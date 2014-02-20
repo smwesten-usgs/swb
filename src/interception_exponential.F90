@@ -1,9 +1,9 @@
 !> @file
-!!  Contains a single module, @ref interception_linear, which
-!!  calculates daily interception values by means of a simple linear relation.
+!!  Contains a single module, @ref interception_exponential, which
+!!  calculates daily interception values by means of an exponential relation.
 
 
-!>  Calculates daily canopy interception by means of a simple linear relation.
+!>  Calculates daily canopy interception by means of an exponential relation.
 module interception_exponential
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double

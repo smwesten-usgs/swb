@@ -173,30 +173,20 @@ end function equivalent_evaporation
 
 end function row_latitude
 
-!!***
-!--------------------------------------------------------------------------
-!!****f* meteorological_functions/sensible_heat_exchange_h
-! NAME
-!   sensible_heat_exchange_h - Returns sensible heat exchange between
-!                              surface and air
-! SYNOPSIS
-!   Returns sensible heat exchange between surface and air
-!
-! INPUTS
-!
-! OUTPUTS
-!   rH - Returns sensible heat exchange between surface and air in
-!        kJ per square meter
-!
-! SOURCE
-!
-! (equation 11)
-!
-! Walter, M.T.., Brooks, E.S., McCool, D.K., King, L.G., Molnau, M.
-!   and Boll, J., 2005, Process-based snowmelt modeling:
-!   does it require more input data than temperature-index modeling?:
-!   Journal of Hydrology, v. 300, no. 1-4, p. 65–75.
-
+!> Return sensible heat exchange between surface and air
+!!
+!! @param[in] rTSnow Snow temperature, in &deg;C
+!! @param[in] rTAvg Mean daily air temperature, in &deg;C
+!! @param[in] rWindSpd Wind speed in meters per second
+!! @retval rH Sensible heat exchange between surface and air, in 
+!! kilojoules per square meter
+!!
+!! @note Implemented as equation 11, Walter and others (2005)
+!! @note Reference:
+!!   Walter, M.T., Brooks, E.S., McCool, D.K., King, L.G., Molnau, M.
+!!   and Boll, J., 2005, Process-based snowmelt modeling:
+!!   does it require more input data than temperature-index modeling?:
+!!   Journal of Hydrology, v. 300, no. 1-4, p. 65–75.
 function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
 
   real (kind=c_float) :: rTSnow
@@ -205,35 +195,15 @@ function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
   real(kind=c_double) :: rH
 
   ! [ LOCALS ]
-  real (kind=c_float), parameter :: rCa = 0.93   ! kJ per cubic meter per degree C
-                                               ! (heat capacity of air)
-
-  real (kind=c_float), parameter :: rRho_air = 1.29  ! kg per cubic meter
-
+  !> heat capacity of air; kJ per cubic meter per degree C
+  real (kind=c_float), parameter :: rCa = 0.93   
+  !> density of air; kg per cubic meter
+  real (kind=c_float), parameter :: rRho_air = 1.29
   real (kind=c_double) :: rWindSpeed
-
-  ! rTurbConst derived from equation 12 in the reference by assigning
-  ! reasonable default values to the parameters and combining into a constant
-  !
-  ! R code follows:
-  ! zu <- 2
-  ! d <- 0
-  ! zm <- 0.001
-  ! a <- log((zu - d + zm) / zm)
-  ! a
-  ! [1] 7.601402
-  ! zT <- 1
-  ! zh <- 0.0002
-  ! b <- log((zT - d + zh) / zh)
-  ! b
-  ! [1] 8.517393
-  ! a * b / 86400 / 0.41^2
-  ! [1] 0.0044577833643
-!  real (kind=c_double) :: rTurbConst = 0.0044577833643_c_double
+  !> @todo Check on the origins of the value specified for rTurbConst
   real (kind=c_double) :: rTurbConst = 385.16_c_double
+  real (kind=c_float) :: rRh                   
 
-  real (kind=c_float) :: rRh                     ! resistance to heat x-fer in
-                                               ! days per meter
   if(present(rWindspd)) then
     rWindSpeed = rWindSpd
   else
@@ -243,8 +213,6 @@ function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
   rRh = rTurbConst / rWindSpeed
 
   rH = 86400 * rCa * rRho_air *(FtoC(rTAvg) - FtoC(rTSnow)) / rRh
-
-  return
 
 end function sensible_heat_exchange_h
 
@@ -274,7 +242,6 @@ end function sensible_heat_exchange_h
 !   and Boll, J., 2005, Process-based snowmelt modeling:
 !   does it require more input data than temperature-index modeling?:
 !   Journal of Hydrology, v. 300, no. 1-4, p. 65–75.
-
 function convective_heat_exchange_e(rTSnow, rTAvg, rWindSpd) result(rE)
 
   real (kind=c_float) :: rTSnow
