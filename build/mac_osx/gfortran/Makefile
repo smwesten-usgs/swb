@@ -42,10 +42,10 @@ EQUALS = =
 CMAKE_EDIT_COMMAND = "/Applications/CMake 2.8-11.app/Contents/bin/ccmake"
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/smwesten/smwdata/Source_Code/swb_fork
+CMAKE_SOURCE_DIR = /Users/smwesten/smwdata/Source_Code/swb
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/smwesten/smwdata/Source_Code/swb_fork/build/mac_osx/gfortran
+CMAKE_BINARY_DIR = /Users/smwesten/smwdata/Source_Code/swb/build/mac_osx/gfortran
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -73,7 +73,7 @@ package/fast: package
 # Special rule for the target package_source
 package_source:
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --cyan "Run CPack packaging tool for source..."
-	"/Applications/CMake 2.8-11.app/Contents/bin/cpack" --config ./CPackSourceConfig.cmake /Users/smwesten/smwdata/Source_Code/swb_fork/build/mac_osx/gfortran/CPackSourceConfig.cmake
+	"/Applications/CMake 2.8-11.app/Contents/bin/cpack" --config ./CPackSourceConfig.cmake /Users/smwesten/smwdata/Source_Code/swb/build/mac_osx/gfortran/CPackSourceConfig.cmake
 .PHONY : package_source
 
 # Special rule for the target package_source
@@ -102,9 +102,9 @@ test/fast: test
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/smwesten/smwdata/Source_Code/swb_fork/build/mac_osx/gfortran/CMakeFiles /Users/smwesten/smwdata/Source_Code/swb_fork/build/mac_osx/gfortran/CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/smwesten/smwdata/Source_Code/swb/build/mac_osx/gfortran/CMakeFiles /Users/smwesten/smwdata/Source_Code/swb/build/mac_osx/gfortran/CMakeFiles/progress.marks
 	$(MAKE) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/smwesten/smwdata/Source_Code/swb_fork/build/mac_osx/gfortran/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/smwesten/smwdata/Source_Code/swb/build/mac_osx/gfortran/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
