@@ -13,5 +13,9 @@ webpages/includes
 webpages/images
 build
 doc/doxygen
+doc/doxygen/html
+doc/doxygen/html/*
+doc/doxygen/html/*.*
 share/Redistributables
 share/external
+share/related_codes/Hawaii_Water_Budget_Code/
