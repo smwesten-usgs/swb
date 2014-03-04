@@ -80,7 +80,7 @@ contains
 !>      "Crop Evapotranspiration (Guidelines for computing crop water
 !>      requirements)", Food and Agriculture Organization, Rome, Italy.
 !>
-h!> @sa http://www.fao.org/docrep/x0490e/x0490e07.htm#solar%20radiation
+!> @sa http://www.fao.org/docrep/x0490e/x0490e07.htm#solar%20radiation
 function extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rDsubR) result(rRa)
 
   ! [ ARGUMENTS ]
