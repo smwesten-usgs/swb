@@ -70,9 +70,9 @@ set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
 
 set(LIB_PATH ${LIB_PATH1} ${LIB_PATH2} ${LIB_PATH3} ${LIB_PATH4} )
 
-set(CMAKE_LIBRARY_PATH ${SWB_LIBPATH} ${LIB_PATH} ) 
+set(CMAKE_LIBRARY_PATH ${SWB_LIBPATH} ${LIB_PATH} )
 
-include( cmake/find_programs_and_libraries.cmake )
+include( cmake/find_programs_and_libraries_simplified.cmake )
 
 #set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
 

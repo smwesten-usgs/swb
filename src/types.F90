@@ -1203,7 +1203,6 @@ module types
   interface asCharacter
     module procedure short2char
     module procedure int2char
-    module procedure c_size_t2char
     module procedure real2char
     module procedure dbl2char
   end interface asCharacter
@@ -2723,19 +2722,6 @@ function dbl2real(dpValue)  result(rValue)
   rValue = real(dpValue, kind=c_float)
 
 end function dbl2real
-
-!--------------------------------------------------------------------------
-
-!> Convert an integer value into a formatted character string
-elemental function c_size_t2char(iValue)  result(sBuf)
-
-  integer (kind=c_size_t), intent(in) :: iValue
-  character (len=14) :: sBuf
-
-  write(UNIT=sBuf,FMT="(i14)") iValue
-  sBuf = ADJUSTL(sBuf)
-
-end function c_size_t2char
 
 !--------------------------------------------------------------------------
 
