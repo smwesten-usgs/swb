@@ -23,7 +23,7 @@ else()
 
   set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
 
-endif()  
+endif()
 
 
 ################################################################
@@ -46,8 +46,8 @@ message("MOD: LIB_PATH = ${LIB_PATH}")
 
 find_library(LIBZ
         NAMES z libz libz.a
-        PATHS 
-        /usr/local/opt/zlib/lib 
+        PATHS
+        /usr/local/opt/zlib/lib
         ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
@@ -56,7 +56,7 @@ find_library(LIBSZ
         NAMES sz libsz libsz.a
         PATHS
         /usr/local/opt/szip/lib
-#        ${SWB_LIBPATH}
+        ${SWB_LIBPATH}
         ${LIB_PATH} )
 
 
@@ -84,14 +84,14 @@ find_library(LIBHDF5_HL
 
 find_library(LIBCURL
         NAMES curl libcurl libcurl.a
-        PATHS /usr/local/opt/curl/lib 
+        PATHS /usr/local/opt/curl/lib
         ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
         NAMES dismg libdismg libdismg.a dislin.10 dislin dislin.10.dylib
-        PATHS 
+        PATHS
         /usr/local/lib
         ${SWB_LIBPATH} )
 
@@ -111,21 +111,21 @@ set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
 
 if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
-  find_library(LIBWINPTHREAD  
+  find_library(LIBWINPTHREAD
           NAMES libwinpthread.a winpthread winpthread
           PATHS ${LIB_PATH} )
 
   find_library(LIBWS2_32
           NAMES ws2_32 libws2_32 libws2_32.a
           PATHS ${LIB_PATH} )
-		  
+
   find_library(LIBOPENGL
           NAMES opengl32 libopengl32 libopengl32.a
           PATHS ${LIB_PATH} )
 
   find_library(LIBGDI32
           NAMES gdi32 libgdi32 libgdi32.a
-          PATHS ${LIB_PATH} )        
+          PATHS ${LIB_PATH} )
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
 
@@ -137,9 +137,9 @@ else()
           NAMES Xm libXm libXm.dylib
           PATHS ${LIB_PATH} )
 
-  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")        
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBXM} )        
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBXM} )
 
 endif()
 
@@ -151,15 +151,15 @@ if ("${OS}" STREQUAL "mac_osx" )
           PATHS ${SWB_LIBPATH}
           ${LIB_PATH} )
 
-  find_library(LIBLDAP  
+  find_library(LIBLDAP
           NAMES ldap libldap libldap.dylib
           PATHS /usr/local/opt/openldap/lib
           NO_CMAKE_SYSTEM_PATH )
 
-  find_library(LIBSASL2  
+  find_library(LIBSASL2
           NAMES gsasl libgsasl sasl2 libsasl2 libsasl2.dylib
           PATHS /usr/local/opt/gsasl/lib
-#          ${SWB_PATH} 
+#          ${SWB_PATH}
           NO_CMAKE_SYSTEM_PATH )
 
   find_library(LIBLBER
@@ -168,21 +168,21 @@ if ("${OS}" STREQUAL "mac_osx" )
           ${LIB_PATH}
           NO_CMAKE_SYSTEM_PATH )
 
-  find_library(LIBSSH2  
+  find_library(LIBSSH2
           NAMES ssh2 libssh2 libssh2.dylib
-          PATHS 
-          /usr/local/opt/libssh2/lib 
+          PATHS
+          /usr/local/opt/libssh2/lib
 #          ${SWB_PATH}
           ${LIB_PATH})
 
-  find_library(LIBSSL  
+  find_library(LIBSSL
           NAMES ssl libssl libssl.dylib
-          PATHS 
+          PATHS
           /usr/local/opt/openssl/lib
-#          ${SWB_PATH} 
+#          ${SWB_PATH}
           ${LIB_PATH} )
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS}  ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}  
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS}  ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}
         ${LIBSSH2} ${LIBSASL2} )
 
 endif()
