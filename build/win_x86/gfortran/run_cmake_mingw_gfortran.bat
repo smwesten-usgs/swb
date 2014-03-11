@@ -1,7 +1,9 @@
 @echo off
-:: cmake -G "Mi:: remove existing Cmake cache and directories
 :: remove existing Cmake cache and directories
-rmdir /S /Q CMake*
+rmdir /S /Q CMakeFiles
+rmdir /S /Q src
+rmdir /S /Q Testing
+rmdir /S /Q tests
 del /S /Q *.txt
 
 :: set CMAKE-related and build-related variables
@@ -21,8 +23,8 @@ set OMP_NUM_THREADS=8
 set INSTALL_PREFIX=d:\DOS
 
 :: define other variables for use in the CMakeList.txt file
-:: options are "Release" or "Debug"
-set BUILD_TYPE="Debug"
+:: options are "Release" or "Debug" (or possibly "Profile")
+set BUILD_TYPE="Release"
 :: options are "win_x86" (32-bit) or "win_x64" (64-bit)
 set OS="win_x86"
 
@@ -75,7 +77,7 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DLIB_PATH2=%COMPILER_LIB_PATH2% ^
 -DFortran_COMPILER_NAME=%Fortran_COMPILER_NAME% ^
 -DOS=%OS% ^
--DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
+-DBUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^
 -DCMAKE_MAKE_PROGRAM:FILEPATH=%COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% ^
 -DCMAKE_RANLIB:FILEPATH=%COMPILER_DIR%\bin\ranlib.exe ^

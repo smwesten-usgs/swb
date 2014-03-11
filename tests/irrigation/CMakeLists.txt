@@ -11,7 +11,7 @@ message("SWB LOCATION: " ${SWB_EXECUTABLE} )
 # Need input files over in build environment
 file(GLOB infiles
      RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-     *.ssf *.inp *.R *.dat *.csv *.txt)
+     *.ssf *.inp *.r *.R *.ctl *.bat *.asc *.dat *.csv *.txt)
 
 foreach(infilename ${infiles})
     set(infile  ${CMAKE_CURRENT_SOURCE_DIR}/${infilename})

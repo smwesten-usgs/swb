@@ -4,7 +4,7 @@
 # set and passed during CMake invocation:
 
 # CMAKE_BINARY_DIR
-# CMAKE_BUILD_TYPE       | possible values: "debug", "release", "profile"
+# DESIRED_BUILD_TYPE     | possible values: "debug", "release", "profile"
 # CMAKE_INSTALL_PREFIX   | ex: "D:/DOS"
 # Fortran_FLAGS_DEBUG
 # Fortran_FLAGS_RELEASE

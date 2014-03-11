@@ -3,7 +3,7 @@ REM @echo off
 rmdir /S /Q CMakeFiles
 rmdir /S /Q src
 rmdir /S /Q Testing
-rmdir /S /Q test
+rmdir /S /Q tests
 del /S /Q *.txt
 
 :: set CMAKE-related and build-related variables
