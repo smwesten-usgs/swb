@@ -1945,14 +1945,14 @@ subroutine netcdf_dump_cdl(NCFILE, iLU)
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
   type (T_NETCDF_DIMENSION), pointer :: pNC_DIM
   integer :: iLU
-  character (len=256) :: sBuf
+  character (len=256) :: sBuf, sBuf2
   character (len=256) :: sDimName
   integer (kind=c_int) :: iDimID
   integer (kind=c_int) :: iUbound
 
   integer :: iResult, iIndex, iIndex2, iIndex3, iIndex4
 
-  sBuf=""
+  sBuf=""; sBuf2=""
 
   write(unit=iLU, fmt="(a)") "netcdf "//trim(NCFILE%sFilename)//" {"
   write(unit=iLU, fmt="(a)") "  dimensions:"
@@ -1983,8 +1983,9 @@ subroutine netcdf_dump_cdl(NCFILE, iLU)
         pNC_DIM => NCFILE%pNC_DIM(iDimID)
         sDimName = pNC_DIM%sDimensionName
 
+        write(sBuf2, fmt="(i12)") pNC_DIM%iNC_DimSize
         sBuf = trim(sBuf)//trim(pNC_DIM%sDimensionName)//"=" &
-               //trim(asCharacter(pNC_DIM%iNC_DimSize))
+           //trim(adjustl(sBuf2))
 
         if (iIndex3 /= iUbound) sBuf = trim(sBuf)//", "
 

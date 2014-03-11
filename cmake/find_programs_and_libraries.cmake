@@ -143,7 +143,7 @@ else()
 
 endif()
 
-#if ("${OS}" STREQUAL "mac_osx" )
+if ("${OS}" STREQUAL "mac_osx" )
 
 
   find_library(LIBCRYPTO
@@ -185,7 +185,7 @@ endif()
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS}  ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}
         ${LIBSSH2} ${LIBSASL2} )
 
-#endif()
+endif()
 
 
 link_libraries( ${EXTERNAL_LIBS} )
