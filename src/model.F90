@@ -742,10 +742,10 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
       end if
 
-      if (cel%rTMin > 29.) then
-        cel%rGDD_29F = cel%rGDD_29F + (cel%rTMin - 29.)
+      if (cel%rTMin > 28.) then
+        cel%rGDD_28F = cel%rGDD_28F + (cel%rTAvg - 28.)
       else
-        cel%rGDD_29F = 0.
+        cel%rGDD_28F = 0.
       endif
 
     end do
@@ -843,13 +843,13 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol, iRow)
 
-      if ( cel%lGrowingSeason ) then
+      if ( cel%lGrowingSeason ) then   ! check for killing frost
 
-        if ( cel%rGDD_29F <= 50. ) cel%lGrowingSeason = lFALSE
+        if ( cel%rTMin <= 28. ) cel%lGrowingSeason = lFALSE
 
-      else  ! it is NOT growing season
+      else  ! it is NOT currently growing season; should it be?
 
-        if ( cel%rGDD_29F > 50. ) cel%lGrowingSeason = lTRUE
+        if ( cel%rGDD_28F > 90. ) cel%lGrowingSeason = lTRUE
 
       endif
 
