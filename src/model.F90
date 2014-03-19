@@ -3168,7 +3168,7 @@ subroutine model_setInactiveCells( pGrd, pConfig )
 
   endwhere
 
-  call echolog("Finished converting cells with missing data to inactive cells." &
+  call echolog("Finished converting cells with missing data (negative values) to inactive cells." &
     //"~ A total of "//trim(asCharacter(count(pGrd%iMask==iINACTIVE_CELL))) &
     //" cells were inactivated out of "//trim(asCharacter(pConfig%iNumGridCells))//" cells.")
 
@@ -3562,6 +3562,9 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
+
+      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
+
       lMatch = lFALSE
       cel => pGrd%Cells(iCol,iRow)
 
