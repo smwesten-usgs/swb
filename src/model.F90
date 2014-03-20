@@ -63,7 +63,7 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
+subroutine model_Solve( pGrd, pConfig, pGraph)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
@@ -73,13 +73,12 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
     ! pointer to data structure that holds parameters for creating
     ! DISLIN plots
-  type ( T_GENERAL_GRID ), pointer :: pLandUseGrid       ! pointer to land use grid
 
   ! [ LOCALS ]
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=c_int) :: tj, ti
   integer (kind=c_int) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=c_int) :: iPos
+  integer (kind=c_int) :: iPos, iIndex
   integer (kind=c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=c_int) :: iCol, iRow
   character(len=3) :: sMonthName
@@ -109,11 +108,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
        pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 
+    ! perform some basic sanity checking on the specified model options
     call model_CheckConfigurationSettings( pGrd, pConfig )
 
-!    call model_InitializeInputAndOutput( pGrd, pConfig )
-
-    !> read in flow direction, soil group, and AWC grids
+    ! read in flow direction, soil group, and AWC grids
     call model_InitializeDataStructures( pGrd, pConfig )
 
     call model_InitializeInputAndOutput( pGrd, pConfig )
@@ -201,6 +199,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd, iMonth=pConfig%iMonth, &
     iDay=pConfig%iDay, iYear=pConfig%iYear )
 
+  ! if a new landuse grid is found, then we need to perform a basic reinitialization
+  ! of active/inactive cells, total soil water capacity, etc.
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
     pGrd%Cells%iLandUse = pGrd%iData
     DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
@@ -226,6 +226,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
+    !> @TODO Check the logic here. It would seem that a new irrigation table
+    !! index *should* be created if we have dynamic data rather than static data
     if (pConfig%lEnableIrrigation .and. &
       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
@@ -411,6 +413,25 @@ end if
   ! update value of last year
   if( .not. pConfig%lGriddedData) pConfig%iEndYear = pConfig%iYear
 
+  do iIndex=1,iNUM_VARIABLES
+
+    ! write the end date of the simulation (up to this point) into the header of
+    ! the binary file (*.bin)
+    if(STAT_INFO(iIndex)%iDailyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
+
+      inquire(UNIT=STAT_INFO(iIndex)%iLU,POS=iPos)  ! establish location to return to
+  
+      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
+        pConfig%iMonth,pConfig%iDay, pConfig%iYear
+
+      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iPos ) ! return to prior location in bin file
+
+    end if
+
+  end do
+
   ! update current date so all is well when next years file is opened
   pConfig%iMonth = iTempMonth
   pConfig%iDay = iTempDay
@@ -456,20 +477,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   integer (kind=c_int) :: iIndex
-
-  ! finalize and close any open NetCDF or binary output files
-  do iIndex=1,iNUM_VARIABLES
-
-    ! write the end date of the simulation into the header of
-    ! the binary file (*.bin)
-    if(STAT_INFO(iIndex)%iDailyOutput > iNONE &
-      .or. STAT_INFO(iIndex)%iMonthlyOutput > iNONE &
-      .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
-      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
-        pConfig%iMonth,pConfig%iDay, pConfig%iYear
-    end if
-
-  end do
 
   ! clean up
   close ( unit=LU_TS )

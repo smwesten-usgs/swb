@@ -176,14 +176,14 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
     do k = 1,iNumRecs
 
-      iCount = COUNT(pMaskGrd%iData == k)
+      iCount = COUNT(pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL)
 
       if (iCount == 0) cycle
 
       ! sum of the sum of values within basin mask boundaries
-      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
-      rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
-      rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
+      rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
+      rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
 
       rAvg = rSum / iCount
 
@@ -240,10 +240,11 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   else  ! GAP_DIFFERENCE
 
-    iCount = COUNT(pMaskGrd%iData == iNumRecs)
+    iCount = COUNT(pMaskGrd%iData == iNumRecs .and. pGrd%iMask == iACTIVE_CELL)
 
     ! sum of the sum of values within basin mask boundaries
-    rBaseSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iNumRecs) / rDenominator
+    rBaseSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iNumRecs &
+                  .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
 
     rBaseAvg = rBaseSum / iCount
 
@@ -252,12 +253,12 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
     do k = 1,iNumRecs-1
 
-      iCount = COUNT(pMaskGrd%iData == k)
+      iCount = COUNT(pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL)
 
       if (iCount == 0) cycle
 
       ! sum of the sum of values within basin mask boundaries
-      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k) / rDenominator
+      rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == k .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
 
       rAvg = rSum / iCount
 
@@ -357,12 +358,12 @@ subroutine CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridValue, sLabe
 
   end if
 
-  iCount = COUNT(pMaskGrd%iData == iGridValue)
+  iCount = COUNT(pMaskGrd%iData == iGridValue .and. pGrd%iMask == iACTIVE_CELL)
 
   ! sum of the sum of values within basin mask boundaries
-  rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
-  rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
-  rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue) / rDenominator
+  rSum = SUM(pGrd%rData,MASK=pMaskGrd%iData == iGridValue .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
+  rMax = MAXVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
+  rMin = MINVAL(pGrd%rData,MASK=pMaskGrd%iData == iGridValue .and. pGrd%iMask == iACTIVE_CELL) / rDenominator
 
   rAvg = rSum / iCount
 
@@ -391,7 +392,6 @@ end subroutine CalcMaskStatsSSF
 
 end module swbstats_support
 
-!------------------------------------------------------------------------------
 !------------------------------------------------------------------------------
 
 program swbstats
