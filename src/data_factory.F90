@@ -1016,7 +1016,7 @@ end subroutine set_constant_value_real
           endif
 
           this%pGrdNative%sFilename = this%sSourceFilename
-          
+
           ! we don't need to perform all these steps for the next file; we are
           ! assuming, of course, that all of the subsequent files cover the same
           ! extents and are in the same projection as this first file
@@ -1335,7 +1335,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
     ! [ LOCALS ]
     integer (kind=c_int) :: iRetVal
-    real (kind=c_float) :: rMultiplier = 1.5
+    real (kind=c_float) :: rMultiplier = 1.
     real (kind=c_double), dimension(4) :: rX, rY
 
     ! ensure that there is sufficient coverage on all sides of grid

@@ -587,36 +587,11 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
       end if
   end do
 
-  if(iDataType==DATATYPE_INT) then    ! check for strange or illegal values
-    iCumlCount = 0
-    write(LU_LOG,"(1x,'Summary of integer grid data values')")
-
-    do k=0,maxval(pGrd%iData)
-      iCount=COUNT(pGrd%iData==k)
-      if(iCount>0) then
-        iCumlCount = iCumlCount + iCount
-        write(LU_LOG,FMT="(3x,i8,' grid cells have value: ',i8)") &
-          iCount, k
-      end if
-    end do
-
-    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
-      COUNT(pGrd%iData == pGrd%iNoDataValue )
-
-    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
-      size(pGrd%iData)
-    write(LU_LOG,FMT="(1x,a,t48,i12)") &
-      "Total number of grid cells with value >= 0: ",iCumlCount
-    flush(LU_LOG)
-!    call Assert(size(pGrd%iData)==iCumlCount, &
-!      "Illegal or missing values in integer grid file: "//trim(sFileName))
-
-  end if
+  if ( iDataType == DATATYPE_INT ) call grid_checkIntegerGridValues(pGrd, sFilename)
 
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
 
-  return
 end function grid_ReadArcGrid_fn
 
 !--------------------------------------------------------------------------
@@ -747,31 +722,7 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
       end if
   end do
 
-  if(pGrd%iDataType==DATATYPE_INT) then    ! check for strange or illegal values
-    iCumlCount = 0
-    write(LU_LOG,"(1x,'Summary of integer grid data values')")
-
-    do k=0,maxval(pGrd%iData)
-      iCount=COUNT(pGrd%iData==k)
-      if(iCount>0) then
-        iCumlCount = iCumlCount + iCount
-        write(LU_LOG,FMT="(3x,i8,' grid cells have value: ',i8)") &
-          iCount, k
-      end if
-    end do
-
-    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
-      COUNT(pGrd%iData == pGrd%iNoDataValue )
-
-    write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
-      size(pGrd%iData)
-    write(LU_LOG,FMT="(1x,a,t48,i12)") &
-      "Total number of grid cells with value >= 0: ",iCumlCount
-    flush(LU_LOG)
-    call Assert(LOGICAL(size(pGrd%iData)==iCumlCount,kind=c_bool), &
-      "Illegal or missing values in integer grid file: "//trim(sFileName))
-
-  end if
+  if ( pGrd%iDataType == DATATYPE_INT ) call grid_checkIntegerGridValues(pGrd, sFilename)
 
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
@@ -867,11 +818,14 @@ function grid_ReadSurferGrid_fn ( sFileName, iDataType ) result ( pGrd )
 
   pGrd%rGridCellSize = (rX1-rX0)/iNX
 
+  if ( iDataType == DATATYPE_INT ) call grid_checkIntegerGridValues(pGrd, sFilename)
+
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
 
 end function grid_ReadSurferGrid_fn
 
+!------------------------------------------------------------------------------
 
 subroutine grid_ReadSurferGrid_sub ( sFileName, pGrd )
 
@@ -933,11 +887,14 @@ subroutine grid_ReadSurferGrid_sub ( sFileName, pGrd )
   call Assert(LOGICAL(iNX>0,kind=c_bool),"Must have a non-zero number of grid cells in a surfer grid file...")
   call Assert(LOGICAL(iNY>0,kind=c_bool),"Must have a non-zero number of grid cells in a surfer grid file...")
 
+  if ( pGrd%iDataType == DATATYPE_INT ) call grid_checkIntegerGridValues(pGrd, sFilename)
+
   close ( unit=LU_GRID, iostat=iStat )
   call Assert ( iStat == 0, "Failed to close grid file" )
 
 end subroutine grid_ReadSurferGrid_sub
 
+!------------------------------------------------------------------------------
 
 subroutine grid_WriteGrid(sFilename, pGrd, iOutputFormat)
 
@@ -958,6 +915,7 @@ subroutine grid_WriteGrid(sFilename, pGrd, iOutputFormat)
 
 end subroutine grid_WriteGrid
 
+!------------------------------------------------------------------------------
 
 subroutine grid_WriteArcGrid(sFilename, pGrd)
 
@@ -1033,6 +991,7 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
 
 end subroutine grid_WriteArcGrid
 
+!------------------------------------------------------------------------------
 
 subroutine grid_WriteSurferGrid(sFilename, pGrd)
 
@@ -1199,6 +1158,8 @@ function grid_Conform ( pGrd1, pGrd2, rTolerance ) result ( lConform )
   endif
 
 end function grid_Conform
+
+!------------------------------------------------------------------------------
 
 function grid_CompletelyCover( pBaseGrd, pOtherGrd, rTolerance ) result ( lCompletelyCover )
   !! Returns .true. if the T_GRID objects conform (in terms of cell sizes and extents)
@@ -1384,9 +1345,9 @@ subroutine grid_LookupRow(pGrd,rYval,iBefore,iAfter,rFrac)
     rFrac = mod(rColPosition,rONE)
   end if
 
-  return
 end subroutine grid_LookupRow
 
+!------------------------------------------------------------------------------
 
 !> Call PROJ4 to transform coordinates.
 !> @details This subroutine calls a Fortran wrapper to the C library
@@ -1396,8 +1357,6 @@ end subroutine grid_LookupRow
 !> @param[in] sFromPROJ4
 !> @param[in] sToPROJ4
 subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
-
-  use, intrinsic :: iso_c_binding
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
   character (len=*) :: sFromPROJ4, sToPROJ4
@@ -1455,6 +1414,52 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 end subroutine grid_Transform
 
 !--------------------------------------------------------------------------
+
+subroutine grid_checkIntegerGridValues(pGrd, sFilename)
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd
+  character (len=*), intent(in)   :: sFilename
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iRunningSum
+  integer (kind=c_int) :: iIndex
+  integer (kind=c_int) :: iCount
+
+  iRunningSum = 0
+
+  write(LU_LOG,"(1x,'Summary of integer grid data values')")
+
+  do iIndex=0,maxval(pGrd%iData)
+    iCount=COUNT( pGrd%iData==iIndex )
+    if ( iCount > 0 ) then
+      iRunningSum = iRunningSum + iCount
+      write(LU_LOG,FMT="(3x,i8,' grid cells have value: ',i8)") iCount, iIndex
+    end if
+  end do
+
+  write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
+    COUNT(pGrd%iData == pGrd%iNoDataValue )
+
+  write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
+    size(pGrd%iData)
+
+  write(LU_LOG,FMT="(1x,a,t48,i12)") &
+    "Total number of grid cells with value >= 0: ",iRunningSum
+
+  flush(LU_LOG)
+
+  if (size(pGrd%iData) /= iRunningSum) then
+    call echolog(repeat("*",80))
+    call echolog("Possible illegal or missing values in integer grid file: "//trim(sFileName))
+    call echolog(repeat("*",80))
+  endif
+
+end subroutine grid_checkIntegerGridValues
+
+
+!--------------------------------------------------------------------------
+
+
 
 subroutine grid_CheckForPROJ4Error(iRetVal, sFromPROJ4, sToPROJ4)
 
@@ -1718,7 +1723,6 @@ function grid_SearchColumn(pGrd,rXval,rZval,rNoData) result ( rValue )
 
   deallocate ( rCol )
 
-  return
 end function grid_SearchColumn
 !!***
 !--------------------------------------------------------------------------
