@@ -924,11 +924,13 @@ end subroutine set_constant_value_real
     if ( this%iNC_FILE_STATUS == NETCDF_FILE_CLOSED ) then
 
       ! increment or reset file counter based on current year value
-
       call this%increment_filecount()
 
+      ! the numerical counter used in creating filenames is reset at the end of each year
       call this%reset_at_yearend_filecount(iYear)
 
+      ! based on the template information, create the filename that SWB
+      ! is to look for
       call this%make_filename( iMonth=iMonth, iYear=iYear, iDay=iDay)
 
       this%lPadValues = this%test_for_need_to_pad_values(iMonth=iMonth, iYear=iYear, iDay=iDay)
@@ -1014,7 +1016,10 @@ end subroutine set_constant_value_real
           endif
 
           this%pGrdNative%sFilename = this%sSourceFilename
-
+          
+          ! we don't need to perform all these steps for the next file; we are
+          ! assuming, of course, that all of the subsequent files cover the same
+          ! extents and are in the same projection as this first file
           this%lPerformFullInitialization = lFALSE
 
         else

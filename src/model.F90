@@ -78,7 +78,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=c_int) :: tj, ti
   integer (kind=c_int) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=c_int) :: iPos
+  integer (kind=c_int) :: iPos, iIndex
   integer (kind=c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=c_int) :: iCol, iRow
   character(len=3) :: sMonthName
@@ -413,6 +413,25 @@ end if
   ! update value of last year
   if( .not. pConfig%lGriddedData) pConfig%iEndYear = pConfig%iYear
 
+  do iIndex=1,iNUM_VARIABLES
+
+    ! write the end date of the simulation (up to this point) into the header of
+    ! the binary file (*.bin)
+    if(STAT_INFO(iIndex)%iDailyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iMonthlyOutput > iNONE &
+      .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
+
+      inquire(UNIT=STAT_INFO(iIndex)%iLU,POS=iPos)  ! establish location to return to
+  
+      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
+        pConfig%iMonth,pConfig%iDay, pConfig%iYear
+
+      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iPos ) ! return to prior location in bin file
+
+    end if
+
+  end do
+
   ! update current date so all is well when next years file is opened
   pConfig%iMonth = iTempMonth
   pConfig%iDay = iTempDay
@@ -458,20 +477,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   integer (kind=c_int) :: iIndex
-
-  ! finalize and close any open NetCDF or binary output files
-  do iIndex=1,iNUM_VARIABLES
-
-    ! write the end date of the simulation into the header of
-    ! the binary file (*.bin)
-    if(STAT_INFO(iIndex)%iDailyOutput > iNONE &
-      .or. STAT_INFO(iIndex)%iMonthlyOutput > iNONE &
-      .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
-      write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
-        pConfig%iMonth,pConfig%iDay, pConfig%iYear
-    end if
-
-  end do
 
   ! clean up
   close ( unit=LU_TS )
