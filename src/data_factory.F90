@@ -148,6 +148,7 @@ module data_factory
   end type T_DATA_GRID
 
   type (T_DATA_GRID), dimension(12), public, target :: DAT
+  type (T_DATA_GRID), dimension(:), public, target, allocatable :: DAT_EXTRA
 
   integer (kind=c_int), parameter, public :: LANDUSE_DATA = 1
   integer (kind=c_int), parameter, public :: AWC_DATA = 2

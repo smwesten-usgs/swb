@@ -31,7 +31,7 @@ subroutine control_setModelOptions(sControlFile)
   ! [LOCALS]
   type (T_GENERAL_GRID),pointer :: input_grd         ! Temporary grid for I/O
   type (T_GENERAL_GRID),pointer :: pGrd              ! Grid of model cells
-  type (T_GENERAL_GRID),pointer :: pLandUseGrid      ! Landuse input grid
+!  type (T_GENERAL_GRID),pointer :: pLandUseGrid      ! Landuse input grid
 !  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
 !  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
 !  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
@@ -1897,7 +1897,7 @@ subroutine control_setModelOptions(sControlFile)
       end if
       pConfig%lGriddedData = lFALSE
       ! actual call to "model_Solve" subroutine
-      call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
+      call model_Solve( pGrd, pConfig, pGraph)
 
     else if ( sItem == "SOLVE_NO_TS_DATA" .or. sItem == "SOLVE_NO_TS_FILE" ) then
       pConfig%lGriddedData = lTRUE
@@ -1945,7 +1945,7 @@ subroutine control_setModelOptions(sControlFile)
           // "  Current year = ",i
         flush(UNIT=LU_LOG)
        ! actual call to "model_Solve" subroutine
-        call model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
+        call model_Solve( pGrd, pConfig, pGraph)
       end do
 
     else if ( trim(sItem) == "CALC_BASIN_STATS" ) then

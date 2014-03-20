@@ -63,7 +63,7 @@ contains
 !
 !!***
 
-subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
+subroutine model_Solve( pGrd, pConfig, pGraph)
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
@@ -73,7 +73,6 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
     ! pointer to data structure that holds parameters for creating
     ! DISLIN plots
-  type ( T_GENERAL_GRID ), pointer :: pLandUseGrid       ! pointer to land use grid
 
   ! [ LOCALS ]
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
@@ -109,11 +108,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     pGenericGrd_sgl => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
        pGrd%rX1, pGrd%rY1, DATATYPE_REAL )
 
+    ! perform some basic sanity checking on the specified model options
     call model_CheckConfigurationSettings( pGrd, pConfig )
 
-!    call model_InitializeInputAndOutput( pGrd, pConfig )
-
-    !> read in flow direction, soil group, and AWC grids
+    ! read in flow direction, soil group, and AWC grids
     call model_InitializeDataStructures( pGrd, pConfig )
 
     call model_InitializeInputAndOutput( pGrd, pConfig )
@@ -201,6 +199,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd, iMonth=pConfig%iMonth, &
     iDay=pConfig%iDay, iYear=pConfig%iYear )
 
+  ! if a new landuse grid is found, then we need to perform a basic reinitialization
+  ! of active/inactive cells, total soil water capacity, etc.
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
     pGrd%Cells%iLandUse = pGrd%iData
     DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
@@ -226,6 +226,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
+    !> @TODO Check the logic here. It would seem that a new irrigation table
+    !! index *should* be created if we have dynamic data rather than static data
     if (pConfig%lEnableIrrigation .and. &
       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
