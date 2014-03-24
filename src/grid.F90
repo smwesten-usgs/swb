@@ -1427,7 +1427,8 @@ subroutine grid_checkIntegerGridValues(pGrd, sFilename)
 
   iRunningSum = 0
 
-  write(LU_LOG,"(1x,'Summary of integer grid data values')")
+  write(LU_LOG,"(/,1x,'Summary of integer grid data values for file ', a)") &
+    dQuote(sFilename)
 
   do iIndex=0,maxval(pGrd%iData)
     iCount=COUNT( pGrd%iData==iIndex )
@@ -1437,13 +1438,13 @@ subroutine grid_checkIntegerGridValues(pGrd, sFilename)
     end if
   end do
 
-  write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
+  write(LU_LOG,FMT="(/,1x,a,t48,i12)") "Total number of grid cells with value NODATA: ", &
     COUNT(pGrd%iData == pGrd%iNoDataValue )
 
   write(LU_LOG,FMT="(1x,a,t48,i12)") "Total number of grid cells: ", &
     size(pGrd%iData)
 
-  write(LU_LOG,FMT="(1x,a,t48,i12)") &
+  write(LU_LOG,FMT="(1x,a,t48,i12,/)") &
     "Total number of grid cells with value >= 0: ",iRunningSum
 
   flush(LU_LOG)

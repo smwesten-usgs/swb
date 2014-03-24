@@ -497,6 +497,9 @@ subroutine getvalues_constant_sub( this, pGrdBase )
         endif
       endif
 
+      write( unit=LU_LOG, fmt="(/,1x,a)") "Opening file "//dQuote(this%sSourceFilename) &
+        //" for "//trim(this%sDescription)//" data."
+
       if ( this%lGridIsPersistent .and. associated(this%pGrdNative) ) then
 
         call grid_ReadExisting ( sFileName=this%sSourceFilename, &
@@ -514,9 +517,6 @@ subroutine getvalues_constant_sub( this, pGrdBase )
         this%pGrdNative%sPROJ4_string = this%sSourcePROJ4_string
 
       endif
-
-      write( unit=LU_LOG, fmt="(a)") "Opened file "//dQuote(this%sSourceFilename) &
-        //" for "//trim(this%sDescription)//" data."
 
       this%lGridHasChanged = lTRUE
 
