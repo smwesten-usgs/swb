@@ -16,7 +16,7 @@ Once steps 1 through 4 have been completed successfully, they should not need to
 
 ###Install the required compilers and support software###
 
-At a minimum, a MinGW compiler package, Git version control sotfware, and CMake package build software must be presesnt on the target system. In this example the specific software sources were as follows:
+At a minimum, a MinGW compiler package, Git version control software, and CMake package build software must be presesnt on the target system. In this example the specific software sources were as follows:
 
 __32-bit gcc/gfortran compilers__ ( install to c:\mingw32 )
 
