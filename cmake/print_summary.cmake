@@ -1,4 +1,3 @@
-
 message("--------------------------------------------------------------------")
 message("   Summary of CMAKE environment variables")
 message("--------------------------------------------------------------------")
@@ -35,10 +34,11 @@ message("  LIBZ      ${LIBZ}")
 message("  LIBSZ     ${LIBSZ}")
 message(" ")
 message("  DISLIN-RELATED LIBRARIES")
-message("    DISLIN    ${LIBDISLIN}")
-message("    OPENGL32  ${LIBOPENGL}")
-message("    GDI32     ${LIBGDI32}")
-message("    Xm        ${LIBXM}")
+message("    DISLIN          ${LIBDISLIN}")
+message("    OPENGL32        ${LIBOPENGL}")
+message("    GDI32           ${LIBGDI32}")
+message("    LIBWINPTHREAD   ${LIBWINPTHREAD}")
+message("    Xm              ${LIBXM}")
 
 if ("${OS}" STREQUAL "mac_osx" )
 
