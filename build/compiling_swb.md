@@ -16,7 +16,7 @@ Once steps 1 through 4 have been completed successfully, they should not need to
 
 ###Install the required compilers and support software###
 
-At a minimum, a MinGW compiler package, Git version control sotfware, and CMake package build software must be presesnt on the target system. In this example the specific software sources were as follows:
+At a minimum, a MinGW compiler package, Git version control software, and CMake package build software must be presesnt on the target system. In this example the specific software sources were as follows:
 
 __32-bit gcc/gfortran compilers__ ( install to c:\mingw32 )
 
@@ -109,7 +109,7 @@ After allowing this command to finish, you should now have a complete and up-to-
 
 ![][image]
 
-[image]: images/SWB_subdirectories.png "" height=100px width=75px
+[image]: images/SWB_subdirectories.png
 
 The most significant of these subdirectories are the *build*, *cmake*, *lib*, *include*, and *src* subdirectories. A brief description of the contents of the SWB subdirectories is given below.
 
@@ -143,7 +143,7 @@ Linux Mint         | gfortran / gcc  | swb/build/linux_x64/gfortran
 Windows (32-bit)   | gfortran / gcc  | swb/build/win_x86/gfortran
 Windows (64-bit)   | gfortran / gcc  | swb/build/win_x64/gfortran
 
-__*NOTE: The repository contains build subdirectories for Intel Fortran as well. As of this writing (March 2014), the only Intel Fortran build that has been successful is on a Linux platform. Now that Unidata (authors of NetCDF) is officially supporting Windows with binaries of the NetCDF libraries, it may be a lot easier to compile SWB on a Windows platform than in the past. However, the scripts that are currently in the *ifort* subdirectories are almost guaranteed to fail.*__
+__*NOTE: The repository contains build subdirectories for Intel Fortran as well. As of this writing (March 2014), the only Intel Fortran build that has been successful is on a Linux platform. Now that Unidata (authors of NetCDF) is officially supporting Windows with binaries of the NetCDF libraries, it may be a lot easier to compile SWB on a Windows platform than in the past. However, the scripts that are currently in the ifort subdirectories are almost guaranteed to fail.*__
 
 ### Recompile module files with your local compiler###
 This step is not always needed. However, there have been cases recently where the *gfortran* compiler internals have changed enough to render the module files between versions incompatible.
