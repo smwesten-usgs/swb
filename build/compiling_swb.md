@@ -109,7 +109,7 @@ After allowing this command to finish, you should now have a complete and up-to-
 
 ![][image]
 
-[image]: images/SWB_subdirectories.png "" height=100px width=75px
+[image]: images/SWB_subdirectories.png
 
 The most significant of these subdirectories are the *build*, *cmake*, *lib*, *include*, and *src* subdirectories. A brief description of the contents of the SWB subdirectories is given below.
 
