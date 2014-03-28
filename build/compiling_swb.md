@@ -190,3 +190,7 @@ With the changes made as discussed above, the *run_cmake_mingw_gfortran.bat* bat
 ![][image6]
 
 [image6]: images/success_cmake.png
+
+### Build SWB ###
+
+A successful run of the CMake program will result in a new *makefile* being written to the directory in which the batchfile was run. At this point, it should be possible to build SWB by invoking the *make* program: simply type *make* at the command line. It should not be necessary to rerun the batchfile and CMake again unless the underlying libraries are updated.
