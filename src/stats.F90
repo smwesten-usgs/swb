@@ -818,7 +818,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       ! name "RLE_readByte" is misleading, since the return value (rVal)
       ! is actually a vector of all daily values with dimension (iNY*iNX)
       call RLE_readByte(STAT_INFO(k)%iLU,pConfig%iRLE_MULT, &
-        pConfig%rRLE_OFFSET, rVal,iNumGridCells, lEOF)
+        pConfig%rRLE_OFFSET, rVal, iNumGridCells, lEOF)
 
       if(lEOF) exit
 
@@ -1450,7 +1450,7 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
     call Assert(iSSFindex <= size(pConfig%SSF_FILES) .and. &
         iSSFindex > 0, "Internal programming error - " &
         //"Value for SSFindex falls outside legal bounds: " &
-        //TRIM(int2char(iSSFindex)), &
+        //TRIM(asCharacter(iSSFindex)), &
         TRIM( __FILE__ ), __LINE__ )
 
     pSSF => pConfig%SSF_FILES(iSSFindex)
@@ -1458,14 +1458,14 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
     open(pSSF%iLU, file=TRIM(pSSF%sFileName),status='OLD', &
         access='APPEND', iostat=iStat)
 
-    sBuf = TRIM(int2char(pSSF%iLU))//"; filename = "//TRIM(pSSF%sFileName)
+    sBuf = TRIM(asCharacter(pSSF%iLU))//"; filename = "//TRIM(pSSF%sFileName)
 
     call Assert(iStat==0,"Error opening file on unit "//TRIM(sBuf), &
         TRIM(__FILE__),__LINE__)
 
     write(unit=pSSF%iLU,fmt="(a,2x,i2.2,'/',i2.2,'/',i4.4,2x," &
         //"'12:00:00',2x,f14.4)") &
-        TRIM(int2char(pSSF%iColNum))//"_"//TRIM(int2char(pSSF%iRowNum)), &
+        TRIM(asCharacter(pSSF%iColNum))//"_"//TRIM(asCharacter(pSSF%iRowNum)), &
         iMonth, iDay, iYear, &
         rValue
 
@@ -1590,12 +1590,12 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
       write(unit=LU_LOG,fmt=*) "Opened binary file for " &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
-        //TRIM(int2char(STAT_INFO(i)%iLU))
+        //TRIM(asCharacter(STAT_INFO(i)%iLU))
 
       write(unit=LU_LOG,fmt=*) "filename: "//dquote(sFIlename)
-      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(int2char(iSTARTDATE_POS))
-      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(int2char(iENDDATE_POS))
-      write(unit=LU_LOG,fmt=*) "end-of-header offset: "//TRIM(int2char(iENDHEADER_POS))
+      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(asCharacter(iSTARTDATE_POS))
+      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(asCharacter(iENDDATE_POS))
+      write(unit=LU_LOG,fmt=*) "end-of-header offset: "//TRIM(asCharacter(iENDHEADER_POS))
 
       write(UNIT=LU_LOG,fmt="('NX:',i5)") pGrd%iNX             ! Number of cells in the x-direction
       write(UNIT=LU_LOG,fmt="('NY:',i5)") pGrd%iNY             ! Number of cells in the y-direction
@@ -1662,10 +1662,10 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
       write(unit=LU_LOG,fmt=*) "Opened binary file for " &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
-        //TRIM(int2char(STAT_INFO(i)%iLU))
+        //TRIM(asCharacter(STAT_INFO(i)%iLU))
 
-      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(int2char(iSTARTDATE_POS))
-      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(int2char(iENDDATE_POS))
+      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(asCharacter(iSTARTDATE_POS))
+      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(asCharacter(iENDDATE_POS))
 
       read(UNIT=STAT_INFO(i)%iLU) iNX             ! Number of cells in the x-direction
       read(UNIT=STAT_INFO(i)%iLU) iNY             ! Number of cells in the y-direction
@@ -1722,7 +1722,7 @@ subroutine stats_CloseBinaryFiles()
 
       write(unit=LU_LOG,fmt=*) "Closed binary file for " &
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
-        //TRIM(int2char(STAT_INFO(i)%iLU))
+        //TRIM(asCharacter(STAT_INFO(i)%iLU))
 
 	end if
 

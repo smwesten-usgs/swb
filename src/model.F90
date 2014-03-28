@@ -7,7 +7,7 @@
 !> necessary process modules in turn.
 module model
 
-  use iso_c_binding, only : c_short, c_int, c_float, c_double
+  use iso_c_binding, only : c_short, c_int, c_float, c_double, c_long_long
   use types
   use data_factory
   use datetime
@@ -78,7 +78,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=c_int) :: tj, ti
   integer (kind=c_int) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=c_int) :: iPos, iIndex
+  integer (kind=c_long_long) :: iPos 
+  integer (kind=c_int) :: iIndex
   integer (kind=c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=c_int) :: iCol, iRow
   character(len=3) :: sMonthName
