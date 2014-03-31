@@ -11,30 +11,30 @@ module data_factory
   integer (kind=c_int), public, parameter :: NETCDF_FILE_CLOSED = 42
 
   type, public :: T_DATA_GRID
-    integer (kind=c_int) :: iSourceDataForm    ! constant, static grid, dynamic grid
-    integer (kind=c_int) :: iSourceDataType = DATATYPE_NA  ! real, short, integer, etc.
-    integer (kind=c_int) :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF
-    integer (kind=c_int) :: iTargetDataType = DATATYPE_NA  ! Fortran real, integer, etc.
-    character (len=256) :: sDescription = ""
-    character (len=256) :: sSourcePROJ4_string
-    character (len=256) :: sSourceFileType
-    character (len=256) :: sFilenameTemplate
-    character (len=256) :: sSourceFilename      ! e.g. 1980_00_prcp.nc
-    character (len=256) :: sOldFilename = "NA"  ! e.g. 1980_00_prcp.nc
-    integer (kind=c_int) :: iFileCount = -1
-    integer (kind=c_int) :: iFileCountYear = -9999
+    integer (kind=c_int)  :: iSourceDataForm    ! constant, static grid, dynamic grid
+    integer (kind=c_int)  :: iSourceDataType = DATATYPE_NA  ! real, short, integer, etc.
+    integer (kind=c_int)  :: iSourceFileType  ! Arc ASCII, Surfer, NetCDF
+    integer (kind=c_int)  :: iTargetDataType = DATATYPE_NA  ! Fortran real, integer, etc.
+    character (len=256)   :: sDescription = ""
+    character (len=256)   :: sSourcePROJ4_string
+    character (len=256)   :: sSourceFileType
+    character (len=256)   :: sFilenameTemplate
+    character (len=256)   :: sSourceFilename      ! e.g. 1980_00_prcp.nc
+    character (len=256)   :: sOldFilename = "NA"  ! e.g. 1980_00_prcp.nc
+    integer (kind=c_int)  :: iFileCount = -1
+    integer (kind=c_int)  :: iFileCountYear = -9999
     logical (kind=c_bool) :: lProjectionDiffersFromBase = lFALSE
-    real (kind=c_float) :: rMinAllowedValue = -rBIGVAL     ! default condition is to impose
-    real (kind=c_float) :: rMaxAllowedValue = rBIGVAL      ! no bounds on data
-    integer (kind=c_int) :: iMinAllowedValue = -iBIGVAL     ! default condition is to impose
-    integer (kind=c_int) :: iMaxAllowedValue = iBIGVAL      ! no bounds on data
-    real (kind=c_float) :: rMissingValuesCode = -rBIGVAL
-    integer (kind=c_int) :: iMissingValuesCode = -iBIGVAL
-    character (len=2) :: sMissingValuesOperator = "<="
-    integer (kind=c_int) :: iMissingValuesAction = 0
-    real (kind=c_double) :: rScaleFactor = 1_c_double
-    real (kind=c_double) :: rAddOffset = 0_c_double
-    real (kind=c_double) :: rConversionFactor = 1_c_double
+    real (kind=c_float)   :: rMinAllowedValue = -rBIGVAL     ! default condition is to impose
+    real (kind=c_float)   :: rMaxAllowedValue = rBIGVAL      ! no bounds on data
+    integer (kind=c_int)  :: iMinAllowedValue = -iBIGVAL     ! default condition is to impose
+    integer (kind=c_int)  :: iMaxAllowedValue = iBIGVAL      ! no bounds on data
+    real (kind=c_float)   :: rMissingValuesCode = -rBIGVAL
+    integer (kind=c_int)  :: iMissingValuesCode = -iBIGVAL
+    character (len=2)     :: sMissingValuesOperator = "<="
+    integer (kind=c_int)  :: iMissingValuesAction = 0
+    real (kind=c_double)  :: rScaleFactor = 1_c_double
+    real (kind=c_double)  :: rAddOffset = 0_c_double
+    real (kind=c_double)  :: rConversionFactor = 1_c_double
 
     logical (kind=c_bool) :: lUserSuppliedScaleAndOffset = lFALSE
     logical (kind=c_bool) :: lApplyConversionFactor = lFALSE
@@ -42,10 +42,10 @@ module data_factory
     logical (kind=c_bool) :: lFlipHorizontal = lFALSE
     logical (kind=c_bool) :: lFlipVertical = lFALSE
 
-    integer (kind=c_int) :: iDaysToPadAtYearsEnd = 0
-    integer (kind=c_int) :: iDaysToPadIfLeapYear = 1
-    integer (kind=c_int) :: iStartYear = -9999
-    integer (kind=c_int) :: iEndYear = -9999
+    integer (kind=c_int)  :: iDaysToPadAtYearsEnd = 0
+    integer (kind=c_int)  :: iDaysToPadIfLeapYear = 1
+    integer (kind=c_int)  :: iStartYear = -9999
+    integer (kind=c_int)  :: iEndYear = -9999
     logical (kind=c_bool) :: lPadReplaceWithZero = lFALSE
     logical (kind=c_bool) :: lPadValues = lFALSE
 
@@ -54,28 +54,31 @@ module data_factory
     character (len=256) :: sVariableName_y = "y"
     character (len=256) :: sVariableName_z = ""
     character (len=256) :: sVariableName_time = "time"
-    character (len=3) :: sVariableOrder = "tyx"
+    character (len=3)   :: sVariableOrder = "tyx"
 
-    type (T_GRID_BOUNDS) :: GRID_BOUNDS
+    type (T_GRID_BOUNDS) :: GRID_BOUNDS_NATIVE
+    type (T_GRID_BOUNDS) :: GRID_BOUNDS_BASE
 
-    integer (kind=c_int) :: iNC_FILE_STATUS = NETCDF_FILE_CLOSED
+    integer (kind=c_int)  :: iNC_FILE_STATUS = NETCDF_FILE_CLOSED
     type (T_NETCDF4_FILE) :: NCFILE
 
-    integer (kind=c_int) :: iNC_ARCHIVE_STATUS = NETCDF_FILE_CLOSED
-    type (T_NETCDF4_FILE) :: NCFILE_ARCHIVE
+    integer (kind=c_int)    :: iNC_ARCHIVE_STATUS = NETCDF_FILE_CLOSED
+    type (T_NETCDF4_FILE)   :: NCFILE_ARCHIVE
     integer (kind=c_size_t) :: iNCFILE_RECNUM = 0
 
     integer (kind=c_int) :: iConstantValue
-    real (kind=c_float) :: rConstantValue
+    real (kind=c_float)  :: rConstantValue
 
     ! pGrdNative is a grid created to serve as an intermediary between
     ! the native coordinate of the data source file and the project coordinates
     ! in use by swb
-    type (T_GENERAL_GRID), pointer :: pGrdNative => NULL()
+    type (T_GENERAL_GRID), pointer :: pGrdNative => null()
     logical (kind=c_bool) :: lGridIsPersistent = lFALSE
     logical (kind=c_bool) :: lGridHasChanged = lFALSE
     logical (kind=c_bool) :: lPerformFullInitialization = lTRUE
     logical (kind=c_bool) :: lCreateLocalNetCDFArchive = lFALSE
+
+    type (T_GENERAL_GRID), pointer :: pGrdBase => null()
 
   contains
 
@@ -425,6 +428,8 @@ subroutine getvalues_constant_sub( this, pGrdBase )
         trim(__FILE__), __LINE__)
 
     end select
+
+    this%lGridHasChanged = lTRUE
 
   end subroutine getvalues_constant_sub
 
@@ -959,7 +964,7 @@ end subroutine set_constant_value_real
               sVarName_y=this%sVariableName_y, &
               sVarName_z=this%sVariableName_z, &
               sVarName_time=this%sVariableName_time, &
-              tGridBounds=this%GRID_BOUNDS, &
+              tGridBounds=this%GRID_BOUNDS_NATIVE, &
               iLU=LU_LOG)
 
           else  ! PROJ4 string is blank
@@ -1370,10 +1375,10 @@ end subroutine set_maximum_allowable_value_real_sub
 
   endif
 
-   this%GRID_BOUNDS%rXll = rX(1); this%GRID_BOUNDS%rXlr = rX(2)
-   this%GRID_BOUNDS%rYll = rY(1); this%GRID_BOUNDS%rYlr = rY(2)
-   this%GRID_BOUNDS%rXul = rX(3); this%GRID_BOUNDS%rXur = rX(4)
-   this%GRID_BOUNDS%rYul = rY(3); this%GRID_BOUNDS%rYur = rY(4)
+   this%GRID_BOUNDS_NATIVE%rXll = rX(1); this%GRID_BOUNDS_NATIVE%rXlr = rX(2)
+   this%GRID_BOUNDS_NATIVE%rYll = rY(1); this%GRID_BOUNDS_NATIVE%rYlr = rY(2)
+   this%GRID_BOUNDS_NATIVE%rXul = rX(3); this%GRID_BOUNDS_NATIVE%rXur = rX(4)
+   this%GRID_BOUNDS_NATIVE%rYul = rY(3); this%GRID_BOUNDS_NATIVE%rYur = rY(4)
 
 #ifdef DEBUG_PRINT
    print *, " "
@@ -1382,10 +1387,10 @@ end subroutine set_maximum_allowable_value_real_sub
    print *, "TO:   ", dquote(this%sSourcePROJ4_string)
    PRINT *, "file: ", dquote(this%sSourceFileName)
    print *, "            X                            Y"
-   print *, "LL: ", this%GRID_BOUNDS%rXll, this%GRID_BOUNDS%rYll
-   print *, "LR: ", this%GRID_BOUNDS%rXlr, this%GRID_BOUNDS%rYlr
-   print *, "UL: ", this%GRID_BOUNDS%rXul, this%GRID_BOUNDS%rYul
-   print *, "UR: ", this%GRID_BOUNDS%rXur, this%GRID_BOUNDS%rYur
+   print *, "LL: ", this%GRID_BOUNDS_NATIVE%rXll, this%GRID_BOUNDS_NATIVE%rYll
+   print *, "LR: ", this%GRID_BOUNDS_NATIVE%rXlr, this%GRID_BOUNDS_NATIVE%rYlr
+   print *, "UL: ", this%GRID_BOUNDS_NATIVE%rXul, this%GRID_BOUNDS_NATIVE%rYul
+   print *, "UR: ", this%GRID_BOUNDS_NATIVE%rXur, this%GRID_BOUNDS_NATIVE%rYur
 #endif
 
   end subroutine calc_project_boundaries

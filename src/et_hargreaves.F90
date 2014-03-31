@@ -99,6 +99,8 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   rD_r =rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear)
   rDelta = solar_declination(iDayOfYear, iNumDaysInYear)
 
+!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, rLatitude, rOmega_s, rRa)
+
   do iRow=1,pGrd%iNY
 
     rLatitude = row_latitude(pConfig%rNorthernLatitude, &
@@ -128,6 +130,7 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
 
   end do
 
+!!!   *$OMP END PARALLEL DO
 
 !  write(UNIT=LU_LOG,FMT=*) "=========HARGREAVES POTET CALCULATION==========="
 !  write(UNIT=LU_STD_OUT,FMT="(A)") &

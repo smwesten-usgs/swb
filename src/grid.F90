@@ -204,7 +204,7 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   pGrd%iNumGridCells = iNX * iNY
 
   allocate(pGrd%iMask(iNX, iNY))
-  pGrd%iMask = 1
+  pGrd%iMask = iACTIVE_CELL
 
 end function grid_CreateComplete
 
@@ -283,7 +283,7 @@ function grid_CreateSimple ( iNX, iNY, rX0, rY0, rGridCellSize, iDataType ) resu
   pGrd%iNumGridCells = iNX * iNY
 
   allocate(pGrd%iMask(iNX, iNY))
-  pGrd%iMask = 1
+  pGrd%iMask = iACTIVE_CELL
 
 end function grid_CreateSimple
 
@@ -2036,9 +2036,7 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 !  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
   if ( lTRUE ) then
 
-!$OMP PARALLEL DO
-
-  !$OMP ORDERED
+!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iColRow)
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2065,13 +2063,12 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
       enddo
     enddo
-!$OMP END ORDERED
 
-!$OMP END PARALLEL DO
+!!!   *$OMP END PARALLEL DO
 
   else
 
-!$OMP PARALLEL DO ORDERED
+!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iSrcCol, iSrcRow)
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
         iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=c_double) )
@@ -2095,7 +2092,7 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
       enddo
     enddo
-!$OMP END PARALLEL DO
+!!!   *$OMP END PARALLEL DO
 
   endif
 
@@ -2182,6 +2179,8 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
 !  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
   if ( lTRUE ) then
 
+!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iColRow)
+
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
 
@@ -2207,7 +2206,11 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
       enddo
     enddo
 
+!!!   *$OMP END PARALLEL DO
+
   else  ! if we have the same projections as the base, our standard methods work
+
+!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iSrcRow, iSrcCol)
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2225,6 +2228,8 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
         rArrayTo(iCol,iRow) = rArrayFrom( iSrcCol, iSrcRow )
       enddo
     enddo
+
+!!!   *$OMP END PARALLEL DO
 
   endif
 

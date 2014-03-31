@@ -78,13 +78,12 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=c_int) :: tj, ti
   integer (kind=c_int) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=c_long_long) :: iPos 
+  integer (kind=c_long_long) :: iPos
   integer (kind=c_int) :: iIndex
   integer (kind=c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
   integer (kind=c_int) :: iCol, iRow
   character(len=3) :: sMonthName
   logical (kind=c_bool) :: lMonthEnd
-  integer (kind=c_int),save :: iNumGridCells
 
   real (kind=c_float) :: rmin,ravg,rmax
 
@@ -101,7 +100,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 
   pConfig%iNumDaysInYear = num_days_in_year(pConfig%iYear)
 
-  FIRST_YEAR: if(pConfig%lFirstYearOfSimulation) then
+  FIRST_YEAR_pt_1: if(pConfig%lFirstYearOfSimulation) then
 
     pGenericGrd_int => grid_Create ( pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
        pGrd%rX1, pGrd%rY1, DATATYPE_INT )
@@ -112,29 +111,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     ! perform some basic sanity checking on the specified model options
     call model_CheckConfigurationSettings( pGrd, pConfig )
 
-    ! read in flow direction, soil group, and AWC grids
-    call model_InitializeDataStructures( pGrd, pConfig )
-
-    call model_InitializeInputAndOutput( pGrd, pConfig )
-
-   ! Are we solving using the downhill algorithm?
-    if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
-      ! if a routing table exists, read it in; else initialize and
-      ! save the routing table for future use
-      write(UNIT=LU_LOG,FMT=*) "Configuring runoff for the downhill flow routing option..."
-      call model_ConfigureRunoffDownhill( pGrd, pConfig)
-    end if
-
-    ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
-    if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing flow direction..."
-      call model_InitializeFlowDirection( pGrd , pConfig)
-    end if
-
-    ! calculate number of gridcells here.
-    iNumGridCells = pGrd%iNX * pGrd%iNY
-
-  end if FIRST_YEAR
+  endif FIRST_YEAR_pt_1
 
   ! close any existing open time-series files...
   close(LU_TS)
@@ -221,6 +198,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
       sTitleTxt="Landuse Grid", &
       sAxisTxt="Landuse Code" )
 
+    if (pConfig%lFirstYearOfSimulation) then
+      ! read in flow direction, soil group, and AWC grids
+      call model_InitializeDataStructures( pGrd, pConfig )
+    endif
+
     call model_setInactiveCells( pGrd, pConfig )
 
     ! (Re)-initialize the model
@@ -230,8 +212,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     !> @TODO Check the logic here. It would seem that a new irrigation table
     !! index *should* be created if we have dynamic data rather than static data
     if (pConfig%lEnableIrrigation .and. &
-      ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
-        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+      ( pConfig%iConfigureLanduse /= CONFIG_LANDUSE_STATIC_GRID &
+        .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_CONSTANT) ) then
       call model_CreateIrrigationTableIndex(pGrd, pConfig )
     endif
 
@@ -240,6 +222,35 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     call model_InitializeET( pGrd, pConfig )
 
   endif
+
+  FIRST_YEAR_pt_2: if(pConfig%lFirstYearOfSimulation) then
+
+    if (pConfig%lEnableIrrigation .and. &
+       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+      call model_CreateIrrigationTableIndex(pGrd, pConfig )
+    endif
+
+    ! initialize binary and stats output files
+    call model_InitializeInputAndOutput( pGrd, pConfig )
+
+   ! Are we solving using the downhill algorithm?
+    if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
+      ! if a routing table exists, read it in; else initialize and
+      ! save the routing table for future use
+      write(UNIT=LU_LOG,FMT=*) "Configuring runoff for the downhill flow routing option..."
+      call model_ConfigureRunoffDownhill( pGrd, pConfig)
+    end if
+
+    ! Unless we are *not* routing water, we *must* call InitializeFlowDirection
+    if( pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
+      write(UNIT=LU_LOG,FMT=*) "Initializing flow direction..."
+      call model_InitializeFlowDirection( pGrd , pConfig)
+    end if
+
+    pConfig%lFirstYearOfSimulation = lFALSE
+
+  end if FIRST_YEAR_pt_2
 
   if(pConfig%lFirstDayOfSimulation) then
     ! scan through list of potential output variables; if any
@@ -289,13 +300,17 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 !***********************************************************************
 
 !  ! Initialize precipitation value for current day
-  call model_GetDailyPrecipValue(pGrd, pConfig, pTS%rPrecip, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
+!  call model_GetDailyPrecipValue(pGrd, pConfig, pTS%rPrecip, &
+!    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
   ! Initialize temperature values for current day
-  call model_GetDailyTemperatureValue(pGrd, pConfig, &
-    pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pTS%rRH, &
-    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
+!  call model_GetDailyTemperatureValue(pGrd, pConfig, &
+!    pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pTS%rRH, &
+!    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
+
+   call model_GetDailyPrecipAndTemperatureValue(pGrd, pConfig, pTS%rPrecip, &
+    pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pConfig%iMonth, pConfig%iDay, &
+    pConfig%iYear, pConfig%iCurrentJulianDay)
 
   write(UNIT=LU_LOG,FMT="(1x,'Beginning calculations for day: '," &
     //"i3,4x,A3,4x,i2,'/',i2,'/',i4)") &
@@ -423,7 +438,7 @@ end if
       .or. STAT_INFO(iIndex)%iAnnualOutput > iNONE)  then
 
       inquire(UNIT=STAT_INFO(iIndex)%iLU,POS=iPos)  ! establish location to return to
-  
+
       write(UNIT=STAT_INFO(iIndex)%iLU,POS=iENDDATE_POS) &
         pConfig%iMonth,pConfig%iDay, pConfig%iYear
 
@@ -589,7 +604,7 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL)
   iCount = count( pGrd%iMask == iACTIVE_CELL )
 
-  call assert(iCount > 0, "Cannot continue -- count of active cells <= 0", &
+  call assert(iCount > 0, "Cannot continue -- there are no active cells", &
     __FILE__, __LINE__)
   ! We are ignoring any missing or bogus values in this calculation
   rMean = rSum / iCount
@@ -646,6 +661,115 @@ end subroutine model_GetDailyPrecipValue
 !
 ! SOURCE
 
+subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
+    rAvgT, rMinT, rMaxT, iMonth, iDay, iYear, iJulianDay)
+
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+  real (kind=c_float), intent(in) :: rPrecip
+  real (kind=c_float), intent(in) :: rAvgT
+  real (kind=c_float), intent(in) :: rMinT
+  real (kind=c_float), intent(in) :: rMaxT
+  integer (kind=c_int), intent(in) :: iMonth
+  integer (kind=c_int), intent(in) :: iDay
+  integer (kind=c_int), intent(in) :: iYear
+  integer (kind=c_int), intent(in) :: iJulianDay
+
+  ! [ LOCALS ]
+  real (kind=c_double) :: rMin, rMean, rMax, rSum, rTempVal
+  integer (kind=c_int) :: iNumGridCells
+  integer (kind=c_int) :: iRow,iCol, iCount, iCount_valid, iNegCount
+  character (len=256) sBuf
+  type (T_CELL),pointer :: cel
+
+  iCount = 0
+
+!$OMP PARALLEL SECTIONS PRIVATE(pGrd)
+!$OMP SECTION
+  call DAT(TMAX_DATA)%set_constant(rMaxT)
+  call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMax)
+!$OMP SECTION
+  call DAT(TMIN_DATA)%set_constant(rMinT)
+  call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
+!$OMP SECTION
+  call DAT(PRECIP_DATA)%set_constant(rPrecip)
+  call DAT(PRECIP_DATA)%getvalues( pGrdBase=pGrd, &
+      iMonth=iMonth, iDay=iDay, iYear=iYear, &
+      iJulianDay=iJulianDay, &
+      rValues=pGrd%Cells%rGrossPrecip)
+!$OMP END PARALLEL SECTIONS
+
+!!!   *$OMP PARALLEL SECTIONS
+!!!   *$OMP SECTION
+!!!   *$OMP PARALLEL DO PRIVATE(iRow, iCol, cel, rTempVal)
+  do iRow=1,pGrd%iNY
+    do iCol=1,pGrd%iNX
+      cel=>pGrd%Cells(iCol,iRow)
+
+      if( cel%rTMax < cel%rTMin )then
+        ! swap min and max values to maintain a positive delta T
+        rTempVal = cel%rTMax
+        cel%rTMax = cel%rTMin
+        cel%rTMin = cel%rTMax
+
+      end if
+
+      if (cel%rTMin > 28.) then
+        cel%rGDD_28F = cel%rGDD_28F + (cel%rTAvg - 28.)
+      else
+        cel%rGDD_28F = 0.
+      endif
+
+    enddo
+  enddo
+
+  pGrd%Cells%rTAvg = (pGrd%Cells%rTMax + pGrd%Cells%rTMin) / 2_c_float
+
+!!!   *$OMP END PARALLEL DO
+
+!!!   *$OMP SECTION
+
+
+  rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL )
+  rMax = maxval(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL)
+  rSum = sum(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL)
+  iCount = count( pGrd%iMask == iACTIVE_CELL )
+
+  iNegCount = COUNT(pGrd%Cells%rGrossPrecip < pConfig%rMinValidPrecip &
+                .and. pGrd%iMask == iACTIVE_CELL )
+
+  call assert(iCount > 0, "Cannot continue -- there are no active cells", &
+    __FILE__, __LINE__)
+  ! We are ignoring any missing or bogus values in this calculation
+  rMean = rSum / iCount
+
+  if(pConfig%lHaltIfMissingClimateData) then
+    call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
+      //trim(real2char(pConfig%rMinValidPrecip))//" are not allowed. " &
+      //"("//trim(int2char(iNegCount))//" cells with values < " &
+      //trim(real2char(pConfig%rMinValidPrecip))//")",TRIM(__FILE__),__LINE__)
+  elseif(iNegCount > 0) then
+    write(sBuf,fmt="(a,i7,1x,a,1x,i2.2,'/',i2.2,'/',i4.4)") "*** ",iNegCount, &
+      "Missing PRECIPITATION values detected: ", iMonth, iDay, iYear
+    call echolog(sBuf)
+    call echolog("  ==> Missing precipitation values will be set to zero")
+  endif
+
+  call stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iGROSS_PRECIP,iMonth)
+
+!!!   *$OMP END PARALLEL SECTIONS
+
+end subroutine model_GetDailyPrecipAndTemperatureValue
+
+
+
+
 subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   rMaxT, rRH, iMonth, iDay, iYear, iJulianDay)
 
@@ -671,8 +795,8 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
   iCount = 0
 
-!$OMP PARALLEL SECTIONS
-!$OMP SECTION
+!!!   *$OMP PARALLEL SECTIONS
+!!!   *$OMP SECTION
   call DAT(TMAX_DATA)%set_constant(rMaxT)
   call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
@@ -682,7 +806,7 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
-!$OMP END PARALLEL SECTIONS
+!!!   *$OMP END PARALLEL SECTIONS
 
 
 #ifdef STREAM_INTERACTIONS
@@ -797,7 +921,7 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   real (kind=c_float) :: rTAvg_C              ! temporary variable holding avg temp in C
   real (kind=c_float) :: rSnowDepthCM         ! snow depth in centimeters
 
-  !$OMP DO ORDERED
+  !!!   *$OMP DO ORDERED PRIVATE(iRow, iCol, cel)
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
@@ -820,7 +944,7 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
   end do
 end do
 
-  !$OMP END DO
+  !!!   *$OMP END DO
 
 !  write(UNIT=LU_LOG,FMT=*)  "=========CFGI CALCULATION==========="
 !  write(UNIT=LU_STD_OUT,FMT="(A)") &
@@ -1547,7 +1671,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
               do iColSub=iCol-1,iCol+1
                 if (iColSub>=1 .and. iColSub<=pGrd%iNX) then              ! we're within array bounds
                   if (iRow==iRowSub .and. iCol==iColSub) cycle            ! Skip current inquiry cell
-                  if (pGrd%iMask(iColSub, iRowSub) == 0) cycle     ! Don't count inactive neighbors
+                  if (pGrd%iMask(iColSub, iRowSub) == iINACTIVE_CELL ) cycle     ! Don't count inactive neighbors
                   call model_DownstreamCell(pGrd,iRowSub,iColSub,iTgt_Row,iTgt_Col)
 
                   if (iTgt_Row==iRow .and. iTgt_Col==iCol ) then          ! target cell points at current inquiry cell
@@ -1613,7 +1737,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
         ! loop over possible (legal) values of the flow direction grid
         do k=0,128
           iCount=COUNT(.not. pGrd%Cells%lDownHillMarked &
-            .and.pGrd%Cells%iFlowDir==k .and. pGrd%iMask == 0)
+            .and.pGrd%Cells%iFlowDir==k .and. pGrd%iMask == iACTIVE_CELL)
           if(iCount>0) then
             iCumlCount = iCumlCount + iCount
             write(LU_LOG,FMT="(3x,i8,' unmarked grid cells have flowdir value: ',i8)") &
@@ -1627,7 +1751,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
 
 #ifdef DEBUG_PRINT
 
-        where( pGrd%Cells%lDownHillMarked .or.  pGrd%iMask /= 0)
+        where( pGrd%Cells%lDownHillMarked .or.  pGrd%iMask /=  iACTIVE_CELL )
           pTempGrid%iData = iROUTE_CELL_MARKED
         elsewhere
           pTempGrid%iData = pGrd%Cells%iFlowDir
@@ -3168,11 +3292,15 @@ subroutine model_setInactiveCells( pGrd, pConfig )
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
-  where ( pGrd%Cells%iSoilGroup < 0 .or. &
+  where ( pGrd%Cells%iSoilGroup <= 0 .or. &
           pGrd%Cells%iFlowDir < 0 .or. &
-          pGrd%Cells%iLandUse < 0)
+          pGrd%Cells%iLandUse <= 0)
 
     pGrd%iMask = iINACTIVE_CELL
+
+  elsewhere
+
+    pGrd%iMask = iACTIVE_CELL
 
   endwhere
 
