@@ -63,9 +63,9 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
 
   if(iByteCount(iVarNum) == 1) then
 
-   iCurr(iVarNum) = NINT((rValue + rRLE_OFFSET) * iRLE_MULT)
-	iRunCount(iVarNum) = 0
-	lRun(iVarNum) = lFALSE
+    iCurr(iVarNum) = NINT((rValue + rRLE_OFFSET) * iRLE_MULT)
+	  iRunCount(iVarNum) = 0
+	  lRun(iVarNum) = lFALSE
 
   else ! 1 < iByteCount <= iByteTotal
 
@@ -78,7 +78,7 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
     if(iPrevious(iVarNum) == iCurr(iVarNum)) then ! we have a new or existing run
 
       if(lRun(iVarNum)) then  ! EXISTING RUN
-	    lRun(iVarNum) = lTRUE
+	      lRun(iVarNum) = lTRUE
         iRunCount(iVarNum) = iRunCount(iVarNum) + 1
       else  ! BEGIN A NEW RUN
         write(iLU) iPrevious(iVarNum)
@@ -86,18 +86,20 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
         lRun(iVarNum) = lTRUE
         iRunCount(iVarNum) = 0
       end if
-	elseif(iPrevious(iVarNum)/=iCurr(iVarNum)) then
+
+	  elseif(iPrevious(iVarNum)/=iCurr(iVarNum)) then
+      
       if(lRun(iVarNum)) then  ! *END* EXISTING RUN
         write(iLU) iRunCount(iVarNum)
-		lRun(iVarNum) = lFALSE
-		iRunCount(iVarNum) = 0
+		    lRun(iVarNum) = lFALSE
+		    iRunCount(iVarNum) = 0
       else  ! OK to write out iPrevious
         write(iLU) iPrevious(iVarNum)
         lRun(iVarNum) = lFALSE
         iRunCount(iVarNum) = 0
       end if
 
-	endif
+	  endif
 
   endif
 
@@ -175,12 +177,12 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
   real(kind=c_float),intent(in) :: rRLE_OFFSET
   real(kind=c_float),dimension(iByteTotal), intent(out) :: rValue
   integer(kind=c_int), intent(in) :: iByteTotal      ! total # of bytes in
-                                                     ! original datastream
+                                                           ! original datastream
   logical(kind=c_bool),intent(out) :: lEOF
 
   ![LOCALS]
   integer(kind=c_int), save :: iByteCount   ! total # of bytes reconstituted
-                                            ! by RLE_readByte so far
+                                                  ! by RLE_readByte so far
 
   integer(kind=c_int) iCurr, i, iRepeat, iStat
   integer(kind=c_int), save :: iPrevious

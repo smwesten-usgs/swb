@@ -159,7 +159,7 @@ Before one can successfully build SWB, the batch file used to configure CMake mu
 
 If one is building for a 32-bit system (win_x86) under MinGW gfortran, the first thing to do is to navigate to the appropriate build subdirectory: _swb/build/win_x86/gfortran_.
 
-If the compilers are gfortran/gcc, it is easy to find the version of the software by typing *'gcc - v' at the command prompt:
+If the compilers are gfortran/gcc, it is easy to find the version of the software by typing *'gcc - v'* at the command prompt:
 
 ![][image3]
 
@@ -190,3 +190,7 @@ With the changes made as discussed above, the *run_cmake_mingw_gfortran.bat* bat
 ![][image6]
 
 [image6]: images/success_cmake.png
+
+### Build SWB ###
+
+A successful run of the CMake program will result in a new *makefile* being written to the directory in which the batchfile was run. At this point, it should be possible to build SWB by invoking the *make* program: simply type *make* at the command line. It should not be necessary to rerun the batchfile and CMake again unless the underlying libraries are updated.

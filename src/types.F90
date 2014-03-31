@@ -122,9 +122,9 @@ module types
   !> These variables store the position of the start date and
   !> end date within the binary (stream) output file.
   !> @{
-  integer(kind=c_int) :: iSTARTDATE_POS
-  integer(kind=c_int) :: iENDDATE_POS
-  integer(kind=c_int) :: iENDHEADER_POS
+  integer(kind=c_long_long) :: iSTARTDATE_POS
+  integer(kind=c_long_long) :: iENDDATE_POS
+  integer(kind=c_long_long) :: iENDHEADER_POS
   !> @}
 
 
@@ -1203,6 +1203,7 @@ module types
   interface asCharacter
     module procedure short2char
     module procedure int2char
+    module procedure longlong2char
     module procedure real2char
     module procedure dbl2char
   end interface asCharacter
@@ -2637,6 +2638,19 @@ elemental function int2char(iValue)  result(sBuf)
   sBuf = ADJUSTL(sBuf)
 
 end function int2char
+
+!--------------------------------------------------------------------------
+
+!> Convert an long long (integer) value into a formatted character string
+elemental function longlong2char(iValue)  result(sBuf)
+
+  integer (kind=c_long_long), intent(in) :: iValue
+  character (len=14) :: sBuf
+
+  write(UNIT=sBuf,FMT="(i14)") iValue
+  sBuf = ADJUSTL(sBuf)
+
+end function longlong2char
 
 !--------------------------------------------------------------------------
 
