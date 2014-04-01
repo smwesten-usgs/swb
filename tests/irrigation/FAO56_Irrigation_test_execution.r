@@ -2,9 +2,6 @@ myargs <- commandArgs(trailingOnly = TRUE)
 
 swb_exe <- myargs[1]
 
-#setwd("D:\\SMWData\\Source_Code\\swb\\tests\\irrigation")
-#swb_exe <- "d:/DOS/swb.exe"
-
 nash_sutcliffe <- function(cw, swb)  {
   
   numerator <- sum((cw - swb)^2)
@@ -33,6 +30,8 @@ retval <- shell(cmd="cleanup.bat", intern=TRUE, ignore.stdout=FALSE)
 retval <- shell(cmd=paste(swb_exe,swb_ctl, " > swb_command_line_echo.txt", sep=" "),
                 intern=TRUE,
                 ignore.stdout=FALSE)
+
+pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 
 sm <- read.table("SOIL_MOISTURE_2_2.ssf", colClasses=c("character","character","character","numeric"))
 colnames(sm) <- c("row_col", "date", "time", "value")
@@ -92,13 +91,14 @@ with(cropet, lines(date, value, col="blue"))
 legend("topright",legend=c("CROPWAT","SWB"), lty=c(-1,1),
        pch=c(21,-1), col=c("black","blue"), inset=c(0.02,0.02))
 
-with(rootdpth, plot(date, value, col="brown", main="EFFECTIVE_ROOTING DEPTH (FEET)"))
+with(rootdpth, plot(date, value, col="brown", type="l", ylim=c(0, 1.8),
+                    main="EFFECTIVE_ROOTING DEPTH (FEET)"))
 
-with(cropcoef, plot(date, value, col="orange", main="CROP COEFFICIENT (Kcb)"))
+with(cropcoef, plot(date, value, col="orange", type="l", main="CROP COEFFICIENT (Kcb)"))
 
 with(cw_msb, plot(date, sm, pch=21, main="SOIL MOISTURE"))
 with(sm, lines(date, value, col="red"))
-legend("topright",legend=c("CROPWAT","SWB"), lty=c(-1,1),
+legend("bottomright",legend=c("CROPWAT","SWB"), lty=c(-1,1),
        pch=c(21,-1), col=c("black","red"), inset=c(0.02,0.02))
 
 with(cw_msb, plot(date, rain_in, pch=21, main="PRECIPITATION"))
@@ -128,6 +128,8 @@ sum_irr_cw <- sum(cw_msb$gross_irr_in)
 
 rpd_irr <- rpd(sum_irr_swb, sum_irr_cw)
 
+dev.off()
+
 # reference ET and crop ET are easier to get right; the soil moisture depends on
 # several other factors, so we'll accept a lower NS for it.
 lTEST <- ns_sm > 0.8 & ns_eto > 0.98 & ns_cropet > 0.98 & rpd_irr < 10.
@@ -137,3 +139,4 @@ if( lTEST == TRUE ) {
 } else {
   cat("FAIL")  
 }
+

@@ -17,11 +17,11 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
- !> Update the current basal crop corfficient (Kcb) for 
+ !> Update the current basal crop corfficient (Kcb) for
  !! a SINGLE irrigation table entry
  !!
  !! @param[inout] pIRRIGATION pointer to a single line of information in the irrigation file.
- !! @param[in] iThreshold either the current day of year or the number of growing degree days. 
+ !! @param[in] iThreshold either the current day of year or the number of growing degree days.
  subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
 
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
@@ -61,7 +61,7 @@ end subroutine et_kc_UpdateCropCoefficient
 
 !------------------------------------------------------------------------------
 
-!> 
+!>
 function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, &
    rDeficit)  result(rKr)
 
@@ -118,10 +118,20 @@ end function et_kc_CalcFractionExposedAndWettedSoil
 
 !------------------------------------------------------------------------------
 
-!> This function calculates the effective root zone depth given the
-!> stage of plant growth, the soil type, and the land cover type.
-!> @note Implemented as equation 8-1 (Annex 8), FAO-56, Allen and others.
-
+!> Calculate the effective root zone depth.
+!!
+!! Calculate the effective root zone depth give then current stage
+!! of plant growth, the soil type, and the crop type.
+!!
+!! @param[in] pIRRIGATION pointer to a specific line of the irrigation
+!!     lookup data structure.
+!! @param[in] rZr_max The maximum rooting depth for this crop; currently this
+!!     is supplied to this function as the rooting depth associated with the
+!!     landuse/soil type found in the landuse lookup table.
+!! @param[in] iThreshold Numeric value (either the GDD or the DOY) defining
+!!     the time that the crop is planted.
+!! @retval rZr_i current active rooting depth.
+!! @note Implemented as equation 8-1 (Annex 8), FAO-56, Allen and others.
 function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(rZr_i)
 
   ! [ ARGUMENTS ]
@@ -133,6 +143,8 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
   real (kind=c_float) :: rZr_i
 
 	! [ LOCALS ]
+	! 0.328 feet equals 0.1 meters, which is seems to be the standard
+	! initial rooting depth in the FAO-56 methodology
 	real (kind=c_float), parameter :: rZr_min = 0.328
 
 	if ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini < 0.1) then

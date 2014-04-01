@@ -14,17 +14,17 @@ FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD
 ```
 The table below summarizes the effect that each of the four modes has on the calculation of irrigation amounts.
 
-<!-- Table generated in R 3.0.1 by googleVis 0.4.3 package -->
-<!-- Mon Jun 24 10:33:18 2013 -->
+<!-- Table generated in R 3.0.1 by googleVis 0.4.5 package -->
+<!-- Tue Apr 01 10:04:26 2014 -->
 
 
 <!-- jsHeader -->
 <script type="text/javascript">
  
 // jsData 
-function gvisDataTableID6e84d7d1f86 () {
-  var data = new google.visualization.DataTable();
-  var datajson =
+function gvisDataTableID1082c614c93 () {
+var data = new google.visualization.DataTable();
+var datajson =
 [
  [
  "CROP_COEFFICIENTS_ONE_FACTOR_STANDARD",
@@ -60,18 +60,18 @@ return(data);
 }
  
 // jsDrawChart
-function drawChartTableID6e84d7d1f86() {
-  var data = gvisDataTableID6e84d7d1f86();
-  var options = {};
+function drawChartTableID1082c614c93() {
+var data = gvisDataTableID1082c614c93();
+var options = {};
 options["allowHtml"] = true;
 options["width"] =   1200;
 options["height"] =    200;
 options["page"] = "enable";
 
-     var chart = new google.visualization.Table(
-       document.getElementById('TableID6e84d7d1f86')
-     );
-     chart.draw(data,options);
+    var chart = new google.visualization.Table(
+    document.getElementById('TableID1082c614c93')
+    );
+    chart.draw(data,options);
     
 
 }
@@ -79,51 +79,51 @@ options["page"] = "enable";
  
 // jsDisplayChart
 (function() {
-  var pkgs = window.__gvisPackages = window.__gvisPackages || [];
-  var callbacks = window.__gvisCallbacks = window.__gvisCallbacks || [];
-  var chartid = "table";
-
-  // Manually see if chartid is in pkgs (not all browsers support Array.indexOf)
-  var i, newPackage = true;
-  for (i = 0; newPackage && i < pkgs.length; i++) {
-    if (pkgs[i] === chartid)
-      newPackage = false;
-  }
-  if (newPackage)
-    pkgs.push(chartid);
-
-  // Add the drawChart function to the global list of callbacks
-  callbacks.push(drawChartTableID6e84d7d1f86);
+var pkgs = window.__gvisPackages = window.__gvisPackages || [];
+var callbacks = window.__gvisCallbacks = window.__gvisCallbacks || [];
+var chartid = "table";
+  
+// Manually see if chartid is in pkgs (not all browsers support Array.indexOf)
+var i, newPackage = true;
+for (i = 0; newPackage && i < pkgs.length; i++) {
+if (pkgs[i] === chartid)
+newPackage = false;
+}
+if (newPackage)
+  pkgs.push(chartid);
+  
+// Add the drawChart function to the global list of callbacks
+callbacks.push(drawChartTableID1082c614c93);
 })();
-function displayChartTableID6e84d7d1f86() {
+function displayChartTableID1082c614c93() {
   var pkgs = window.__gvisPackages = window.__gvisPackages || [];
   var callbacks = window.__gvisCallbacks = window.__gvisCallbacks || [];
   window.clearTimeout(window.__gvisLoad);
   // The timeout is set to 100 because otherwise the container div we are
   // targeting might not be part of the document yet
   window.__gvisLoad = setTimeout(function() {
-    var pkgCount = pkgs.length;
-    google.load("visualization", "1", { packages:pkgs, callback: function() {
-      if (pkgCount != pkgs.length) {
-        // Race condition where another setTimeout call snuck in after us; if
-        // that call added a package, we must not shift its callback
-        return;
-      }
-      while (callbacks.length > 0)
-        callbacks.shift()();
-    } });
-  }, 100);
+  var pkgCount = pkgs.length;
+  google.load("visualization", "1", { packages:pkgs, callback: function() {
+  if (pkgCount != pkgs.length) {
+  // Race condition where another setTimeout call snuck in after us; if
+  // that call added a package, we must not shift its callback
+  return;
+}
+while (callbacks.length > 0)
+callbacks.shift()();
+} });
+}, 100);
 }
  
 // jsFooter
- </script>
+</script>
  
 <!-- jsChart -->  
-<script type="text/javascript" src="https://www.google.com/jsapi?callback=displayChartTableID6e84d7d1f86"></script>
+<script type="text/javascript" src="https://www.google.com/jsapi?callback=displayChartTableID1082c614c93"></script>
  
 <!-- divChart -->
   
-<div id="TableID6e84d7d1f86"
+<div id="TableID1082c614c93"
   style="width: 1200px; height: 200px;">
 </div>
 
@@ -231,7 +231,7 @@ As is true in the case of the single coefficient approach, 'standard conditions'
 4. DUAL COEFFICIENT UNDER NONSTANDARD CONDITIONS
 -----------------------
 
-The last option for application of the FAO-56 methodology uses the dual-coefficient approach discussed in the last section. Further, this option **disables** the Thornethwaite-Mather soil moisture retention tables and **enables** the reduction of crop evaportanspiration due to water stress. 
+The last option for application of the FAO-56 methodology uses the dual-coefficient approach discussed in the last section. Further, this option **disables** the Thornthwaite-Mather soil moisture retention tables and **enables** the reduction of crop evaportanspiration due to water stress. 
 
 ![plot of chunk unnamed-chunk-7](figure/unnamed-chunk-7.png) 
 

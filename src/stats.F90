@@ -578,12 +578,15 @@ end subroutine stats_UpdateAllAccumulatorsByGrid
 
 !--------------------------------------------------------------------------
 
-!> Writes out the min, max, and mean of 2D variable array.
-!> @par
-!> @param [in] iLU Fortran logical unit number to write output to.
-!> @param [in] sText Descriptive text associated with the statistics.
-!> @param [in] rData 2-d array of values for which statistics are calculated.
-!> @param [in] iCount <em>{Optional} User-supplied divisor for use in calculating the mean.</em>
+!> Write out the min, max, and mean of 2D variable array.
+!!
+!! @param [in] iLU Fortran logical unit number to write output to.
+!! @param [in] sText Descriptive text associated with the statistics.
+!! @param [in] rData 2-d array of values for which statistics are calculated.
+!! @param [in] iCount <em>{Optional} User-supplied divisor for use in
+!!                    calculating the mean.</em>
+!! @param [in] iMask <em>{Optional} User-supplied mask; used to
+!!                   determine which cells are included in the mean calculation.</em>
 subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount, iMask)
 
   ! [ ARGUMENTS ]

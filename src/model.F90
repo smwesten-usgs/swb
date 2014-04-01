@@ -209,7 +209,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-    !> @TODO Check the logic here. It would seem that a new irrigation table
+    !> @todo Check the logic here. It would seem that a new irrigation table
     !! index *should* be created if we have dynamic data rather than static data
     if (pConfig%lEnableIrrigation .and. &
       ( pConfig%iConfigureLanduse /= CONFIG_LANDUSE_STATIC_GRID &
