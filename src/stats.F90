@@ -782,6 +782,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   iNumGridCells = iNX * iNY
 
+  !!!   *$OMP PARALLEL DO PRIVATE(k)
+
   do k=1,iNUM_VARIABLES
 
     ! if we don't have any output requested for the current variable,
@@ -1046,6 +1048,8 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
     end do
 
   enddo
+
+!!!   *$OMP END PARALLEL DO
 
 end subroutine stats_RewriteGrids
 

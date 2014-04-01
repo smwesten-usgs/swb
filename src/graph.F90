@@ -421,9 +421,6 @@ module graph
 !    iNumGridCells = pGrd%iNY * pGrd%iNX
     iNumGridCells = count(pGrd%iMask == iACTIVE_CELL)
 
-    print *, "Number of active cells: ", iNumGridCells
-    print *, "Total number of cells: ", pGrd%iNY * pGrd%iNX
-
     XA = REAL(pGrd%rX0)
     XE = REAL(pGrd%rX1)
     XOR = XA
