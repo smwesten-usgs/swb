@@ -114,6 +114,9 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
 
   r_few = 1.0 - r_fc
 
+  if (r_few < 0.) r_few = 0.0
+  if (r_few > 1.) r_few = 1.0
+
 end function et_kc_CalcFractionExposedAndWettedSoil
 
 !------------------------------------------------------------------------------
