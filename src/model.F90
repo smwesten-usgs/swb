@@ -509,6 +509,7 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
 
   ! trigger the call to reconstitute the output grids and plots from the
   ! compressed binary files, if desired
+
   if(.not. pConfig%lUseSWBRead) &
     call stats_RewriteGrids(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, pGrd%rX1, &
       pGrd%rY1, pConfig, pGraph)
@@ -517,7 +518,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   call grid_Destroy(pGrd)
   call grid_Destroy(pGenericGrd_int)
   call grid_Destroy(pGenericGrd_sgl)
-!  call grid_Destroy(pGenericGrd_short)
 
   do iIndex=1,size(DAT, 1)
     if (DAT(iIndex)%iNC_ARCHIVE_STATUS == NETCDF_FILE_OPEN ) then
@@ -533,7 +533,6 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   write(unit=LU_LOG,fmt="(//1x,'SWB run completed in: ',f10.2, ' minutes')"), &
     (rEndTime - rStartTime) / 60.0_c_float
 
-  return
 end subroutine model_EndOfRun
 
 !--------------------------------------------------------------------------
@@ -3258,7 +3257,7 @@ subroutine model_CheckConfigurationSettings( pGrd, pConfig )
     //" to your ~control file." )
 
   call assert(DAT(LANDUSE_DATA)%iSourceDataType /= DATATYPE_NA, &
-    "No landuse data has been specified. If you have only" &
+    "No landuse data grid has been specified. If you have only" &
     //"~a single landuse type, add a directive such as 'LANDUSE CONSTANT 21'" &
     //"~to your control file." )
 
@@ -3281,6 +3280,14 @@ subroutine model_CheckConfigurationSettings( pGrd, pConfig )
       //sTAB//"FAO56 CROP_COEFFICIENTS_ONE_FACTOR_NONSTANDARD~" &
       //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
   endif
+
+  call assert( pConfig%iConfigureTemperature /= CONFIG_NONE, &
+    "No temperature data have been specified. A data source for both the minumum~" &
+    //"and maximum air temperature must be specified in order to run SWB." )
+
+  call assert( pConfig%iConfigurePrecip /= CONFIG_NONE, &
+    "No precipitation data have been specified. A data source for ~" &
+    //"daily precipitation must be specified in order to run SWB." )
 
 end subroutine model_CheckConfigurationSettings
 
@@ -3317,6 +3324,8 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
+
+  print *, __FILE__, __LINE__
 
   call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iFlowDir = pGrd%iData

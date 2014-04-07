@@ -904,6 +904,9 @@ module types
       !> Initial abstraction method: use 0.2S or 0.05S as estimate of initial abstraction
       integer (kind=c_int) :: iConfigureInitialAbstraction = CONFIG_NONE
 
+      !> Is an EOJ statement present?
+      logical (kind=c_bool) :: lEOJ_IsPresent = lFALSE
+
 			!> Enable irrigation calculations?
 			logical (kind=c_bool) ::lEnableIrrigation = lFALSE
 
@@ -1313,6 +1316,39 @@ function str_compare(sString1, sString2)                   result(lBool)
   end if
 
 end function str_compare
+
+!------------------------------------------------------------------------------
+
+   subroutine warn(sMessage, sModule, iLine, sHints)
+
+     use iso_fortran_env, only : OUTPUT_UNIT
+
+    character (len=*), intent(in)               :: sMessage
+    character (len=*), intent(in), optional     :: sModule
+    integer (kind=c_int), intent(in), optional  :: iLine
+    character (len=*), intent(in), optional     :: sHints
+!    integer (kind=c_int), intent(in), optional  :: iLU
+
+    ! [ LOCALS ]
+    integer (kind=c_int) :: iLU
+
+    iLU = OUTPUT_UNIT
+
+    write (unit=iLU, fmt="(/,/,a)") "** WARNING **"
+    write (unit=iLU, fmt="(/,t5,a,t23,a)") "possible error: ", trim(sMessage)
+
+    if (present(sModule))  &
+      write (unit=iLU, fmt="(t5,a,t23,a)")     "module: ", trim(sModule)
+
+    if (present(iLine))  &
+      write (unit=iLU, fmt="(t5,a,t23,i0)")  "line no: ", iLine
+
+    if (present(sHints)) &
+      write (unit=iLU, fmt="(/,t5,'==> ',a)") sHints
+
+    write (unit=iLU, fmt="(/)")
+
+  end subroutine warn
 
 !------------------------------------------------------------------------------
 

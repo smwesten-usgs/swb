@@ -189,6 +189,11 @@ contains
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
 
+    print *, repeat("*",100)
+    print *, __FILE__, __LINE__
+    print *, dQuote(this%sDescription)
+    print *, repeat("*",100)
+
   end subroutine initialize_constant_real_data_object_sub
 
 !----------------------------------------------------------------------
@@ -210,6 +215,11 @@ contains
 
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
+
+    print *, repeat("*",100)
+    print *, __FILE__, __LINE__
+    print *, dQuote(this%sDescription)
+    print *, repeat("*",100)
 
   end subroutine initialize_constant_int_data_object_sub
 
@@ -412,11 +422,21 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
     case ( DATATYPE_REAL )
 
-      pGrdBase%rData = this%rConstantValue
+      if (.not. all( pGrdBase%rData == this%rConstantValue ) ) then
+
+        this%lGridHasChanged = lTRUE
+        pGrdBase%rData = this%rConstantValue
+
+      endif
 
     case ( DATATYPE_INT)
 
-      pGrdBase%iData = this%iConstantValue
+      if (.not. all( pGrdBase%iData == this%iConstantValue ) ) then
+
+        this%lGridHasChanged = lTRUE
+        pGrdBase%iData = this%iConstantValue
+
+      endif
 
     case default
 
@@ -428,8 +448,6 @@ subroutine getvalues_constant_sub( this, pGrdBase )
         trim(__FILE__), __LINE__)
 
     end select
-
-    this%lGridHasChanged = lTRUE
 
   end subroutine getvalues_constant_sub
 

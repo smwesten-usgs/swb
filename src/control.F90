@@ -317,10 +317,20 @@ subroutine control_setModelOptions(sControlFile)
       if ( str_compare(sOption,"SINGLE_STATION") ) then
         write(UNIT=LU_LOG,FMT=*) "  Precip data will be read for a single station"
         pConfig%lGriddedData = lFALSE
+        pConfig%iConfigurePrecip = CONFIG_PRECIP_SINGLE_STATION
         call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=0.0 )
-      elseif(str_compare(sOption,"ARC_GRID") &
-             .or. str_compare(sOption,"SURFER") ) then
+
+      elseif(str_compare(sOption,"ARC_GRID") ) then
+        pConfig%iConfigurePrecip = CONFIG_PRECIP_ARC_GRID
+        call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilenameTemplate=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
+          pConfig%lGriddedData = lTRUE
+
+      elseif(str_compare(sOption,"SURFER") ) then
+        pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER
         call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilenameTemplate=trim(sArgument), &
@@ -328,22 +338,13 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%lGriddedData = lTRUE
 
       else if( str_compare(sOption,"NETCDF") ) then
-
-          ! initialize DAT object for precip data
-          call DAT(PRECIP_DATA)%initialize_netcdf( &
-            sDescription=trim(sItem), &
+        pConfig%iConfigurePrecip = CONFIG_PRECIP_NETCDF
+        ! initialize DAT object for precip data
+        call DAT(PRECIP_DATA)%initialize_netcdf( &
+          sDescription=trim(sItem), &
             sFilenameTemplate = trim(sArgument), &
             iDataType=DATATYPE_REAL, &
             pGrdBase=pGrd)
-
-!          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%iNCID = &
-!              netcdf_open(TRIM(sArgument))
-!          pConfig%NETCDF_FILE(iGROSS_PRECIP, iNC_INPUT)%sFilename = &
-!              TRIM(sArgument)
-
-!          call netcdf_info(pConfig, iGROSS_PRECIP,iNC_INPUT, TRIM(sArgument))
-!          pConfig%NETCDF_FILE(iGROSS_PRECIP,iNC_INPUT)%sVarName = TRIM(sArgument)
-!          call netcdf_chk_extent(pConfig,iGROSS_PRECIP,iNC_INPUT,pGrd)
           pConfig%lGriddedData = lTRUE
       else
         call Assert( lFALSE , "Illegal precipitation input format specified" )
@@ -434,23 +435,46 @@ subroutine control_setModelOptions(sControlFile)
         call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=65.0 )
       else
-        if ( trim(sOption) == "ARC_GRID" .or. trim(sOption) == "SURFER" ) then
 
-        call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
-          sFileType=trim(sOption), &
-          sFilenameTemplate=trim(sArgument), &
-          iDataType=DATATYPE_REAL )
+        if ( trim(sOption) == "ARC_GRID" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
+
+          call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
 
           call Chomp ( sRecord, sArgument )
 
-        call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
-          sFileType=trim(sOption), &
-          sFilenameTemplate=trim(sArgument), &
-          iDataType=DATATYPE_REAL )
+          call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          pConfig%lGriddedData = lTRUE
+
+        elseif ( trim(sOption) == "SURFER" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER
+
+          call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          call Chomp ( sRecord, sArgument )
+
+          call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
 
           pConfig%lGriddedData = lTRUE
 
         else if( trim(sOption) == "NETCDF" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
 
           call DAT(TMAX_DATA)%initialize_netcdf( &
             sDescription=trim(sItem), &
@@ -2006,6 +2030,7 @@ subroutine control_setModelOptions(sControlFile)
       call stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
       call stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       write(UNIT=LU_LOG,FMT=*) "Job complete."
+      pConfig%lEOJ_IsPresent = lTRUE
       call model_EndOfRun(pGrd, pConfig, pGraph)
       exit
 
@@ -2016,6 +2041,10 @@ subroutine control_setModelOptions(sControlFile)
     end if
 
   end do CTL_READ  ! end of control file read loop
+
+  if ( .not. pConfig%lEOJ_IsPresent ) &
+    call warn("No end-of-job directive was found; some cleanup steps may be skipped, ~" &
+    //"and certain output files and/or images may be missing.")
 
   DEALLOCATE(pConfig, STAT=iStat)
   call Assert( iStat == 0, &
