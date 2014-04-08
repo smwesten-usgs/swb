@@ -3325,8 +3325,6 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   type ( T_GENERAL_GRID ),pointer :: pGrd               ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
-  print *, __FILE__, __LINE__
-
   call DAT(FLOWDIR_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iFlowDir = pGrd%iData
 

@@ -9,7 +9,7 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
 set COMPILER_DIR=C:/MinGW32
-set COMPILER_VERSION=4.8.2
+set COMPILER_VERSION=4.8.1
 set COMPILER_TRIPLET=i686-w64-mingw32
 set LIB_PATH1=%COMPILER_DIR%/%COMPILER_TRIPLET%/lib
 set LIB_PATH2=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION%

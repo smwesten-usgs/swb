@@ -1085,6 +1085,8 @@ subroutine nf_open_file(NCFILE, sFilename, iLU)
   call nf_trap( nc_open(trim(sFilename)//c_null_char, &
                 NC_READONLY, NCFILE%iNCID), __FILE__, __LINE__ )
 
+  print *, __FILE__,": ",__LINE__
+
   call nf_trap( nc_inq_format(ncid=NCFILE%iNCID, formatp=NCFILE%iFileFormat), &
                __FILE__, __LINE__)
 
