@@ -22,10 +22,12 @@ module et_crop_coefficients
  !!
  !! @param[inout] pIRRIGATION pointer to a single line of information in the irrigation file.
  !! @param[in] iThreshold either the current day of year or the number of growing degree days.
- subroutine et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)
+ !! @retval rKcb Basal crop coefficient given the irrigation table entries and the current threshold values.
+ function et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)  result(rKcb)
 
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  integer (kind=c_int) :: iThreshold
+  integer (kind=c_int), intent(in)   :: iThreshold
+  real (kind=c_float)                :: rKcb
 
   ! [ LOCALS ]
   integer (kind=c_int) :: i, j
@@ -34,30 +36,30 @@ module et_crop_coefficients
 
   ! now calculate Kcb for the given landuse
   if(iThreshold > pIRRIGATION%iL_late) then
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
+    rKcb = pIRRIGATION%rKcb_min
 
   elseif ( iThreshold > pIRRIGATION%iL_mid ) then
     frac = real(iThreshold - pIRRIGATION%iL_mid, kind=c_double ) &
       / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=c_double )
-    pIRRIGATION%rKcb =  pIRRIGATION%rKcb_mid * (1_c_double - frac) &
+    rKcb =  pIRRIGATION%rKcb_mid * (1_c_double - frac) &
                          + pIRRIGATION%rKcb_end * frac
 
   elseif ( iThreshold > pIRRIGATION%iL_dev ) then
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_mid
+    rKcb = pIRRIGATION%rKcb_mid
 
   elseif ( iThreshold > pIRRIGATION%iL_ini ) then
     frac = real(iThreshold - pIRRIGATION%iL_ini) &
         / real( pIRRIGATION%iL_dev - pIRRIGATION%iL_ini )
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
+    rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
                            + pIRRIGATION%rKcb_mid * frac
 
   elseif ( iThreshold >= pIRRIGATION%iL_plant ) then
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_ini
+    rKcb = pIRRIGATION%rKcb_ini
   else
-    pIRRIGATION%rKcb = pIRRIGATION%rKcb_min
+    rKcb = pIRRIGATION%rKcb_min
   endif
 
-end subroutine et_kc_UpdateCropCoefficient
+end function et_kc_UpdateCropCoefficient
 
 !------------------------------------------------------------------------------
 
@@ -262,17 +264,18 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        cel => pGrd%Cells(iCol, iRow)
 
        if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
+
 !       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
        if(cel%rSoilWaterCap <= rNear_ZERO &
             .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
 
        pIRRIGATION => pConfig%IRRIGATION(cel%iIrrigationTableIndex)
-			 cel%rKcb = pIRRIGATION%rKcb
 
 			 rZr_max = pConfig%ROOTING_DEPTH(cel%iLandUseIndex,cel%iSoilGroup)
 
        if(pIRRIGATION%lUnitsAreDOY) then
-         call et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
+
+         cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
 
 				 if(pConfig%iDayOfYear < pIRRIGATION%iL_dev) then
 				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
@@ -281,7 +284,8 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				 endif
 
        else
-         call et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=c_int))
+
+         cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=c_int))
 
 				 if(int(cel%rGDD, kind=c_int) < pIRRIGATION%iL_dev) then
 				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
@@ -317,9 +321,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
 
-         if (rKe < 0) print *, "rKe < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKe
-         if (rKr < 0) print *, "rKr < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKr
-         if (r_few < 0) print *, "r_few < 0: ", iRow, iCol, cel%iLandUse, cel%iSoilGroup, r_few
+         if (rKe < 0) print *, "rKe < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKe, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
+         if (rKr < 0) print *, "rKr < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKr, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
+         if (r_few < 0) print *, "r_few < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, r_few, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
 
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 

@@ -211,7 +211,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 
     !> @todo Check the logic here. It would seem that a new irrigation table
     !! index *should* be created if we have dynamic data rather than static data
-    if (pConfig%lEnableIrrigation .and. &
+    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE .and. &
       ( pConfig%iConfigureLanduse /= CONFIG_LANDUSE_STATIC_GRID &
         .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_CONSTANT) ) then
       call model_CreateIrrigationTableIndex(pGrd, pConfig )
@@ -225,7 +225,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 
   FIRST_YEAR_pt_2: if(pConfig%lFirstYearOfSimulation) then
 
-    if (pConfig%lEnableIrrigation .and. &
+    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE .and. &
        ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
       call model_CreateIrrigationTableIndex(pGrd, pConfig )
@@ -2958,8 +2958,8 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
 
     call chomp(sRecord, sItem, sTAB)
     pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription = trim(sItem)
-    write(UNIT=LU_LOG,FMT=*)  "  landuse description ", &
-      pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription
+    write(UNIT=LU_LOG,FMT=*)  "  landuse "//trim(asCharacter(iLandUseType))//" : ", &
+      dQuote(pConfig%IRRIGATION(iLandUseIndex)%sLandUseDescription)
 
     call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rMeanPlantHeight
