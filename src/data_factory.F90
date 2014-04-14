@@ -189,11 +189,6 @@ contains
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
 
-    print *, repeat("*",100)
-    print *, __FILE__, __LINE__
-    print *, dQuote(this%sDescription)
-    print *, repeat("*",100)
-
   end subroutine initialize_constant_real_data_object_sub
 
 !----------------------------------------------------------------------
@@ -215,11 +210,6 @@ contains
 
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE )
     call netcdf_nullify_data_struct( NCFILE=this%NCFILE_ARCHIVE )
-
-    print *, repeat("*",100)
-    print *, __FILE__, __LINE__
-    print *, dQuote(this%sDescription)
-    print *, repeat("*",100)
 
   end subroutine initialize_constant_int_data_object_sub
 
