@@ -3281,13 +3281,17 @@ subroutine model_CheckConfigurationSettings( pGrd, pConfig )
       //sTAB//"FAO56 CROP_COEFFICIENTS_TWO_FACTOR_NONSTANDARD~")
   endif
 
-  call assert( pConfig%iConfigureTemperature /= CONFIG_NONE, &
-    "No temperature data have been specified. A data source for both the minumum~" &
-    //"and maximum air temperature must be specified in order to run SWB." )
+  if ( pConfig%lGriddedData ) then
 
-  call assert( pConfig%iConfigurePrecip /= CONFIG_NONE, &
-    "No precipitation data have been specified. A data source for ~" &
-    //"daily precipitation must be specified in order to run SWB." )
+    call assert( pConfig%iConfigureTemperature /= CONFIG_NONE, &
+      "No temperature data have been specified. A data source for both the minumum~" &
+      //"and maximum air temperature must be specified in order to run SWB." )
+
+    call assert( pConfig%iConfigurePrecip /= CONFIG_NONE, &
+      "No precipitation data have been specified. A data source for ~" &
+      //"daily precipitation must be specified in order to run SWB." )
+
+  endif
 
 end subroutine model_CheckConfigurationSettings
 

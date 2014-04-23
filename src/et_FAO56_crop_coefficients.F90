@@ -328,7 +328,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
-         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs)
+         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
@@ -339,7 +339,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
          cel%rBareSoilEvap = rZERO
-         cel%rCropETc = cel%rReferenceET0 * (pIRRIGATION%rKcb * rKs)
+         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_STANDARD ) then
 
@@ -357,7 +357,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
                  rKr ), r_few * pIRRIGATION%rKcb_mid )
 
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
-         cel%rCropETc = cel%rReferenceET0 * pIRRIGATION%rKcb
+         cel%rCropETc = cel%rReferenceET0 * cel%rKcb
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_STANDARD ) then
 
@@ -366,7 +366,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				 ! no real calculations required because we're applying the crop coefficient directly
 
          cel%rBareSoilEvap = rZERO
-         cel%rCropETc = cel%rReferenceET0 * pIRRIGATION%rKcb
+         cel%rCropETc = cel%rReferenceET0 * cel%rKcb
 
 			 else
 
