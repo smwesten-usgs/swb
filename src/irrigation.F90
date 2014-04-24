@@ -40,6 +40,7 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
   type ( T_CELL ),pointer :: cel
   real (kind=c_float) :: rDepletionFraction
   real (kind=c_double) :: rDepletionAmount
+  real (kind=c_double) :: rIrrigationAmount
 
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
@@ -68,36 +69,32 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
                                / cel%rTotalAvailableWater, 1.0)
 
         if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
-          rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+
+          !> NEW as of 4/23/2014: irrigation amount can either be the amount
+          !! of the current soil moisture deficit *or* a specified maximum
+          !! daily amount
+          if (pIRRIGATION%rIrrigationAmount <= rNEAR_ZERO) then
+            rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+          else
+            rIrrigationAmount = pIRRIGATION%rIrrigationAmount
+          endif
+
           cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
-                                      * rDepletionAmount, kind=c_double )
+                                      * rIrrigationAmount, kind=c_double )
 
           cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
-                                      * rDepletionAmount, kind=c_double )
+                                      * rIrrigationAmount, kind=c_double )
 
           !> @todo Must difinitively figure out what to do with water that
           !! is calculated to be used as part of the inefficiency in the
           !! delivery system.
 
           ! rIrrigationAmount is the value that actually enters the mass balance
-!          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
-
-          ! if rIrrigationAmount is calculated here, the extra water reported owing to
-          ! inefficiencies is not actually applied anywhere
-
-          ! assume that the inefficiencies in the delivery system do *not*
-          ! enter the root zone, as per CROPWAT
-          cel%rIrrigationFromGW = cel%rIrrigationFromGW &
-             * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
-          cel%rIrrigationFromSW = cel%rIrrigationFromSW &
-             * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
-
-          ! rIrrigationAmount is the value that actually enters the mass balance
-          cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
-
-          ! if rIrrigationAmount is calculated here, the extra water reported owing to
-          ! inefficiencies **is assumed to make it into the root zone**
-
+          ! NOTE!! Currently we are assuming that the amounts from GW and SW are the amounts a grower
+          !        would estimate based on pumping rates and times; it is assumed that the inefficiencies
+          !        in delivery result in water that bypasses the root zone.
+          cel%rIrrigationAmount = cel%rIrrigationFromGW * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double ) &
+                                + cel%rIrrigationFromSW * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
 
         else
           cel%rIrrigationAmount = rZERO
