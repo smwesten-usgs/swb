@@ -39,7 +39,7 @@ contains
 
 
   !> Calculate the number of daylight hours at a location.
-  !> 
+  !>
   !> @param  [in] rOmega_s The sunset hour angle in Radians.
   !> @return rN The number of daylight hours.
   !>
@@ -72,7 +72,7 @@ contains
 !> @note  1 MJ = 1e6 Joules; 1 Joule = 1 Watt / sec.
 !> @note   Therefore, multiply by 1e6 and divide by 86400 to get W/m*2-day.
 !>
-!> @par Source 
+!> @par Source
 !>      Equation 21, Allen and others (2006).
 !>
 !> @par Reference
@@ -178,7 +178,7 @@ end function row_latitude
 !! @param[in] rTSnow Snow temperature, in &deg;C
 !! @param[in] rTAvg Mean daily air temperature, in &deg;C
 !! @param[in] rWindSpd Wind speed in meters per second
-!! @retval rH Sensible heat exchange between surface and air, in 
+!! @retval rH Sensible heat exchange between surface and air, in
 !! kilojoules per square meter
 !!
 !! @note Implemented as equation 11, Walter and others (2005)
@@ -196,13 +196,13 @@ function sensible_heat_exchange_h(rTSnow, rTAvg, rWindSpd) result(rH)
 
   ! [ LOCALS ]
   !> heat capacity of air; kJ per cubic meter per degree C
-  real (kind=c_float), parameter :: rCa = 0.93   
+  real (kind=c_float), parameter :: rCa = 0.93
   !> density of air; kg per cubic meter
   real (kind=c_float), parameter :: rRho_air = 1.29
   real (kind=c_double) :: rWindSpeed
   !> @todo Check on the origins of the value specified for rTurbConst
   real (kind=c_double) :: rTurbConst = 385.16_c_double
-  real (kind=c_float) :: rRh                   
+  real (kind=c_float) :: rRh
 
   if(present(rWindspd)) then
     rWindSpeed = rWindSpd
@@ -541,7 +541,7 @@ function solar_radiation_Hargreaves_Rs(rRa, rTMIN, rTMAX) result(rRs)
 
   ! [ LOCALS ]
   real (kind=c_double) :: rRs
-  real (kind=c_double), parameter :: rKRs = 0.175
+  real (kind=c_double), parameter :: rKRs = 0.17
 
   rRs = rKRs * sqrt(FtoK(rTMAX) - FtoK(rTMIN)) * rRa
 

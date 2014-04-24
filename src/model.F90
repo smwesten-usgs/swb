@@ -3155,6 +3155,14 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
       pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
 
     call chomp(sRecord, sItem, sTAB)
+    read( unit=sItem, fmt=*, iostat=iStat) pConfig%IRRIGATION(iLandUseIndex)%rIrrigationAmount
+    call Assert( iStat == 0, &
+      "Error reading irrigation amount in irrigation lookup table" )
+    write(unit=LU_LOG, fmt=*) "  irrigation amount per event ", &
+      pConfig%IRRIGATION(iLandUseIndex)%rIrrigationAmount
+
+
+    call chomp(sRecord, sItem, sTAB)
     read ( unit=sItem, fmt=*, iostat=iStat ) &
       pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
     call Assert( iStat == 0, &
@@ -3164,28 +3172,32 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
       pConfig%IRRIGATION(iLandUseIndex)%rFractionOfIrrigationFromGW
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW
     call Assert( iStat == 0, &
-      "Error reading the fraction of irrigation water obtained from groundwater " &
+      "Error reading the irrigation application efficiency when making use of groundwater " &
       //"from the irrigation lookup table" )
-    call assert(rTempValue > 0., &
+    call assert(pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW > 0., &
       "Fractional irrigation efficiency for groundwater sources must be greater than 0.", &
       trim(__FILE__),__LINE__)
+    call assert(pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW <= 1., &
+      "Fractional irrigation efficiency for groundwater sources must be less than or equal to 1.", &
+      trim(__FILE__),__LINE__)
     write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for groundwater sources ", &
-      rTempValue
-    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW = 1.0 / rTempValue
+      pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_GW
 
     call chomp(sRecord, sItem, sTAB)
-    read ( unit=sItem, fmt=*, iostat=iStat ) rTempValue
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW
     call Assert( iStat == 0, &
-      "Error reading the fraction of irrigation water obtained from surface water " &
+      "Error reading the irrigation application efficiency when making use of surface water " &
       //"from the irrigation lookup table" )
-    call assert(rTempValue > 0., &
+    call assert(pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW > 0., &
       "Fractional irrigation efficiency for surface-water sources must be greater than 0.", &
       trim(__FILE__),__LINE__)
+    call assert(pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW <= 1., &
+      "Fractional irrigation efficiency for surface-water sources must be less than or equal to 1.", &
+      trim(__FILE__),__LINE__)
     write(UNIT=LU_LOG,FMT=*)  "  fractional irrigation efficiency for surface-water sources ", &
-      rTempValue
-    pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW = 1.0 / rTempValue
+      pConfig%IRRIGATION(iLandUseIndex)%rIrrigationEfficiency_SW
 
     iRecNum = iRecNum + 1
 

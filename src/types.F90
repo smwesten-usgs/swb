@@ -398,6 +398,10 @@ module types
     !> Day of year after which no irrigation is assumed to take place
     integer (kind=c_int) :: iEndIrrigation = 240
 
+    !> Maximum irrigation amount, in inches, per irrigation event.
+    !! Values near zero or less indicate irrigation until soil reaches saturation!
+    real (kind=c_float) :: rIrrigationAmount = rZERO
+
     !> Fraction of irrigation water obtained from GW rather than surface water
     real (kind=c_float) :: rFractionOfIrrigationFromGW = rONE
 
@@ -474,7 +478,7 @@ module types
 
   type T_STATS
     !> Short version of the variable name
-    character (len=20) :: sVARIABLE_NAME
+    character (len=21) :: sVARIABLE_NAME
     !> Fortran logical unit for binary file writes
     integer(kind=c_int) :: iLU
     !> Integer number of characters to indent (on-screen display)
@@ -538,8 +542,8 @@ module types
       'inches','incoming flow from adjacent cells', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
-    T_STATS ('IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
-      lTRUE, 'inches','daily estimated irrigation amount', &
+    T_STATS ('NET_IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
+      lTRUE, 'inches','NET daily estimated irrigation amount', &
         1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
 
     ! NOW make room for the SINKS (-) in the mass balance...
