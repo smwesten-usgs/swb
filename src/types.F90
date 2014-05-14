@@ -197,8 +197,7 @@ module types
       real (kind=c_float) :: rSnowFall_SWE = rZERO   ! precipitation that falls as snow (in SWE)
       real (kind=c_float) :: rSnowFall = rZERO       ! snowfall in inches as SNOW
       real (kind=c_float) :: rSnowCover = rZERO      ! snowcover expressed as inches of water
-      real (kind=c_float) :: rSnowTemperature = 23. ! snow temperature
-!      real (kind=c_float) :: rPrevious_SnowCover     ! Previous day's snow cover
+      !      real (kind=c_float) :: rPrevious_SnowCover     ! Previous day's snow cover
       real (kind=c_float) :: rSnowMelt = rZERO       ! snowmelt in inches of water
       real (kind=c_float) :: rTMin = rZERO           ! Minimum daily temperature
       real (kind=c_float) :: rTMax = rZERO           ! Maximum daily temperature
@@ -212,11 +211,7 @@ module types
       real (kind=c_float) :: rIrrigationAmount = rZERO ! total amount of any irrigation
       real (kind=c_float) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
       real (kind=c_float) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
-!      real (kind=c_float) :: rMaximumAllowableDepletion = 100_c_float ! by default, no irrigation
-                                                                  ! will be performed
 
-      real (kind=c_float) :: rSnowAlbedo = rZERO      ! Snow albedo value
-      integer (kind=c_int) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
 !      real (kind=c_float) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
       real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf = rZERO  ! Inflow buffer for moving avg
       real (kind=c_float) :: rDailyRecharge = rZERO  ! Daily recharge
@@ -804,13 +799,6 @@ module types
   integer (kind=c_int),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
   !> @}
 
-  !> @name Constants: Snow module
-  !> Configuration for selection of snowfall and snowmelt modules
-  !> @{
-  integer (kind=c_int),parameter :: CONFIG_SNOW_ORIGINAL_SWB = 0
-  integer (kind=c_int),parameter :: CONFIG_SNOW_NEW_SWB = 1
-  !> @}
-
   !> @name Constants: Soil-moisture input data format
   !> Configuration information for soil-moisture capacity calculations
   !> @{
@@ -895,9 +883,6 @@ module types
 
       !> Soil moisture calculation option
       integer (kind=c_int) :: iConfigureSM = CONFIG_SM_NONE
-
-      !> Snowfall and snowmelt option
-      integer (kind=c_int) :: iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
 
       !> Maximum soil water capacity option
       integer (kind=c_int) :: iConfigureSMCapacity = CONFIG_NONE

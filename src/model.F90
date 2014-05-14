@@ -23,7 +23,6 @@ module model
   use irrigation
   use netcdf4_support
   use sm_thornthwaite_mather
-  use snow
   use water_balance
 
    implicit none
@@ -330,16 +329,8 @@ end if
 
   call model_UpdateGrowingSeason( pGrd, pConfig )
 
-  if(pConfig%iConfigureSnow == CONFIG_SNOW_ORIGINAL_SWB) then
-    call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
-  else if(pConfig%iConfigureSnow == CONFIG_SNOW_NEW_SWB) then
-    call model_ProcessRainPRMS(pGrd, pConfig, pConfig%iDayOfYear, &
-      pConfig%iMonth, pConfig%iNumDaysInYear)
-  else
-    call Assert(lFALSE,"Unhandled snow module option specified", &
-      TRIM(__FILE__),__LINE__)
-  end if
-
+  call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
+  
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
@@ -1266,219 +1257,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
 
 end subroutine model_ProcessRain
-
-!----------------------------------------------------------------------
-
-subroutine model_ProcessRainPRMS( pGrd, pConfig, iDayOfYear, iMonth, iNumDaysInYear)
-
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear  ! Day of the year
-  integer (kind=c_int), intent(in) :: iMonth     ! Integer month value (1-12)
-  integer (kind=c_int), intent(in) :: iNumDaysInYear
-
-  ! [ LOCALS ]
-  real (kind=c_double) :: rPotentialMelt,rPotentialInterception,rInterception
-  real (kind=c_float) :: rPreviousSnowCover,rChgInSnowCover
-  integer (kind=c_int) :: iCol,iRow
-  type (T_CELL),pointer :: cel
-  integer (kind=c_int) :: iNumGridCells
-  real (kind=c_double) :: rMin, rMean, rMax, rSum, rSum2
-  integer (kind=c_int) :: iCount
-  real (kind=c_float) ::  rMonthlySnowRunoff
-  real (kind=c_float) :: rFracRain
-  real (kind=c_float) :: rTd, rTempDifference
-  real (kind=c_double) :: rDelta,rOmega_s,rD_r, rRa, rRs, rRn_mean, rN, rRso
-  real (kind=c_float) :: rRns, rRnl, rRn, rZenithAngle
-  real (kind=c_double) :: rLatitude
-  real (kind=c_float) :: rTempComp, rRadComp
-  logical (kind=c_bool), parameter :: lENERGY_BALANCE = lFALSE
-
-  ! [ LOCAL PARAMETERS ]
-  ! from eqn 2, Kustas and Rango, 1994
-  ! value of 0.2 for A_sub_r from Brubaker et al 1996 (Snowmelt Runoff Model)
-  real (kind=c_float), parameter :: rA_sub_r = 0.2_c_float   ! cm per degree C
-  real (kind=c_float), parameter :: rM_sub_Q = 0.026_c_float  ! cm/day per W/m**2
-
-  ! Bastardized values below....
-!  real (kind=c_float), parameter :: rA_sub_r = 0.27_c_float   ! cm per degree C
-!  real (kind=c_float), parameter :: rM_sub_Q = 0.0040_c_float  ! cm/day per W/m**2
-
-  real (kind=c_float), parameter :: rAlbedoInit = 0.965   ! Kustas et al
-  real (kind=c_float), parameter :: rElevation = 1500
-  real (kind=c_float), parameter :: rMeltInitTemperature = 31.5_c_float
-
-  ! set snowmelt to zero uniformly across model grid
-!  pGrd%Cells(:,:)%rSnowMelt = rZERO
-
-  ! set snowfall to zero uniformly across model grid
-! pGrd%Cells(:,:)%rSnowFall_SWE = rZERO
-
-  ! calculate number of cells in model grid
-  iNumGridCells = pGrd%iNX * pGrd%iNY
-
-!  pGrd%Cells(:,:)%rPrevious_SnowCover = pGrd%Cells(:,:)%rSnowCover
-
-  rD_r =rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear)
-  rDelta = solar_declination(iDayOfYear, iNumDaysInYear)
-
-  do iRow=1,pGrd%iNY
-
-  rLatitude = row_latitude(pConfig%rNorthernLatitude, &
-    pConfig%rSouthernLatitude, pGrd%iNY, iRow)
-  rOmega_s = sunset_angle(rLatitude, rDelta)
-  rN = daylight_hours(rOmega_s)
-
-  ! NOTE that the following equation returns extraterrestrial radiation in
-  ! MJ / m**2 / day.
-  rRa = extraterrestrial_radiation_Ra(rLatitude,rDelta,rOmega_s,rD_r)
-  rRso = clear_sky_solar_radiation_Rso(rRa)
-  rZenithAngle = zenith_angle(rLatitude, rDelta)
-
-  ! determine the fraction of precip that falls as snow
-  do iCol=1,pGrd%iNX
-
-  cel => pGrd%Cells(iCol,iRow)
-
-  ! initialize accumulators for this cell
-  cel%rSnowMelt = rZERO
-  cel%rSnowFall_SWE = rZERO
-  cel%rSnowFall = rZERO
-
-  if(cel%rTMin > pConfig%rTMaxAllSnow &
-    .or. cel%rTMax > pConfig%rTMaxAllRain) then
-
-  rFracRain = rONE
-  cel%iDaysSinceLastSnow = cel%iDaysSinceLastSnow + 1
-
-  else if(cel%rTMax < pConfig%rTMaxAllSnow) then
-
-  rFracRain = rZERO
-  cel%iDaysSinceLastSnow = 0
-
-  else
-
-  ! this is straight from MMS/PRMS
-  rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
-    / (cel%rTMax - cel%rTMin))
-  cel%iDaysSinceLastSnow = 0
-
-  end if
-
-  cel%rGrossPrecip = rFracRain * cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor &
-    + (rONE - rFracRain) * cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
-
-  rPotentialInterception = rf_model_GetInterception( pConfig, cel )
-
-  rPreviousSnowCover = cel%rSnowCover
-
-  cel%rNetPrecip = MAX(cel%rGrossPrecip-rPotentialInterception,rZERO)
-  rInterception = MAX(cel%rGrossPrecip - cel%rNetPrecip,rZERO)
-
-!      cel%rAnnualInterception = cel%rAnnualInterception + cel%rInterception
-!      rMonthlyInterception = rMonthlyInterception + cel%rInterception
-
-  cel%rSnowFall_SWE = cel%rNetPrecip * (rONE - rFracRain)
-  cel%rSnowFall = cel%rSnowFall_SWE * snow_depth_Hedstrom(cel%rTAvg, pConfig)
-  cel%rSnowCover = cel%rSnowCover + cel%rSnowFall_SWE
-  cel%rNetPrecip = cel%rNetPrecip - cel%rSnowFall_SWE
-
-  if(cel%rSnowCover > rNEAR_ZERO) then  ! no point in calculating all this
-    ! unless there is snowcover present
-
-  rRs = solar_radiation_Hargreaves_Rs(rRa, cel%rTMin, cel%rTMax) ! &
-
-  cel%rSnowAlbedo = snow_albedo(rAlbedoInit, cel%iDaysSinceLastSnow, &
-    rZenithAngle)
-
-  if(lENERGY_BALANCE) then
-
-  call snow_energy_balance(cel%rTMin, cel%rTMax, &
-    cel%rTAvg, rRs, rRso, cel%rSnowAlbedo, cel%rSnowCover, &
-    cel%rNetPrecip, cel%rSnowTemperature, cel%rSnowMelt, iCol,iRow)
-
-  else
-
-  ! amount average temperature exceeds freezing point
-  rTempDifference = FtoC(cel%rTAvg) - FtoC(rMeltInitTemperature)
-  rTd = max(rTempDifference,rZERO)
-
-  rRns = net_shortwave_radiation_Rns(rRs, real(cel%rSnowAlbedo, kind=c_double))
-
-  rRnl = net_longwave_radiation_Rnl(cel%rTMin, cel%rTMax, rRs, rRso)
-
-  rRn = rRns - rRnl
-
-  rTempComp = rA_sub_r * rTd / rCM_PER_INCH
-
-  rRadComp = max(rM_sub_Q * rRn * 11.57  / rCM_PER_INCH,rZERO)
-
-  rPotentialMelt = rTempComp + rRadComp
-#ifdef DEBUG_PRINT
-  if(iCol > 3 .and. iCol < 5 .and. iRow > 20 .and. iRow < 22) then
-    write(*,FMT="('Snow albedo:',t32,F14.3)") cel%rSnowAlbedo
-    write(*,FMT="('Extraterrestrial radiation (Ra):',t32,F14.3)") rRa
-    write(*,FMT="('Incoming shortwave (Rs):',t32,F14.3)") rRs
-    write(*,FMT="('Clear sky shortwave (Rso):',t32,F14.3)") rRso
-    write(*,FMT="('Zenith angle :',t32,F14.3)") rZenithAngle
-    write(*,FMT="('Net shortwave (Rns):',t32,F14.3)") rRns
-    write(*,FMT="('Net longwave (Rnl):',t32,F14.3)") rRnl
-    write(*,FMT="('Net shortwave + longwave (Rn):',t32,F14.3)") rRn
-    write(*,FMT="('Amount temp > 0 (rTd):',t32,F14.3)") rTd
-    write(*,FMT="('Average temp  (rTAvg):',t32,F14.3)") cel%rTAvg
-    write(*,FMT="('Temp Difference:',t32,F14.3)") rTempDifference
-    write(*,FMT="('Snowcover (SWE, inches):',t32,F14.3)") cel%rSnowCover
-    write(*,FMT="('Potential snowmelt (temp):',t32,F14.3)") rTempComp
-    write(*,FMT="('Potential snowmelt (rad):',t32,F14.3)") rRadComp
-    write(*,FMT="('Potential snowmelt:',t32,F14.3)") rPotentialMelt
-    write(*,FMT="('----------------------------------------------------')")
-  end if
-#endif
-
-  if(cel%rSnowCover > rPotentialMelt) then
-    cel%rSnowMelt = rPotentialMelt
-    cel%rSnowCover = cel%rSnowCover - rPotentialMelt
-  else
-    cel%rSnowMelt = cel%rSnowCover
-    cel%rSnowCover = rZERO
-  end if
-end if
-end if
-
-  rChgInSnowCover = cel%rSnowCover - rPreviousSnowCover
-
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(rChgInSnowCover,kind=c_double), iCHG_IN_SNOW_COV,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rNetPrecip,kind=c_double),iNET_RAINFALL,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowMelt,kind=c_double),iSNOWMELT,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowFall_SWE,kind=c_double),iSNOWFALL_SWE,iMonth,iZERO)
-  call stats_UpdateAllAccumulatorsByCell( &
-    REAL(cel%rSnowCover,kind=c_double),iSNOWCOVER,iMonth,iZERO)
-
-
-  end do
-
-  end do
-
-  ! a call to the UpdateAllAccumulatorsByCell subroutine with a value of "iNumGridCalls"
-  ! as the final argument triggers the routine to update monthly and annual stats
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iCHG_IN_SNOW_COV,iMonth,iNumGridCells)
-!  call stats_UpdateAllAccumulatorsByCell(dpZERO,iINTERCEPTION,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iNET_RAINFALL,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWMELT,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWFALL_SWE,iMonth,iNumGridCells)
-  call stats_UpdateAllAccumulatorsByCell(dpZERO,iSNOWCOVER,iMonth,iNumGridCells)
-
-  return
-
-end subroutine model_ProcessRainPRMS
-
-!!***
 
 !--------------------------------------------------------------------------
 !!****s* model/model_ProcessRunoff
@@ -3616,9 +3394,9 @@ real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
-!where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-!  pGrd%Cells%rReferenceET0 = rZERO
-!endwhere
+where (pGrd%Cells%rCFGI > rNEAR_ZERO)
+  pGrd%Cells%rReferenceET0 = rZERO
+endwhere
 
 ! in order to integrate Thornthwaite-Mather approach with FAO56 approach,
 ! an adjusted reference ET0 is now defined... must populate this

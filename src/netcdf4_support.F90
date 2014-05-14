@@ -633,6 +633,7 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
   call nf_get_x_and_y(NCFILE)
 
   !> retrieve the time values as included in the NetCDF file
+  !> @todo Investigate why reading in all time values from a NetCDF file is a good idea.
   call nf_get_time_vals(NCFILE)
 
   if (present(tGridBounds) ) then
@@ -960,8 +961,8 @@ subroutine nf_get_time_vals(NCFILE)
   call assert(iStat==0, "Failed to deallocate memory for time values", &
     trim(__FILE__), __LINE__)
 
-  allocate( NCFILE%rDateTimeValues(0 : pNC_DIM_time%iNC_DimSize-1 ), stat=iStat )
-  call assert(iStat==0, "Failed to allocate memory for time values", &
+  allocate( NCFILE%rDateTimeValues(0 : pNC_DIM_time%iNC_DimSize - 1 ), stat=iStat )
+    call assert(iStat==0, "Failed to allocate memory for time values", &
     trim(__FILE__), __LINE__)
 
   !> @todo allow time to be read in as float, short, or int as well
@@ -1084,8 +1085,6 @@ subroutine nf_open_file(NCFILE, sFilename, iLU)
 
   call nf_trap( nc_open(trim(sFilename)//c_null_char, &
                 NC_READONLY, NCFILE%iNCID), __FILE__, __LINE__ )
-
-  print *, __FILE__,": ",__LINE__
 
   call nf_trap( nc_inq_format(ncid=NCFILE%iNCID, formatp=NCFILE%iFileFormat), &
                __FILE__, __LINE__)

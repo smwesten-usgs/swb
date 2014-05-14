@@ -439,6 +439,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               rMoistureDeficit
             write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
               cel%rSoilMoisture
+            write(UNIT=LU_LOG,FMT="('  rPrevious_Soil_Moisture: ',t32,F14.4)") &
+              rPrevious_Soil_Moisture
             write(UNIT=LU_LOG,FMT="('  cel%rRouteFraction: ',t32,F14.4)") &
               cel%rRouteFraction
 

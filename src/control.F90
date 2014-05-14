@@ -133,7 +133,6 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%iConfigurePrecip = CONFIG_PRECIP_SINGLE_STATION
   pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SINGLE_STATION
   pConfig%iConfigureSMCapacity = CONFIG_SM_CAPACITY_CALCULATE
-  pConfig%iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
   pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_TR55
   pConfig%sOutputFileSuffix = "asc"
   pConfig%iHeaderPrintInterval = 7
@@ -1120,51 +1119,6 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*)  "Reference ET constant set to: ", rValue
       flush(UNIT=LU_LOG)
 
-    else if ( sItem == "SNWD_SLOPE" ) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing parameter SNWD_SLOPE"
-      call Chomp ( sRecord, sArgument )
-      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-      call Assert( iStat == 0, "Cannot read real data value" )
-      pConfig%rSNWD_slp1 = rValue
-      write(UNIT=LU_LOG,FMT=*)  "SNWD_SLOPE set to: ", rValue
-      flush(UNIT=LU_LOG)
-
-    else if ( sItem == "SNWD_DENOMINATOR" ) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing parameter SNWD_DENOM"
-      call Chomp ( sRecord, sArgument )
-      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-      call Assert( iStat == 0, "Cannot read real data value" )
-      pConfig%rSNWD_denom = rValue
-      write(UNIT=LU_LOG,FMT=*)  "SNWD_DENOM set to: ", rValue
-      flush(UNIT=LU_LOG)
-
-    else if ( sItem == "SNWD_INTERCEPT" ) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing parameter SNWD_INTERCEPT"
-      call Chomp ( sRecord, sArgument )
-      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-      call Assert( iStat == 0, "Cannot read real data value" )
-      pConfig%rSNWD_intcp1 = rValue
-      write(UNIT=LU_LOG,FMT=*)  "SNWD_INTERCEPT set to: ", rValue
-      flush(UNIT=LU_LOG)
-
-    else if ( sItem == "TMAX_ALLSNOW" ) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing parameter TMAX_ALLSNOW"
-      call Chomp ( sRecord, sArgument )
-      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-      call Assert( iStat == 0, "Cannot read real data value" )
-      pConfig%rTMaxAllSnow = rValue
-      write(UNIT=LU_LOG,FMT=*)  "TMAX_ALLSNOW set to: ", rValue
-      flush(UNIT=LU_LOG)
-
-    else if ( sItem == "TMAX_ALLRAIN" ) then
-      write(UNIT=LU_LOG,FMT=*) "Initializing parameter TMAX_ALLRAIN"
-      call Chomp ( sRecord, sArgument )
-      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
-      call Assert( iStat == 0, "Cannot read real data value" )
-      pConfig%rTMaxAllRain = rValue
-      write(UNIT=LU_LOG,FMT=*)  "TMAX_ALLRAIN set to: ", rValue
-      flush(UNIT=LU_LOG)
-
     else if ( sItem == "RAINFALL_CORRECTION_FACTOR" ) then
       write(UNIT=LU_LOG,FMT=*) "Initializing rainfall correction factor"
       call Chomp ( sRecord, sArgument )
@@ -1758,24 +1712,7 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
-    else if ( sItem == "SNOW" ) then
-      write(UNIT=LU_LOG,FMT=*) "Configuring snow module options"
-      call Chomp ( sRecord, sOption )
-      call Uppercase ( sOption )
-      if ( trim(sOption) == "ORIGINAL_SNOW_MODULE" ) then
-        pConfig%iConfigureSnow = CONFIG_SNOW_ORIGINAL_SWB
-        write(UNIT=LU_LOG,FMT=*) "Snow calculations will be made using " &
-                       //"the original SWB formulations"
-      else if ( trim(sOption) == "NEW_SNOW_MODULE" ) then
-        pConfig%iConfigureSnow = CONFIG_SNOW_NEW_SWB
-        write(UNIT=LU_LOG,FMT=*) "Snow calculations will be made using " &
-                       //"*NEW* SWB formulations"
-      else
-        call Assert( .false._c_bool, "Illegal snow module option specified" )
-      end if
-      flush(UNIT=LU_LOG)
-
-    else if ( sItem == "ITERATIVE_METHOD_TOLERANCE" ) then
+     else if ( sItem == "ITERATIVE_METHOD_TOLERANCE" ) then
       write(UNIT=LU_LOG,FMT=*) "Setting iterative method solution tolerance"
       call Chomp ( sRecord, sOption )
       read ( unit=sOption, fmt=*, iostat=iStat ) rValue
