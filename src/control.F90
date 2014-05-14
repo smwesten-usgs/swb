@@ -13,6 +13,8 @@ module control
   use data_factory
   use datetime
 
+  implicit none
+
   contains
 
 !>  Reads model control file and initializes model configuration
@@ -329,7 +331,7 @@ subroutine control_setModelOptions(sControlFile)
           pConfig%lGriddedData = lTRUE
 
       elseif(str_compare(sOption,"SURFER") ) then
-        pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER
+        pConfig%iConfigurePrecip = CONFIG_PRECIP_SURFER_GRID
         call DAT(PRECIP_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilenameTemplate=trim(sArgument), &
@@ -455,7 +457,7 @@ subroutine control_setModelOptions(sControlFile)
 
         elseif ( trim(sOption) == "SURFER" ) then
 
-          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
 
           call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
             sFileType=trim(sOption), &
@@ -1489,12 +1491,16 @@ subroutine control_setModelOptions(sControlFile)
     else if ( sItem == "DISLIN_PARAMETERS" ) then
       call Chomp ( sRecord, sArgument )
       write(UNIT=LU_LOG,FMT=*) "Setting the values for DISLIN parameters"
+      lMatch = lFALSE
       do i=1,iNUM_VARIABLES
         if(TRIM(sArgument) == TRIM(STAT_INFO(i)%sVARIABLE_NAME)) then
           iVarNum = i
+          lMatch = lTRUE
           exit
         end if
       end do
+      call assert( lMatch, "DISLIN parameters were specified for an unknown SWB parameter" &
+          //"( "//dquote(sArgument)//" )")
 
     else if ( TRIM(sItem) == "SET_PAGE" ) then
       if(iVarNum>0 .and. iVarNum <= iNUM_VARIABLES) then
