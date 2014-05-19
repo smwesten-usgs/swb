@@ -6,9 +6,9 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_VERSION=4.8.2
-export COMPILER_MAJ_VERSION=4.8
-export COMPILER_TRIPLET=x86_64-apple-darwin13.0.0
+export COMPILER_VERSION=4.9.0
+export COMPILER_MAJ_VERSION=4.9
+export COMPILER_TRIPLET=x86_64-apple-darwin13.1.0
 export COMPILER_DIR=/usr/local
 export LIB_PATH1="/usr/local/lib/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
 export LIB_PATH2=/usr/OpenMotif/lib
@@ -44,14 +44,14 @@ export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fexceptions -ffree-l
 export CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -ffree-line-length-none"
 
 # set important environment variables
-export FC=$COMPILER_TRIPLET-gfortran
-export CC=$COMPILER_TRIPLET-gcc-$COMPILER_MAJ_VERSION
-export CXX=$COMPILER_TRIPLET-g++-$COMPILER_MAJ_VERSION
-export AR=$COMPILER_TRIPLET-gcc-ar-$COMPILER_MAJ_VERSION
-export NM=/usr/local/bin/gcc-nm-$COMPILER_MAJ_VERSION
+export FC=gfortran-$COMPILER_MAJ_VERSION
+export CC=gcc-$COMPILER_MAJ_VERSION
+export CXX=g++-$COMPILER_MAJ_VERSION
+export AR=gcc-ar-$COMPILER_MAJ_VERSION
+export NM=gcc-nm-$COMPILER_MAJ_VERSION
 export LD=/usr/bin/ld
 export STRIP=/usr/bin/strip
-export CMAKE_RANLIB=$COMPILER_TRIPLET-gcc-ranlib-$COMPILER_MAJ_VERSION
+export CMAKE_RANLIB=gcc-ranlib-$COMPILER_MAJ_VERSION
 
 cmake ../../.. -G "Unix Makefiles" \
 -DCOMPILER_DIR="$COMPILER_DIR " \
