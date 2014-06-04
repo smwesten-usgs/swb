@@ -151,6 +151,6 @@ program main
 
   close(unit=LU_LOG)
 
-  stop
+  stop 0
 
 end program main
