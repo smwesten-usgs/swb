@@ -360,6 +360,10 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_offset(asReal(sArgument))
 
+    else if ( str_compare(sItem,"PRECIPITATION_USER_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_user_offset(asReal(sArgument))
+
     else if ( str_compare(sItem,"PRECIPITATION_CONVERSION_FACTOR") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_conversion_factor(asReal(sArgument))
@@ -568,6 +572,10 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       call DAT(TMAX_DATA)%set_scale(asReal(sArgument))
 
+    else if ( str_compare(sItem,"TMAX_USER_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMAX_DATA)%set_user_offset(asReal(sArgument))
+
     else if ( str_compare(sItem,"TMAX_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMAX_DATA)%set_offset(asReal(sArgument))
@@ -613,6 +621,10 @@ subroutine control_setModelOptions(sControlFile)
     else if ( str_compare(sItem,"TMIN_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMIN_DATA)%set_offset(asReal(sArgument))
+
+    else if ( str_compare(sItem,"TMIN_USER_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(TMIN_DATA)%set_user_offset(asReal(sArgument))
 
     else if ( str_compare(sItem,"TMIN_CONVERSION_FACTOR") ) then
       call Chomp ( sRecord, sArgument )

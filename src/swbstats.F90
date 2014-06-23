@@ -608,9 +608,9 @@ implicit none
     enddo
   enddo
 
-  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
-    "The SWB compilation date used to create the binary file" &
-     //" is different from the compilation date of the SWBSTATS reader.")
+!  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
+!    "The SWB compilation date used to create the binary file" &
+!     //" is different from the compilation date of the SWBSTATS reader.")
 
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
   read(UNIT=LU_SWBSTATS) iEndMM, iEndDD, iEndYYYY

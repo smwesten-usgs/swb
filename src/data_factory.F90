@@ -35,6 +35,7 @@ module data_factory
     real (kind=c_double)  :: rScaleFactor = 1_c_double
     real (kind=c_double)  :: rAddOffset = 0_c_double
     real (kind=c_double)  :: rConversionFactor = 1_c_double
+    real (kind=c_double)  :: rUserOffset = 0.0_c_double
 
     logical (kind=c_bool) :: lUserSuppliedScaleAndOffset = lFALSE
     logical (kind=c_bool) :: lApplyConversionFactor = lFALSE
@@ -94,6 +95,7 @@ module data_factory
 
     procedure, public :: set_scale => set_scale_sub
     procedure, public :: set_offset => set_offset_sub
+    procedure, public :: set_user_offset => set_user_offset_sub
 
     procedure, private :: set_minimum_allowable_value_int_sub
     procedure, private :: set_minimum_allowable_value_real_sub
@@ -389,14 +391,14 @@ end subroutine initialize_netcdf_data_object_sub
 
     if (present(rValues)) then
 
-       rValues = ( pGrdBase%rData * this%rScaleFactor + this%rAddOffset ) * this%rConversionFactor
+       rValues = ( pGrdBase%rData * this%rScaleFactor + this%rAddOffset ) * this%rConversionFactor + this%rUserOffset
 
     endif
 
     if (present(iValues)) then
 
         iValues = ( pGrdBase%iData * int(this%rScaleFactor, kind=c_int)  &
-                                  + int(this%rAddOffset,kind=c_int) ) * this%rConversionFactor
+                      + int(this%rAddOffset,kind=c_int) ) * this%rConversionFactor + int( this%rUserOffset, kind=c_int)
     endif
 
   end subroutine getvalues_sub
@@ -1272,6 +1274,17 @@ subroutine set_offset_sub(this, rAddOffset)
    this%lUserSuppliedScaleAndOffset = lTRUE
 
 end subroutine set_offset_sub
+
+!----------------------------------------------------------------------
+
+subroutine set_user_offset_sub(this, rUserOffset)
+
+   class (T_DATA_GRID) :: this
+   real (kind=c_float) :: rUserOffset
+
+   this%rUserOffset = rUserOffset
+   
+end subroutine set_user_offset_sub
 
 !----------------------------------------------------------------------
 
