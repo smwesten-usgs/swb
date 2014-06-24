@@ -115,21 +115,21 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   ! close any existing open time-series files...
   close(LU_TS)
 
-  if(.not. pConfig%lGriddedData) then
+  if( .not. pConfig%lGriddedData ) then
   ! Connect to the single-site time-series file
     open ( LU_TS, file=pConfig%sTimeSeriesFilename, &
-      status="OLD", iostat=iStat )
+      status="OLD", action='READ', iostat=iStat )
     write(UNIT=LU_LOG,FMT=*)  "Opening time series file: ", &
       TRIM(pConfig%sTimeSeriesFilename)
     flush(LU_LOG)
-    call Assert ( iStat == 0, &
-      "Can't open time-series data file" )
+    call Assert ( iStat == 0, "Can't open time-series data file" )
 !    pConfig%iCurrentJulianDay = pConfig%iCurrentJulianDay + 1
     call gregorian_date(pConfig%iCurrentJulianDay, &
       iTempYear, iTempMonth, iTempDay)
     pConfig%iYear = iTempYear
     pConfig%iMonth = iTempMonth
     pConfig%iDay = iTempDay
+    
   end if
 
   ! Zero out monthly and annual accumulators

@@ -88,7 +88,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   integer (kind=c_int) :: iLU
   integer (kind=c_int), dimension(12) :: iMonthlyCount
   real (kind=c_double), dimension(12) :: rMonthlySum
-  ! [ LOCAL CONSTANTS ]
+  logical (kind=c_bool) :: lIsOpen
 
   !> exponent value is from Thornthwaite (1948), p 89.
   real (kind=c_double),parameter :: rExp=1.514_c_double
@@ -99,8 +99,10 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   !> by the time this routine is called, the tabular data file is already
   !> open
 
-  open ( LU_TEMP, file=trim(sFileName), iostat=iStat )
-  call Assert ( iStat == 0, "Could not open time series file " // trim(sFileName), &
+  
+   inquire( unit=LU_TS, opened=lIsOpen )
+!  open ( LU_TEMP, file=trim(sFileName), action='READ', iostat=iStat )
+  call Assert ( lIsOpen, "INTERNAL ERROR--T-M method requires that time series file is open before calling this subroutine.", &
     trim(__FILE__),__LINE__)
 
   ! Now, compute the monthly-average temperatures for all months
@@ -108,7 +110,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   rMonthlySum = rZERO
 
   do
-    read ( unit=LU_TEMP, fmt="(a256)", iostat=iStat ) sBuf
+    read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
     if ( iStat<0 ) exit            ! Here on EOF
     call Assert ( iStat == 0, "Cannot read record from time-series file" )
     if ( sBuf(1:1) == '#' ) cycle      ! Check comments
@@ -151,7 +153,31 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
                + 1.7921E-2 * rAnnualIndex &
                + 0.49239
 
-  close (unit=LU_TEMP)
+!  close (unit=LU_TEMP)
+  rewind ( unit=LU_TS )
+
+  ! The following is needed because by the time this routine is called, the first
+  ! line of data has already been read in. So we read in only line of data and exit.
+  do 
+
+    read ( unit=LU_TS, fmt="(a256)", iostat=iStat ) sBuf
+    if ( iStat<0 ) exit            ! Here on EOF
+    call Assert ( iStat == 0, "Cannot read record from time-series file", __FILE__, __LINE__ )
+    if ( sBuf(1:1) == '#' ) cycle      ! Check comments
+    call CleanUpCsv ( sBuf )
+
+    read ( unit=sBuf, fmt=*, iostat=iStat ) iMonth, iDay, iYear, rAvgT, &
+                                            rPrecip, rRH, rMaxT, rMinT, &
+                                            rWindSpd, rMinRH, rSunPct
+
+    if (iStat/=0) then
+      write(UNIT=LU_LOG,FMT=*)"   Skipping: ",trim(sBuf)
+      cycle
+    else 
+      exit
+    end if
+
+  enddo
 
   write(UNIT=LU_LOG,FMT=*) "  Thornthwaite-Mather annual heat index = ",rAnnualIndex
   write(UNIT=LU_LOG,FMT=*) "  Thornthwaite-Mather exponent 'a' = ",rExponentA
