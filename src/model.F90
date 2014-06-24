@@ -3394,9 +3394,9 @@ real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 
 ! if the ground is still frozen, we're not going to consider ET to be
 ! possible.
-where (pGrd%Cells%rCFGI > rNEAR_ZERO)
-  pGrd%Cells%rReferenceET0 = rZERO
-endwhere
+!where (pGrd%Cells%rCFGI > rNEAR_ZERO)
+!  pGrd%Cells%rReferenceET0 = rZERO
+!endwhere
 
 ! in order to integrate Thornthwaite-Mather approach with FAO56 approach,
 ! an adjusted reference ET0 is now defined... must populate this
