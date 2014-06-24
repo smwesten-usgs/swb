@@ -97,7 +97,7 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   real (kind=c_float) :: rSum, rAvg, rMin, rMax
   real (kind=c_float) :: rBaseSum, rBaseAvg
   real (kind=c_double), dimension(:), allocatable, save :: rRunningSum
-  integer (kind=c_int), save :: i
+  !integer (kind=c_int), save :: i
   real (kind=c_double) :: rConversionFactor
   real (kind=c_float) :: rDenominator
 
@@ -120,9 +120,10 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
   if(pConfig%lFirstDayOfSimulation) then
 
     iNumRecs = maxval(pMaskGrd%iData)
+
     if(lCUMULATIVE) then
       allocate(rRunningSum(iNumRecs))
-      rRunningSum = 0_c_double
+      rRunningSum = 0.0_c_double
     endif
 
     sBuf = "SWB_"//trim(sVarName)//"_"//trim(sStatsDescription)//".txt"
@@ -170,7 +171,9 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
 
   if(lDATE_RANGE_ACTIVE) write(UNIT=LU_STATS,FMT="(a,a)", advance='NO') TRIM(sLabel),sTAB
 
-  if(lRESET .and. lCUMULATIVE) rRunningSum = 0_c_double
+  if(lRESET .and. lCUMULATIVE) then
+    rRunningSum = 0.0_c_double
+  endif  
 
   if(.not. lGAP_DIFFERENCE) then
 
@@ -197,12 +200,15 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
         write(UNIT=LU_LOG,FMT="(8x,A7,i12)") "count:",iCount
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "sum:",rSum
         write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "avg:",rAvg
-        write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
       endif
 
       if(lCUMULATIVE) then
 
         rRunningSum(k) = rRunningSum(k) + rAvg
+
+          if (lVERBOSE) then
+            write(UNIT=LU_LOG,FMT="(8x,A7,f14.2)") "running sum:", rRunningSum(k)
+          endif
 
         if(lDATE_RANGE_ACTIVE) then
 
@@ -292,6 +298,8 @@ subroutine CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel, iNumDays)
     enddo
 
   endif
+
+  if (lVERBOSE)  write(UNIT=LU_LOG,FMT="(A)") REPEAT("-",80)
 
   flush(UNIT=LU_STATS)
 
@@ -608,9 +616,12 @@ implicit none
     enddo
   enddo
 
-!  call assert (trim(sSWBCompileDate) == trim(COMPILE_DATE), &
-!    "The SWB compilation date used to create the binary file" &
-!     //" is different from the compilation date of the SWBSTATS reader.")
+  ! give a warning if SWB compilation date is different from the SWBSTATS 
+  ! compilation date; different compilation dates could cause problems if
+  ! the binary file format differs between the two.
+  if (trim(sSWBCompileDate) /= trim(COMPILE_DATE) ) &
+    call warn("The SWB compilation date used to create the binary file" &
+     //" is different from the compilation date of the SWBSTATS reader.")
 
   read(UNIT=LU_SWBSTATS) iStartMM, iStartDD, iStartYYYY
   read(UNIT=LU_SWBSTATS) iEndMM, iEndDD, iEndYYYY
@@ -697,6 +708,7 @@ implicit none
     write(sBuf,fmt="(f14.2)") rGridCellSize
     write(unit=LU,fmt="(/,'  Grid cell size: ',t28,a)") trim(adjustl(sBuf))
 
+
     if(iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
       write(unit=LU,fmt="('  Grid cell units: ',t28,'meters')")
     else
@@ -710,6 +722,9 @@ implicit none
     write(unit=LU, fmt="('  ',a, ' cells are inactive (of ',a,' total cells)')") &
       trim(asCharacter(count(pGrd%iMask == iINACTIVE_CELL))), &
       trim(asCharacter(iNumGridCells))
+    write(unit=LU,fmt="(/,'  RLE Offset: ',t42,a)") trim(real2char( rRLE_OFFSET ))
+    write(unit=LU,fmt="('  RLE Multiplier: ',t42,a)") trim(int2char( iRLE_MULT ))
+
 
     if (iNumArgs /= 1) exit
 
@@ -802,6 +817,7 @@ implicit none
     elseif( str_compare(sBuf, "MASK") ) then
       lMASKSTATS = lTRUE
 !      STAT_INFO(iVariableNumber)%iAnnualOutput = iSTATS
+      lDAILY = lTRUE
       lSTATS = lTRUE
       i = i + 1
       call GET_COMMAND_ARGUMENT(i,sBuf)
@@ -850,6 +866,9 @@ implicit none
 
   end do
 
+  ! end of loop to process command line arguments
+  ! begin main processing section
+
   if (lGRID) iSWBStatsOutputType = iGRID
   if (lPLOT) iSWBStatsOutputType = iGRAPH
   if (lBOTH) iSWBStatsOutputType = iBOTH
@@ -892,11 +911,6 @@ implicit none
       "' to ',i02.2,'/',i02.2,'/',i04.4)") iSWBStatsStartMM, iSWBStatsStartDD, iSWBStatsStartYYYY, &
       iSWBStatsEndMM, iSWBStatsEndDD, iSWBStatsEndYYYY
 
-
-  write(unit=LU_STD_OUT,fmt="(/,a,/)") "  Summary of output to be generated:"
-  write(unit=LU_STD_OUT,fmt="(t20,a,t28,a,t36,a,t44,a)") &
-    "NONE","PLOT","GRID","STATS"
-
   if(lPERIOD_SLICE) then
 
     write(sStatsDescription,fmt="(i02.2,'-',i02.2,"// &
@@ -917,6 +931,7 @@ implicit none
   if(lMASKSSF) sStatsDescription = trim(sStatsDescription) // "_" &
     //trim(sSiteNumber)
 
+  ! output a summary of the calculations that will be generated
   do LU=LU_STD_OUT, LU_LOG
 
     write(unit=LU,fmt="(/,a,/)") "  Summary of output to be generated:"
@@ -972,9 +987,7 @@ implicit none
     read(UNIT=LU_SWBSTATS,iostat=iStat) &
        iCurrDD, iCurrMM, iCurrYYYY, iCurrDOY
 
-    if(iStat /= 0) then
-      exit
-    end if
+    if(iStat /= 0)  exit
 
     write(sDateTxt,fmt="(i2.2,'/',i2.2,'/',i4.4)") &
       iCurrMM, iCurrDD, iCurrYYYY
@@ -994,6 +1007,7 @@ implicit none
                    sMonthName, lMonthEnd)
 
     lRESET = ( iCurrMM == 1 .and. iCurrDD == 1)
+
     pGrd%rData(:,:)= rZERO
 
     !> if current date does not fall within desired date range, keep
@@ -1028,7 +1042,7 @@ implicit none
 
     ! name "RLE_readByte" is misleading, since the return value (rVal)
     ! is actually a vector of all daily values with dimension (iNY*iNX)
-    call RLE_readByte(LU_SWBSTATS,iRLE_MULT, rRLE_OFFSET, rVal,iNumGridCells,lEOF)
+    call RLE_readByte(LU_SWBSTATS,iRLE_MULT, rRLE_OFFSET, rVal, iNumGridCells,lEOF)
     if(lEOF) exit
 
     if(lF_TO_C) then
@@ -1037,7 +1051,7 @@ implicit none
     else
       pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
     endif
-
+    
     ! if internal grid mask contains inactive cells, nuke any spurious results
     ! that may have been stored at these locations
     where (pGrd%iMask == iINACTIVE_CELL)
@@ -1064,6 +1078,7 @@ implicit none
       iYearCount = iYearCount + 1
     endif
 
+    ! store period data and keep track of number of days' worth of data contribute to current sum
     where (pGrd%iMask == iACTIVE_CELL)
       pSummaryGrd%rData = pSummaryGrd%rData + pGrd%rData
     endwhere
@@ -1104,7 +1119,6 @@ implicit none
         call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
                   pGrd=pSummaryGrd, &
                   iOutputFormat=iOutputFormat)
-
       else
 
         call grid_WriteGrid(sFilename=TRIM(sOutputFilename), &
@@ -1119,21 +1133,21 @@ implicit none
 
       write(sLabel,FMT="(i2.2,'/',i2.2'/',i4.4)") iCurrMM, iCurrDD, iCurrYYYY
 
-      if(lCUMULATIVE) then
+!      if(lCUMULATIVE) then
 
-        if(lMASKSTATS) call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
+!         if(lMASKSTATS) call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
 
-        if(lMASKSSF) call CalcMaskStatsSSF(pSummaryGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
-           trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
+!         if(lMASKSSF) call CalcMaskStatsSSF(pSummaryGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
+!            trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
 
-      else
+!       else
 
         if(lMASKSTATS) call CalcMaskStats(pGrd, pMaskGrd, pConfig, sVarName, sLabel)
 
         if(lMASKSSF) call CalcMaskStatsSSF(pGrd, pMaskGrd, pConfig, sVarName, iGridCellValue, &
            trim(sSiteNumber)//"   "//trim(sLabel)//"    00:00:00 ")
 
-      endif
+!       endif
 
     endif
 
@@ -1364,13 +1378,13 @@ implicit none
 
   lRESET = lFALSE
 
-!  if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
-!    if(iSWBStatsType == iMEAN) then
-!      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iPeriodCount)
-!    else
-!      call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
-!    endif
-!  endif
+!   if( iSWBStatsOutputType == iSTATS .and. lMASKSTATS) then
+!     if(iSWBStatsType == iMEAN) then
+!       call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel, iPeriodCount)
+!     else
+!       call CalcMaskStats(pSummaryGrd, pMaskGrd, pConfig, sVarName, sLabel)
+!     endif
+!   endif
 
   write(sOutputFilename,FMT="(A,'_',a,'.',a)") &
      "SUM_"//TRIM(STAT_INFO(iVariableNumber)%sVARIABLE_NAME), &
@@ -1387,7 +1401,7 @@ implicit none
 
   if (iPeriodCount > 0) then
 
-    where (pSummaryGrdMean %iMask == iACTIVE_CELL)
+    where (pSummaryGrdMean%iMask == iACTIVE_CELL)
       pSummaryGrdMean%rData = pSummaryGrdMean%rData / REAL(iPeriodCount)
     elsewhere
       pSummaryGrdMean%rData = rNO_DATA_NCDC
