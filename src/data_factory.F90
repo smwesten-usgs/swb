@@ -32,13 +32,13 @@ module data_factory
     integer (kind=c_int)  :: iMissingValuesCode = -iBIGVAL
     character (len=2)     :: sMissingValuesOperator = "<="
     integer (kind=c_int)  :: iMissingValuesAction = 0
-    real (kind=c_double)  :: rScaleFactor = 1_c_double
-    real (kind=c_double)  :: rAddOffset = 0_c_double
-    real (kind=c_double)  :: rConversionFactor = 1_c_double
+    real (kind=c_double)  :: rScaleFactor = 1.0_c_double
+    real (kind=c_double)  :: rAddOffset = 0.0_c_double
+    real (kind=c_double)  :: rX_Coord_AddOffset = 0.0_c_double
+    real (kind=c_double)  :: rY_Coord_AddOffset = 0.0_c_double
     real (kind=c_double)  :: rUserOffset = 0.0_c_double
+    real (kind=c_double)  :: rUserScaleFactor = 1.0_c_double
 
-    logical (kind=c_bool) :: lUserSuppliedScaleAndOffset = lFALSE
-    logical (kind=c_bool) :: lApplyConversionFactor = lFALSE
     logical (kind=c_bool) :: lMissingFilesAreAllowed = lFALSE
     logical (kind=c_bool) :: lFlipHorizontal = lFALSE
     logical (kind=c_bool) :: lFlipVertical = lFALSE
@@ -93,9 +93,10 @@ module data_factory
                              init_const_real, &
                              init_gridded
 
-    procedure, public :: set_scale => set_scale_sub
-    procedure, public :: set_offset => set_offset_sub
     procedure, public :: set_user_offset => set_user_offset_sub
+    procedure, public :: set_user_scale => set_user_scale_sub 
+    procedure, public :: set_X_offset => set_X_coord_offset_sub
+    procedure, public :: set_Y_offset => set_Y_coord_offset_sub
 
     procedure, private :: set_minimum_allowable_value_int_sub
     procedure, private :: set_minimum_allowable_value_real_sub
@@ -108,7 +109,6 @@ module data_factory
 
     procedure, public :: set_grid_flip_horizontal => set_grid_flip_horizontal_sub
     procedure, public :: set_grid_flip_vertical => set_grid_flip_vertical_sub
-    procedure, public :: set_conversion_factor => set_conversion_factor_sub
 
     procedure, public :: getvalues_constant => getvalues_constant_sub
     procedure, public :: getvalues_gridded => getvalues_gridded_sub
@@ -391,14 +391,13 @@ end subroutine initialize_netcdf_data_object_sub
 
     if (present(rValues)) then
 
-       rValues = ( pGrdBase%rData * this%rScaleFactor + this%rAddOffset ) * this%rConversionFactor + this%rUserOffset
+       rValues = ( pGrdBase%rData * this%rUserScaleFactor ) + this%rUserOffset
 
     endif
 
     if (present(iValues)) then
 
-        iValues = ( pGrdBase%iData * int(this%rScaleFactor, kind=c_int)  &
-                      + int(this%rAddOffset,kind=c_int) ) * this%rConversionFactor + int( this%rUserOffset, kind=c_int)
+        iValues = ( pGrdBase%iData * int(this%rUserScaleFactor, kind=c_int) ) + int( this%rUserOffset, kind=c_int)
     endif
 
   end subroutine getvalues_sub
@@ -538,6 +537,9 @@ subroutine getvalues_constant_sub( this, pGrdBase )
       select case (this%iTargetDataType)
 
         case ( GRID_DATATYPE_REAL )
+
+          ! need to apply scale and offset before comparing to missing values code
+          this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
 
           call this%handle_missing_values(this%pGrdNative%rData)
           call this%enforce_limits(this%pGrdNative%rData)
@@ -718,14 +720,16 @@ end subroutine set_constant_value_real
   subroutine make_filename_from_template( this, iMonth, iDay, iYear )
 
     class (T_DATA_GRID) :: this
-    integer (kind=c_int), optional :: iMonth, iDay, iYear
+    integer (kind=c_int), optional :: iMonth
+    integer (kind=c_int), optional :: iDay
+    integer (kind=c_int), optional :: iYear
 
     ! [ LOCALS ]
     character (len=256) :: sNewFilename
     character (len=256) :: sUppercaseFilename
     character (len=256) :: sCWD
     character (len=256) :: sBuf2
-    integer (kind=c_int) :: iPos_Y, iPos_D, iPos_M, iPos, iPos2, iLen, iCount
+    integer (kind=c_int) :: iPos_Y, iPos_D, iPos_M, iPos_0D, iPos_0M, iPos, iPos2, iLen, iCount
     integer (kind=c_int) :: iNumZeros, iNumZerosToPrint
     logical (kind=c_bool) :: lMatch
     logical (kind=c_bool) :: lExist
@@ -753,21 +757,27 @@ end subroutine set_constant_value_real
 
       lMatch = lFALSE
 
-      if (present(iYear) ) iPos_Y = &
-           max(index(sNewFilename, "%Y"), index(sNewFilename, "%y") )
+      if (present(iYear) ) then
+        
+        iPos_Y = max(index(sNewFilename, "%Y"), index(sNewFilename, "%y") )
 
-      if (iPos_Y > 0) then
-        lMatch = lTRUE
-        iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos_Y - 1)//trim(asCharacter(iYear)) &
-                       //sNewFilename(iPos_Y + 2:iLen)
+        if (iPos_Y > 0) then
+          lMatch = lTRUE
+          iLen=len_trim(sNewFilename)
+          sNewFilename = sNewFilename(1:iPos_Y - 1)//trim(asCharacter(iYear)) &
+                         //sNewFilename(iPos_Y + 2:iLen)
 
-      endif
+        endif
 
+      endif  
+
+      ! evaluate template string for "#" characters
       iPos = index(sNewFilename, "#")
 
       if (iPos > 0) then
 
+        ! example:  %000#
+        ! trying to determine how many zero values have been inserted between % and # characters
         iPos2 = index(sNewFilename(1:iPos),"%", BACK=lTRUE)
         sBuf2 = trim(asCharacter(this%iFileCount))
         iNumZeros = max(0, iPos - iPos2 - 1)
@@ -776,7 +786,7 @@ end subroutine set_constant_value_real
           iNumZerosToPrint = max(0,iNumZeros - len_trim(sBuf2) + 1)
           sNumber = repeat("0", iNumZerosToPrint )//trim(sBuf2)
         else
-          sNumber = repeat("0", iNumZeros - len_trim(sBuf2) )//trim(sBuf2)
+          sNumber = trim(sBuf2)
         endif
 
         lMatch = lTRUE
@@ -785,27 +795,59 @@ end subroutine set_constant_value_real
                        //sNewFilename(iPos+1:iLen)
       endif
 
-      if (present(iMonth) ) iPos_M = &
-          max(index(sNewFilename, "%M"), index(sNewFilename, "%m") )
 
-      if (iPos_M > 0) then
-        lMatch = lTRUE
-        write (unit=sBuf, fmt="(i2.2)") iMonth
+      ! evaluate template string for "%m": month number
+      if (present(iMonth) ) then
 
-        iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos_M - 1)//sBuf &
-                       //sNewFilename(iPos_M + 2:iLen)
+        iPos_M = max(index(sNewFilename, "%M"), index(sNewFilename, "%m") )
+        iPos_0M = max(index(sNewFilename, "%0M"), index(sNewFilename, "%0m") )
+
+        if ( iPos_0M > 0 ) then
+
+          lMatch = lTRUE
+          write (unit=sBuf, fmt="(i2.2)") iMonth
+
+          iLen=len_trim(sNewFilename)
+          sNewFilename = sNewFilename(1:iPos_0M - 1)//trim(sBuf) &
+                         //sNewFilename(iPos_0M + 3:iLen)
+
+        elseif ( iPos_M > 0 ) then
+
+          lMatch = lTRUE
+          sBuf = asCharacter( iMonth )
+
+          iLen=len_trim(sNewFilename)
+          sNewFilename = sNewFilename(1:iPos_M - 1)//trim(sBuf) &
+                         //sNewFilename(iPos_M + 2:iLen)
+
+        endif
+
       endif
 
-      if (present(iDay) ) iPos_D = &
-           max(index(sNewFilename, "%D"),index(sNewFilename, "%d") )
+      ! evaluate template string for "%d": day number
+      if (present(iDay) )  then
 
-      if (iPos_D > 0) then
-        lMatch = lTRUE
-        write (unit=sBuf, fmt="(i2.2)") iDay
-        iLen=len_trim(sNewFilename)
-        sNewFilename = sNewFilename(1:iPos_D - 1)//sBuf &
-                       //sNewFilename(iPos_D + 2:iLen)
+        iPos_D = max(index(sNewFilename, "%D"),index(sNewFilename, "%d") )
+        iPos_0D = max(index(sNewFilename, "%0D"), index(sNewFilename, "%0d") )
+
+        if (iPos_0D > 0) then
+          lMatch = lTRUE
+          write (unit=sBuf, fmt="(i2.2)") iDay
+          iLen=len_trim(sNewFilename)
+          sNewFilename = sNewFilename(1:iPos_0D - 1)//sBuf &
+                         //sNewFilename(iPos_0D + 3:iLen)
+
+        elseif ( iPos_D > 0 ) then
+
+          lMatch = lTRUE
+          sBuf = asCharacter( iDay )
+
+          iLen=len_trim(sNewFilename)
+          sNewFilename = sNewFilename(1:iPos_D - 1)//trim(sBuf) &
+                         //sNewFilename(iPos_D + 2:iLen)
+
+        endif
+
       endif
 
       if (.not. lMatch) exit
@@ -969,6 +1011,8 @@ end subroutine set_constant_value_real
               sFilename=this%sSourceFilename, &
               lFlipHorizontal=this%lFlipHorizontal, &
               lFlipVertical=this%lFlipVertical, &
+              rX_Coord_AddOffset = this%rX_Coord_AddOffset, &
+              rY_Coord_AddOffset = this%rY_Coord_AddOffset, &
               sVariableOrder=this%sVariableOrder, &
               sVarName_x=this%sVariableName_x, &
               sVarName_y=this%sVariableName_y, &
@@ -985,6 +1029,8 @@ end subroutine set_constant_value_real
               sFilename=this%sSourceFilename, &
               lFlipHorizontal=this%lFlipHorizontal, &
               lFlipVertical=this%lFlipVertical, &
+              rX_Coord_AddOffset = this%rX_Coord_AddOffset, &
+              rY_Coord_AddOffset = this%rY_Coord_AddOffset, &
               sVariableOrder=this%sVariableOrder, &
               sVarName_x=this%sVariableName_x, &
               sVarName_y=this%sVariableName_y, &
@@ -1005,13 +1051,10 @@ end subroutine set_constant_value_real
 
           this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
 
-          ! if the user has not supplied a scale and offset,
-          ! then populate these values with the scale and offset
+          ! populate these values with the scale and offset
           ! factor included in the NetCDF attribute data, if any.
-          if (.not. this%lUserSuppliedScaleAndOffset) then
-            this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
-            this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
-          endif
+          this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
+          this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
 
           ! Amongst other things, the call to netcdf_open_and_prepare
           ! finds the nearest column and row that correspond to the
@@ -1065,7 +1108,7 @@ end subroutine set_constant_value_real
 
     endif  ! If (NC_FILE_STATUS == NETCDF_CLOSED)
 
-    if (.not. this%lPadValues) then
+    if ( .not. this%lPadValues ) then
 
       do
         lDateTimeFound = netcdf_update_time_starting_index(NCFILE=this%NCFILE, &
@@ -1077,6 +1120,10 @@ end subroutine set_constant_value_real
         endif
 
         call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+
+        ! need to apply scale and offset before comparing to missing values code
+        this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
+
         call this%handle_missing_values(this%pGrdNative%rData)
         call this%enforce_limits(this%pGrdNative%rData)
         exit
@@ -1084,7 +1131,7 @@ end subroutine set_constant_value_real
 
     endif
 
-    if (this%lPadValues) then
+    if ( this%lPadValues ) then
 
       if (this%lPadReplaceWithZero) then
 
@@ -1095,12 +1142,6 @@ end subroutine set_constant_value_real
 
       call echolog( repeat("=", 60) )
       call echolog( "Missing day found in NetCDF file - padding values" )
-!      call stats_WriteMinMeanMax( iLU=LU_STD_OUT, &
-!        sText=trim(this%NCFILE%sFilename), &
-!        rData=this%pGrdNative%rData)
-!      call stats_WriteMinMeanMax( iLU=LU_LOG, &
-!        sText=trim(this%NCFILE%sFilename), &
-!        rData=this%pGrdNative%rData)
       call echolog( repeat("=", 60) )
 
     endif
@@ -1139,6 +1180,7 @@ end subroutine set_constant_value_real
     iNumCols = int(size(this%pGrdNative%rData, 1), kind=c_size_t)
     iNumRecs = this%iNCFILE_RECNUM
 
+    ! write out value array to NetCDF
     call netcdf_put_variable_array(NCFILE=this%NCFILE_ARCHIVE, &
        iVarID=this%NCFILE_ARCHIVE%iVarID(NC_Z), &
        iStart=[iNumRecs, 0_c_size_t, 0_c_size_t], &
@@ -1146,12 +1188,13 @@ end subroutine set_constant_value_real
        iStride=[1_c_ptrdiff_t,1_c_ptrdiff_t,1_c_ptrdiff_t], &
        rValues=this%pGrdNative%rData)
 
+    ! write out time value
     call netcdf_put_variable_vector(NCFILE=this%NCFILE_ARCHIVE, &
        iVarID=this%NCFILE_ARCHIVE%iVarID(NC_TIME), &
        iStart=[this%iNCFILE_RECNUM], &
        iCount=[1_c_size_t], &
        iStride=[1_c_size_t], &
-       dpValues=[real(this%iNCFILE_RECNUM, kind=c_double)])
+       dpValues=[real(this%iNCFILE_RECNUM , kind=c_double)])
 
     this%iNCFILE_RECNUM = this%iNCFILE_RECNUM + 1
 
@@ -1231,29 +1274,6 @@ end subroutine set_constant_value_real
 
 !----------------------------------------------------------------------
 
-subroutine set_scale_sub(this, rScaleFactor)
-
-   class (T_DATA_GRID) :: this
-   real (kind=c_float) :: rScaleFactor
-
-   this%rScaleFactor = rScaleFactor
-   this%lUserSuppliedScaleAndOffset = lTRUE
-
-end subroutine set_scale_sub
-
-!----------------------------------------------------------------------
-
-subroutine set_conversion_factor_sub(this, rConversionFactor)
-
-   class (T_DATA_GRID) :: this
-   real (kind=c_float) :: rConversionFactor
-
-   this%rConversionFactor = rConversionFactor
-
-end subroutine set_conversion_factor_sub
-
-!----------------------------------------------------------------------
-
 subroutine set_archive_local_sub(this, lValue)
 
    class (T_DATA_GRID) :: this
@@ -1265,17 +1285,35 @@ end subroutine set_archive_local_sub
 
 !----------------------------------------------------------------------
 
-subroutine set_offset_sub(this, rAddOffset)
+subroutine set_X_coord_offset_sub(this, rXOffset)
 
    class (T_DATA_GRID) :: this
-   real (kind=c_float) :: rAddOffset
+   real (kind=c_double) :: rXOffset
 
-   this%rAddOffset = rAddOffset
-   this%lUserSuppliedScaleAndOffset = lTRUE
-
-end subroutine set_offset_sub
+   this%rX_Coord_AddOffset = rXOffset
+   
+end subroutine set_X_coord_offset_sub
 
 !----------------------------------------------------------------------
+
+subroutine set_Y_coord_offset_sub(this, rYOffset)
+
+   class (T_DATA_GRID) :: this
+   real (kind=c_double) :: rYOffset
+
+   this%rY_Coord_AddOffset = rYOffset
+   
+end subroutine set_Y_coord_offset_sub
+
+subroutine set_user_scale_sub(this, rUserScaleFactor)
+
+   class (T_DATA_GRID) :: this
+   real (kind=c_float) :: rUserScaleFactor
+
+   this%rUserScaleFactor = rUserScaleFactor
+   
+end subroutine set_user_scale_sub
+
 
 subroutine set_user_offset_sub(this, rUserOffset)
 

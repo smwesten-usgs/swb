@@ -1373,11 +1373,6 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
   csFromPROJ4 = trim(sFromPROJ4)
   csToPROJ4 = trim(sToPROJ4)
 
-  !lMask = lTRUE
-
-  !x = pack(pGrd%rX, lMask)
-  !y = pack(pGrd%rY, lMask)
-
   !> PROJ4 expects unprojected coordinates (i.e. lat lon) to be provided
   !> in RADIANS. Therefore, we convert to radians prior to the call...
   if( index(string=csFromPROJ4, substring="latlon") > 0 &
@@ -1392,13 +1387,8 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
                                   csToPROJ4//C_NULL_CHAR, &
                                   int(pGrd%iNumGridCells, kind=c_long), pGrd%rX, pGrd%rY)
 
+
   call grid_CheckForPROJ4Error(iRetVal, sFromPROJ4, sToPROJ4)
-
-  ! transfer coordinate values back into an array structure
-!  pGrd%rY = unpack(y, lMask, pGrd%rY)
-
-  ! transfer coordinate values back into an array structure
-!  pGrd%rX = unpack(x, lMask, pGrd%rX)
 
   ! now update the grid boundaries based on the transformed coordinate values
   pGrd%rGridCellSize = ( maxval(pGrd%rX) - minval(pGrd%rX) ) &

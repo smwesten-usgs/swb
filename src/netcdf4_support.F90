@@ -148,7 +148,7 @@ module netcdf4_support
 
   type T_NETCDF4_FILE
     integer (kind=c_int) :: iNCID
-    character (len=256) :: sFilename
+    character (len=256)  :: sFilename
     integer (kind=c_int) :: iFileFormat
     integer (kind=c_int) :: iNumberOfDimensions
     integer (kind=c_int) :: iNumberOfVariables
@@ -193,6 +193,8 @@ module netcdf4_support
 
     real (kind=c_double), allocatable, dimension(:) :: rX_Coords
     real (kind=c_double), allocatable, dimension(:) :: rY_Coords
+    real (kind=c_double)                            :: rX_Coord_AddOffset = 0.0_c_double
+    real (kind=c_double)                            :: rY_Coord_AddOffset = 0.0_c_double    
     real (kind=c_double), allocatable, dimension(:) :: rDateTimeValues
     real (kind=c_double) :: rGridCellSizeX
     real (kind=c_double) :: rGridCellSizeY
@@ -289,6 +291,7 @@ function nf_index_to_dayvalue(NCFILE, iIndex)   result(rDayValue)
 
 end function nf_index_to_dayvalue
 
+!--------------------------------------------------------------------------------------------------
 
 function nf_dayvalue_to_julian_day(NCFILE, rDayValue)   result(rJulianDay)
 
@@ -304,7 +307,10 @@ function nf_dayvalue_to_julian_day(NCFILE, rDayValue)   result(rJulianDay)
 
 end function nf_dayvalue_to_julian_day
 
+!--------------------------------------------------------------------------------------------------
 
+!> Given the current Julian Date of the simulation, return the corresponding
+!! index value for the NetCDF file. 
 function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
   type (T_NETCDF4_FILE ) :: NCFILE
@@ -312,56 +318,64 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
   integer (kind=c_size_t) :: iStart
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iMinDiff, iDiff
-  integer (kind=c_int) :: iCandidateIndex, iLastCandidate
-  integer (kind=c_int) :: iInitialCandidateIndex
-  integer (kind=c_int) :: iTestIndex
-  real (kind=c_double) :: rTestJD
-  integer (kind=c_int) :: iIndexLower, iIndexUpper, iIndex
-  logical (kind=c_bool) :: lChanged
+  integer (kind=c_int)              :: iJD_Difference
+  real (kind=c_double)              :: rJD_atIndex
+  integer (kind=c_int)              :: iIndex
+  integer (kind=c_int)              :: iMonth, iDay, iYear
+  integer (kind=c_int)              :: iIterations
+  integer (kind=c_int), parameter   :: MAX_ITERATIONS = 20
 
+  ! return value of this function represents the *starting* index of the time dimension 
+  ! if no value is found in association with the current Julian Date, return -9999
   iStart = -9999
-  iMinDiff = iBIGVAL
+  iIterations = 0
+
   !> First guess at what the appropriate index value should be.
   !> Current JD minus the Origin JD is a good guess.
-  iCandidateIndex = nf_julian_day_to_index(NCFILE, rJulianDay)
+  iIndex = nf_julian_day_to_index(NCFILE, rJulianDay)
 
-  call assert(iCandidateIndex >=0, "Problem finding the index number of the time " &
+  call assert(iIndex >=0, "Problem finding the index number of the time " &
     //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
-
-  iInitialCandidateIndex = iCandidateIndex
 
   do
 
-    !> calculate the range of *INDEX* values to search over
-    iIndexLower = max( lbound(NCFILE%rDateTimeValues, 1), iCandidateIndex - 1)
-    iIndexUpper = min( ubound(NCFILE%rDateTimeValues, 1), iCandidateIndex + 1)
+    ! determine Julian Date associated with the current date/time value at this index position
+    rJD_atIndex = nf_dayvalue_to_julian_day( NCFILE=NCFILE, rDayValue=NCFILE%rDateTimeValues(iIndex) )
+    
+    ! index value is relative to zero in C API;
+    ! first day's data should be associated with index value of zero
+    iJD_Difference = aint( rJD_atIndex ) - aint( rJulianDay )
 
-    lChanged = lFALSE
+    select case ( iJD_Difference )
 
-    do iIndex=iIndexLower,iIndexUpper
+      ! difference between estimated Julian Date and current is zero; we've found the desired index
+      case ( 0 )
 
-      rTestJD = nf_dayvalue_to_julian_day(NCFILE=NCFILE, &
-          rDayValue=NCFILE%rDateTimeValues(iIndex))
+        iStart = iIndex        
+        exit
 
-      iTestIndex = aint(rTestJD) - NCFILE%iFirstDayJD
-      iDiff = abs(iTestIndex - iInitialCandidateIndex)
+      ! difference between estimated JD and current JD is < 0; JD at index is *less* than
+      ! the current JD; increase index value and try again
+      case ( :-1 )
 
-      if (iDiff < iMinDiff ) then
+        iIndex = min( ubound(NCFILE%rDateTimeValues, 1) , iIndex + 1 )
+        iIndex = max( 0, iIndex - 1 )
+        iIterations = iIterations + 1
 
-        iMinDiff = iDiff
-        iCandidateIndex = iIndex
-        lChanged = lTRUE
+      ! difference between estimated JD and current JD is > 0; JD at index is *greater* than
+      ! the current JD; reduce index value and try again
+      case ( 1: )
 
-      endif
+        iIndex = max( 0, iIndex - 1 )
+        iIterations = iIterations + 1
 
-    enddo
+    end select
 
-    if (.not. lChanged ) exit
+    ! we've examined the Julian Dates in a reasonable subset of the date/time variable; 
+    ! if we haven't found it yet, we're probably not going to.
+    if ( iIterations > MAX_ITERATIONS ) exit
 
   enddo
-
-  if (iMinDiff == 0) iStart = iCandidateIndex
 
 end function nf_julian_day_to_index_adj
 
@@ -553,21 +567,24 @@ end function nf_return_DimSize
 
 subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
     lFlipHorizontal, lFlipVertical, &
+    rX_Coord_AddOffset, rY_Coord_AddOffset, &
     sVariableOrder, sVarName_x, &
     sVarName_y, sVarName_z, sVarName_time, &
     tGridBounds, iLU)
 
   type (T_NETCDF4_FILE ) :: NCFILE
   character (len=*) :: sFilename
-  logical (kind=c_bool), optional :: lFlipHorizontal
-  logical (kind=c_bool), optional :: lFlipVertical
-  character (len=*), optional :: sVariableOrder
-  character (len=*), optional :: sVarName_x
-  character (len=*), optional :: sVarName_y
-  character (len=*), optional :: sVarName_z
-  character (len=*), optional :: sVarName_time
-  type (T_GRID_BOUNDS), optional :: tGridBounds
-  integer (kind=c_int), optional :: iLU
+  logical (kind=c_bool), optional   :: lFlipHorizontal
+  logical (kind=c_bool), optional   :: lFlipVertical
+  character (len=*), optional       :: sVariableOrder
+  real (kind=c_double), optional    :: rX_Coord_AddOffset
+  real (kind=c_double), optional    :: rY_Coord_AddOffset
+  character (len=*), optional       :: sVarName_x
+  character (len=*), optional       :: sVarName_y
+  character (len=*), optional       :: sVarName_z
+  character (len=*), optional       :: sVarName_time
+  type (T_GRID_BOUNDS), optional    :: tGridBounds
+  integer (kind=c_int), optional    :: iLU
 
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
@@ -584,6 +601,8 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
 
   if (present(lFlipHorizontal) ) NCFILE%lFlipHorizontal = lFlipHorizontal
   if (present(lFlipVertical) ) NCFILE%lFlipVertical = lFlipVertical
+  if (present(rX_Coord_AddOffset))  NCFILE%rX_Coord_AddOffset = rX_Coord_AddOffset
+  if (present(rY_Coord_AddOffset))  NCFILE%rY_Coord_AddOffset = rY_Coord_AddOffset
 
   if (present(sVariableOrder) )  NCFILE%sVariableOrder = sVariableOrder
 
@@ -633,7 +652,6 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
   call nf_get_x_and_y(NCFILE)
 
   !> retrieve the time values as included in the NetCDF file
-  !> @todo Investigate why reading in all time values from a NetCDF file is a good idea.
   call nf_get_time_vals(NCFILE)
 
   if (present(tGridBounds) ) then
@@ -1034,6 +1052,9 @@ subroutine nf_get_x_and_y(NCFILE)
        iNC_Count=pNC_DIM_y%iNC_DimSize, &
        iNC_Stride=1_c_size_t, &
        dpNC_Vars=NCFILE%rY_Coords)
+
+  NCFILE%rX_Coords = NCFILE%rX_Coords + NCFILE%rX_Coord_AddOffset
+  NCFILE%rY_Coords = NCFILE%rY_Coords + NCFILE%rY_Coord_AddOffset
 
   iLowerBound = lbound(NCFILE%rX_Coords, 1)
   iUpperBound = ubound(NCFILE%rX_Coords, 1)
@@ -1491,6 +1512,9 @@ end subroutine nf_populate_attribute_struct
 
 !----------------------------------------------------------------------
 
+! this routine is called in order to update the NetCDF file TIME index
+! prior to the call to get a slice of data
+
 function netcdf_update_time_starting_index(NCFILE, iJulianDay)  result(lDateTimeFound)
 
   type (T_NETCDF4_FILE) :: NCFILE
@@ -1499,6 +1523,7 @@ function netcdf_update_time_starting_index(NCFILE, iJulianDay)  result(lDateTime
 
   ! [ LOCALS ]
   real (kind=c_double) :: rNC_DateTime
+  integer (kind=c_int) :: iMonth, iDay, iYear
 
   NCFILE%iStart(NC_TIME) = nf_julian_day_to_index_adj( NCFILE=NCFILE, &
                                      rJulianDay=real(iJulianDay, kind=c_double ) )
@@ -1595,7 +1620,6 @@ subroutine nf_get_variable_slice_short(NCFILE, rValues)
             rValues(iCol,iRow) = real(iTemp(iIndex), kind=c_float)
           enddo
         enddo
-
 
   end select
 
@@ -2100,6 +2124,15 @@ function nf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
     case (NC_INT)
 
+      call nf_get_variable_vector_int(NCFILE=NCFILE, &
+        iNC_VarID=pNC_VAR%iNC_VarID, &
+        iNC_Start=0_c_size_t, &
+        iNC_Count=iCount, &
+        iNC_Stride=iStride, &
+        iNC_Vars=ipValues)
+
+      dpValues = real(ipValues, kind=c_double)
+
     case (NC_FLOAT)
 
       call nf_get_variable_vector_float(NCFILE=NCFILE, &
@@ -2135,6 +2168,9 @@ end function nf_get_first_and_last
 subroutine nf_calculate_time_range(NCFILE)
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
+
+  ! [ LOCALS ] 
+  integer (kind=c_int) :: iMonth, iDay, iYear
 
   NCFILE%iOriginJD = julian_day(NCFILE%iOriginYear, &
     NCFILE%iOriginMonth, NCFILE%iOriginDay)
@@ -2185,20 +2221,45 @@ subroutine nf_get_time_units(NCFILE)
   call chomp(sDateTime, sItem)    !> should be "since"
 
   call chomp(sDateTime, sItem, "/-")
-  read(sItem, *) NCFILE%iOriginYear
+  read(sItem, *, iostat=iStat) NCFILE%iOriginYear
+  call assert(iStat == 0, "Problem parsing year value in NetCDF file", __FILE__, __LINE__)
 
   call chomp(sDateTime, sItem, "/-")
-  read(sItem, *) NCFILE%iOriginMonth
+  read(sItem, *, iostat=iStat) NCFILE%iOriginMonth
+  call assert(iStat == 0, "Problem parsing month value in NetCDF file", __FILE__, __LINE__)
 
-  read(sDateTime, *) NCFILE%iOriginDay
+  call chomp(sDateTime, sItem )
+  read(sItem, *, iostat=iStat) NCFILE%iOriginDay
+  call assert(iStat == 0, "Problem parsing day value in NetCDF file", __FILE__, __LINE__)
 
-  call chomp(sDateTime, sItem, ":")
-  read(sItem, *) NCFILE%iOriginHH
+  ! if no time value has been given, assign values of zero to HH:MM:SS
+  if (len_trim(sDateTime) == 0 ) then
 
-  call chomp(sDateTime, sItem, ":")
-  read(sItem, *) NCFILE%iOriginMM
+    NCFILE%iOriginHH = 0
+    NCFILE%iOriginMM = 0
+    NCFILE%iOriginSS = 0
 
-  read(sDateTime, *) NCFILE%iOriginSS
+  else
+
+    call chomp(sDateTime, sItem, ":")
+    read(sItem, *, iostat=iStat) NCFILE%iOriginHH
+
+    if (iStat /= 0) then
+      NCFILE%iOriginHH = 0
+      NCFILE%iOriginMM = 0
+      NCFILE%iOriginSS = 0
+    else
+      
+      call chomp(sDateTime, sItem, ":")
+      read(sItem, *, iostat=iStat) NCFILE%iOriginMM
+      if (iStat /= 0)  NCFILE%iOriginMM = 0
+
+      read(sDateTime, *, iostat=iStat) NCFILE%iOriginSS
+      if (iStat /= 0)  NCFILE%iOriginSS = 0
+
+    endif
+
+  endif  
 
 end subroutine nf_get_time_units
 
@@ -2683,7 +2744,8 @@ subroutine nf_set_standard_attributes(NCFILE, sOriginText)
 
     pNC_ATT(1)%sAttributeName = "calendar"
     allocate(pNC_ATT(1)%sAttValue(0:0))
-    pNC_ATT(1)%sAttValue(0) = "standard"
+    pNC_ATT(1)%sAttValue(0) = "proleptic_gregorian"
+    ! pNC_ATT(1)%sAttValue(0) = "standard"
     pNC_ATT(1)%iNC_AttType = NC_CHAR
     pNC_ATT(1)%iNC_AttSize = 1_c_size_t
 

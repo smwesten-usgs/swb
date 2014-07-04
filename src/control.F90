@@ -352,29 +352,34 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
-    else if ( str_compare(sItem,"PRECIPITATION_SCALE") ) then
-      call Chomp ( sRecord, sArgument )
-      call DAT(PRECIP_DATA)%set_scale(asReal(sArgument))
-
-    else if ( str_compare(sItem,"PRECIPITATION_OFFSET") ) then
-      call Chomp ( sRecord, sArgument )
-      call DAT(PRECIP_DATA)%set_offset(asReal(sArgument))
-
-    else if ( str_compare(sItem,"PRECIPITATION_USER_OFFSET") ) then
+    else if ( str_compare(sItem,"PRECIPITATION_ADD_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_user_offset(asReal(sArgument))
 
+    else if ( str_compare(sItem,"PRECIPITATION_SCALE_FACTOR") ) then
+      call Chomp ( sRecord, sArgument )
+      call DAT(PRECIP_DATA)%set_user_scale(asReal(sArgument))
+
+    ! this is here to allow older input files to continue to work
     else if ( str_compare(sItem,"PRECIPITATION_CONVERSION_FACTOR") ) then
       call Chomp ( sRecord, sArgument )
-      call DAT(PRECIP_DATA)%set_conversion_factor(asReal(sArgument))
+      call DAT(PRECIP_DATA)%set_user_scale(asReal(sArgument))
 
     else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_x = trim(sArgument)
 
+    else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR_ADD_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%rX_Coord_AddOffset = asReal(sArgument)
+
     else if ( str_compare(sItem,"NETCDF_PRECIP_Y_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_y = trim(sArgument)
+
+    else if ( str_compare(sItem,"NETCDF_PRECIP_Y_VAR_ADD_OFFSET") ) then
+      call Chomp ( sRecord, sArgument )
+      DAT(PRECIP_DATA)%rY_Coord_AddOffset = asReal(sArgument)
 
     else if ( str_compare(sItem,"NETCDF_PRECIP_Z_VAR") ) then
       call Chomp ( sRecord, sArgument )
@@ -568,21 +573,17 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
 
-    else if ( str_compare(sItem,"TMAX_SCALE") ) then
-      call Chomp ( sRecord, sArgument )
-      call DAT(TMAX_DATA)%set_scale(asReal(sArgument))
-
-    else if ( str_compare(sItem,"TMAX_USER_OFFSET") ) then
+    else if ( str_compare(sItem,"TMAX_ADD_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMAX_DATA)%set_user_offset(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMAX_OFFSET") ) then
+    else if ( str_compare(sItem,"TMAX_SCALE_FACTOR") ) then
       call Chomp ( sRecord, sArgument )
-      call DAT(TMAX_DATA)%set_offset(asReal(sArgument))
+      call DAT(TMAX_DATA)%set_user_scale(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMAX_CONVERSION_FACTOR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR_ADD_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
-      call DAT(TMAX_DATA)%set_conversion_factor(asReal(sArgument))
+      DAT(TMAX_DATA)%rX_Coord_AddOffset = asReal(sArgument)
 
     elseif (sItem == "TMAX_MINIMUM_ALLOWED_VALUE") then
       call Chomp ( sRecord, sArgument )
@@ -614,21 +615,17 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "TMIN_GRID_PROJECTION_DEFINITION") then
       call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
 
-    else if ( str_compare(sItem,"TMIN_SCALE") ) then
+    else if ( str_compare(sItem,"TMIN_SCALE_FACTOR") ) then
       call Chomp ( sRecord, sArgument )
-      call DAT(TMIN_DATA)%set_scale(asReal(sArgument))
+      call DAT(TMIN_DATA)%set_user_scale(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMIN_OFFSET") ) then
-      call Chomp ( sRecord, sArgument )
-      call DAT(TMIN_DATA)%set_offset(asReal(sArgument))
-
-    else if ( str_compare(sItem,"TMIN_USER_OFFSET") ) then
+    else if ( str_compare(sItem,"TMIN_ADD_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMIN_DATA)%set_user_offset(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMIN_CONVERSION_FACTOR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMIN_X_VAR_ADD_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
-      call DAT(TMIN_DATA)%set_conversion_factor(asReal(sArgument))
+      DAT(TMIN_DATA)%rX_Coord_AddOffset = asReal(sArgument)
 
     elseif (sItem == "TMIN_MINIMUM_ALLOWED_VALUE") then
       call Chomp ( sRecord, sArgument )

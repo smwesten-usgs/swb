@@ -84,6 +84,7 @@
 	},
 	"file_history":
 	[
+		"/C/Users/smwesten/AppData/Local/Temp/dtemp-860fba07650928-20.dop/Read_Me.txt",
 		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_142409.txt",
 		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_135221.txt",
 		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_141819.txt",
@@ -259,8 +260,8 @@
 						"selection":
 						[
 							[
-								5894,
-								5894
+								4259,
+								4259
 							]
 						],
 						"settings":
@@ -271,7 +272,7 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 2682.0,
+						"translation.y": 1920.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
