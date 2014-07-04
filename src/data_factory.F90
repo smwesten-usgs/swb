@@ -1164,13 +1164,40 @@ end subroutine set_constant_value_real
 
     ! [ LOCALS ]
     integer (kind=c_size_t) :: iNumRows, iNumCols, iNumRecs
+    type (T_GENERAL_GRID), pointer  :: pTempGrd
 
     if (this%iNC_ARCHIVE_STATUS == NETCDF_FILE_CLOSED) then
 
-      call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
-               NCFILE_ARCHIVE=this%NCFILE_ARCHIVE, &
-               iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear, &
-               iStartYear=this%iStartYear, iEndYear=this%iEndYear)
+  !> @todo finish the logic in this section: really want to output X(:,:) and Y(:,:)
+  !!       as grid of latitude and longitude so that external NetCDF viewers can 
+  !!       plot the archived data correctly
+
+!       if ( len_trim(this%sPROJ4_string ) > 0 ) then
+
+!           pTempGrd => grid_CreateComplete ( iNX=this%NCFILE%iNX, &
+!                     iNY=this%NCFILE%iNY, &
+!                     rX0=this%NCFILE%rX(NC_LEFT), &
+!                     rY0=this%NCFILE%rY(NC_BOTTOM), &
+!                     rX1=this%NCFILE%rX(NC_RIGHT), &
+!                     rY1=this%NCFILE%rY(NC_TOP), &
+!                     iDataType=this%iTargetDataType )
+
+!           call grid_Transform(pGrd=pTempGrd, sFromPROJ4=thi%sPROJ4_string, sToPROJ4="+proj=lonlat +ellps=WGS84 +datum=WGS84 +no_defs" )
+
+!           call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
+!                    NCFILE_ARCHIVE=this%NCFILE_ARCHIVE, &
+!                    iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear, &
+!                    iStartYear=this%iStartYear, iEndYear=this%iEndYear, &
+!                    rX=pTempGrd%rX, rY=pTempGrd%rY )
+
+!       else
+
+          call netcdf_open_and_prepare_as_output(NCFILE=this%NCFILE, &
+                   NCFILE_ARCHIVE=this%NCFILE_ARCHIVE, &
+                   iOriginMonth=iMonth, iOriginDay=iDay, iOriginYear=iYear, &
+                   iStartYear=this%iStartYear, iEndYear=this%iEndYear)
+
+!       endif
 
       this%iNC_ARCHIVE_STATUS = NETCDF_FILE_OPEN
 

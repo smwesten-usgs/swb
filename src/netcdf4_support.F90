@@ -730,8 +730,11 @@ end subroutine netcdf_open_and_prepare_as_input
 
 !----------------------------------------------------------------------
 
+!> Open a NetCDF file in order to save a local copy of the source NetCDF
+!! file.
 subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
-   iOriginMonth, iOriginDay, iOriginYear, iStartYear, iEndYear)
+   iOriginMonth, iOriginDay, iOriginYear, iStartYear, iEndYear, &
+   rX, rY)
 
   type (T_NETCDF4_FILE ) :: NCFILE
   type (T_NETCDF4_FILE ) :: NCFILE_ARCHIVE
@@ -740,7 +743,9 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
   integer (kind=c_int) :: iOriginYear
   integer (kind=c_int) :: iStartYear
   integer (kind=c_int) :: iEndYear
-
+  real (kind=c_double), optional :: rX(:,:)
+  real (kind=c_double), optional :: rY(:,:)
+  
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
   type (T_NETCDF_DIMENSION), pointer :: pNC_DIM
@@ -748,7 +753,7 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
   integer (kind=c_int) :: iNumCols, iNumRows
   integer (kind=c_int) :: iMinCol, iMaxCol
   integer (kind=c_int) :: iMinRow, iMaxRow
-  real (kind=c_double), dimension(:), allocatable :: rX, rY
+  real (kind=c_double), dimension(:), allocatable :: rX_vec, rY_vec
   character (len=10) :: sOriginText
   character (len=256) :: sFilename
 
@@ -763,10 +768,10 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
   iNumRows = iMaxRow - iMinRow + 1
   iNumCols = iMaxCol - iMinCol + 1
 
-  allocate(rX(iNumCols))
-  allocate(rY(iNumRows))
-  rX = NCFILE%rX_Coords(iMinCol:iMaxCol)
-  rY = NCFILE%rY_Coords(iMinRow:iMaxRow)
+  allocate(rX_vec(iNumCols))
+  allocate(rY_vec(iNumRows))
+  rX_vec = NCFILE%rX_Coords(iMinCol:iMaxCol)
+  rY_vec = NCFILE%rY_Coords(iMinRow:iMaxRow)
 
   sFilename = trim(NCFILE%sVarName(NC_Z))//"_"//trim(asCharacter(iStartYear)) &
     //"_"//trim(asCharacter(iEndYear))//"__" &
@@ -2715,16 +2720,17 @@ end subroutine nf_set_global_attributes
 
 !----------------------------------------------------------------------
 
-subroutine nf_set_standard_attributes(NCFILE, sOriginText)
+subroutine nf_set_standard_attributes(NCFILE, sOriginText, rX, rY)
 
   type (T_NETCDF4_FILE ) :: NCFILE
   character (len=*) :: sOriginText
+  real (kind=c_double), optional  :: rX(:,:)
+  real (kind=c_double), optional  :: rY(:,:)  
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iStat
   integer (kind=c_int) :: iNumAttributes
   type (T_NETCDF_ATTRIBUTE), dimension(:), pointer :: pNC_ATT
-
 
   iNumAttributes = 3
   allocate( NCFILE%pNC_VAR(NC_TIME)%pNC_ATT(0:iNumAttributes-1), stat=iStat)
