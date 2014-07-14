@@ -9,6 +9,10 @@ from matplotlib import colors
 rRLE_MULT = 10000.
 
 def writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npVals):
+    """
+    Write out a grid in ESRI Arc ASCII format
+    """
+    
     ofp = open(filename,'w')        
     
     ofp.write(str("NCOLS         {0}\n").format(iNX))
@@ -25,6 +29,9 @@ def writeArcASCII(filename, iNX, iNY, rX0, rY0, rGridCellSize, npVals):
     
 def readSWBbinary(ifp):
     """
+    The Soil-Water-Balance model packs data by means of a run-length encoding 
+    scheme before writing to a Fortran 2003 stream binary file.
+    This code "unpacks" data by reversing the RLE procedure.   
     RLE routine ported from FORTRAN SWB code. 
     
     Each subsequent call to this routine returns a grid associated with a days worth of output.
@@ -84,21 +91,42 @@ def makePlot(rPlotVals, iYYYY, iMM, iDD, fileprefix, sTitleTxt):
 # ------------------ BEGIN MAIN CODE --------------------
 #
 
-
-
 ifp = open('output/swb__RUNOFF_OUTSIDE.bin','rb')
 
 # read in HEADER values from Fortran binary file
+# first read in number of rows(iNY) and number of columns (iNX)
 iNX = np.fromfile(ifp,dtype='i',count=1)
 iNY = np.fromfile(ifp,dtype='i',count=1)
+
+# read in data type:
+#   DATATYPE_REAL = 1
+#   DATATYPE_CELL_GRID = 2
+#   DATATYPE_SHORT = 3
+#   DATATYPE_DOUBLE = 4
+#   DATATYPE_NA = -9999
 iDataType = np.fromfile(ifp,dtype='i',count=1)
+
 rGridCellSize = np.fromfile(ifp,dtype='d',count=1)
+
+# length units: 0 = METERS, 1 = FEET
 iLengthUnits = np.fromfile(ifp,dtype='i',count=1)
+
+# SWB compilation date. Binary format has changed over time, and therefore
+# the reader may not function if this date is too far from the current compilation date.
 sSWBCompilationDate = np.fromfile(ifp,dtype='a15',count=1)
+
+# variable number as defined in types.F90 in the STAT_INFO data structure.
+# see https://github.com/smwesten-usgs/swb/blob/master/src/types.F90
 iVariableNumber = np.fromfile(ifp,dtype='i',count=1)
+
+# value of the multiplier and offset value used to 'pack' the data 
+# using the RLE module
 iRLE_MULT = np.fromfile(ifp,dtype='i',count=1)
 rRLE_OFFSET = np.fromfile(ifp,dtype='f',count=1)
+
+# lower left, upper right hand X coordinates
 rX0, rX1 = np.fromfile(ifp,dtype='d',count=2)
+# lower left, upper right hand Y coordinates
 rY0, rY1 = np.fromfile(ifp,dtype='d',count=2)
 
 iLengthOfPROJ4String = np.fromfile(ifp,dtype='i',count=1)
@@ -106,13 +134,18 @@ formatStr = "a{0}".format(iLengthOfPROJ4String[0])
 
 print "'" + formatStr + "'\n"
 
+# proj4 string that defines the projection that the data are in
 sPROJ4_string = np.fromfile(ifp,dtype=formatStr,count=1)
 
+iNumElements = iNX * iNY
+iMask = np.empty([iNX, iNY], dtype='i', order='F')
+
+# mask argument. 1=active, anything else=inactive cell
+np.fromfile(ifp, dtype='i', count=iNumElements )
+
+# start and end date associated with the data.
 iStartMM, iStartDD, iStartYYYY = np.fromfile(ifp,dtype='i',count=3)
 iEndMM, iEndDD, iEndYYYY = np.fromfile(ifp,dtype='i',count=3)
-
-
-#V = np.linspace(0.,0.5,10)
 
 print "\nGrid summary:\n"
 print "iNX:              {0}".format(iNX)
@@ -124,8 +157,6 @@ print "rX0, rX1:         ({0:.2f},{1:.2f})".format(rX0, rX1)
 print "rY0, rY1:         ({0:.2f},{1:.2f})".format(rY0, rY1)
 print "Start Date:       {0}/{1}/{2}".format(iStartMM,iStartDD,iStartYYYY)
 print "End Date:         {0}/{1}/{2}".format(iEndMM,iEndDD,iEndYYYY)
-
-iNumElements = iNX * iNY
 
 iEndDate = date(2100, 02, 28)
 
