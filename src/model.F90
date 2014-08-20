@@ -176,6 +176,10 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   call DAT(LANDUSE_DATA)%getvalues( pGrdBase=pGrd, iMonth=pConfig%iMonth, &
     iDay=pConfig%iDay, iYear=pConfig%iYear )
 
+  ! after the first call to getvalues, allow for landuse files to be missing.
+  ! if files are missing, the existing landuse values are retained. 
+  DAT(LANDUSE_DATA)%lMissingFilesAreAllowed = lTRUE
+
   ! if a new landuse grid is found, then we need to perform a basic reinitialization
   ! of active/inactive cells, total soil water capacity, etc.
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
