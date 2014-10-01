@@ -147,6 +147,11 @@ module data_factory
     generic, public :: handle_missing_values => handle_missing_values_real, &
                                         handle_missing_values_int
 
+    procedure, private :: apply_scale_and_offset_real => data_GridApplyScaleAndOffset_real
+    procedure, private :: apply_scale_and_offset_int  => data_GridApplyScaleAndOffset_int
+    generic, public    :: apply_scale_and_offset => apply_scale_and_offset_int, &
+                                                    apply_scale_and_offset_real   
+
     procedure, public :: calc_project_boundaries => calc_project_boundaries
     procedure, public :: test_for_need_to_pad_values => test_for_need_to_pad_values
 
@@ -389,6 +394,8 @@ end subroutine initialize_netcdf_data_object_sub
 
     endif
 
+    !> Here is where the data are actually assigned to the data structure that the
+    !! rest of SWB sees...
     if (present(rValues)) then
 
        rValues = ( pGrdBase%rData * this%rUserScaleFactor ) + this%rUserOffset
@@ -538,8 +545,8 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
         case ( GRID_DATATYPE_REAL )
 
-          ! need to apply scale and offset before comparing to missing values code
-          this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
+          !> removed scale and offset correction step here... not needed because
+          !! Arc ASCII grids do not carry internal scale and add_offset factors.
 
           call this%handle_missing_values(this%pGrdNative%rData)
           call this%enforce_limits(this%pGrdNative%rData)
@@ -557,6 +564,7 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
       end select
 
+      ! Now transfer data from the NATIVE gridspace to the PROJECT (BASE) gridspace
       call this%transfer_from_native( pGrdBase )
 
       if (.not. this%lGridIsPersistent )  call grid_Destroy(this%pGrdNative)
@@ -1122,7 +1130,9 @@ end subroutine set_constant_value_real
         call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
 
         ! need to apply scale and offset before comparing to missing values code
-        this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
+        !this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
+
+        call this%apply_scale_and_offset( this%pGrdNative%rData )
 
         call this%handle_missing_values(this%pGrdNative%rData)
         call this%enforce_limits(this%pGrdNative%rData)
@@ -1519,13 +1529,102 @@ end subroutine set_maximum_allowable_value_real_sub
 
 !----------------------------------------------------------------------
 
+  subroutine data_GridApplyScaleAndOffset_real(this, rValues)
+
+    class (T_DATA_GRID) :: this
+    real (kind=c_float), dimension(:,:), intent(inout) :: rValues
+
+    ! [ LOCALS ]
+    real (kind=c_float) :: rMissing
+
+    rMissing = real(this%rMissingValuesCode, kind=c_float)
+
+    select case (trim(this%sMissingValuesOperator))
+
+      case ("<=")
+
+        where (rValues > rMissing) &
+          rValues = rValues * this%rScaleFactor + this%rAddOffset
+
+      case ("<")
+
+        where (rValues >= rMissing) &
+          rValues = rValues * this%rScaleFactor + this%rAddOffset
+
+      case (">=")
+
+        where (rValues < rMissing) &
+          rValues = rValues * this%rScaleFactor + this%rAddOffset
+
+      case (">")
+
+        where (rValues <= rMissing) &
+          rValues = rValues * this%rScaleFactor + this%rAddOffset
+
+      case default
+
+        call assert(lFALSE, "Unknown missing values code was supplied " &
+          //"for processing data "//squote(this%sDescription)//": " &
+          //dquote(this%sMissingValuesOperator), __FILE__, __LINE__ )
+
+    end select
+
+  end subroutine data_GridApplyScaleAndOffset_real
+
+!--------------------------------------------------------------------------------------------------
+
+  subroutine data_GridApplyScaleAndOffset_int(this, iValues)
+
+    class (T_DATA_GRID) :: this
+    integer (kind=c_int), dimension(:,:), intent(inout) :: iValues
+
+    ! [ LOCALS ]
+    integer (kind=c_int) :: iMissing
+
+    iMissing = int(this%rMissingValuesCode, kind=c_int)
+
+    select case (trim(this%sMissingValuesOperator))
+
+      case ("<=")
+
+        where (iValues > iMissing) &
+          iValues = iValues * this%rScaleFactor + this%rAddOffset
+
+      case ("<")
+
+        where (iValues >= iMissing) &
+          iValues = iValues * this%rScaleFactor + this%rAddOffset
+
+      case (">=")
+
+        where (iValues < iMissing) &
+          iValues = iValues * this%rScaleFactor + this%rAddOffset
+
+      case (">")
+
+        where (iValues <= iMissing) &
+          iValues = iValues * this%rScaleFactor + this%rAddOffset
+
+      case default
+
+        call assert(lFALSE, "Unknown missing values code was supplied " &
+          //"for processing data "//squote(this%sDescription)//": " &
+          //dquote(this%sMissingValuesOperator), __FILE__, __LINE__ )
+
+    end select
+
+  end subroutine data_GridApplyScaleAndOffset_int  
+
+!--------------------------------------------------------------------------------------------------
+
   subroutine data_GridHandleMissingData_real(this, rValues)
 
     class (T_DATA_GRID) :: this
     real (kind=c_float), dimension(:,:), intent(inout) :: rValues
 
     ! [ LOCALS ]
-    real (kind=c_float) :: rMissing, rMean
+    real (kind=c_float)  :: rMissing, rMean, rSum
+    integer (kind=c_int) :: iCount
 
     rMissing = real(this%rMissingValuesCode, kind=c_float)
 
@@ -1561,33 +1660,39 @@ end subroutine set_maximum_allowable_value_real_sub
 
       case (MISSING_VALUES_REPLACE_WITH_MEAN)
 
+        rMean = 0.0_c_float
+
         select case (this%sMissingValuesOperator)
 
           case ("<=")
-
-            rMean = sum(rValues, rValues > rMissing ) &
-               / count(rValues > rMissing )
+       
+            rSum = sum(rValues, rValues > rMissing )
+            iCount = count(rValues > rMissing )
+            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
 
             where (rValues <= rMissing) rValues = rMean
 
           case ("<")
 
-            rMean = sum(rValues, rValues >= rMissing ) &
-               / count(rValues >= rMissing )
+            rSum = sum(rValues, rValues >= rMissing )
+            iCount = count(rValues > rMissing )
+            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
 
             where (rValues < rMissing) rValues = rMean
 
           case (">=")
 
-            rMean = sum(rValues, rValues < rMissing ) &
-               / count(rValues < rMissing )
+            rSum = sum(rValues, rValues < rMissing )
+            iCount = count(rValues > rMissing )
+            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
 
             where (rValues >= rMissing) rValues = rMean
 
           case (">")
 
-            rMean = sum(rValues, rValues <= rMissing ) &
-               / count(rValues <= rMissing )
+            rSum = sum(rValues, rValues <= rMissing )
+            iCount = count(rValues > rMissing )
+            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
 
             where (rValues > rMissing) rValues = rMean
 
