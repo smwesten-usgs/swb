@@ -96,8 +96,7 @@ program main
   if(iNumArgs/=1) then
 
     write(UNIT=*,FMT="(/,a,/)") &
-      "Soil Water Balance Code version "//trim(SWB_VERSION)//" -- compiled on: "// &
-      TRIM(__DATE__) //" "// TRIM(__TIME__)
+      "Soil Water Balance Code version "//trim(SWB_VERSION)//" -- compiled on: "//trim(COMPILE_DATE)
 #ifdef __GFORTRAN__
     sCompilerFlags = COMPILER_OPTIONS()
     sCompilerVersion = COMPILER_VERSION()

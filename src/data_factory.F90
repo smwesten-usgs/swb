@@ -140,12 +140,12 @@ module data_factory
 
     procedure, private :: enforce_limits_real => data_GridEnforceLimits_real
     procedure, private :: enforce_limits_int => data_GridEnforceLimits_int
-    generic, public :: enforce_limits => enforce_limits_real, enforce_limits_int
+    generic, public    :: enforce_limits => enforce_limits_real, enforce_limits_int
 
-    procedure, private :: handle_missing_values_real => data_GridHandleMissingData_real
-    procedure, private :: handle_missing_values_int => data_GridHandleMissingData_int
-    generic, public :: handle_missing_values => handle_missing_values_real, &
-                                        handle_missing_values_int
+    procedure, private :: create_missing_values_mask_real => data_CreateMissingValuesMask_real                                      
+    procedure, private :: create_missing_values_mask_int  => data_CreateMissingValuesMask_int
+    generic, public    :: create_missing_values_mask => create_missing_values_mask_real, &
+                                                        create_missing_values_mask_int
 
     procedure, private :: apply_scale_and_offset_real => data_GridApplyScaleAndOffset_real
     procedure, private :: apply_scale_and_offset_int  => data_GridApplyScaleAndOffset_int
@@ -545,11 +545,9 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
         case ( GRID_DATATYPE_REAL )
 
-          !> removed scale and offset correction step here... not needed because
-          !! Arc ASCII grids do not carry internal scale and add_offset factors.
-
-          call this%handle_missing_values(this%pGrdNative%rData)
-          call this%enforce_limits(this%pGrdNative%rData)
+          call this%create_missing_values_mask( rValues = this%pGrdNative%rData )
+          call this%apply_scale_and_offset( rValues = this%pGrdNative%rData )
+          call this%enforce_limits( rValues = this%pGrdNative%rData )
 
         case ( GRID_DATATYPE_INT )
 
@@ -1129,13 +1127,11 @@ end subroutine set_constant_value_real
 
         call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
 
-        ! need to apply scale and offset before comparing to missing values code
-        !this%pGrdNative%rData = this%pGrdNative%rData * this%rScaleFactor + this%rAddOffset
-
-        call this%apply_scale_and_offset( this%pGrdNative%rData )
-
-        call this%handle_missing_values(this%pGrdNative%rData)
-        call this%enforce_limits(this%pGrdNative%rData)
+        ! the missing_values code stored in the NetCDF file needs to be processed *before* applying
+        ! the scale and offset
+        call this%create_missing_values_mask( rValues = this%pGrdNative%rData )
+        call this%apply_scale_and_offset( rValues = this%pGrdNative%rData )
+        call this%enforce_limits( rValues = this%pGrdNative%rData )
         exit
       enddo
 
@@ -1513,8 +1509,8 @@ end subroutine set_maximum_allowable_value_real_sub
 
   subroutine data_GridEnforceLimits_real(this, rValues)
 
-    class (T_DATA_GRID) :: this
-    real (kind=c_float), dimension(:,:) :: rValues
+    class (T_DATA_GRID)                 :: this
+    real (kind=c_float), intent(inout)  :: rValues(:,:)
 
     ! [ LOCALS ]
     real (kind=c_float) :: rMin, rMax
@@ -1522,8 +1518,12 @@ end subroutine set_maximum_allowable_value_real_sub
     rMin = real(this%rMinAllowedValue, kind=c_float)
     rMax = real(this%rMaxAllowedValue, kind=c_float)
 
-    where ( rValues < rMin )  rValues = rMin
-    where ( rValues > rMax )  rValues = rMax
+    associate ( values => rValues )
+
+      where ( values < rMin )   values = rMin 
+      where ( values > rMax )   values = rMax
+
+    end associate    
 
   end subroutine data_GridEnforceLimits_real
 
@@ -1531,43 +1531,55 @@ end subroutine set_maximum_allowable_value_real_sub
 
   subroutine data_GridApplyScaleAndOffset_real(this, rValues)
 
-    class (T_DATA_GRID) :: this
-    real (kind=c_float), dimension(:,:), intent(inout) :: rValues
-
+    class (T_DATA_GRID)                   :: this
+    real (kind=c_float), intent(inout)    :: rValues(:,:)
+    
     ! [ LOCALS ]
-    real (kind=c_float) :: rMissing
+    real (kind=c_float)  :: rMean, rSum
+    integer (kind=c_int) :: iCount
 
-    rMissing = real(this%rMissingValuesCode, kind=c_float)
+    associate ( values => rValues, valid_data => this%pGrdNative%lMask,   &
+                scale_factor => this%rScaleFactor, add_offset => this%rAddOffset )
 
-    select case (trim(this%sMissingValuesOperator))
+      select case (this%iMissingValuesAction)
 
-      case ("<=")
+        case (MISSING_VALUES_ZERO_OUT)
 
-        where (rValues > rMissing) &
-          rValues = rValues * this%rScaleFactor + this%rAddOffset
+          where ( valid_data )
 
-      case ("<")
+            values = values * scale_factor + add_offset
 
-        where (rValues >= rMissing) &
-          rValues = rValues * this%rScaleFactor + this%rAddOffset
+          elsewhere
+          
+            values = rZERO  
+         
+         endwhere
 
-      case (">=")
+        case (MISSING_VALUES_REPLACE_WITH_MEAN)
 
-        where (rValues < rMissing) &
-          rValues = rValues * this%rScaleFactor + this%rAddOffset
+          rMean = rZERO
+          rSum = sum( values, valid_data )
+          iCount = count( valid_data )
 
-      case (">")
+          if ( iCount > 0 )  rMean = rSum / real( iCount, kind=c_float) * scale_factor + add_offset
 
-        where (rValues <= rMissing) &
-          rValues = rValues * this%rScaleFactor + this%rAddOffset
+          where ( valid_data )
 
-      case default
+            values = values * scale_factor + add_offset
 
-        call assert(lFALSE, "Unknown missing values code was supplied " &
-          //"for processing data "//squote(this%sDescription)//": " &
-          //dquote(this%sMissingValuesOperator), __FILE__, __LINE__ )
+          elsewhere
+          
+            values = rMean
+         
+         endwhere
 
-    end select
+        case default
+
+          call assert( lFALSE, "Unhandled case select", __FILE__, __LINE__ )
+
+      end select  
+
+    end associate
 
   end subroutine data_GridApplyScaleAndOffset_real
 
@@ -1575,233 +1587,151 @@ end subroutine set_maximum_allowable_value_real_sub
 
   subroutine data_GridApplyScaleAndOffset_int(this, iValues)
 
-    class (T_DATA_GRID) :: this
-    integer (kind=c_int), dimension(:,:), intent(inout) :: iValues
-
+    class (T_DATA_GRID)                    :: this
+    integer (kind=c_int), intent(inout)    :: iValues(:,:)
+    
     ! [ LOCALS ]
-    integer (kind=c_int) :: iMissing
+    integer (kind=c_int) :: iMode
 
-    iMissing = int(this%rMissingValuesCode, kind=c_int)
+    associate ( values => iValues, valid_data => this%pGrdNative%lMask,   &
+                scale_factor => this%rScaleFactor, add_offset => this%rAddOffset )
 
-    select case (trim(this%sMissingValuesOperator))
+      select case (this%iMissingValuesAction)
 
-      case ("<=")
+        case (MISSING_VALUES_ZERO_OUT)
 
-        where (iValues > iMissing) &
-          iValues = iValues * this%rScaleFactor + this%rAddOffset
+          where ( valid_data )
 
-      case ("<")
+            values = real( values, kind=c_float ) * scale_factor + add_offset
 
-        where (iValues >= iMissing) &
-          iValues = iValues * this%rScaleFactor + this%rAddOffset
+          elsewhere
+          
+            values = iZERO  
+         
+         endwhere
 
-      case (">=")
+        case (MISSING_VALUES_REPLACE_WITH_MEAN)
 
-        where (iValues < iMissing) &
-          iValues = iValues * this%rScaleFactor + this%rAddOffset
+          iMode =  grid__most_common_int( iValues=values, iFloor=0, iCeiling=256, lMask=valid_data )
 
-      case (">")
+          where ( valid_data )
 
-        where (iValues <= iMissing) &
-          iValues = iValues * this%rScaleFactor + this%rAddOffset
+            values = real( values, kind=c_float ) * scale_factor + add_offset
 
-      case default
+          elsewhere
+          
+            values = iMode
+         
+         endwhere
 
-        call assert(lFALSE, "Unknown missing values code was supplied " &
-          //"for processing data "//squote(this%sDescription)//": " &
-          //dquote(this%sMissingValuesOperator), __FILE__, __LINE__ )
+        case default
 
-    end select
+          call assert( lFALSE, "Unhandled case select", __FILE__, __LINE__ )
 
-  end subroutine data_GridApplyScaleAndOffset_int  
+      end select  
+
+    end associate
+
+  end subroutine data_GridApplyScaleAndOffset_int
 
 !--------------------------------------------------------------------------------------------------
 
-  subroutine data_GridHandleMissingData_real(this, rValues)
+  subroutine data_CreateMissingValuesMask_real(this, rValues)
 
-    class (T_DATA_GRID) :: this
-    real (kind=c_float), dimension(:,:), intent(inout) :: rValues
+    class (T_DATA_GRID)               :: this
+    real (kind=c_float), intent(in)   :: rValues(:,:)
 
     ! [ LOCALS ]
-    real (kind=c_float)  :: rMissing, rMean, rSum
-    integer (kind=c_int) :: iCount
+    real (kind=c_float)  :: rMissing
 
     rMissing = real(this%rMissingValuesCode, kind=c_float)
 
-    select case (this%iMissingValuesAction)
+    associate ( values => rValues, mask => this%pGrdNative%lMask )
 
-      case (MISSING_VALUES_ZERO_OUT)
+      ! by default, assume that ALL cells are included
+      mask = lTRUE
 
-        select case (trim(this%sMissingValuesOperator))
+      select case (trim(this%sMissingValuesOperator))
 
-          case ("<=")
+        case ("<=")
 
-            where (rValues <= rMissing) rValues = rZERO
+          where (values <= rMissing) mask = lFALSE
 
-          case ("<")
+        case ("<")
 
-            where (rValues < rMissing) rValues = rZERO
+          where (values < rMissing) mask = lFALSE
 
-          case (">=")
+        case (">=")
 
-            where (rValues >= rMissing) rValues = rZERO
+          where (values >= rMissing) mask = lFALSE
 
-          case (">")
+        case (">")
 
-            where (rValues > rMissing) rValues = rZERO
+          where (values > rMissing) mask = lFALSE
 
-          case default
+        case default
 
-            call assert(lFALSE, "Unknown missing values code was supplied " &
-              //"for processing data "//squote(this%sDescription)//": " &
-              //dquote(this%sMissingValuesOperator) )
+          call assert(lFALSE, "Unknown missing values code was supplied " &
+            //"for processing data "//squote(this%sDescription)//": " &
+            //dquote(this%sMissingValuesOperator) )
 
-          end select
+      end select
 
-      case (MISSING_VALUES_REPLACE_WITH_MEAN)
+      ! scan for NaNs and replace with 0.0
+      !> @TODO Replace isnan function with ieee_is_nan once gfortran supports it (gcc 5.1)
+      where ( isnan( values) )  mask = lFALSE
 
-        rMean = 0.0_c_float
+    end associate
 
-        select case (this%sMissingValuesOperator)
+  end subroutine data_CreateMissingValuesMask_real
 
-          case ("<=")
-       
-            rSum = sum(rValues, rValues > rMissing )
-            iCount = count(rValues > rMissing )
-            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
+!-----------------------------------------------------------------------------------------------------
 
-            where (rValues <= rMissing) rValues = rMean
+  subroutine data_CreateMissingValuesMask_int(this, iValues)
 
-          case ("<")
-
-            rSum = sum(rValues, rValues >= rMissing )
-            iCount = count(rValues > rMissing )
-            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
-
-            where (rValues < rMissing) rValues = rMean
-
-          case (">=")
-
-            rSum = sum(rValues, rValues < rMissing )
-            iCount = count(rValues > rMissing )
-            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
-
-            where (rValues >= rMissing) rValues = rMean
-
-          case (">")
-
-            rSum = sum(rValues, rValues <= rMissing )
-            iCount = count(rValues > rMissing )
-            if ( iCount > 0)   rMean = rSum / real( iCount, kind=c_float )
-
-            where (rValues > rMissing) rValues = rMean
-
-          case default
-
-            call assert(lFALSE, "Unknown missing values code was supplied " &
-              //"for processing data "//squote(this%sDescription)//": " &
-              //dquote(this%sMissingValuesOperator) )
-
-          end select
-
-      case default
-
-        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - unhandled iMissingValuesAction", &
-        trim(__FILE__), __LINE__)
-
-    end select
-
-  end subroutine data_GridHandleMissingData_real
-
-!----------------------------------------------------------------------
-
-  subroutine data_GridHandleMissingData_int(this, iValues)
-
-    class (T_DATA_GRID) :: this
-    integer (kind=c_int), dimension(:,:), intent(inout) :: iValues
+    class (T_DATA_GRID)               :: this
+    integer (kind=c_int), intent(in)  :: iValues(:,:)
 
     ! [ LOCALS ]
-    integer (kind=c_int) :: iMissing, iMean
+    integer (kind=c_int)  :: iMissing
 
-    iMissing = this%iMissingValuesCode
+    iMissing = int(this%rMissingValuesCode, kind=c_int)
 
-    select case (this%iMissingValuesAction)
+    associate ( values => iValues, mask => this%pGrdNative%lMask )
 
-      case (MISSING_VALUES_ZERO_OUT)
+      ! by default, assume that ALL cells are included
+      mask = lTRUE
 
-        select case (trim(this%sMissingValuesOperator))
+      select case (trim(this%sMissingValuesOperator))
 
-          case ("<=")
+        case ("<=")
 
-            where (iValues <= iMissing) iValues = iZERO
+          where (values <= iMissing) mask = lFALSE
 
-          case ("<")
+        case ("<")
 
-            where (iValues < iMissing) iValues = iZERO
+          where (values < iMissing) mask = lFALSE
 
-          case (">=")
+        case (">=")
 
-            where (iValues >= iMissing) iValues = iZERO
+          where (values >= iMissing) mask = lFALSE
 
-          case (">")
+        case (">")
 
-            where (iValues > iMissing) iValues = iZERO
+          where (values > iMissing) mask = lFALSE
 
-          case default
+        case default
 
-            call assert(lFALSE, "Unknown missing values code was supplied " &
-              //"for processing data "//squote(this%sDescription)//": " &
-              //dquote(this%sMissingValuesOperator) )
+          call assert(lFALSE, "Unknown missing values code was supplied " &
+            //"for processing data "//squote(this%sDescription)//": " &
+            //dquote(this%sMissingValuesOperator) )
 
-          end select
+      end select
 
-      case (MISSING_VALUES_REPLACE_WITH_MEAN)
+    end associate
 
-        select case (this%sMissingValuesOperator)
+  end subroutine data_CreateMissingValuesMask_int
 
-          case ("<=")
-
-            iMean = sum(iValues, iValues > iMissing ) &
-               / count(iValues > iMissing )
-
-            where (iValues <= iMissing) iValues = iMean
-
-          case ("<")
-
-            iMean = sum(iValues, iValues >= iMissing ) &
-               / count(iValues >= iMissing )
-
-            where (iValues < iMissing) iValues = iMean
-
-          case (">=")
-
-            iMean = sum(iValues, iValues < iMissing ) &
-               / count(iValues < iMissing )
-
-            where (iValues >= iMissing) iValues = iMean
-
-          case (">")
-
-            iMean = sum(iValues, iValues <= iMissing ) &
-               / count(iValues <= iMissing )
-
-            where (iValues > iMissing) iValues = iMean
-
-          case default
-
-            call assert(lFALSE, "Unknown missing values code was supplied " &
-              //"for processing data "//squote(this%sDescription)//": " &
-              //dquote(this%sMissingValuesOperator) )
-
-          end select
-
-      case default
-
-        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - unhandled iMissingValuesAction", &
-        trim(__FILE__), __LINE__)
-
-    end select
-
-  end subroutine data_GridHandleMissingData_int
+!----------------------------------------------------------------------
 
 end module data_factory

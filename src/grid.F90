@@ -204,7 +204,9 @@ function grid_CreateComplete ( iNX, iNY, rX0, rY0, rX1, rY1, iDataType ) result 
   pGrd%iNumGridCells = iNX * iNY
 
   allocate(pGrd%iMask(iNX, iNY))
+  allocate(pGrd%lMask(iNX, iNY))
   pGrd%iMask = iACTIVE_CELL
+  pGrd%lMask = lTRUE
 
 end function grid_CreateComplete
 
@@ -2373,5 +2375,38 @@ function grid_Convolve_sgl(rValues, iTargetCol, &
   endif
 
 end function grid_Convolve_sgl
+
+function grid__most_common_int( iValues, iFloor, iCeiling, lMask )    result( iValue )
+
+  integer (kind=c_int), intent(in)      :: iValues(:,:)
+  integer (kind=c_int), intent(in)      :: iFloor
+  integer (kind=c_int), intent(in)      :: iCeiling
+  logical (kind=c_bool), intent(in)     :: lMask(:,:)
+  integer (kind=c_int)                  :: iValue
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iIndex
+  integer (kind=c_int) :: iStat
+  integer (kind=c_int) :: iCount
+  integer (kind=c_int) :: iMaxCount
+
+  call assert( iCeiling > iFloor, "Ceiling value < floor value", __FILE__, __LINE__ )
+
+  iIndex = -9999
+  iCount = 0
+  iMaxCount = 0
+
+  do iIndex = iFloor, iCeiling
+
+    iCount = count( (iValues == iIndex) .and. ( lMask ) )
+
+    if ( iCount > iMaxCount ) then
+      iMaxCount = iCount
+      iValue = iIndex
+    endif  
+
+  enddo
+
+end function grid__most_common_int  
 
 end module swb_grid

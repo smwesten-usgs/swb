@@ -269,10 +269,11 @@ module types
       integer (kind=c_int), dimension(:,:), pointer :: iData ! Integer data
       integer (kind=c_int) :: iNoDataValue = -99999
       real (kind=c_float) :: rNoDataValue = -99999.0
-      real (kind=c_float), dimension(:,:), pointer :: rData    ! Real data
-      real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
-      real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
-      integer (kind=c_int), dimension(:,:), allocatable :: iMask ! Mask for processing results
+      real (kind=c_float), dimension(:,:), pointer :: rData       ! Real data
+      real (kind=c_double), dimension(:,:), allocatable :: rX     ! x coordinate associated with data
+      real (kind=c_double), dimension(:,:), allocatable :: rY     ! y coordinate associated with data
+      integer (kind=c_int), dimension(:,:), allocatable :: iMask  ! Mask for processing results
+      logical (kind=c_bool), dimension(:,:), allocatable :: lMask ! Mask for processing results
       type (T_CELL), dimension(:,:), pointer :: Cells        ! T_CELL objects
   end type T_GENERAL_GRID
 
