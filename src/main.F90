@@ -139,17 +139,15 @@ program main
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"
 
-    stop
+  else 
 
-  end if
+    call GET_COMMAND_ARGUMENT(1,sControlFile)
 
-  call GET_COMMAND_ARGUMENT(1,sControlFile)
+    ! pass control to control module
+    call control_setModelOptions(sControlFile)
 
-  ! pass control to control module
-  call control_setModelOptions(sControlFile)
+    close(unit=LU_LOG)
 
-  close(unit=LU_LOG)
-
-  stop 0
+  endif
 
 end program main
