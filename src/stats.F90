@@ -1619,11 +1619,6 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
 
   end do
 
-  print *, trim(__FILE__), "  ", __LINE__
-  print *, "*** NUMBER OF CELLS: "//trim(asCharacter(pGrd%iNX*pGrd%iNY))
-  print *, "*** Number of __ACTIVE__ CELLS: "//trim(asCharacter(count(pGrd%iMask == iACTIVE_CELL)))
-  print *, " "
-
 end subroutine stats_OpenBinaryFiles
 
 !------------------------------------------------------------------------------

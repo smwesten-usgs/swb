@@ -2636,12 +2636,16 @@ subroutine writeMultiLine(sMessageText, iLU)
 
   inquire (unit=iLU, opened=lFileOpen)
 
-  sRecord = trim(sMessageText)
-
   if (lFileOpen) then
 
-    do
+    if( sMessageText(1:1) == "~" ) then
+      sMessageText = sMessageText(2:len(sMessageText))
+      write(UNIT=iLU,FMT="(/)") 
+    endif
 
+    sRecord = trim(sMessageText)
+
+    do
       ! break up string with '~' as delimiter
       call chomp(sRecord, sItem, "~")
       if(len_trim(sItem) == 0) exit
