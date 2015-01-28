@@ -6,9 +6,9 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_VERSION=4.9.0
+export COMPILER_VERSION=4.9.1
 export COMPILER_MAJ_VERSION=4.9
-export COMPILER_TRIPLET=x86_64-apple-darwin13.1.0
+export COMPILER_TRIPLET=x86_64-apple-darwin13.3.0
 export COMPILER_DIR=/usr/local
 export LIB_PATH1="/usr/local/lib/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
 export LIB_PATH2=/usr/OpenMotif/lib
