@@ -323,7 +323,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
   integer (kind=c_int)              :: iIndex
   integer (kind=c_int)              :: iMonth, iDay, iYear
   integer (kind=c_int)              :: iIterations
-  integer (kind=c_int), parameter   :: MAX_ITERATIONS = 20
+  integer (kind=c_int), parameter   :: MAX_ITERATIONS = 100
 
   ! return value of this function represents the *starting* index of the time dimension 
   ! if no value is found in association with the current Julian Date, return -9999
@@ -1529,6 +1529,7 @@ function netcdf_update_time_starting_index(NCFILE, iJulianDay)  result(lDateTime
   ! [ LOCALS ]
   real (kind=c_double) :: rNC_DateTime
   integer (kind=c_int) :: iMonth, iDay, iYear
+  integer (kind=c_int) :: crap
 
   NCFILE%iStart(NC_TIME) = nf_julian_day_to_index_adj( NCFILE=NCFILE, &
                                      rJulianDay=real(iJulianDay, kind=c_double ) )
@@ -2430,11 +2431,14 @@ function nf_return_index_double(rValues, rTargetValue)  result(iIndex)
   real (kind=c_double) :: rDiff, rDiffMin
 
   if ( .not. (rTargetValue >= minval(rValues) .and. rTargetValue <= maxval(rValues)) ) then
-    call echolog("rTargetValue (" &
-    //trim(asCharacter(rTargetValue))//") is not within the range " &
+    call echolog("~SWB grid coordinate value (" &
+    //trim(asCharacter(rTargetValue))//") is not within the range of coordinate values covered ~" &
+    //"by the NetCDF file. Range of NetCDF file coordinates: "  &
     //trim(asCharacter(minval(rValues)))//" to "//trim(asCharacter(maxval(rValues))) )
 
-    call assert(lFALSE, "INTERNAL PROGRAMMING ERROR", trim(__FILE__), __LINE__)
+    call assert(lFALSE, "USER ERROR: NetCDF file coverage is not large enough to cover your area of interest.~" &
+      //"Try creating a NetCDF file whose boundaries extend several cells beyond your area of ~interest in all directions.", &
+      trim(__FILE__), __LINE__)
   endif
 
   rDiffMin = 1.e+20

@@ -1377,8 +1377,9 @@ subroutine grid_Transform(pGrd, sFromPROJ4, sToPROJ4 )
 
   !> PROJ4 expects unprojected coordinates (i.e. lat lon) to be provided
   !> in RADIANS. Therefore, we convert to radians prior to the call...
-  if( index(string=csFromPROJ4, substring="latlon") > 0 &
-      .or. index(string=csFromPROJ4, substring="lonlat") > 0 ) then
+  if( ( index(string=csFromPROJ4, substring="latlon") > 0 )     &
+    .or. ( index(string=csFromPROJ4, substring="lonlat") > 0 )  &
+    .or. ( index(string=csFromPROJ4, substring="longlat") > 0 ) )      then
 
     pGrd%rX = pGrd%rX * dpPI_OVER_180
     pGrd%rY = pGrd%rY * dpPI_OVER_180
@@ -2168,62 +2169,32 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
   if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
-!  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
-  if ( lTRUE ) then
+!!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iColRow)
 
-!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iColRow)
+  do iRow=1,pGrdTo%iNY
+    do iCol=1,pGrdTo%iNX
 
-    do iRow=1,pGrdTo%iNY
-      do iCol=1,pGrdTo%iNX
+      iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+                 rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
+                 rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
 
-        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
-                   rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
-                   rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
+      call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+        "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+        trim(__FILE__), __LINE__)
 
-        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-          trim(__FILE__), __LINE__)
-
-        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-          trim(__FILE__), __LINE__)
+      call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+        "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+        trim(__FILE__), __LINE__)
 
         rArrayTo(iCol,iRow) = rArrayFrom( iColRow(COLUMN), iColRow(ROW) )
 
-!         rArrayTo(iCol,iRow) = grid_Convolve_sgl(rValues=rArrayFrom, &
-!           iTargetCol=iColRow(COLUMN), &
-!           iTargetRow=iColRow(ROW), &
-!           rKernel=rKernel)
+!       rArrayTo(iCol,iRow) = grid_Convolve_sgl(pGrd=pGrdFrom, &
+!         iTargetCol=iColRow(COLUMN), &
+!         iTargetRow=iColRow(ROW), &
+!         rKernel=rKernel)
 
-      enddo
     enddo
-
-!!!   *$OMP END PARALLEL DO
-
-  else  ! if we have the same projections as the base, our standard methods work
-
-!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iSrcRow, iSrcCol)
-
-    do iRow=1,pGrdTo%iNY
-      do iCol=1,pGrdTo%iNX
-        iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=c_double) )
-        iSrcRow = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=c_double) )
-
-        call assert(iSrcCol > 0 .and. iSrcCol <= pGrdFrom%iNX, &
-          "Illegal column number supplied: "//trim(asCharacter(iSrcCol)), &
-          trim(__FILE__), __LINE__)
-
-        call assert(iSrcRow > 0 .and. iSrcRow <= pGrdFrom%iNY, &
-          "Illegal row number supplied: "//trim(asCharacter(iSrcRow)), &
-          trim(__FILE__), __LINE__)
-
-        rArrayTo(iCol,iRow) = rArrayFrom( iSrcCol, iSrcRow )
-      enddo
-    enddo
-
-!!!   *$OMP END PARALLEL DO
-
-  endif
+  enddo
 
 end subroutine grid_GridToGrid_sgl
 
@@ -2305,17 +2276,12 @@ function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
 
 end function grid_majorityFilter_int
 
-function grid_Convolve_sgl(rValues, iTargetCol, &
-   iTargetRow, rKernel, rNoDataValue)  result(rRetVal)
+function grid_Convolve_sgl(pGrd, iTargetCol, iTargetRow, rKernel)  result(rRetVal)
 
-  ! [ ARGUMENTS ]
-  real (kind=c_float), dimension(:,:) :: rValues
-  integer (kind=c_int) :: iNX
-  integer (kind=c_int) :: iNY
-  integer (kind=c_int) :: iTargetCol          ! column number of target cell
-  integer (kind=c_int) :: iTargetRow          ! row number of target cell
-  real (kind=c_float), dimension(:,:) :: rKernel
-  real (kind=c_float), optional :: rNoDataValue
+  type ( T_GENERAL_GRID ),pointer     :: pGrd
+  integer (kind=c_int), intent(in)    :: iTargetCol          
+  integer (kind=c_int), intent(in)    :: iTargetRow          
+  real (kind=c_float), intent(in)     :: rKernel(:,:)
   real (kind=c_float) :: rRetVal
 
   ! [ LOCALS ]
@@ -2325,54 +2291,50 @@ function grid_Convolve_sgl(rValues, iTargetCol, &
   integer (kind=c_int) :: iIncValue
   integer (kind=c_int) :: iCol, iRow, iRownum, iColnum
   real (kind=c_float) :: rKernelSum
+  integer (kind=c_int) :: iNX
+  integer (kind=c_int) :: iNY
 
   rKernelSum = rZERO
-  rRetVal = rZERO
+  ! if we are in an area marked as "no data", at least the existing value will be returned
+  rRetVal = pGrd%rData(iTargetCol,iTargetRow)
 
   iKernelSize = size(rKernel, dim=1)
   iIncValue = (iKernelSize - 1) / 2
 
-  iNX = ubound(rValues,1)
-  iNY = ubound(rValues,2)
+  ! dimensions of the grid in "native" coordinates
+  iNX = ubound(pGrd%rData,1)
+  iNY = ubound(pGrd%rData,2)
 
+  ! define search neighborhood
   iRowMin = max(1,iTargetRow - iIncValue)
   iRowMax = min(iNY, iTargetRow + iIncValue)
 
   iColMin = max(1,iTargetCol - iIncValue)
   iColMax = min(iNY, iTargetCol + iIncValue)
 
-  if( (iRowMax - iRowMin + 1)  /= iKernelsize &
-    .or. (iColMax - iColMin + 1)  /= iKernelsize ) then
+  ! now scan over the kernel area within the "native" grid
+  do iCol=0,iKernelSize-1
+    do iRow=0,iKernelSize-1
 
-    ! This is a simple, but less than desirable way to treat cells that
-    ! fall near the edge of the source grid. Ideally, the source grid will
-    ! be greater than the target grid by a wide enough margin that this
-    ! code will rarely be used.
-    rRetVal = rValues(iTargetCol, iTargetRow)
+      iRownum = iRow + iRowMin
+      iColnum = iCol + iColmin
 
-  else
+      if (iRownum > iNY .or. iColnum > iNX) then
+        
+        cycle   
 
-!    rRetVal = sum(rValues(iColMin:iColMax, iRowMin:iRowMax) * rKernel ) / sum( rKernel )
+      elseif ( .not. pGrd%lMask( iCol, iRow ) ) then
+        
+        cycle
 
-    do iCol=0,iKernelSize-1
-      do iRow=0,iKernelSize-1
-
-        iRownum = iRow + iRowMin
-        iColnum = iCol + iColmin
-
-        if (iRownum > iNY .or. iColnum > iNX) then
-          cycle   ! our calculated row or column number is outside of the
-                  ! bounds of the rValues array
-        else
-          rRetVal = rRetVal + rValues(iColnum,iRownum) * rKernel(iCol+1, iRow+1)
-          rKernelSum = rKernelSum + rKernel(iCol+1, iRow+1)
-        endif
-      enddo
+      else
+        rRetVal = rRetVal + pGrd%rData(iColnum,iRownum) * rKernel(iCol+1, iRow+1)
+        rKernelSum = rKernelSum + rKernel(iCol+1, iRow+1)
+      endif
     enddo
+  enddo
 
-    if (rKernelSum > 0.) rRetVal = rRetVal / rKernelSum
-
-  endif
+  if (rKernelSum > 0.) rRetVal = rRetVal / rKernelSum
 
 end function grid_Convolve_sgl
 

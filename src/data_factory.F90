@@ -1459,8 +1459,9 @@ end subroutine set_maximum_allowable_value_real_sub
   ! because PROJ4 works in RADIANS if data are unprojected (i.e. GEOGRAPHIC),
   ! we need to convert back to degrees on the assumption that the coordinates
   ! referenced in the file will also be i degrees
-  if( index(string=trim(this%sSourcePROJ4_string), substring="latlon") > 0 &
-      .or. index(string=trim(this%sSourcePROJ4_string), substring="lonlat") > 0 ) then
+  if(    ( index(string=trim(this%sSourcePROJ4_string), substring="latlon") > 0 )    &
+    .or. ( index(string=trim(this%sSourcePROJ4_string), substring="lonlat") > 0 )    &
+    .or. ( index(string=trim(this%sSourcePROJ4_string), substring="longlat") > 0 ) )    then
 
     rX = rad2deg(rX)
     rY = rad2deg(rY)
@@ -1474,6 +1475,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
 #ifdef DEBUG_PRINT
    print *, " "
+   print *, __FILE__, ": ", __LINE__
    print *, "--  BASE GRID BOUNDS projected to DATA NATIVE COORDS"
    print *, "FROM: ", dquote(pGrdBase%sPROJ4_string)
    print *, "TO:   ", dquote(this%sSourcePROJ4_string)
@@ -1639,10 +1641,12 @@ end subroutine set_maximum_allowable_value_real_sub
   subroutine data_CreateMissingValuesMask_real(this, rValues)
 
     class (T_DATA_GRID)               :: this
-    real (kind=c_float), intent(in)   :: rValues(:,:)
+    real (kind=c_float), intent(inout)   :: rValues(:,:)
 
     ! [ LOCALS ]
     real (kind=c_float)  :: rMissing
+
+    integer :: i, j
 
     rMissing = real(this%rMissingValuesCode, kind=c_float)
 
@@ -1677,9 +1681,9 @@ end subroutine set_maximum_allowable_value_real_sub
 
       end select
 
-      ! scan for NaNs and replace with 0.0
+      ! scan for NaNs
       !> @TODO Replace isnan function with ieee_is_nan once gfortran supports it (gcc 5.1)
-      where ( isnan( values) )  mask = lFALSE
+      where ( isnan( values) )  mask = lFALSE      
 
     end associate
 
