@@ -752,12 +752,12 @@ subroutine control_setModelOptions(sControlFile)
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
         call Assert( iStat == 0, "Cannot read real data value" )
 
-        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
+        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=rValue )
 
       else
 
-        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
+        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
           iDataType=DATATYPE_REAL )
@@ -765,13 +765,43 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
     else if (sItem == "ROUTING_FRACTION_PROJECTION_DEFINITION") then
-      call DAT(ROUTING_FRAC_DATA)%set_PROJ4( trim(sRecord) )
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_PROJ4( trim(sRecord) )
 
     elseif (sItem == "ROUTING_FRACTION_SET_MINIMUM_ALLOWED" ) then
-      call DAT(ROUTING_FRAC_DATA)%set_valid_minimum(asReal(sRecord))
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_minimum(asReal(sRecord))
 
     elseif (sItem == "ROUTING_FRACTION_SET_MAXIMUM_ALLOWED" ) then
-      call DAT(ROUTING_FRAC_DATA)%set_valid_maximum(asReal(sRecord))
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_maximum(asReal(sRecord))
+
+
+   else if ( sItem == "IRRIGATED_LAND_MASK" ) then
+      write(UNIT=LU_LOG,FMT=*) "Populating irrigated land mask grid"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      if ( trim(sOption) == "CONSTANT" ) then
+        read ( unit=sArgument, fmt=*, iostat=iStat ) iValue
+        call Assert( iStat == 0, "Cannot read integer data value" )
+
+        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
+           iConstant=iValue )
+
+      else
+
+        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_INT )
+
+      endif
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_minimum( 0_c_int )
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_maximum( 1_c_int )
+
+
+
+    else if (sItem == "IRRIGATED_LAND_MASK_PROJECTION_DEFINITION") then
+      call DAT(IRRIGATED_LAND_MASK_DATA)%set_PROJ4( trim(sRecord) )
+
 
     else if ( sItem == "INITIAL_FROZEN_GROUND_INDEX" ) then
       write(UNIT=LU_LOG,FMT=*) "Initializing continuous frozen ground index"

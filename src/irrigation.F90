@@ -9,6 +9,7 @@ module irrigation
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
+  use data_factory
 
   implicit none
 
@@ -47,63 +48,74 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
     pGrd%Cells%rIrrigationFromSW = rZERO
     pGrd%Cells%rIrrigationAmount = rZERO
 
-    ! iterate over cells; add water if soil storage zone is below the
-    ! maximum allowable depletion
-    do iRow=1,pGrd%iNY
-      do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
-        cel => pGrd%Cells(iCol,iRow)
+    call DAT( IRRIGATED_LAND_MASK_DATA )%getvalues( pGrdBase=pGrd)
 
-        if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
+    associate ( IRRIGATION_LAND_MASK => pGrd%iData )
 
-        ! now we run the gauntlet of tests to ensure that we really need
-        ! to perform all of the irrigation calculations
+      ! iterate over cells; add water if soil storage zone is below the
+      ! maximum allowable depletion
+      do iRow=1,pGrd%iNY
+        do iCol=1,pGrd%iNX  ! last index in a Fortan array should be the slowest changing
+          cel => pGrd%Cells(iCol,iRow)
 
-        pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
-        if(pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation &
-          .or. pConfig%iDayOfYear > pIRRIGATION%iEndIrrigation ) cycle
+          if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
 
-        if( pIRRIGATION%rMAD > 0.99 .or. cel%rSoilWaterCap < rNEAR_ZERO ) cycle
+          ! now we run the gauntlet of tests to ensure that we really need
+          ! to perform all of the irrigation calculations
 
-        ! cell is active and irrigation enabled and in season
-        rDepletionFraction = min((cel%rSoilWaterCap - cel%rSoilMoisture) &
-                               / cel%rTotalAvailableWater, 1.0)
+          pIRRIGATION => pConfig%IRRIGATION(cel%iLandUseIndex)
 
-        if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
+          if (      pConfig%iDayOfYear < pIRRIGATION%iBeginIrrigation   &
+               .or. pConfig%iDayOfYear > pIRRIGATION%iEndIrrigation )       cycle
 
-          !> NEW as of 4/23/2014: irrigation amount can either be the amount
-          !! of the current soil moisture deficit *or* a specified maximum
-          !! daily amount
-          if (pIRRIGATION%rIrrigationAmount <= rNEAR_ZERO) then
-            rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+          if (      pIRRIGATION%rMAD > 0.99                     &
+               .or. cel%rSoilWaterCap < rNEAR_ZERO              &
+               .or. IRRIGATION_LAND_MASK( iCol, iRow)  /= 1 )               cycle
+
+          ! cell is active and irrigation enabled and in season
+          rDepletionFraction = min((cel%rSoilWaterCap - cel%rSoilMoisture) &
+                                 / cel%rTotalAvailableWater, 1.0)
+
+          if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
+
+            !> NEW as of 4/23/2014: irrigation amount can either be the amount
+            !! of the current soil moisture deficit *or* a specified maximum
+            !! daily amount
+            if (pIRRIGATION%rIrrigationAmount <= rNEAR_ZERO) then
+              rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+            else
+              rIrrigationAmount = pIRRIGATION%rIrrigationAmount
+            endif
+
+            cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
+                                        * rIrrigationAmount, kind=c_double )
+
+            cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
+                                        * rIrrigationAmount, kind=c_double )
+
+            !> @todo Must difinitively figure out what to do with water that
+            !! is calculated to be used as part of the inefficiency in the
+            !! delivery system.
+
+            ! rIrrigationAmount is the value that actually enters the mass balance
+            ! NOTE!! Currently we are assuming that the amounts from GW and SW are the amounts a grower
+            !        would estimate based on pumping rates and times; it is assumed that the inefficiencies
+            !        in delivery result in water that bypasses the root zone.
+            cel%rIrrigationAmount = cel%rIrrigationFromGW * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double ) &
+                                  + cel%rIrrigationFromSW * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
           else
-            rIrrigationAmount = pIRRIGATION%rIrrigationAmount
+
+            cel%rIrrigationAmount = rZERO
+            cel%rIrrigationFromGW = rZERO
+            cel%rIrrigationFromSW = rZERO
+
           endif
 
-          cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
-                                      * rIrrigationAmount, kind=c_double )
+        enddo  ! loop over columns
+      enddo  ! loop over rows
 
-          cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
-                                      * rIrrigationAmount, kind=c_double )
-
-          !> @todo Must difinitively figure out what to do with water that
-          !! is calculated to be used as part of the inefficiency in the
-          !! delivery system.
-
-          ! rIrrigationAmount is the value that actually enters the mass balance
-          ! NOTE!! Currently we are assuming that the amounts from GW and SW are the amounts a grower
-          !        would estimate based on pumping rates and times; it is assumed that the inefficiencies
-          !        in delivery result in water that bypasses the root zone.
-          cel%rIrrigationAmount = cel%rIrrigationFromGW * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double ) &
-                                + cel%rIrrigationFromSW * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
-
-        else
-          cel%rIrrigationAmount = rZERO
-          cel%rIrrigationFromGW = rZERO
-          cel%rIrrigationFromSW = rZERO
-        endif
-
-      enddo  ! loop over columns
-    enddo  ! loop over rows
+    end associate
 
 end subroutine irrigation_UpdateAmounts
 

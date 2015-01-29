@@ -3208,9 +3208,18 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   endif
 
+
+  if (DAT(IRRIGATED_LAND_MASK_DATA)%iSourceDataType /= DATATYPE_NA) then
+
+    call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription="Irrigated land mask data", &
+      iConstant=1_c_int )
+
+  endif
+
+
   if (DAT(MASK_DATA)%iSourceDataType /= DATATYPE_NA) then
 
-    call DAT(MASK_DATA)%getvalues( pGrdBase=pGrd)
+    call DAT(MASK_DATA)%getvalues( pGrdBase=pGrd )
 
     where ( pGrd%iData > 0 )
       pGrd%iMask = iACTIVE_CELL
