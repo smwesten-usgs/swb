@@ -3209,7 +3209,7 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   endif
 
 
-  if (DAT(IRRIGATED_LAND_MASK_DATA)%iSourceDataType /= DATATYPE_NA) then
+  if (DAT(IRRIGATED_LAND_MASK_DATA)%iSourceDataType == DATATYPE_NA) then
 
     call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription="Irrigated land mask data", &
       iConstant=1_c_int )

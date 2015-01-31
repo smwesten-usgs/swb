@@ -752,12 +752,12 @@ subroutine control_setModelOptions(sControlFile)
         read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
         call Assert( iStat == 0, "Cannot read real data value" )
 
-        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
+        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
            rConstant=rValue )
 
       else
 
-        call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription=trim(sItem), &
+        call DAT(ROUTING_FRAC_DATA)%initialize(sDescription=trim(sItem), &
           sFileType=trim(sOption), &
           sFilename=trim(sArgument), &
           iDataType=DATATYPE_REAL )
@@ -765,13 +765,13 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
     else if (sItem == "ROUTING_FRACTION_PROJECTION_DEFINITION") then
-      call DAT(IRRIGATED_LAND_MASK_DATA)%set_PROJ4( trim(sRecord) )
+      call DAT(ROUTING_FRAC_DATA)%set_PROJ4( trim(sRecord) )
 
     elseif (sItem == "ROUTING_FRACTION_SET_MINIMUM_ALLOWED" ) then
-      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_minimum(asReal(sRecord))
+      call DAT(ROUTING_FRAC_DATA)%set_valid_minimum(asReal(sRecord))
 
     elseif (sItem == "ROUTING_FRACTION_SET_MAXIMUM_ALLOWED" ) then
-      call DAT(IRRIGATED_LAND_MASK_DATA)%set_valid_maximum(asReal(sRecord))
+      call DAT(ROUTING_FRAC_DATA)%set_valid_maximum(asReal(sRecord))
 
 
    else if ( sItem == "IRRIGATED_LAND_MASK" ) then
