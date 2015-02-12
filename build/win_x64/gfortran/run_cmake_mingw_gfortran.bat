@@ -7,16 +7,16 @@ rmdir /S /Q tests
 del /S /Q *.txt
 
 :: set CMAKE-related and build-related variables
-set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
+set CMAKEROOT=C:\Program Files (x86)\CMake
 set COMPILER_DIR=C:\MinGW64
-set COMPILER_VERSION=4.9.0
+set COMPILER_VERSION=4.9.2
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 set LIB_PATH1=%COMPILER_DIR%/%COMPILER_TRIPLET%/lib
 set LIB_PATH2=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION%
 
 set MAKE_EXECUTABLE_NAME=mingw32-make.exe
 set Fortran_COMPILER_NAME=gfortran
-set R_HOME=C:\Program Files\R\R-3.0.1\bin
+set R_HOME=C:\Program Files\R\R-3.1.2\bin
 set OMP_NUM_THREADS=8
 
 :: define where 'make copy' will place executables
@@ -32,7 +32,7 @@ set OS="win_x64"
 :: define which portions of swb to build (i.e. swbstats? as library?)
 set TARGET__SWB_EXECUTABLE="TRUE"
 set TARGET__SWB_LIBRARY="FALSE"
-set TARGET__SWBSTATS="TRUE"
+set TARGET__SWBSTATS="FALSE"
 
 :: define which conditional compilation statements to include
 set OPTION__STREAM_INTERACTIONS="FALSE"
@@ -41,7 +41,7 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=core2 -march=core2 -flto -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=core2 -flto -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
@@ -70,8 +70,10 @@ set COMPILER_LIB_PATH3=%COMPILER_DIR%/lib
 
 set CTEST_OUTPUT_ON_FAILURE=1
 
+
 :: invoke CMake; add --trace to see copious details re: CMAKE
-cmake ..\..\.. -G "MinGW Makefiles" ^
+for %%f in ( "CodeBlocks - MinGW Makefiles" "MinGW Makefiles" ) do ^
+cmake ..\..\.. -G %%f ^
 -DCOMPILER_VERSION=%COMPILER_VERSION% ^
 -DLIB_PATH1=%COMPILER_LIB_PATH1% ^
 -DLIB_PATH2=%COMPILER_LIB_PATH2% ^

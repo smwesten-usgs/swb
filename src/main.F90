@@ -90,6 +90,7 @@ program main
   integer (kind=c_int) :: iNumArgs
   character (len=1024) :: sCompilerFlags
   character (len=256) :: sCompilerVersion
+  logical             :: lExists
 
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
@@ -139,7 +140,7 @@ program main
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"
 
-  else 
+  else
 
     call GET_COMMAND_ARGUMENT(1,sControlFile)
 

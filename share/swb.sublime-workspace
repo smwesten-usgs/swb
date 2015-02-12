@@ -4,8 +4,76 @@
 		"selected_items":
 		[
 			[
-				"iR",
-				"iRLE_MULT"
+				"rMin",
+				"rMinValidPrecip"
+			],
+			[
+				"string",
+				"string_to_character_fn"
+			],
+			[
+				"st",
+				"string_to_character_fn"
+			],
+			[
+				"is_string",
+				"is_string_an_integer_fn"
+			],
+			[
+				"T_STRI",
+				"T_STRING"
+			],
+			[
+				"is_",
+				"is_string_an_integer_fn"
+			],
+			[
+				"T",
+				"T_STRING"
+			],
+			[
+				"T_STRING",
+				"T_STRING_LIST"
+			],
+			[
+				"string_to_character",
+				"string_to_character_sub"
+			],
+			[
+				"res",
+				"result"
+			],
+			[
+				"new_",
+				"new_character_from_string_fn"
+			],
+			[
+				"newstr",
+				"newstr"
+			],
+			[
+				"iData",
+				"iDataType"
+			],
+			[
+				"T_",
+				"T_DATA_COLUMN"
+			],
+			[
+				"iD",
+				"iDataType"
+			],
+			[
+				"open",
+				"open_file_sub"
+			],
+			[
+				"COMPILER",
+				"COMPILER_LIB_PATH1"
+			],
+			[
+				"COMPIL",
+				"COMPILER_TRIPLET"
 			],
 			[
 				"fun",
@@ -16,26 +84,18 @@
 	"buffers":
 	[
 		{
-			"file": "/D/SMWData/Source_Code/swb/src/swbstats.F90",
+			"file": "/D/SMWData/Source_Code/swb/src/et_turc.F90",
 			"settings":
 			{
-				"buffer_size": 51884,
+				"buffer_size": 4334,
 				"line_ending": "Windows"
 			}
 		},
 		{
-			"file": "/D/SMWData/Source_Code/swb/src/model.F90",
+			"file": "/D/SMWData/Source_Code/swb/src/control.F90",
 			"settings":
 			{
-				"buffer_size": 142149,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/et_thornthwaite_mather.F90",
-			"settings":
-			{
-				"buffer_size": 9053,
+				"buffer_size": 85627,
 				"line_ending": "Windows"
 			}
 		},
@@ -43,7 +103,23 @@
 			"file": "/D/SMWData/Source_Code/swb/src/types.F90",
 			"settings":
 			{
-				"buffer_size": 101663,
+				"buffer_size": 102446,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/D/SMWData/Source_Code/swb/src/model.F90",
+			"settings":
+			{
+				"buffer_size": 142658,
+				"line_ending": "Windows"
+			}
+		},
+		{
+			"file": "/D/SMWData/Source_Code/swb/src/main.F90",
+			"settings":
+			{
+				"buffer_size": 5464,
 				"line_ending": "Windows"
 			}
 		}
@@ -51,19 +127,11 @@
 	"build_system": "",
 	"command_palette":
 	{
-		"height": 311.0,
+		"height": 392.0,
 		"selected_items":
 		[
-			[
-				"Package Control: ",
-				"Package Control: List Packages"
-			],
-			[
-				"",
-				"Snippet: Matrix Multiplication"
-			]
 		],
-		"width": 400.0
+		"width": 392.0
 	},
 	"console":
 	{
@@ -82,37 +150,41 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+		"/D/SMWData/Source_Code/swb/src"
+	],
 	"file_history":
 	[
-		"/C/Users/smwesten/AppData/Local/Temp/dtemp-860fba07650928-20.dop/Read_Me.txt",
-		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_142409.txt",
-		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_135221.txt",
-		"/D/SMWData/Source_Code/swb/build/win_x64/gfortran/tests/irrigation/SWB_LOGFILE_20140624_141819.txt",
-		"/D/SMWData/Source_Code/swb/tests/irrigation/CMakeLists.txt",
-		"/c/users/smwesten/appdata/local/temp/2/tmpi2vkl2.gif",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k/SWB_AVG_TEMP_06-01_to_08-31_for_years_1990-2008.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWB_AVG_TEMP_06-01_to_08-31_for_years_1990-2008.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWB_RECHARGE_06-01_to_08-31_for_years_1990-2008_CUMULATIVE.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140623_143024.txt",
-		"/D/SMWData/Source_Code/swb/CMakeLists.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140623_142333.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140623_141903.txt",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140623_140944.txt",
-		"/D/SMWData/Source_Code/swb/src/swbstats.F90",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140623_140854.txt",
-		"/D/SMWData/Source_Code/swb/src/data_factory.F90",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k/SWBSTATS_LOGFILE_20140619_162932.txt",
-		"/D/SMWData/Source_Code/swb/src/control.F90",
-		"/F/SMWData2/SWB_RUNS/Diebel__presettlement_24k_altered_clim/SWBSTATS_LOGFILE_20140619_172735.txt",
-		"/D/SMWData/Source_Code/swb/share/swb.sublime-project",
-		"/Users/smwesten/SMWData/Source_Code/swb/src/stats.F90",
-		"/Users/smwesten/SMWData/Source_Code/swb/src/et_blaney_criddle.F90",
-		"/Users/smwesten/SMWData/Source_Code/swb/src/datetime.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/et_hargreaves.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/irrigation.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/datetime.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/meteorological_functions.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/data_factory.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/netcdf4_support.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/model.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/types.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb_fork/src/et_FAO56_crop_coefficients.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/data_factory.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/test2.f90",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/string2.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/build/mac_osx/gfortran/run_cmake_gfortran.sh",
+		"/Users/smwesten/SMWData/Source_Code/swb/cmake/find_programs_and_libraries.cmake",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/data_frame.F90",
 		"/Users/smwesten/SMWData/Source_Code/swb/src/types.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/tests/general/CMakeLists.txt",
+		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists.txt",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/strings.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/test.F90",
+		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
 		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/Default/Preferences.sublime-settings",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/model.F90",
+		"/Users/smwesten/SMWData/Source_Code/swb/cmake/print_summary.cmake",
+		"/Users/smwesten/SMWData/Source_Code/swb/eclipse_projects/swb/src/graph.F90",
+		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/control.F90",
 		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_orig.txt",
 		"/Users/smwesten/SMWData/Source_Code/swb/build/osx/gfortran/run_cmake_gfortran.sh",
-		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists.txt",
 		"/Users/smwesten/SMWData/Source_Code/swb/CMakeLists_new.txt",
 		"/Users/smwesten/SMWData/Source_Code/swb/build/win_x64/gfortran/run_cmake_mingw_gfortran.bat",
 		"/Users/smwesten/SMWData/Source_Code/swb/src/netcdf_support.F90",
@@ -124,18 +196,21 @@
 		"/Users/smwesten/SMWData/Documents/LaTeX/SWB_Documentation_TM6-A31/tables/LU_LOOKUP_NLCD.txt",
 		"/Users/smwesten/SMWData/Visual_Identity/univers_fontinst/build-funivers-script.perl",
 		"/Users/smwesten/DefaultKeyBinding.dict",
+		"/Users/smwesten/SMWData/Source_Code/swb/src/et_blaney_criddle.F90",
 		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/User/Perl.sublime-settings",
 		"/Users/smwesten/Library/Application Support/Sublime Text 3/Packages/User/fortran.tmbundle-master/Syntaxes/Fortran - Modern.tmLanguage"
 	],
 	"find":
 	{
-		"height": 36.0
+		"height": 34.0
 	},
 	"find_in_files":
 	{
-		"height": 0.0,
+		"height": 93.0,
 		"where_history":
 		[
+			"/Users/smwesten/SMWData/Source_Code/swb/src",
+			""
 		]
 	},
 	"find_state":
@@ -143,12 +218,31 @@
 		"case_sensitive": false,
 		"find_history":
 		[
-			"assert",
-			"print *",
-			"lRESET",
-			"CalcMaskStats",
-			"lMASKSTATS",
-			"lUserSuppliedScaleAndOffset",
+			"lGrowingSeason",
+			"approx",
+			"Active",
+			"lIsActive",
+			"chomp",
+			"%sString",
+			"op_assign_CH_VS",
+			"char_auto",
+			"char_",
+			"op_assign_CH_VS",
+			"op_eq_VS_VS",
+			"var_str_",
+			"var_str",
+			"op_concat_CH_VS",
+			"len_",
+			"let_",
+			"char",
+			"var_str",
+			"op_assign_VS_CH",
+			"char",
+			"op_assign_CH_VS",
+			"2char",
+			"asCharacter",
+			"trim(asCharacter",
+			"LIB_PATH",
 			"/gfortran/",
 			"MINGW_VERSION",
 			"MINGWBASE",
@@ -164,6 +258,7 @@
 		"regex": true,
 		"replace_history":
 		[
+			"%sChars",
 			"/${Fortran_COMPILER_NAME}/",
 			"COMPILER_VERSION",
 			"COMPILER_DIR",
@@ -176,7 +271,7 @@
 		"reverse": false,
 		"show_context": true,
 		"use_buffer2": true,
-		"whole_word": false,
+		"whole_word": true,
 		"wrap": true
 	},
 	"groups":
@@ -187,61 +282,59 @@
 			[
 				{
 					"buffer": 0,
-					"file": "/D/SMWData/Source_Code/swb/src/swbstats.F90",
+					"file": "/D/SMWData/Source_Code/swb/src/et_turc.F90",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 51884,
+						"buffer_size": 4334,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								7239,
-								7239
+								779,
+								779
 							]
 						],
 						"settings":
 						{
-							"function_name_status_row": 175,
-							"syntax": "Packages/Fortran/Syntaxes/Fortran - Modern.tmLanguage",
+							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
 							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3339.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 2,
+					"stack_index": 4,
 					"type": "text"
 				},
 				{
 					"buffer": 1,
-					"file": "/D/SMWData/Source_Code/swb/src/model.F90",
+					"file": "/D/SMWData/Source_Code/swb/src/control.F90",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 142149,
+						"buffer_size": 85627,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								5846,
-								5846
+								12031,
+								12031
 							]
 						],
 						"settings":
 						{
-							"function_name_status_row": 186,
-							"syntax": "Packages/Fortran/Syntaxes/Fortran - Modern.tmLanguage",
+							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
 							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 3500.0,
+						"translation.y": 4680.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 1,
@@ -249,30 +342,29 @@
 				},
 				{
 					"buffer": 2,
-					"file": "/D/SMWData/Source_Code/swb/src/et_thornthwaite_mather.F90",
+					"file": "/D/SMWData/Source_Code/swb/src/types.F90",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 9053,
+						"buffer_size": 102446,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								4259,
-								4259
+								81924,
+								81924
 							]
 						],
 						"settings":
 						{
-							"function_name_status_row": -1,
-							"syntax": "Packages/Fortran/Syntaxes/Fortran - Modern.tmLanguage",
+							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
 							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 1920.0,
+						"translation.y": 40397.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
@@ -280,30 +372,59 @@
 				},
 				{
 					"buffer": 3,
-					"file": "/D/SMWData/Source_Code/swb/src/types.F90",
+					"file": "/D/SMWData/Source_Code/swb/src/model.F90",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 101663,
+						"buffer_size": 142658,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								57265,
-								57265
+								34000,
+								34000
 							]
 						],
 						"settings":
 						{
-							"function_name_status_row": 1333,
-							"syntax": "Packages/Fortran/Syntaxes/Fortran - Modern.tmLanguage",
+							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
 							"tab_size": 2,
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 26279.0,
+						"translation.y": 16655.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "/D/SMWData/Source_Code/swb/src/main.F90",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 5464,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								5280,
+								5280
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 1918.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 3,
@@ -314,11 +435,11 @@
 	],
 	"incremental_find":
 	{
-		"height": 23.0
+		"height": 26.0
 	},
 	"input":
 	{
-		"height": 36.0
+		"height": 0.0
 	},
 	"layout":
 	{
@@ -350,7 +471,7 @@
 	"project": "swb.sublime-project",
 	"replace":
 	{
-		"height": 64.0
+		"height": 48.0
 	},
 	"save_all_on_build": true,
 	"select_file":
@@ -379,20 +500,21 @@
 	},
 	"select_symbol":
 	{
-		"height": 0.0,
+		"height": 392.0,
 		"selected_items":
 		[
 		],
-		"width": 0.0
+		"width": 674.0
 	},
+	"selected_group": 0,
 	"settings":
 	{
 	},
 	"show_minimap": true,
 	"show_open_files": true,
-	"show_tabs": false,
+	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 244.0,
+	"side_bar_width": 203.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

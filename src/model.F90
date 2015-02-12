@@ -957,30 +957,39 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
   implicit none
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
+  type ( T_GENERAL_GRID ),pointer        :: pGrd    
+  type (T_MODEL_CONFIGURATION), pointer  :: pConfig 
 
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel              ! pointer to a particular cell
   integer (kind=c_int) :: iCol, iRow
 
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX
-      cel => pGrd%Cells(iCol, iRow)
 
-      if ( cel%lGrowingSeason ) then   ! check for killing frost
 
-        if ( cel%rTMin <= 28. ) cel%lGrowingSeason = lFALSE
+  if (pConfig%iConfigureGrowingSeason == CONFIG_GROWING_SEASON_CONTROL_FILE ) then
 
-      else  ! it is NOT currently growing season; should it be?
+    pGrd%Cells%lGrowingSeason = lf_model_GrowingSeason( pConfig, pConfig%iDayOfYear )
 
-        if ( cel%rGDD_28F > 90. ) cel%lGrowingSeason = lTRUE
+  else
 
-      endif
+    do iRow=1,pGrd%iNY
+      do iCol=1,pGrd%iNX
+        cel => pGrd%Cells(iCol, iRow)
 
+        if ( cel%lGrowingSeason ) then   ! check for killing frost
+
+          if ( cel%rTMin <= 28. ) cel%lGrowingSeason = lFALSE
+
+        else  ! it is NOT currently growing season; should it be?
+
+          if ( cel%rGDD_28F > 90. ) cel%lGrowingSeason = lTRUE
+
+        endif
+
+      enddo
     enddo
-  enddo
+
+  endif
 
 end subroutine model_UpdateGrowingSeason
 

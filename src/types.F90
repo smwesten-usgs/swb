@@ -816,6 +816,13 @@ module types
   integer (kind=c_int),parameter :: CONFIG_SM_TM_EQUATIONS = 2
   !> @}
 
+  !> @name Constants: Growing season implementation method
+  !> Configuration information for determining if growing season active
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_GROWING_SEASON_CONTROL_FILE = 1
+  integer (kind=c_int),parameter :: CONFIG_GROWING_SEASON_GDD = 2
+  !> @}
+
   !> @name Constants: FAO56 module
   !> Configuration information for FAO56 calculations
   !> @{
@@ -884,6 +891,9 @@ module types
 
       !> Soil moisture calculation option
       integer (kind=c_int) :: iConfigureSM = CONFIG_SM_NONE
+
+      !> Growing season detemination method
+      integer (kind=c_int) :: iConfigureGrowingSeason = CONFIG_GROWING_SEASON_CONTROL_FILE
 
       !> Maximum soil water capacity option
       integer (kind=c_int) :: iConfigureSMCapacity = CONFIG_NONE
@@ -2171,9 +2181,9 @@ end subroutine LookupMonth
 
 function approx_equal_dbl(rA, rB, rTol)  result(lTest)
 
-   real(kind=c_double) :: rA
-   real(kind=c_double) :: rB
-   real(kind=c_double), optional :: rTol
+   real(kind=c_double), intent(in)           :: rA
+   real(kind=c_double), intent(in)           :: rB
+   real(kind=c_double), intent(in), optional :: rTol
    logical(kind=c_bool) :: lTest
 
    ! [ LOCALS ]
@@ -2184,7 +2194,7 @@ function approx_equal_dbl(rA, rB, rTol)  result(lTest)
    if(present(rTol) ) then
      rMultiplier = rTol
    else
-     rTol = 10000.
+     rMultiplier = 10000.
    endif
 
    rDiff = ABS(rA - rB)
@@ -2195,17 +2205,15 @@ function approx_equal_dbl(rA, rB, rTol)  result(lTest)
    else
      lTest = lFALSE
    endif
-
-   return
-
+ 
 end function approx_equal_dbl
 
 
 function approx_equal_sgl(rA, rB, rTol)  result(lTest)
 
-   real(kind=c_float) :: rA
-   real(kind=c_float) :: rB
-   real(kind=c_float), optional :: rTol
+   real(kind=c_float), intent(in)           :: rA
+   real(kind=c_float), intent(in)           :: rB
+   real(kind=c_float), intent(in), optional :: rTol
    logical(kind=c_bool) :: lTest
 
    ! [ LOCALS ]
@@ -2216,7 +2224,7 @@ function approx_equal_sgl(rA, rB, rTol)  result(lTest)
    if(present(rTol) ) then
      rMultiplier = rTol
    else
-     rTol = 10000.
+     rMultiplier = 10000.
    endif
 
    rDiff = ABS(rA - rB)

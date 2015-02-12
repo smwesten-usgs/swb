@@ -228,15 +228,14 @@ subroutine control_setModelOptions(sControlFile)
         ! Now, build the grid
 
         pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, GRID_DATATYPE_ALL)
-        call assert(pGrd%rGridCellSize == rGridCellSize, "Grid cell size entered in the " &
+
+        call assert( approx_equal( pGrd%rGridCellSize, rGridCellSize), "Grid cell size entered in the " &
           //"control file ("//trim(asCharacter(rGridCellSize))//")~does not" &
           //" match calculated grid cell size ("//trim(asCharacter(pGrd%rGridCellSize)) &
           //"). ~Check the control file.", &
           trim(__FILE__), __LINE__)
-
         write(UNIT=LU_LOG,FMT="('    X1: ',f14.4)") rX1
         write(UNIT=LU_LOG,FMT="('    Y1: ',f14.4)") rY1
-
       endif
 
       write(UNIT=LU_LOG,FMT="('    grid cell size: ',f8.1)") rGridCellSize

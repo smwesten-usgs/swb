@@ -6,6 +6,19 @@ if( !require(chron) ) {
 
 source("Thornthwaite_Mather_cell_class.R")
 
+rpd <- function( val1, val2 ) {
+  meanval <- mean(val1, val2)
+  if ( is.na( meanval ) ) {
+    
+    retval <- 0.0
+    
+  } else {
+    
+    retval <- ( abs(val1) - abs(val2) ) / meanval * 100.
+    
+  }
+}
+
 TOLERANCE <- 0.01
 
 swb_exe <- myargs[1]
@@ -141,7 +154,7 @@ for (i in sort(unique(v_in$Year))) {
         indices <- which(diffvals > TOLERANCE)
         for (index in indices) {
           cat(colnames(vb)[j],":", format(vb[index,"Date"], "%m-%d-%Y"),
-              y[index], x[index],"  rpd: ",rpd(y[index],x[index]),"\n")
+             " swb: ",y[index], " R calc: ",x[index],"  rpd: ",rpd(y[index],x[index]),"\n")
         }
         
         lTEST <- FALSE
