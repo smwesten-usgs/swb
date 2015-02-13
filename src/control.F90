@@ -290,24 +290,30 @@ subroutine control_setModelOptions(sControlFile)
 #endif
 
     elseif ( str_compare(sItem,"GROWING_SEASON") ) then
-      write(UNIT=LU_LOG,FMT=*) "Reading growing season"
       call Chomp ( sRecord, sArgument )
-      read ( sArgument, fmt=*, iostat=iStat ) rValue
-      pConfig%iDayOfFirstFrost = INT(rValue,kind=c_int)
-      call Assert ( iStat == 0, "Could not read start of growing season" )
-      call Chomp ( sRecord, sArgument )
-      read ( sArgument, fmt=*, iostat=iStat ) rValue
-      pConfig%iDayOfLastFrost = INT(rValue,kind=c_int)
-      call Assert ( iStat == 0, "Could not read end of growing season" )
-      call Chomp ( sRecord, sOption )
-      call Uppercase ( sOption )
-      if (trim(sOption) == "TRUE" .or. trim(sOption) == "T") then
-        pConfig%lNorthernHemisphere = lTRUE
+      if (str_compare( sArgument, "GDD") .or. str_compare( sArgument, "BASE_ON_GDD") ) then
+        pConfig%iConfigureGrowingSeason = CONFIG_GROWING_SEASON_GDD
+        write(UNIT=LU_LOG,FMT=*) "Growing season will be based on the growing degree day tabulated for each cell"
       else
-        pConfig%lNorthernHemisphere = lFALSE
-      end if
-      write(UNIT=LU_LOG,FMT=*) "Northern Hemisphere = ",pConfig%lNorthernHemisphere
-      flush(UNIT=LU_LOG)
+        write(UNIT=LU_LOG,FMT=*) "Reading growing season"
+        pConfig%iConfigureGrowingSeason = CONFIG_GROWING_SEASON_CONTROL_FILE
+        read ( sArgument, fmt=*, iostat=iStat ) rValue
+        pConfig%iDayOfFirstFrost = INT(rValue,kind=c_int)
+        call Assert ( iStat == 0, "Could not read start of growing season" )
+        call Chomp ( sRecord, sArgument )
+        read ( sArgument, fmt=*, iostat=iStat ) rValue
+        pConfig%iDayOfLastFrost = INT(rValue,kind=c_int)
+        call Assert ( iStat == 0, "Could not read end of growing season" )
+        call Chomp ( sRecord, sOption )
+        call Uppercase ( sOption )
+        if (trim(sOption) == "TRUE" .or. trim(sOption) == "T") then
+          pConfig%lNorthernHemisphere = lTRUE
+        else
+          pConfig%lNorthernHemisphere = lFALSE
+        end if
+        write(UNIT=LU_LOG,FMT=*) "Northern Hemisphere = ",pConfig%lNorthernHemisphere
+        flush(UNIT=LU_LOG)
+      endif
 
     else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"
