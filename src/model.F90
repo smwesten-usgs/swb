@@ -3573,6 +3573,8 @@ subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
 
       cel => pGrd%Cells(iCol,iRow)
 
+      if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
+
       lMatch = lFALSE
       do j=1,size(pConfig%IRRIGATION,1)
         if(cel%iLanduse == pConfig%IRRIGATION(j)%iLandUseType) then
