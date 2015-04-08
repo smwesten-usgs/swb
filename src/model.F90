@@ -209,16 +209,15 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     call model_setInactiveCells( pGrd, pConfig )
 
     ! (Re)-initialize the model
+    ! calls the following:
+    ! 1) create landuse index values
+    ! 2) calculate soil moisture
+    ! 3) calculate runoff curve numbers
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-    !> @todo Check the logic here. It would seem that a new irrigation table
-    !! index *should* be created if we have dynamic data rather than static data
-    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE .and. &
-      ( pConfig%iConfigureLanduse /= CONFIG_LANDUSE_STATIC_GRID &
-        .and. pConfig%iConfigureLanduse /= CONFIG_LANDUSE_CONSTANT) ) then
+    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE )         &
       call model_CreateIrrigationTableIndex(pGrd, pConfig )
-    endif
 
     write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
     flush(unit=LU_LOG)
@@ -228,11 +227,15 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 
   FIRST_YEAR_pt_2: if(pConfig%lFirstYearOfSimulation) then
 
-    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE .and. &
-       ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
-        .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
-      call model_CreateIrrigationTableIndex(pGrd, pConfig )
-    endif
+!
+!    %% This block should be superfluous, as CreateIrrigationTableIndex should be called
+!       above after a new landuse grid is read in
+!
+!     if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE .and. &
+!        ( pConfig%iConfigureLanduse == CONFIG_LANDUSE_STATIC_GRID &
+!         .or. pConfig%iConfigureLanduse == CONFIG_LANDUSE_CONSTANT) ) then
+!       call model_CreateIrrigationTableIndex(pGrd, pConfig )
+!     endif
 
     ! initialize binary and stats output files
     call model_InitializeInputAndOutput( pGrd, pConfig )
@@ -3572,6 +3575,8 @@ subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
     do iCol=1,pGrd%iNX
 
       cel => pGrd%Cells(iCol,iRow)
+
+      if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
 
       lMatch = lFALSE
       do j=1,size(pConfig%IRRIGATION,1)

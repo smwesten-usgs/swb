@@ -257,6 +257,12 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
   real (kind=c_float) :: rKs       ! Water stress coefficient
 	real (kind=c_float) :: rZr_max   ! Maximum rooting depth
 
+  integer (kind=c_int) :: iLBound
+  integer (kind=c_int) :: iUBound
+
+  iLBound = lbound( pConfig%IRRIGATION, 1 )
+  iUBound = ubound( pConfig%IRRIGATION, 1 )
+
    ! iterate over cells; update evaporation coefficients,
    ! calculate Kc, and apply to ET0
    do iRow=1,pGrd%iNY
@@ -268,6 +274,13 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 !       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
        if(cel%rSoilWaterCap <= rNear_ZERO &
             .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
+
+       
+       if ( cel%iIrrigationTableIndex < iLBound                        &
+              .or. cel%iIrrigationTableIndex > iUBound )               &
+         call assert( lFALSE, "Index out of bounds. Index value: "//   &
+           asCharacter(cel%iIrrigationTableIndex),                     &
+           __FILE__, __LINE__ )
 
        pIRRIGATION => pConfig%IRRIGATION(cel%iIrrigationTableIndex)
 

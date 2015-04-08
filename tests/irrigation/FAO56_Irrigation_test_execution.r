@@ -24,16 +24,38 @@ rpd <- function(arg1, arg2) {
 
 swb_ctl <- "recharge_single_factor_nonstandard.ctl"
 
-# first run SWB
-retval <- shell(cmd="cleanup.bat", intern=TRUE, ignore.stdout=FALSE)
+version <- R.version
 
-retval <- shell(cmd=paste(swb_exe,swb_ctl, " > swb_command_line_echo.txt", sep=" "),
-                intern=TRUE,
-                ignore.stdout=FALSE)
+windows_sys <- length( grep( "mingw", version$os) ) > 0
+
+if ( windows_sys ) {
+# cleanup
+retval <- system2(command="cleanup.bat", 
+                  stderr="stderr.txt",
+                  stdout="stdout.txt",
+                  wait=FALSE)
+
+} else {
+
+  retval <- system2(command="./cleanup.sh", 
+                    stderr="stderr.txt",
+                    stdout="stdout.txt",
+                    wait=FALSE)  
+}
+
+retval <- system2(command=swb_exe,
+                  args=swb_ctl,
+                  stderr="SWB_stderr.txt",
+                  stdout="SWB_stdout.txt",
+                  wait=FALSE)
+
+Sys.sleep(2)
 
 pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 
-sm <- read.table("SOIL_MOISTURE_2_2.ssf", colClasses=c("character","character","character","numeric"))
+sm <- read.table("SOIL_MOISTURE_2_2.ssf", 
+                 colClasses=c("character","character","character","numeric"))
+
 colnames(sm) <- c("row_col", "date", "time", "value")
 sm$date <- as.Date(sm$date, format="%m/%d/%Y")
 

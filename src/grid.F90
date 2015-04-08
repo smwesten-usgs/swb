@@ -688,6 +688,14 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
           ! ... and read the data.
           select case ( pGrd%iDataType )
               case ( DATATYPE_INT )
+
+                if(len_trim(sNoDataValue) > 0) then
+                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%iNoDataValue
+                  call Assert ( iStat == 0, &
+                    "Failed to read NODATA value in grid data - file: " &
+                    //trim(sFileName), TRIM(__FILE__),__LINE__ )
+                endif
+
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%iData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -695,13 +703,16 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
                     //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
+
+              case ( DATATYPE_REAL )
+
                 if(len_trim(sNoDataValue) > 0) then
-                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%iNoDataValue
+                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%rNoDataValue
                   call Assert ( iStat == 0, &
                     "Failed to read NODATA value in grid data - file: " &
                     //trim(sFileName), TRIM(__FILE__),__LINE__ )
                 endif
-              case ( DATATYPE_REAL )
+
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
                   call Assert ( iStat == 0, &
@@ -709,17 +720,11 @@ subroutine grid_ReadArcGrid_sub ( sFileName, pGrd )
                     //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
-                if(len_trim(sNoDataValue) > 0) then
-                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%rNoDataValue
-                  call Assert ( iStat == 0, &
-                    "Failed to read NODATA value in grid data - file: " &
-                    //trim(sFileName), TRIM(__FILE__),__LINE__ )
-                endif
               case default
                   call Assert ( lFALSE, &
                     "Internal error -- illegal ARC GRID data type", &
                     TRIM(__FILE__),__LINE__)
-          end select
+            end select
           exit
       end if
   end do
