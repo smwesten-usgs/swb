@@ -24,9 +24,6 @@ module stats
   implicit none
   save
 
-  !> @defgroup stats stats
-  !> @{
-
   ! dpVolConvert combines the conversion factor between inches and meters, and
   ! multiplies by the area of a grid cell (assumed to be meters)
   real (kind=c_double), public :: dpVolConvert
@@ -1733,8 +1730,5 @@ subroutine stats_CloseBinaryFiles()
 end subroutine stats_CloseBinaryFiles
 
 !--------------------------------------------------------------------------
-
-
-!> @}
 
 end module stats

@@ -25,6 +25,13 @@ module runoff_curve_number
 
 contains
 
+!> @param[inout] pGrd
+!! @param[in]    pConfig
+!!
+!!
+!! @f[ E = mc^2 @f]
+!!
+
 subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
   !! Looks up the base curve number for each cell and stores it in the grid
   ! [ ARGUMENTS ]

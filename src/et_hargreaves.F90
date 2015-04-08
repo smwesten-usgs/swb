@@ -32,9 +32,6 @@ module et_hargreaves
 
   implicit none
 
-  !> @defgroup evapotranspiration Hargreaves-Samani
-  !> @{
-
 contains
 
 subroutine et_hargreaves_configure( pConfig, sRecord )
@@ -196,7 +193,5 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
 end function ET0_hargreaves
 
 !!***
-
-  !> @}
 
 end module et_hargreaves

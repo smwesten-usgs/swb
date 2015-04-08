@@ -992,7 +992,7 @@ implicit none
     write(sDateTxt,fmt="(i2.2,'/',i2.2,'/',i4.4)") &
       iCurrMM, iCurrDD, iCurrYYYY
 
-    ! this logical allows us to output results for a season or period each year
+    ! this boolean allows us to output results for a season or period each year
     lDATE_RANGE_ACTIVE = (iCurrMM > iSlcStartMM .and. iCurrMM < iSlcEndMM) &
              .or. (iCurrMM == iSlcStartMM .and. iCurrDD >= iSlcStartDD) &
              .or. (iCurrMM == iSlcEndMM .and. iCurrDD <= iSlcEndDD)
@@ -1006,6 +1006,7 @@ implicit none
     call LookupMonth(iCurrMM, iCurrDD, iCurrYYYY,iCurrDOY, &
                    sMonthName, lMonthEnd)
 
+    ! boolean triggering effects on the occasion of the first day of a new month
     lRESET = ( iCurrMM == 1 .and. iCurrDD == 1)
 
     pGrd%rData(:,:)= rZERO
@@ -1021,6 +1022,9 @@ implicit none
         ! skip all of the RLE nonsense if we don't care about the contents
         call assert(iStat == 0, "Problem fast-forwarding binary file", &
           trim(__FILE__), __LINE__)
+        ! EOF is poorly named. This value (EOF) is really just a marker for the end of the current DAY'S gridded data.
+        ! By iterating through this file, we are just discarding all data until one value (iEOF) comes up. 
+        ! At that point, the *next* value to be read in will be the next day's date header.
         if(iTemp == iEOF) then
           exit
         else
@@ -1045,6 +1049,7 @@ implicit none
     call RLE_readByte(LU_SWBSTATS,iRLE_MULT, rRLE_OFFSET, rVal, iNumGridCells,lEOF)
     if(lEOF) exit
 
+    ! if user selected option "F_TO_C", perform a Fahrenheit to Celcius degree conversion
     if(lF_TO_C) then
       rValTmp = 5./9. * (rVal -32.)
       pGrd%rData(:,:)=RESHAPE(rValTmp,(/iNX,iNY/),PAD=rPad)

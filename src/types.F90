@@ -18,9 +18,6 @@ module types
 
   implicit none
 
-  !> @defgroup types types
-  !> @{
-
   character(len=45), public, parameter :: &
       SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
   character (len=15) :: COMPILE_DATE = trim(__DATE__)
@@ -2974,8 +2971,6 @@ subroutine gregorian_date(iJD, iYear, iMonth, iDay, iOrigin)
   iDay = iK
 
 end subroutine gregorian_date
-
-  !> @}
 
 function asCSV(sText)  result(sResult)
 
