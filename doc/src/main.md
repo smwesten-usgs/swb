@@ -6,7 +6,7 @@ soil-water-balance approach, with components of the soil water balance calculate
 calculations are made on a rectangular grid of computational elements that may be easily imported into a regional groundwater-
 flow model. Recharge estimates calculated by the code may be output as daily, monthly, or annual values.
 
-The code is written in Fortran 95/2003, and has been compiled on Windows and Linux systems using the gfortran, g95, and Intel fortran compilers.
+The code is written in modern Fortran (Fortran 95/2003/2008), and has been compiled on Windows, Macintosh, and Linux systems using the gfortran, g95, and Intel fortran compilers.
 
 Optional support is provided for:
  - Reading and writing NetCDF files

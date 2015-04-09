@@ -3,13 +3,23 @@
   <!-- Navigation index tabs for HTML output -->
   <navindex>
     <tab type="mainpage" visible="yes" title="Introduction"/>
-	<tab type="usergroup" title="Documentation">
+
+	<tab type="usergroup" title="Theory">
      <tab type="user" url="@ref scope" title="Scope and Purpose"/>
      <tab type="user" url="@ref model_desc" title="Model Description"/>	 
+	 <tab type="user" url="@ref irrigation_module_docs" title="Irrigation Calculations"/>
     </tab>
+
+	<tab type="usergroup" title="Application">
+     <tab type="user" url="@ref directives" title="Control File Directives"/>
+     <tab type="user" url="@ref geotransformations" title="Coordinate Transformations"/>	 
+	 <tab type="user" url="@ref variable_descriptions" title="Output Variable Descriptions"/>	 
+    </tab>
+
 	<tab type="usergroup" title="Development">
      <tab type="user" url="@ref conventions" title="Coding Conventions"/>
     </tab>	
+	
     <tab type="pages" visible="no" title="" intro=""/>
     <tab type="modules" visible="yes" title="" intro=""/>
     <tab type="namespaces" visible="yes" title="">
