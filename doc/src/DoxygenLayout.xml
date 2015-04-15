@@ -13,11 +13,14 @@
 	<tab type="usergroup" title="Application">
      <tab type="user" url="@ref directives" title="Control File Directives"/>
      <tab type="user" url="@ref geotransformations" title="Coordinate Transformations"/>	 
-	 <tab type="user" url="@ref variable_descriptions" title="Output Variable Descriptions"/>	 
+	 <tab type="user" url="@ref variable_descriptions" title="Output Variable Descriptions"/>
+	 <tab type="user" url="@ref specific_datasets" title="Gridded Climate Datasets"/>
+	 <tab type="user" url="@ref parameterization" title="Suggested Starting Parameter Values"/>	 
     </tab>
 
 	<tab type="usergroup" title="Development">
      <tab type="user" url="@ref conventions" title="Coding Conventions"/>
+	 <tab type="user" url="@ref todo" title="To-Do List"/>
     </tab>	
 	
     <tab type="pages" visible="no" title="" intro=""/>
