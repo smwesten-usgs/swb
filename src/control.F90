@@ -315,6 +315,20 @@ subroutine control_setModelOptions(sControlFile)
         flush(UNIT=LU_LOG)
       endif
 
+    elseif ( str_compare(sItem, "GROWING_SEASON_STARTING_GDD") ) then
+      read ( sArgument, fmt=*, iostat=iStat) pConfig%iGrowingSeasonStart_Minimum_GDD
+      call Assert ( iStat == 0, "Could not read growing degree day (GDD) associated with " &
+        //"the start of the growing season" )
+      write(UNIT=LU_LOG,FMT=*) "GDD associated with the start of the growing season set to: ", &
+        pConfig%iGrowingSeasonStart_Minimum_GDD
+
+    elseif ( str_compare(sItem, "GROWING_SEASON_KILLING_FROST") ) then
+      read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonEnd_KillingFrostTemp
+      call Assert ( iStat == 0, "Could not read killing frost temperature associated with " &
+        //"the end of the growing season" )
+      write(UNIT=LU_LOG,FMT=*) "Killing frost temperature associated with the end of the " &
+        //" growing season set to: ", pConfig%fGrowingSeasonEnd_KillingFrostTemp
+
     else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"
       call Chomp ( sRecord, sOption )

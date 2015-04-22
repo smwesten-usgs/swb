@@ -717,12 +717,6 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
 
       end if
 
-      if (cel%rTMin > 28.) then
-        cel%rGDD_28F = cel%rGDD_28F + (cel%rTAvg - 28.)
-      else
-        cel%rGDD_28F = 0.
-      endif
-
     enddo
   enddo
 
@@ -872,9 +866,9 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
       end if
 
       if (cel%rTMin > 28.) then
-        cel%rGDD_28F = cel%rGDD_28F + (cel%rTAvg - 28.)
+        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason + (cel%rTAvg - 28.)
       else
-        cel%rGDD_28F = 0.
+        cel%rGDD_GrowingSeason = 0.
       endif
 
     end do
@@ -981,11 +975,11 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
         if ( cel%lGrowingSeason ) then   ! check for killing frost
 
-          if ( cel%rTMin <= 28. ) cel%lGrowingSeason = lFALSE
+          if ( cel%rTMin <= pConfig%fGrowingSeasonEnd_KillingFrostTemp ) cel%lGrowingSeason = lFALSE
 
         else  ! it is NOT currently growing season; should it be?
 
-          if ( cel%rGDD_28F > 90. ) cel%lGrowingSeason = lTRUE
+          if ( cel%rGDD_GrowingSeason > 90. ) cel%lGrowingSeason = lTRUE
 
         endif
 
@@ -1060,6 +1054,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
 
       rTMax = min(rGDD_MaxTemp, cel%rTMax)
 
+      !> @todo This routine is more complex than it needs to be. Convert to simpler GDD estimation function.
       if(rTMax <= rGDD_BaseTemp) then
 
         rDD = 0.
@@ -1085,6 +1080,13 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
       end if
 
       cel%rGDD = cel%rGDD + rDD
+
+      if (cel%rTMin > pConfig%fGrowingSeasonEnd_KillingFrostTemp ) then
+        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason   &
+            + (cel%rTAvg - pConfig%fGrowingSeasonEnd_KillingFrostTemp )
+      else
+        cel%rGDD_GrowingSeason = 0.
+      endif  
 
     end do
 
