@@ -316,18 +316,31 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
     elseif ( str_compare(sItem, "GROWING_SEASON_STARTING_GDD") ) then
-      read ( sArgument, fmt=*, iostat=iStat) pConfig%iGrowingSeasonStart_Minimum_GDD
+      call Chomp ( sRecord, sArgument )    
+      read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonStart_Minimum_GDD
       call Assert ( iStat == 0, "Could not read growing degree day (GDD) associated with " &
         //"the start of the growing season" )
       write(UNIT=LU_LOG,FMT=*) "GDD associated with the start of the growing season set to: ", &
-        pConfig%iGrowingSeasonStart_Minimum_GDD
+        pConfig%fGrowingSeasonStart_Minimum_GDD
 
     elseif ( str_compare(sItem, "GROWING_SEASON_KILLING_FROST") ) then
+      call Chomp ( sRecord, sArgument )    
       read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonEnd_KillingFrostTemp
       call Assert ( iStat == 0, "Could not read killing frost temperature associated with " &
         //"the end of the growing season" )
       write(UNIT=LU_LOG,FMT=*) "Killing frost temperature associated with the end of the " &
         //" growing season set to: ", pConfig%fGrowingSeasonEnd_KillingFrostTemp
+
+    elseif ( str_compare(sItem, "INTERCEPTION_METHOD") ) then
+      call Chomp ( sRecord, sOption )    
+      if ( str_compare( sOption, "HORTON") ) then
+        pConfig%iConfigureInterception = CONFIG_INTERCEPTION_HORTON
+        write(UNIT=LU_LOG,FMT=*) "Interception method set to HORTON; lookup table must contain columns for " &
+          //"'b' and 'n' coefficients."
+      else
+        call Assert( lFALSE , "Illegal precipitation input format specified" )
+      end if
+      flush(UNIT=LU_LOG)
 
     else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"

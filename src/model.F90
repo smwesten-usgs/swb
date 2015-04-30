@@ -979,7 +979,7 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
         else  ! it is NOT currently growing season; should it be?
 
-          if ( cel%rGDD_GrowingSeason > pConfig%iGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
+          if ( cel%rGDD_GrowingSeason > pConfig%fGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
 
         endif
 
@@ -2642,15 +2642,48 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   end do
 
   call chomp(sRecord, sItem, sTAB)
-  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason_a
   call Assert( iStat == 0, "Error reading interception values in landuse file" )
-  write(UNIT=LU_LOG,FMT=*)  "  Interception value for growing season = ",pConfig%LU(iRecNum)%rIntercept_GrowingSeason
+  write(UNIT=LU_LOG,FMT=*)  "  Interception value ('a' coefficient) for growing season = ",    &
+    pConfig%LU(iRecNum)%rIntercept_GrowingSeason_a
+
+  if ( pConfig%iConfigureInterception == CONFIG_INTERCEPTION_HORTON ) then
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason_b
+    call Assert( iStat == 0, "Error reading interception values in landuse file" )
+    write(UNIT=LU_LOG,FMT=*)  "  Interception value ('b' coefficient) for growing season = ", &
+      pConfig%LU(iRecNum)%rIntercept_GrowingSeason_b
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_GrowingSeason_n
+    call Assert( iStat == 0, "Error reading interception values in landuse file" )
+    write(UNIT=LU_LOG,FMT=*)  "  Interception precipitation exponent ('n' coefficient) for growing season = ", &
+      pConfig%LU(iRecNum)%rIntercept_GrowingSeason_n
+
+  endif      
 
   call chomp(sRecord, sItem, sTAB)
-read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason
+  read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_a
   call Assert( iStat == 0, "Error reading interception values in landuse file" )
-  write(UNIT=LU_LOG,FMT=*)  "  Interception value for non-growing season = ", &
-    pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason
+  write(UNIT=LU_LOG,FMT=*)  "  Interception value ('a' coefficient) for non-growing season = ", &
+    pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_a
+
+  if ( pConfig%iConfigureInterception == CONFIG_INTERCEPTION_HORTON ) then
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_b
+    call Assert( iStat == 0, "Error reading interception values in landuse file" )
+    write(UNIT=LU_LOG,FMT=*)  "  Interception value ('b' coefficient) for non-growing season = ", &
+      pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_b
+
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_n
+    call Assert( iStat == 0, "Error reading interception values in landuse file" )
+    write(UNIT=LU_LOG,FMT=*)  "  Interception precipitation exponent ('n' coefficient) for non-growing season = ", &
+      pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_n
+
+  endif      
 
   ! now read in a rooting depth for each landuse/soil type combination
   do i=1,iNumSoilTypes
@@ -3018,9 +3051,10 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
   real (kind=c_float) :: rIntRate
 
   ! [ LOCALS ]
-  integer ( kind=c_int ) :: i
-  logical ( kind=c_bool ) :: lAssertTest
-  type ( T_LANDUSE_LOOKUP ),pointer :: pLU
+  integer ( kind=c_int )             :: i
+  logical ( kind=c_bool )            :: lAssertTest
+  type ( T_LANDUSE_LOOKUP ),pointer  :: pLU
+  real (kind=c_float)                :: fTempPrecip
 
   lAssertTest = cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses
 
@@ -3031,12 +3065,16 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
 
   pLU => pConfig%LU(cel%iLandUseIndex)
 
+  fTempPrecip = cel%rGrossPrecip
+
   ! Default is zero
   rIntRate = rZERO
   if ( cel%lGrowingSeason ) then
-    rIntRate = pLU%rIntercept_GrowingSeason
+    if ( pLU%rIntercept_GrowingSeason_n < 1.0_c_float )  fTempPrecip = fTempPrecip ** pLU%rIntercept_GrowingSeason_n
+    rIntRate = pLU%rIntercept_GrowingSeason_a + pLU%rIntercept_GrowingSeason_b * fTempPrecip
   else
-    rIntRate = pLU%rIntercept_NonGrowingSeason
+    if ( pLU%rIntercept_NonGrowingSeason_n < 1.0_c_float )  fTempPrecip = fTempPrecip ** pLU%rIntercept_NonGrowingSeason_n
+    rIntRate = pLU%rIntercept_NonGrowingSeason_a + pLU%rIntercept_NonGrowingSeason_b * fTempPrecip
   end if
 
   if (rIntRate < rZero) then

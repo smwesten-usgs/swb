@@ -49,7 +49,7 @@ retval <- system2(command=swb_exe,
                   stdout="SWB_stdout.txt",
                   wait=FALSE)
 
-Sys.sleep(2)
+Sys.sleep(4)
 
 pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 

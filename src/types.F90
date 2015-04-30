@@ -301,19 +301,31 @@ module types
 
     !> Land use type; values are expected to correspond to those provided
     !> by the user in the input landuse grid.
-	integer (kind=c_int) :: iLandUseType
+  	integer (kind=c_int) :: iLandUseType
 
     !> Land use description
     character (len=256) :: sLandUseDescription
 
     !> Assumed percent imperviousness (not used in any calculations)
-	character (len=256) :: sAssumedPercentImperviousness
+  	character (len=256) :: sAssumedPercentImperviousness
 
-    !> Interception value (inches per day) during growing season
-	real (kind=c_float) :: rIntercept_GrowingSeason
+    !> Interception "a" coefficient (inches per day) during growing season
+  	real (kind=c_float) :: rIntercept_GrowingSeason_a
 
-    !> Interception value (inches per day) outside of growing season
-	real (kind=c_float) :: rIntercept_NonGrowingSeason
+    !> Interception "a" coefficient (inches per day) outside of growing season
+  	real (kind=c_float) :: rIntercept_NonGrowingSeason_a
+
+    !> Interception "b" coefficient (inches per day) during growing season
+    real (kind=c_float) :: rIntercept_GrowingSeason_b = 0.0_c_float
+
+    !> Interception "b" coefficient (inches per day) outside of growing season
+    real (kind=c_float) :: rIntercept_NonGrowingSeason_b = 0.0_c_float
+
+    !> Interception "n" precipitation exponent during growing season
+    real (kind=c_float) :: rIntercept_GrowingSeason_n = 0.0_c_float
+
+    !> Interception "n" precipitation exponent outside of growing season
+    real (kind=c_float) :: rIntercept_NonGrowingSeason_n = 0.0_c_float
 
   end type T_LANDUSE_LOOKUP
 
@@ -769,6 +781,13 @@ module types
   integer (kind=c_int),parameter :: CONFIG_ET_HARGREAVES = 5
   !> @}
 
+  !> @name Constants: Interception algorithm
+  !> Options for specifying the choice of interception algorithm
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_BUCKET = 0
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_HORTON = 1
+  !> @}
+
   !> @name Constants: Precipitation data format
   !> Options for specifying the method of input for precipitation data
   !> @{
@@ -876,6 +895,9 @@ module types
 
       !> Reference evapotranspiration calculation method
       integer (kind=c_int) :: iConfigureET = CONFIG_NONE
+
+      !> Interception calculation method
+      integer (kind=c_int) :: iConfigureInterception = CONFIG_INTERCEPTION_BUCKET
 
       !> Precipitation input option
       integer (kind=c_int) :: iConfigurePrecip = CONFIG_NONE
@@ -1081,8 +1103,8 @@ module types
  	    real (kind=c_float) :: rNorthernLatitude = rNO_DATA_NCDC
 
       ! define GDD associated with the start of the growing season
-      integer (kind=c_int) :: iGrowingSeasonStart_Minimum_GDD = 90
-      real (kind=c_float)  :: fGrowingSeasonEnd_KillingFrostTemp = 28.5
+      real (kind=c_float)  :: fGrowingSeasonStart_Minimum_GDD = 90.0_c_float
+      real (kind=c_float)  :: fGrowingSeasonEnd_KillingFrostTemp = 28.5_c_float
 
 #ifdef STREAM_INTERACTIONS
  	    ! Data for the elevation corrections on temperature
