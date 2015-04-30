@@ -979,7 +979,7 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
         else  ! it is NOT currently growing season; should it be?
 
-          if ( cel%rGDD_GrowingSeason > 90. ) cel%lGrowingSeason = lTRUE
+          if ( cel%rGDD_GrowingSeason > pConfig%iGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
 
         endif
 
