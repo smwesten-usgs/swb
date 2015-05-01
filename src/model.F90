@@ -861,7 +861,7 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
         ! swap min and max values to maintain a positive delta T
         rTempVal = cel%rTMax
         cel%rTMax = cel%rTMin
-        cel%rTMin = cel%rTMax
+        cel%rTMin = rTempVal
 
       end if
 
