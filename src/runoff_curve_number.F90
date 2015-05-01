@@ -175,7 +175,7 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
      cel%rAdjCN = cel%rBaseCN * (1-rPf) + &
                   (cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN) * rPf)
 
-  else if ( lf_model_GrowingSeason(pConfig, iJulDay) ) then
+  else if ( if_model_GrowingSeason(pConfig, iJulDay) == iTRUE ) then
 
     if ( rTotalInflow < pConfig%rDRY_GROWING ) then           ! AMC I
 

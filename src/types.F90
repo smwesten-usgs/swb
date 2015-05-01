@@ -21,6 +21,7 @@ module types
   character(len=45), public, parameter :: &
       SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
   character (len=15) :: COMPILE_DATE = trim(__DATE__)
+  character (len=15) :: COMPILE_TIME = trim(__TIME__)
 
   !> @name Variables: Fortran logical unit numbers
   !> Global logical unit numbers for input and output
@@ -88,6 +89,8 @@ module types
   integer (kind=c_int), parameter :: iZERO = 0
   logical (kind=c_bool), parameter :: lTRUE = .true._c_bool
   logical (kind=c_bool), parameter :: lFALSE = .false._c_bool
+  integer (kind=c_int), parameter :: iTRUE = 1_c_int
+  integer (kind=c_int), parameter :: iFALSE = 0_c_int
   character (len=30), parameter :: sPROJ4_LatLon = &
      "+proj=lonlat +ellps=GRS80 +datum=NAD83 +no_defs"
   integer(kind=c_int), parameter :: iEOF = HUGE(iZERO)
@@ -204,7 +207,7 @@ module types
       real (kind=c_float) :: rGDD = rZERO            ! Growing Degree Day
       real (kind=c_float) :: rGDD_GrowingSeason      ! GDD associated with growing season
       integer (kind=c_int) :: iGDD_Reset_DOY = 1       ! Default GDD reset day of year
-      logical (kind=c_bool) :: lGrowingSeason = lFALSE ! boolean true/false indicating growing season
+      integer (kind=c_int) :: iGrowingSeason = iFALSE ! boolean true/false indicating growing season
       real (kind=c_float) :: rIrrigationAmount = rZERO ! total amount of any irrigation
       real (kind=c_float) :: rIrrigationFromGW = rZERO ! term to hold irrigation term, if any
       real (kind=c_float) :: rIrrigationFromSW = rZERO ! term to hold irrigation term, if any
@@ -522,7 +525,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=c_int), parameter :: iNUM_MONTHS = 12
-  integer(kind=c_int), parameter :: iNUM_VARIABLES = 36
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 37
 
   ! constants defining T_STATS output types
   integer(kind=c_int), parameter :: iNONE = 0
@@ -685,7 +688,12 @@ module types
 
     T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, lTRUE, &
       'inches','amount of water required from surface water for irrigation', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('GROWING_SEASON',0,2,0,lFALSE,lFALSE, lTRUE, &
+      'on/off','binary file: 1=growing season; 0=non-growing season', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) &
+
     ]
 
   !> @anchor const_stat
@@ -746,6 +754,7 @@ module types
   integer (kind=c_int), parameter :: iCROP_COEFFICIENT = 34
   integer (kind=c_int), parameter :: iIRRIGATION_FROM_GW = 35
   integer (kind=c_int), parameter :: iIRRIGATION_FROM_SW = 36
+  integer (kind=c_int), parameter :: iGROWING_SEASON = 37
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
@@ -2290,13 +2299,15 @@ end function approx_equal_sgl
 !
 ! SOURCE
 
-function lf_model_GrowingSeason( pConfig, iDayOfYear ) result ( lGrowing )
+function if_model_GrowingSeason( pConfig, iDayOfYear ) result ( iGrowing )
 
   ! [ ARGUMENTS ]
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   integer (kind=c_int),intent(in) :: iDayOfYear
-  ! [ RETURN VALUE ]
+  integer (kind=c_int) :: iGrowing
+
+  ! [ LOCALS ]
   logical (kind=c_bool) :: lGrowing
 
   lGrowing = ( iDayOfYear > pConfig%iDayOfFirstFrost .and. &
@@ -2306,8 +2317,13 @@ function lf_model_GrowingSeason( pConfig, iDayOfYear ) result ( lGrowing )
     lGrowing = .not. lGrowing
   end if
 
-  return
-end function lf_model_GrowingSeason
+  if (lGrowing) then
+    iGrowing = iTRUE
+  else
+    iGrowing = iFALSE
+  endif
+
+end function if_model_GrowingSeason
 
 
 !--------------------------------------------------------------------------

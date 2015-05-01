@@ -15,24 +15,28 @@ program main
 
   implicit none
 
-  character (len=256) :: sControlFile
-  integer (kind=c_int) :: iNumArgs
-  character (len=1024) :: sCompilerFlags
-  character (len=256) :: sCompilerVersion
-  logical             :: lExists
+  character (len=256)             :: sControlFile
+  integer (kind=c_int)            :: iNumArgs
+  character (len=1024)            :: sCompilerFlags
+  character (len=256)             :: sCompilerVersion
+  logical                         :: lExists
+  integer (kind=c_int), parameter :: NUM_REPEAT_CHARS = 35
 
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
   if(iNumArgs/=1) then
 
     write(UNIT=*,FMT="(/,a,/)") &
-      "Soil Water Balance Code version "//trim(SWB_VERSION)//" -- compiled on: "//trim(COMPILE_DATE)
+      "Soil Water Balance Code version "//trim(SWB_VERSION)
+
+    write(UNIT=*,FMT="(a,/)") "Compilation time and date: "//trim(COMPILE_TIME)//"  "//trim(COMPILE_DATE)
+
 #ifdef __GFORTRAN__
     sCompilerFlags = COMPILER_OPTIONS()
     sCompilerVersion = COMPILER_VERSION()
     write(UNIT=*,FMT="(a,/)") "Compiled with: gfortran ("//TRIM(sCompilerVersion)//")"
     write(UNIT=*,FMT="(a)") "Compiler flags:"
-    write(UNIT=*,FMT="(a)") "-------------------------------"
+    write(UNIT=*,FMT="(a)") repeat("-", NUM_REPEAT_CHARS)
     write(UNIT=*,FMT="(a,/)") TRIM(sCompilerFlags)
 #endif
 
@@ -48,7 +52,7 @@ program main
 #endif
 
     write(UNIT=*,FMT="(a)") "Compilation options:"
-    write(UNIT=*,FMT="(a)") "----------------------------------"
+    write(UNIT=*,FMT="(a)") repeat("-", NUM_REPEAT_CHARS)
 #ifdef STREAM_INTERACTIONS
     write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS         yes"
 #else

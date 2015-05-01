@@ -247,6 +247,11 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
             REAL(cel%rStreamCapture,kind=c_float), pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSTREAM_CAPTURE)
 
+        case(iGROWING_SEASON)
+          call RLE_writeByte(STAT_INFO(iGROWING_SEASON)%iLU, &
+            REAL(cel%iGrowingSeason,kind=c_float), pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iGROWING_SEASON)
+
         case default
           call Assert(lFALSE, "Internal programming error in " &
             //"select case structure",TRIM(__FILE__),__LINE__)
@@ -422,6 +427,11 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
           case(iSTREAM_CAPTURE)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rStreamCapture)
+
+          case(iGROWING_SEASON)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, real( cel%iGrowingSeason, kind=c_float) )
+
           case default
             call Assert(lFALSE, "Internal programming error in " &
               //"select case structure",TRIM(__FILE__),__LINE__)

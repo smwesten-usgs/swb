@@ -314,7 +314,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
 !    pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pTS%rRH, &
 !    pConfig%iMonth, pConfig%iDay, pConfig%iYear, pConfig%iCurrentJulianDay)
 
-   call model_GetDailyPrecipAndTemperatureValue(pGrd, pConfig, pTS%rPrecip, &
+  call model_GetDailyPrecipAndTemperatureValue(pGrd, pConfig, pTS%rPrecip, &
     pTS%rAvgT, pTS%rMinT, pTS%rMaxT, pConfig%iMonth, pConfig%iDay, &
     pConfig%iYear, pConfig%iCurrentJulianDay)
 
@@ -861,15 +861,9 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
         ! swap min and max values to maintain a positive delta T
         rTempVal = cel%rTMax
         cel%rTMax = cel%rTMin
-        cel%rTMin = cel%rTMax
+        cel%rTMin = rTempVal
 
       end if
-
-      if (cel%rTMin > 28.) then
-        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason + (cel%rTAvg - 28.)
-      else
-        cel%rGDD_GrowingSeason = 0.
-      endif
 
     end do
   end do
@@ -965,7 +959,7 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
   if (pConfig%iConfigureGrowingSeason == CONFIG_GROWING_SEASON_CONTROL_FILE ) then
 
-    pGrd%Cells%lGrowingSeason = lf_model_GrowingSeason( pConfig, pConfig%iDayOfYear )
+    pGrd%Cells%iGrowingSeason = if_model_GrowingSeason( pConfig, pConfig%iDayOfYear )
 
   else
 
@@ -973,13 +967,23 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
       do iCol=1,pGrd%iNX
         cel => pGrd%Cells(iCol, iRow)
 
-        if ( cel%lGrowingSeason ) then   ! check for killing frost
+        ! update season-specific GDD
+        if (cel%rTMin > pConfig%fGrowingSeasonEnd_KillingFrostTemp ) then
+          cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason   &
+              + (cel%rTAvg - pConfig%fGrowingSeasonEnd_KillingFrostTemp )
+        else
+          cel%rGDD_GrowingSeason = 0.
+        endif  
 
-          if ( cel%rTMin <= pConfig%fGrowingSeasonEnd_KillingFrostTemp ) cel%lGrowingSeason = lFALSE
+        ! is this cell in active growing season?
+        if ( cel%iGrowingSeason == iTRUE ) then
+
+          ! check for killing frost. if minimum temp is below killing frost temp, shut down growing season
+          if ( cel%rTMin <= pConfig%fGrowingSeasonEnd_KillingFrostTemp ) cel%iGrowingSeason = iFALSE
 
         else  ! it is NOT currently growing season; should it be?
 
-          if ( cel%rGDD_GrowingSeason > pConfig%fGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
+          if ( cel%rGDD_GrowingSeason > pConfig%fGrowingSeasonStart_Minimum_GDD ) cel%iGrowingSeason = iTRUE
 
         endif
 
@@ -1080,13 +1084,6 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
       end if
 
       cel%rGDD = cel%rGDD + rDD
-
-      if (cel%rTMin > pConfig%fGrowingSeasonEnd_KillingFrostTemp ) then
-        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason   &
-            + (cel%rTAvg - pConfig%fGrowingSeasonEnd_KillingFrostTemp )
-      else
-        cel%rGDD_GrowingSeason = 0.
-      endif  
 
     end do
 
@@ -3069,7 +3066,7 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
 
   ! Default is zero
   rIntRate = rZERO
-  if ( cel%lGrowingSeason ) then
+  if ( cel%iGrowingSeason == iTRUE ) then
     if ( pLU%rIntercept_GrowingSeason_n < 1.0_c_float )  fTempPrecip = fTempPrecip ** pLU%rIntercept_GrowingSeason_n
     rIntRate = pLU%rIntercept_GrowingSeason_a + pLU%rIntercept_GrowingSeason_b * fTempPrecip
   else
