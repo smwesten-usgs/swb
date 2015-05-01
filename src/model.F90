@@ -858,17 +858,23 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
 
       if( cel%rTMax < cel%rTMin )then
 
-        ! swap min and max values to maintain a positive delta T
+        ! swap min and max values to maintain a positive delta T 
+        !^ is this to ensure positive delta in GDD? [jlr 4-30-15]
         rTempVal = cel%rTMax
         cel%rTMax = cel%rTMin
         cel%rTMin = cel%rTMax
 
       end if
-
-      if (cel%rTMin > 28.) then
-        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason + (cel%rTAvg - 28.)
+      ! GDD as, I'm familiar, are calculated from 50 F. [jlr 4-30-15]
+      if (cel%rTMax > 50) then
+	      if (cel%rTMin > 50.) then
+	        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason + (cel%rTAvg - 50.)
+	      else
+	      	! if TMin < 50 use TMin = 50 to ensure positive delta
+	        cel%rGDD_GrowingSeason = cel%rGDD_GrowingSeason + (cel%rTMax - 50.)
+	      endif
       else
-        cel%rGDD_GrowingSeason = 0.
+      		cel%rGDD_GrowingSeason = 0.
       endif
 
     end do
@@ -975,11 +981,11 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
         if ( cel%lGrowingSeason ) then   ! check for killing frost
 
-          if ( cel%rTMin <= pConfig%fGrowingSeasonEnd_KillingFrostTemp ) cel%lGrowingSeason = lFALSE
+          if ( cel%rTMin <= pConfig%rGrowingSeasonEnd_KillingFrostTemp ) cel%lGrowingSeason = lFALSE
 
         else  ! it is NOT currently growing season; should it be?
 
-          if ( cel%rGDD_GrowingSeason > pConfig%fGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
+          if ( cel%rGDD_GrowingSeason > pConfig%rGrowingSeasonStart_Minimum_GDD ) cel%lGrowingSeason = lTRUE
 
         endif
 
