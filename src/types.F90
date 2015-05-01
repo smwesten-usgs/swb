@@ -1103,8 +1103,8 @@ module types
  	    real (kind=c_float) :: rNorthernLatitude = rNO_DATA_NCDC
 
       ! define GDD associated with the start of the growing season
-      real (kind=c_float)  :: fGrowingSeasonStart_Minimum_GDD = 90.0_c_float
-      real (kind=c_float)  :: fGrowingSeasonEnd_KillingFrostTemp = 28.5_c_float
+      real (kind=c_float)  :: rGrowingSeasonStart_Minimum_GDD = 90.0_c_float
+      real (kind=c_float)  :: rGrowingSeasonEnd_KillingFrostTemp = 28.5_c_float
 
 #ifdef STREAM_INTERACTIONS
  	    ! Data for the elevation corrections on temperature
