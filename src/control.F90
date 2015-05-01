@@ -317,19 +317,19 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif ( str_compare(sItem, "GROWING_SEASON_STARTING_GDD") ) then
       call Chomp ( sRecord, sArgument )    
-      read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonStart_Minimum_GDD
+      read ( sArgument, fmt=*, iostat=iStat) pConfig%rGrowingSeasonStart_Minimum_GDD
       call Assert ( iStat == 0, "Could not read growing degree day (GDD) associated with " &
         //"the start of the growing season" )
       write(UNIT=LU_LOG,FMT=*) "GDD associated with the start of the growing season set to: ", &
-        pConfig%fGrowingSeasonStart_Minimum_GDD
+        pConfig%rGrowingSeasonStart_Minimum_GDD
 
     elseif ( str_compare(sItem, "GROWING_SEASON_KILLING_FROST") ) then
       call Chomp ( sRecord, sArgument )    
-      read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonEnd_KillingFrostTemp
+      read ( sArgument, fmt=*, iostat=iStat) pConfig%rGrowingSeasonEnd_KillingFrostTemp
       call Assert ( iStat == 0, "Could not read killing frost temperature associated with " &
         //"the end of the growing season" )
       write(UNIT=LU_LOG,FMT=*) "Killing frost temperature associated with the end of the " &
-        //" growing season set to: ", pConfig%fGrowingSeasonEnd_KillingFrostTemp
+        //" growing season set to: ", pConfig%rGrowingSeasonEnd_KillingFrostTemp
 
     elseif ( str_compare(sItem, "INTERCEPTION_METHOD") ) then
       call Chomp ( sRecord, sOption )    
