@@ -103,6 +103,12 @@ module netcdf4_support
   integer (kind=c_int), public, parameter :: NC_TOP    = 0
   integer (kind=c_int), public, parameter :: NC_BOTTOM = 1
 
+  integer (kind=c_int), parameter   :: NETCDF_IO_ERROR = -68
+
+  ! how many times should SWB attempt to read data via a THREDDs URL
+  ! before declaring an error and halting?
+  integer (kind=c_int), parameter   :: NETCDF_IO_ERROR_RETRIES = 5
+
   character (len=25), dimension(4), parameter :: NETCDF_FORMAT_STRING = &
     ["NC_FORMAT_CLASSIC        ", &
      "NC_FORMAT_64BIT          ", &
@@ -1106,7 +1112,7 @@ subroutine nf_open_file(NCFILE, sFilename, iLU)
   ! [ LOCALS ]
   logical (kind=c_bool) :: lFileOpen
 
-  call echolog("Attempting to open READONLY NetCDF file: " &
+  call echolog( "Attempting to open READONLY NetCDF file: " &
     //dquote(sFilename))
 
   call nf_trap( nc_open(trim(sFilename)//c_null_char, &
@@ -1115,7 +1121,7 @@ subroutine nf_open_file(NCFILE, sFilename, iLU)
   call nf_trap( nc_inq_format(ncid=NCFILE%iNCID, formatp=NCFILE%iFileFormat), &
                __FILE__, __LINE__)
 
-  call echolog("   Succeeded.  ncid: "//trim(asCharacter(NCFILE%iNCID)) &
+  call echolog( "   Succeeded.  ncid: "//trim(asCharacter(NCFILE%iNCID)) &
          //"  format: "//trim(NETCDF_FORMAT_STRING(NCFILE%iFileFormat) ) )
 
   NCFILE%sFilename = sFilename
@@ -1211,7 +1217,7 @@ subroutine nf_trap( iResultCode, sFilename, iLineNumber )
     cpResult = nc_strerror(iResultCode)
     sTextString = char_ptr_to_fortran_string( cpResult )
 
-    call echolog("NetCDF ERROR: "//dquote( sTextString  )//" | error code was: " &
+    call echolog( "NetCDF ERROR: "//dquote( sTextString  )//" | error code was: " &
       //trim(asCharacter(iResultCode)) )
 
     call assert(lFALSE, "SWB is stopping due to a problem reading or accessing" &
@@ -1227,7 +1233,7 @@ subroutine netcdf_close_file( NCFILE)
 
   type (T_NETCDF4_FILE ) :: NCFILE
 
-  call echolog("Closing NetCDF file with name: "//dquote(NCFILE%sFilename))
+  call echolog( "Closing NetCDF file with name: "//dquote(NCFILE%sFilename))
   call nf_trap( nc_close(NCFILE%iNCID), __FILE__, __LINE__ )
 
 !  call nf_deallocate_data_struct( NCFILE=NCFILE )
@@ -1708,19 +1714,6 @@ subroutine nf_get_variable_vector_short(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
   integer (kind=c_ptrdiff_t) :: iNC_Stride
   integer (kind=c_short), dimension(:) :: iNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), target :: tNC_Start
-!  integer (kind=c_size_t), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), target :: tNC_Stride
-
-!  tNC_Start = iNC_Start
-!  tNC_Count = iNC_Count
-!  tNC_Stride = iNC_Stride
-
-!  pStart = c_loc(tNC_Start)
-!  pCount = c_loc(tNC_Count)
-!  pStride = c_loc(tNC_Stride)
-
   call nf_trap(nc_get_vars_short(ncid=NCFILE%iNCID, &
        varid=iNC_VarID, &
        startp=[iNC_Start], &
@@ -1741,19 +1734,6 @@ subroutine nf_get_variable_array_short(NCFILE, iNC_VarID, iNC_Start, iNC_Count, 
   integer (kind=c_size_t), dimension(:) :: iNC_Count
   integer (kind=c_size_t), dimension(:) :: iNC_Stride
   integer (kind=c_short), dimension(:,:) :: iNC_Vars
-
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), target :: tNC_Start
-!  integer (kind=c_size_t), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), target :: tNC_Stride
-
-!  tNC_Start = iNC_Start(1)
-!  tNC_Count = iNC_Count(1)
-!  tNC_Stride = iNC_Stride(1)
-
-!  pStart = c_loc(tNC_Start)
-!  pCount = c_loc(tNC_Count)
-!  pStride = c_loc(tNC_Stride)
 
   call nf_trap(nc_get_vars_short(ncid=NCFILE%iNCID, &
        varid=iNC_VarID, &
@@ -1796,6 +1776,8 @@ subroutine nf_get_variable_array_as_vector_short(NCFILE, iNC_VarID, iNC_Start, i
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
         
@@ -1821,25 +1803,37 @@ subroutine nf_get_variable_vector_int(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
   integer (kind=c_ptrdiff_t) :: iNC_Stride
   integer (kind=c_int), dimension(:) :: iNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), target :: tNC_Start
-!  integer (kind=c_size_t), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), target :: tNC_Stride
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
 
-!  tNC_Start = iNC_Start
-!  tNC_Count = iNC_Count
-!  tNC_Stride = iNC_Stride
+  iErrorCount = 0
 
-!  pStart = c_loc(tNC_Start)
-!  pCount = c_loc(tNC_Count)
-!  pStride = c_loc(tNC_Stride)
+  do
 
-  call nf_trap(nc_get_vars_int(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=iNC_Vars), __FILE__, __LINE__ )
+    iResultCode = nc_get_vars_int( ncid=NCFILE%iNCID,   &
+      varid=iNC_VarID,                                  &
+      startp=[iNC_Start],                               &
+      countp=[iNC_Count],                               &
+      stridep=[iNC_Stride],                             &
+      vars=iNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_vector_int
 
@@ -1855,12 +1849,37 @@ subroutine nf_get_variable_vector_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count
   integer (kind=c_size_t) :: iNC_Stride
   real (kind=c_double), dimension(:) :: dpNC_Vars
 
-  call nf_trap(nc_get_vars_double(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=dpNC_Vars), __FILE__, __LINE__ )
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_double( ncid=NCFILE%iNCID,   &
+      varid=iNC_VarID,                                     &
+      startp=[iNC_Start],                                  &
+      countp=[iNC_Count],                                  &
+      stridep=[iNC_Stride],                                &
+      vars=dpNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_vector_double
 
@@ -1876,12 +1895,38 @@ subroutine nf_get_variable_array_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
   integer (kind=c_size_t), dimension(:) :: iNC_Stride
   real (kind=c_double), dimension(:,:) :: dpNC_Vars
 
-  call nf_trap(nc_get_vars_double(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=dpNC_Vars), __FILE__, __LINE__ )
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_double( ncid=NCFILE%iNCID,    &
+      varid=iNC_VarID,                                      &
+      startp=[iNC_Start],                                   &
+      countp=[iNC_Count],                                   &
+      stridep=[iNC_Stride],                                 &
+      vars=dpNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_array_double
 
@@ -1897,12 +1942,38 @@ subroutine nf_get_variable_array_as_vector_double(NCFILE, iNC_VarID, iNC_Start, 
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   real (kind=c_double), dimension(:) :: dpNC_Vars
 
-  call nf_trap(nc_get_vars_double(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=dpNC_Vars), __FILE__, __LINE__ )
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_double( ncid=NCFILE%iNCID,    &
+      varid=iNC_VarID,                                      &
+      startp=[iNC_Start],                                   &
+      countp=[iNC_Count],                                   &
+      stridep=[iNC_Stride],                                 &
+      vars=dpNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_array_as_vector_double
 
@@ -1918,12 +1989,37 @@ subroutine nf_get_variable_vector_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
   integer (kind=c_ptrdiff_t) :: iNC_Stride
   real (kind=c_float), dimension(:) :: rNC_Vars
 
-  call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=rNC_Vars), __FILE__, __LINE__ )
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_float( ncid=NCFILE%iNCID,       &
+      varid=iNC_VarID,                                        &
+      startp=[iNC_Start],                                     &
+      countp=[iNC_Count],                                     &
+      stridep=[iNC_Stride],                                   &
+      vars=rNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_vector_float
 
@@ -1939,12 +2035,38 @@ subroutine nf_get_variable_array_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count, 
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   real (kind=c_float), dimension(:,:) :: rNC_Vars
 
-  call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=rNC_Vars), __FILE__, __LINE__ )
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_float( ncid=NCFILE%iNCID,     &
+      varid=iNC_VarID,                                      &
+      startp=[iNC_Start],                                   &
+      countp=[iNC_Count],                                   &
+      stridep=[iNC_Stride],                                 &
+      vars=rNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_array_float
 
@@ -1960,12 +2082,38 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   real (kind=c_float), dimension(:) :: rNC_Vars
 
-  call nf_trap(nc_get_vars_float(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=rNC_Vars), __FILE__, __LINE__ )
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
+
+  iErrorCount = 0
+
+  do
+
+    iResultCode = nc_get_vars_float( ncid=NCFILE%iNCID,      &
+      varid=iNC_VarID,                                       &
+      startp=[iNC_Start],                                    &
+      countp=[iNC_Count],                                    &
+      stridep=[iNC_Stride],                                  &
+      vars=rNC_Vars )
+
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "   ==> making another attempt to access netCDF data." )
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_array_as_vector_float
 
@@ -2196,11 +2344,11 @@ subroutine nf_get_time_units(NCFILE)
 
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
-  character (len=256) :: sDateTime
-  character (len=256) :: sItem
-  integer (kind=c_int) :: iIndex
-  logical (kind=c_bool) :: lFound
-  integer (kind=c_int) :: iStat
+  character (len=256)               :: sDateTime
+  character (len=256)               :: sItem
+  integer (kind=c_int)              :: iIndex
+  logical (kind=c_bool)             :: lFound
+  integer (kind=c_int)              :: iStat
 
   call assert(NCFILE%iVarID(NC_TIME) >= 0, "INTERNAL PROGRAMMING ERROR -- " &
     //"nf_get_time_units must be called only after a call is made to ~" &
@@ -2433,7 +2581,7 @@ function nf_return_index_double(rValues, rTargetValue)  result(iIndex)
   real (kind=c_double) :: rDiff, rDiffMin
 
   if ( .not. (rTargetValue >= minval(rValues) .and. rTargetValue <= maxval(rValues)) ) then
-    call echolog("~SWB grid coordinate value (" &
+    call echolog( "~SWB grid coordinate value (" &
     //trim(asCharacter(rTargetValue))//") is not within the range of coordinate values covered ~" &
     //"by the NetCDF file. Range of NetCDF file coordinates: "  &
     //trim(asCharacter(minval(rValues)))//" to "//trim(asCharacter(maxval(rValues))) )
@@ -2527,7 +2675,7 @@ subroutine nf_create(NCFILE, sFilename, iLU)
   NCFILE%iFileFormat = NC_FORMAT_NETCDF4
 
   if (present(iLU) ) then
-    call echolog("Created NetCDF file for output. Filename: " &
+    call echolog( "Created NetCDF file for output. Filename: " &
       //dquote(NCFILE%sFilename)//"; NCID="//trim(asCharacter(NCFILE%iNCID) ) )
   endif
 
