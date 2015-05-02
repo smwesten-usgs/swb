@@ -1777,33 +1777,35 @@ subroutine nf_get_variable_array_as_vector_short(NCFILE, iNC_VarID, iNC_Start, i
   integer (kind=c_ptrdiff_t), dimension(:) :: iNC_Stride
   integer (kind=c_short), dimension(:) :: iNC_Vars
 
-!  type (c_ptr) :: pCount, pStart, pStride
-!  integer (kind=c_size_t), target :: tNC_Start
-!  integer (kind=c_size_t), target :: tNC_Count
-!  integer (kind=c_ptrdiff_t), target :: tNC_Stride
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iErrorCount
+  integer (kind=c_int) :: iResultCode
 
-!  tNC_Start = iNC_Start(1)
-!  tNC_Count = iNC_Count(1)
-!  tNC_Stride = iNC_Stride(1)
+  iErrorCount = 0
 
-!  pStart = c_loc(tNC_Start)
-!  pCount = c_loc(tNC_Count)
-!  pStride = c_loc(tNC_Stride)
+  do
 
-!  call nf_trap(nc_get_vars_short(ncid=NCFILE%iNCID, &
-!       varid=iNC_VarID, &
-!       startp=[int(iNC_Start, kind=c_size_t)], &
-!       countp=[int(iNC_Count, kind=c_size_t)], &
-!       stridep=[iNC_Stride], &
-!        stridep=[1_c_ptrdiff_t,1_c_ptrdiff_t,1_c_ptrdiff_t], &
-!       vars=iNC_Vars), __FILE__, __LINE__ )
+    iResultCode = nc_get_vars_short(ncid=NCFILE%iNCID, &
+      varid=iNC_VarID, &
+      startp=[iNC_Start], &
+      countp=[iNC_Count], &
+      stridep=[iNC_Stride], &
+      vars=iNC_Vars)
 
-  call nf_trap(nc_get_vars_short(ncid=NCFILE%iNCID, &
-       varid=iNC_VarID, &
-       startp=[iNC_Start], &
-       countp=[iNC_Count], &
-       stridep=[iNC_Stride], &
-       vars=iNC_Vars), __FILE__, __LINE__ )
+    if ( iResultCode == NETCDF_IO_ERROR ) then
+
+      if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
+        iErrorCount = iErrorCount + 1
+        cycle
+      endif
+        
+    endif
+
+    call nf_trap(iResultCode, __FILE__, __LINE__ )     
+      
+    exit
+
+  enddo
 
 end subroutine nf_get_variable_array_as_vector_short
 
