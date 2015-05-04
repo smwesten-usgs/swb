@@ -2482,7 +2482,8 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   integer (kind=c_int) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
   integer (kind=c_int) :: iNumSoilTypes
   character (len=1024) :: sRecord                  ! Input file text buffer
-  character (len=256) :: sItem                    ! Key word read from sRecord
+  character (len=256)  :: sItem                    ! Key word read from sRecord
+  real (kind=c_float)  :: fTempVal
 
   ! open landuse file
   open ( LU_LOOKUP, file=pConfig%sLanduseLookupFilename, &
@@ -2644,6 +2645,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   write(UNIT=LU_LOG,FMT=*)  "  Interception value ('a' coefficient) for growing season = ",    &
     pConfig%LU(iRecNum)%rIntercept_GrowingSeason_a
 
+  ! extra parameters needed if we are running with the Horton option
   if ( pConfig%iConfigureInterception == CONFIG_INTERCEPTION_HORTON ) then
 
     call chomp(sRecord, sItem, sTAB)
@@ -2690,6 +2692,18 @@ subroutine model_ReadLanduseLookupTable( pConfig )
       "Error reading rooting depth for soil group "//trim(int2char(i))//" in landuse lookup table" )
     write(UNIT=LU_LOG,FMT=*)  "  ROOTING DEPTH for soil group",i,": ",pConfig%ROOTING_DEPTH(iRecNum,i)
   end do
+
+  call chomp(sRecord, sItem, sTAB)
+
+  if (len_trim(sItem) > 0 ) then
+    read( sItem, fmt=*, iostat=iStat ) fTempVal
+    ! test to see whether fTempVal was read correcly as a *REAL* value. if it is, we have extra data
+    ! columns present. the HORTON interception routine introduces 4 new columns of data that might be read 
+    ! in as rooting depths if the user is not careful.
+    call assert( iStat /= 0, "Read a real value from a column of the landuse lookup table following what "   &
+      //"was supposed~to be the final ROOTING DEPTH column. This file may contain HORTON interception" &
+      //" values,~or other unknown data columns. Please check the landuse lookup table and rerun.", __FILE__, __LINE__)
+  endif  
 
   iRecNum = iRecNum + 1
 
