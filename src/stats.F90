@@ -1433,6 +1433,145 @@ end subroutine stats_CalcMeanRechargebyLU
 
 !----------------------------------------------------------------------
 
+subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
+
+  type (T_GENERAL_GRID),pointer :: pGrd            ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+                                                   ! model options, flags, and other settings
+  type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
+     ! pointer to data structure that holds parameters for creating
+     ! DISLIN plots
+
+  type ( T_GENERAL_GRID ),pointer :: pTmpGrd
+
+  ![LOCALS]
+  type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
+  integer (kind=c_int) :: iNumGridCells
+
+  integer (kind=c_int) :: i,k,n
+
+  character (len=256) :: sBuf
+
+  if(pConfig%iStartYearforCalculation<pConfig%iStartYear) &
+    pConfig%iStartYearforCalculation = pConfig%iStartYear
+
+  if(pConfig%iEndYearforCalculation>pConfig%iEndYear) &
+    pConfig%iEndYearforCalculation = pConfig%iEndYear
+
+  write(LU_LOG, FMT="(a,i4.4,'-',i4.4,':')") &
+    "Average recharge over period ", &
+      pConfig%iStartYearforCalculation,&
+      pConfig%iEndYearforCalculation
+
+  pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
+    pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
+
+  if(pConfig%iStartYearforCalculation<0) &
+    pConfig%iStartYearforCalculation = pConfig%iStartYear
+
+  if(pConfig%iEndYearforCalculation<0) &
+    pConfig%iEndYearforCalculation = pConfig%iEndYear
+
+  n = pConfig%iEndYearforCalculation - pConfig%iStartYearforCalculation + 1
+
+  pTmpGrd%rData = pGrd%Cells%rSUM_Irrigation/n
+
+  ! iterate through all land use types
+  do k = 1,size(pConfig%LU,1)
+
+        !create pointer to a specific land use type
+        pLU => pConfig%LU(k)
+    call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+       "pointer association failed - stats - CalcMeanIrrigationbyLU")
+
+      ! establish number of ACTIVE cells in model grid
+      iNumGridCells = COUNT( &
+        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+           .and. pGrd%iMask==iACTIVE_CELL)
+
+      if(iNumGridCells>0) then
+
+        write(LU_LOG,"(a45,3(f12.2,2x))") &
+          adjustl(pLU%sLandUseDescription), &
+          minval(pTmpGrd%rData, &
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+             .and. pGrd%iMask==iACTIVE_CELL), &
+          sum(pTmpGrd%rData, &
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+              .and. pGrd%iMask==iACTIVE_CELL) / iNumGridCells, &
+          maxval(pTmpGrd%rData, &
+            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+             .and. pGrd%iMask==iACTIVE_CELL)
+
+        else
+
+          write(LU_LOG,"(a45)") &
+           adjustl(pLU%sLandUseDescription)
+        end if
+
+  end do
+
+  write(LU_LOG, FMT=*) ""
+  write(LU_LOG, FMT="(a,i4.4,'-',i4.4,':')") &
+    "Average irrigation by landuse and soil type over period ", &
+      pConfig%iStartYearforCalculation,&
+      pConfig%iEndYearforCalculation
+
+  write(LU_LOG,"(a30,' Soil Type ',4(a12,2x))") &
+    "Land Use", "Min (in)","Mean (in)","Max (in)","Count"
+
+  ! Now iterate through all land use types *AND* soil types
+  do k = 1,size(pConfig%LU,1)
+
+    do i=1,maxval(INT(pGrd%Cells%iSoilGroup,kind=c_int))
+
+        !create pointer to a specific land use type
+        pLU => pConfig%LU(k)
+    call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+       "pointer association failed - stats - CalcMeanRechargebyLU")
+
+      ! establish number of cells in model grid for THIS combination
+      iNumGridCells = COUNT( &
+        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i)
+
+      if(iNumGridCells>0) then
+
+        write(LU_LOG,"(a45,' Soil:',i2,'| ',3(f12.2,2x),i12)") &
+          adjustl(pLU%sLandUseDescription), &
+          i, &
+          minval(pTmpGrd%rData, &
+          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          sum(pTmpGrd%rData, &
+          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i) &
+             /iNumGridCells, &
+          maxval(pTmpGrd%rData, &
+          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          iNumGridCells
+
+
+        else
+
+          write(LU_LOG,"(a45,' Soil:',i2,'| ')") &
+           adjustl(pLU%sLandUseDescription), i
+
+        end if
+
+    end do
+
+  end do
+
+  write(LU_LOG,FMT=*) REPEAT("-",80)
+
+  return
+
+end subroutine stats_CalcMeanIrrigationbyLU
+
+!----------------------------------------------------------------------
+
 subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rValue)
 
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains

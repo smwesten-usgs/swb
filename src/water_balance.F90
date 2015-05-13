@@ -500,6 +500,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
              iYear<= pConfig%iEndYearforCalculation) then
 
           cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
+          cel%rSUM_Irrigation = cel%rSUM_Irrigation + cel%rIrrigationAmount
           cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
 
         end if

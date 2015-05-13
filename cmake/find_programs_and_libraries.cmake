@@ -113,9 +113,9 @@ set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
 
 if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
-  find_library(LIBWINPTHREAD
-          NAMES libwinpthread.a winpthread winpthread
-          PATHS ${LIB_PATH} )
+#  find_library(LIBWINPTHREAD
+#          NAMES libwinpthread.a winpthread winpthread
+#          PATHS ${LIB_PATH} )
 
   find_library(LIBWS2_32
           NAMES ws2_32 libws2_32 libws2_32.a

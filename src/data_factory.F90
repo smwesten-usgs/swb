@@ -417,6 +417,8 @@ subroutine getvalues_constant_sub( this, pGrdBase )
   class (T_DATA_GRID) :: this
   type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
+  this%lGridHasChanged = lFALSE
+
   select case (this%iSourceDataType)
 
     case ( DATATYPE_REAL )
@@ -1095,19 +1097,6 @@ end subroutine set_constant_value_real
           call netcdf_open_file(NCFILE=this%NCFILE, sFilename=this%sSourceFilename)
 
           this%iNC_FILE_STATUS = NETCDF_FILE_OPEN
-
-        endif
-
-        if (.not. netcdf_date_within_range(NCFILE=this%NCFILE, iJulianDay=iJulianDay) ) then
-
-          call echolog("Valid date range (NetCDF): "//trim(asCharacter(this%NCFILE%iFirstDayJD)) &
-            //" to "//trim(asCharacter(this%NCFILE%iLastDayJD)) )
-
-          call echolog("Current Julian Day value: "//trim(asCharacter(iJulianDay)) )
-
-          call assert (lFALSE, "Date range for currently open NetCDF file" &
-            //" does not include the present simulation date.", &
-            trim(__FILE__), __LINE__)
 
         endif
 

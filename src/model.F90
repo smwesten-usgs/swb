@@ -606,6 +606,8 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   ! We are ignoring any missing or bogus values in this calculation
   rMean = rSum / iCount
 
+print *, "Precip: ", rMin, rMax, rSum, iCount
+
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
       //trim(real2char(pConfig%rMinValidPrecip))//" are not allowed. " &
@@ -1198,12 +1200,17 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         ! *negative* values for GROSS PRECIPITATION; this has happened,
         ! mostly due to interpolation schemes that generate pockets
         ! of negative precip values
-        if(dpInterception < dpZERO) &
+        if(dpInterception < dpZERO) then
+
+          print *, cel%iLanduse, cel%iSoilGroup
+          print *, dpInterception, cel%rGrossPrecip, dpPotentialInterception, dpNetPrecip
+
           call Assert(lFALSE, &
             "Negative value for interception was calculated on day " &
             //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
             //"  iCol: "//trim(int2char(iCol)), &
             trim(__FILE__), __LINE__)
+        endif  
 
         cel%rInterception = real(dpInterception, kind=c_double)
 !      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
