@@ -2020,6 +2020,7 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   integer (kind=c_int), dimension(2) :: iColRow
   integer (kind=c_int) :: iSrcCol, iSrcRow
   integer (kind=c_int) :: iSpread
+  real (kind=c_float)  :: fGridcellRatio
 
   ! must ensure that there are coordinates associated with the "to" grid...
   ! by default, these are left unpopulated during a "normal" swb run
@@ -2029,12 +2030,12 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   call echolog("Target grid resolution: "//trim(asCharacter( pGrdTo%rGridCellSize )))
   call echolog("Source grid resolution: "//trim(asCharacter( pGrdFrom%rGridCellSize )))
 
-  iSpread = max(1, nint(pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize / 2.))
+  fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
 
-!  if (.not. str_compare(pGrdFrom%sPROJ4_string,pGrdTo%sPROJ4_string)) then
-  if ( lTRUE ) then
+  ! if target grid resolution is much more coarse than source grid resolution: MAJORITY FILTER
+  if ( fGridcellRatio > 2.5_c_float ) then
 
-!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iColRow)
+    iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2062,39 +2063,33 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
       enddo
     enddo
 
-!!!   *$OMP END PARALLEL DO
+  else  ! target grid resolution similar to or more dense than source grid resolution: NEAREST NEIGHBOR
 
-  else
-
-!!!   *$OMP PARALLEL DO ORDERED PRIVATE(iRow, iCol, iSrcCol, iSrcRow)
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
-        iSrcCol = grid_GetGridColNum(pGrdFrom,real(pGrdTo%rX(iCol, iRow), kind=c_double) )
-        iSrcRow = grid_GetGridRowNum(pGrdFrom,real(pGrdTo%rY(iCol, iRow), kind=c_double) )
 
-        call assert(iSrcCol > 0 .and. iSrcCol <= pGrdFrom%iNX, &
-          "Illegal column number supplied: "//trim(asCharacter(iSrcCol)), &
+        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+                   rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
+                   rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
+
+        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
           trim(__FILE__), __LINE__)
 
-        call assert(iSrcRow > 0 .and. iSrcRow <= pGrdFrom%iNY, &
-          "Illegal row number supplied: "//trim(asCharacter(iSrcRow)), &
+        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
           trim(__FILE__), __LINE__)
 
-        iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-          iNX=pGrdFrom%iNX, &
-          iNY=pGrdFrom%iNY, &
-          iTargetCol=iSrcCol, &
-          iTargetRow=iSrcRow, &
-          iNoDataValue=pGrdFrom%iNoDataValue, &
-          iSpread=iSpread)
+        iArrayTo(iCol,iRow) = iArrayFrom( iColRow(COLUMN), iColRow(ROW) )
 
       enddo
     enddo
-!!!   *$OMP END PARALLEL DO
 
   endif
 
 end subroutine grid_GridToGrid_int
+
+!--------------------------------------------------------------------------------------------------
 
 subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
@@ -2109,44 +2104,72 @@ subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   integer (kind=c_int) :: iCol, iRow
   integer (kind=c_int), dimension(2) :: iColRow
   integer (kind=c_int) :: iSpread
-
-  print *, trim(__FILE__), __LINE__
-  print *, pGrdTo%rGridCellSize
-  print *, pGrdFrom%rGridCellSize
-
-  iSpread = max(1, nint(pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize / 2.))
+  real (kind=c_float)  :: fGridcellRatio
 
   ! must ensure that there are coordinates associated with the "to" grid...
   ! by default, these are left unpopulated during a "normal" swb run
   if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
   if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
 
-  do iRow=1,pGrdTo%iNY
-    do iCol=1,pGrdTo%iNX
+  call echolog("Target grid resolution: "//trim(asCharacter( pGrdTo%rGridCellSize )))
+  call echolog("Source grid resolution: "//trim(asCharacter( pGrdFrom%rGridCellSize )))
 
-       iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+  fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
+
+  ! if target grid resolution is much more coarse than source grid resolution: MAJORITY FILTER
+  if ( fGridcellRatio > 2.5_c_float ) then
+
+    iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+
+        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
                    rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
                    rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
 
-       call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-         "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-         trim(__FILE__), __LINE__)
+        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+          trim(__FILE__), __LINE__)
 
-      call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-        "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-        trim(__FILE__), __LINE__)
+        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+          trim(__FILE__), __LINE__)
 
+        iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
+          iNX=pGrdFrom%iNX, &
+          iNY=pGrdFrom%iNY, &
+          iTargetCol=iColRow(COLUMN), &
+          iTargetRow=iColRow(ROW), &
+          iNoDataValue=pGrdFrom%iNoDataValue, &
+          iSpread=iSpread)
 
-      iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-         iNX=pGrdFrom%iNX, &
-         iNY=pGrdFrom%iNY, &
-         iTargetCol=iColRow(COLUMN), &
-         iTargetRow=iColRow(ROW), &
-         iNoDataValue=pGrdFrom%iNoDataValue, &
-         iSpread=iSpread)
-
+      enddo
     enddo
-  enddo
+
+  else  ! target grid resolution similar to or more dense than source grid resolution: NEAREST NEIGHBOR
+
+    do iRow=1,pGrdTo%iNY
+      do iCol=1,pGrdTo%iNX
+
+        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+                   rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
+                   rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
+
+        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+          trim(__FILE__), __LINE__)
+
+        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+          trim(__FILE__), __LINE__)
+
+        iArrayTo(iCol,iRow) = iArrayFrom( iColRow(COLUMN), iColRow(ROW) )
+
+      enddo
+    enddo
+
+  endif
 
 end subroutine grid_GridToGrid_short
 
