@@ -338,7 +338,7 @@ subroutine control_setModelOptions(sControlFile)
         write(UNIT=LU_LOG,FMT=*) "Interception method set to HORTON; lookup table must contain columns for " &
           //"'b' and 'n' coefficients."
       else
-        call Assert( lFALSE , "Illegal precipitation input format specified" )
+        call Assert( lFALSE , "Illegal interception method specified" )
       end if
       flush(UNIT=LU_LOG)
 
