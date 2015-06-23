@@ -18,10 +18,11 @@ module types
 
   implicit none
 
-  character(len=45), public, parameter :: &
-      SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
-  character (len=15) :: COMPILE_DATE = trim(__DATE__)
-  character (len=15) :: COMPILE_TIME = trim(__TIME__)
+  ! character(len=45), public, parameter :: &
+  !     SWB_VERSION = "1.2 BETA (geographic transformations enabled)"
+  ! character (len=15) :: COMPILE_DATE = trim(__DATE__)
+  ! character (len=15) :: COMPILE_TIME = trim(__TIME__)
+  ! character (len=:), allocatable  :: GIT_COMMIT_HASH_STR
 
   !> @name Variables: Fortran logical unit numbers
   !> Global logical unit numbers for input and output

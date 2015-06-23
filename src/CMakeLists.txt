@@ -28,6 +28,8 @@ if(TARGET__SWB_EXECUTABLE)
             types.F90
             water_balance.F90
 
+            generated/version_control.F90
+            
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -231,7 +233,8 @@ if(TARGET__SWB_LIBRARY)
             types.F90
             water_balance.F90
 
-
+            generated/version_control.F90
+            
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -418,6 +421,8 @@ if(TARGET__SWBSTATS)
             stats.F90
             swbstats.F90
             types.F90
+
+            generated/version_control.F90
 
             proj4/aasincos.c
             proj4/adjlon.c

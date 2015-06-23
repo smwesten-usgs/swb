@@ -6,13 +6,14 @@
 !>
 !> Accepts command-line arguments and makes a single call
 !> to the control_setModelOptions routine in module \ref control.
-program main
+
+  program main
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
   use control
   use iso_fortran_env
-
+  use version_control
   implicit none
 
   character (len=256)             :: sControlFile
@@ -28,8 +29,10 @@ program main
 
     write(UNIT=*,FMT="(/,a,/)") &
       "Soil Water Balance Code version "//trim(SWB_VERSION)
+    write(UNIT=*,FMT="(a,/)") "Git branch and commit hash: " &
+      //trim(GIT_BRANCH_STRING)//" ( "//trim( GIT_COMMIT_HASH_STRING )//" )"
 
-    write(UNIT=*,FMT="(a,/)") "Compilation time and date: "//trim(COMPILE_TIME)//"  "//trim(COMPILE_DATE)
+    write(UNIT=*,FMT="(a,/)") "Compiled on "//trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
 
 #ifdef __GFORTRAN__
     sCompilerFlags = COMPILER_OPTIONS()

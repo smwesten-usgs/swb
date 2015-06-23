@@ -2,6 +2,7 @@ module swbstats_support
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
+  use version_control
 
   implicit none
 
@@ -523,8 +524,10 @@ implicit none
       status='REPLACE')
   call Assert( iStat == 0, "Problem opening log file file for output.")
 
-  write(UNIT=LU_LOG,FMT=*) "Soil Water Balance Code BINARY FILE READER compiled on: "// &
+  write(UNIT=LU_LOG,FMT="(a,/)") "Soil Water Balance Code BINARY FILE READER compiled on: "// &
     TRIM(__DATE__) //" "// TRIM(__TIME__)
+  write(UNIT=LU_LOG,FMT="(a,/)") "Git branch and commit hash: " &
+      //trim(GIT_BRANCH_STRING)//" ( "//trim( GIT_COMMIT_HASH_STRING )//" )"
   write(UNIT=LU_LOG,FMT=*) "SWB reader execution started: "// &
     sDate//"_"//sTime(1:6)
   write (unit=LU_LOG, fmt="(/,a)") "SWB reader was started with the following command line:"
@@ -539,6 +542,9 @@ implicit none
     write(UNIT=*,FMT="(/,a,/)") &
       "Soil Water Balance Code - statistics calculator -- compiled on: "// &
       TRIM(__DATE__) //" "// TRIM(__TIME__)
+    write(UNIT=*,FMT="(a,/)") "Git branch and commit hash: " &
+      //trim(GIT_BRANCH_STRING)//" ( "//trim( GIT_COMMIT_HASH_STRING )//" )"
+
 #ifdef __GFORTRAN__
     write(UNIT=*,FMT="(a,/)") "Compiled with GNU gfortran version "//TRIM(__VERSION__)
 #endif

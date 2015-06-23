@@ -12,6 +12,7 @@ module control
   use stats
   use data_factory
   use datetime
+  use version_control
 
   implicit none
 
@@ -98,8 +99,13 @@ subroutine control_setModelOptions(sControlFile)
   call Assert(iStat == 0, &
       "Problem opening log file file for output.")
 
-  write(UNIT=LU_LOG,FMT=*) "Soil Water Balance Code compiled on: "// &
-    TRIM(__DATE__) //" "// TRIM(__TIME__)
+  write(UNIT=LU_LOG,FMT="(/,a,/)") &
+    "Soil Water Balance Code version "//trim(SWB_VERSION)
+  write(UNIT=LU_LOG,FMT="(a,/)") "Git branch and commit hash: " &
+    //trim(GIT_BRANCH_STRING)//" ( "//trim( GIT_COMMIT_HASH_STRING )//" )"
+
+  write(UNIT=LU_LOG,FMT="(a,/)") "Compiled on "//trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
+
   write(UNIT=LU_LOG,FMT=*) "Model execution started: "// &
     sDate//"_"//sTime(1:6)
 

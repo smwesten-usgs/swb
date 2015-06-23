@@ -20,6 +20,7 @@ module stats
   use swb_grid
   use graph
   use RLE
+  use version_control
 
   implicit none
   save
