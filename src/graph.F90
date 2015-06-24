@@ -458,6 +458,16 @@ module graph
           ZA = rMinZVal
           ZE = rMaxZVal
 
+        elseif ( present(rMinZVal) ) then
+
+          ZA = rMinZVal
+          ZE = maxval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
+
+        elseif ( present(rMaxZVal) ) then
+
+          ZA = minval(pGrd%iData, mask=pGrd%iMask == iACTIVE_CELL)
+          ZE = rMaxZVal
+
         else
 
           if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
@@ -485,6 +495,16 @@ module graph
         if (present(rMinZVal) .and. present(rMaxZVal)) then
 
           ZA = rMinZVal
+          ZE = rMaxZVal
+
+        elseif ( present(rMinZVal) ) then
+
+          ZA = rMinZVal
+          ZE = maxval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
+
+        elseif ( present(rMaxZVal) ) then
+
+          ZA = minval(pGrd%rData, mask=pGrd%iMask == iACTIVE_CELL)
           ZE = rMaxZVal
 
         else

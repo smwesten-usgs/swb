@@ -199,7 +199,8 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
       trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
       //"_"//trim(asCharacter(pConfig%iYear))//".png", &
       sTitleTxt="Landuse Grid", &
-      sAxisTxt="Landuse Code" )
+      sAxisTxt="Landuse Code",  &
+      rMinZVal=0.0 )
 
     if (pConfig%lFirstYearOfSimulation) then
       ! read in flow direction, soil group, and AWC grids
@@ -3228,7 +3229,8 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   call make_shaded_contour(pGrd=pGenericGrd_int, &
       sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
       sTitleTxt="Hydrologic Soils Group", &
-      sAxisTxt="HSG" )
+      sAxisTxt="HSG", &
+      rMinZVal=0.0 )
 
   call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%rSoilWaterCapInput = pGrd%rData
