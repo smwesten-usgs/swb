@@ -560,12 +560,12 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
                     //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
-                if(len_trim(sNoDataValue) > 0) then
-                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%iNoDataValue
-                  call Assert ( iStat == 0, &
-                    "Failed to read NODATA value in grid data - file: " &
-                    //dquote(sFileName), TRIM(__FILE__),__LINE__ )
-                endif
+                ! if(len_trim(sNoDataValue) > 0) then
+                !   read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%iNoDataValue
+                !   call Assert ( iStat == 0, &
+                !     "Failed to read NODATA value in grid data - file: " &
+                !     //dquote(sFileName), TRIM(__FILE__),__LINE__ )
+                ! endif
               case ( DATATYPE_REAL )
                 do iRow=1,pGrd%iNY
                   read ( unit=LU_GRID, fmt=*, iostat=iStat ) pGrd%rData(:,iRow)
@@ -574,12 +574,12 @@ function grid_ReadArcGrid_fn ( sFileName, iDataType ) result ( pGrd )
                     //trim(sFileName)//"  row num: "//TRIM(int2char(iRow)), &
                    TRIM(__FILE__),__LINE__ )
                 end do
-                if(len_trim(sNoDataValue) > 0) then
-                  read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%rNoDataValue
-                  call Assert ( iStat == 0, &
-                    "Failed to read NODATA value in grid data - file: " &
-                    //trim(sFileName), TRIM(__FILE__),__LINE__ )
-                endif
+                ! if(len_trim(sNoDataValue) > 0) then
+                !   read(unit=sNoDataValue, fmt=*, iostat=iStat) pGrd%rNoDataValue
+                !   call Assert ( iStat == 0, &
+                !     "Failed to read NODATA value in grid data - file: " &
+                !     //trim(sFileName), TRIM(__FILE__),__LINE__ )
+                ! endif
               case default
                   call Assert ( lFALSE, &
                     "Internal error -- illegal ARC GRID data type", &

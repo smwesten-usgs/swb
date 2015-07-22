@@ -4,6 +4,10 @@
 		"selected_items":
 		[
 			[
+				"GIT",
+				"GIT_COMMIT_HASH_VALUE"
+			],
+			[
 				"iL",
 				"iLanduse"
 			],
@@ -96,138 +100,10 @@
 	"buffers":
 	[
 		{
-			"file": "/D/SMWData/Source_Code/swb/src/model.F90",
-			"settings":
-			{
-				"buffer_size": 146311,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/swbstats.F90",
-			"settings":
-			{
-				"buffer_size": 52374,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/data_factory.F90",
-			"settings":
-			{
-				"buffer_size": 57133,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/et_FAO56_crop_coefficients.F90",
-			"settings":
-			{
-				"buffer_size": 15227,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/water_balance.F90",
-			"settings":
-			{
-				"buffer_size": 21662,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb2/src/netcdf4_support.F90",
-			"settings":
-			{
-				"buffer_size": 121590,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/stats.F90",
-			"settings":
-			{
-				"buffer_size": 65872,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/sm_thornthwaite_mather.F90",
-			"settings":
-			{
-				"buffer_size": 7414,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/types.F90",
-			"settings":
-			{
-				"buffer_size": 104197,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/main.F90",
-			"settings":
-			{
-				"buffer_size": 2592,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/runoff_curve_number.F90",
-			"settings":
-			{
-				"buffer_size": 9038,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/output.F90",
-			"settings":
-			{
-				"buffer_size": 26507,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/snow.F90",
-			"settings":
-			{
-				"buffer_size": 8167,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/swb/src/control.F90",
-			"settings":
-			{
-				"buffer_size": 87530,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge.ctl",
-			"settings":
-			{
-				"buffer_size": 2859,
-				"line_ending": "Windows"
-			}
-		},
-		{
-			"file": "/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge_smw.ctl",
-			"settings":
-			{
-				"buffer_size": 3421,
-				"line_ending": "Windows"
-			}
-		},
-		{
 			"file": "/D/SMWData/Source_Code/swb/src/grid.F90",
 			"settings":
 			{
-				"buffer_size": 87727,
+				"buffer_size": 87751,
 				"line_ending": "Windows"
 			}
 		}
@@ -269,29 +145,50 @@
 	],
 	"file_history":
 	[
-		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge_GDD300.ctl",
-		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge.ctl",
-		"/D/SMWData/Source_Code/SWB_TEST_CASES/Howard/LMB_SWBcontrolfile.ctl",
-		"/D/SMWData/Source_Code/swb/src/netcdf4_support.F90",
-		"/D/SMWData/Source_Code/swb2/src/netcdf4_support.F90",
-		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb2/fwp_swb_control.ctl",
-		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb/fwp_swb_control.ctl",
+		"/D/SMWData/Active_Projects/Anvil_Lake/SWB/swb_recharge_smw.ctl",
+		"/D/SMWData/Source_Code/swb/src/snow.F90",
 		"/D/SMWData/Source_Code/swb/src/model.F90",
-		"/D/SMWData/Source_Code/swb/src/main.F90",
-		"/D/SMWData/Source_Code/swb/doc/src/main.md",
-		"/D/SMWData/Source_Code/swb/src/types.F90",
+		"/D/SMWData/Source_Code/Hawaii_Water_Budget_Code/HI_WB_3_1.f",
+		"/D/SMWData/Source_Code/swb/src/et_hargreaves.F90",
+		"/D/SMWData/Source_Code/swb/src/graph.F90",
+		"/D/SMWData/Source_Code/swb/src/swbstats.F90",
+		"/D/SMWData/Source_Code/swb/src/data_factory.F90",
+		"/D/SMWData/Source_Code/swb/src/et_FAO56_crop_coefficients.F90",
+		"/D/SMWData/Source_Code/swb/src/water_balance.F90",
+		"/D/SMWData/Source_Code/swb2/src/netcdf4_support.F90",
 		"/D/SMWData/Source_Code/swb/src/stats.F90",
-		"/D/SMWData/Source_Code/swb/doc/src/scope_and_purpose.md",
+		"/D/SMWData/Source_Code/swb/src/sm_thornthwaite_mather.F90",
+		"/D/SMWData/Source_Code/swb/src/types.F90",
+		"/D/SMWData/Source_Code/swb/src/main.F90",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Erick_Burns/recharge_w_SMW_annotation.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Erik_Smith/recharge.ctl",
+		"/D/SMWData/Source_Code/swb/src/version_control.tpl",
+		"/D/SMWData/Source_Code/swb/src/runoff_curve_number.F90",
+		"/D/SMWData/Source_Code/swb/src/output.F90",
 		"/D/SMWData/Source_Code/swb/src/control.F90",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Dick_Yager/recharge_CIDA_DAYMET_cached.ctl",
+		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb2/fwp_swb_control.ctl",
+		"/D/SMWData/Source_Code/swb/src/netcdf4_support.F90",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Howard/LMB_SWBcontrolfile__SMW.ctl",
+		"/D/SMWData/Source_Code/swb/src/grid.F90",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Kirstin_Seleen_NY_v3/recharge_saratoga_SMW_CIDA_Hayhoe_data.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/bec4/recharge_proj4_200m.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/Howard/LMB_SWBcontrolfile.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km/swb_recharge.ctl",
+		"/D/SMWData/Source_Code/swb/src/CMakeLists.txt",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge_smw.ctl",
+		"/D/SMWData/Active_Projects/Hatchery_Kettle_Moraine/swb/recharge.ctl",
+		"/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge_GDD300.ctl",
+		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb/fwp_swb_control.ctl",
+		"/D/SMWData/Source_Code/swb/doc/src/main.md",
+		"/D/SMWData/Source_Code/swb/doc/src/scope_and_purpose.md",
 		"/D/SMWData/Source_Code/swb/doc/src/variable_descriptions.md",
 		"/D/SMWData/Source_Code/swb/doc/src/settings_for_specific_datasets.md",
 		"/D/SMWData/Source_Code/swb/doc/src/parameterization.md",
 		"/D/SMWData/Source_Code/swb/doc/src/dir_output.md",
 		"/D/SMWData/Source_Code/swb/doc/src/swb_irrigation_module_docs.md",
-		"/D/SMWData/Source_Code/swb/src/runoff_curve_number.F90",
 		"/D/SMWData/Source_Code/swb/doc/src/model_description.md",
-		"/D/SMWData/Source_Code/swb/src/et_hargreaves.F90",
-		"/D/SMWData/Source_Code/swb/src/swbstats.F90",
 		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb2/fwp_swb_control__mauer.ctl",
 		"/D/SMWData/Active_Projects/Fox_Wolf_Peshtigo/swb/std_input/Irrigation_table_1_30_2015.txt",
 		"/D/SMWData/Source_Code/swb/doc/src/dir_output.mdown",
@@ -363,6 +260,11 @@
 		"case_sensitive": false,
 		"find_history":
 		[
+			"nodata",
+			"agirr",
+			"landuse",
+			"could not find input data",
+			"missing",
 			"\\t",
 			"Illegal precipitation input format specified",
 			"lPadReplaceWithZero",
@@ -466,500 +368,24 @@
 	"groups":
 	[
 		{
-			"selected": 15,
+			"selected": 0,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "/D/SMWData/Source_Code/swb/src/model.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 146311,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								76276,
-								76276
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 46708.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 3,
-					"type": "text"
-				},
-				{
-					"buffer": 1,
-					"file": "/D/SMWData/Source_Code/swb/src/swbstats.F90",
-					"semi_transient": true,
-					"settings":
-					{
-						"buffer_size": 52374,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								43147,
-								43147
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 25590.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 6,
-					"type": "text"
-				},
-				{
-					"buffer": 2,
-					"file": "/D/SMWData/Source_Code/swb/src/data_factory.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 57133,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								24783,
-								24783
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 13991.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 8,
-					"type": "text"
-				},
-				{
-					"buffer": 3,
-					"file": "/D/SMWData/Source_Code/swb/src/et_FAO56_crop_coefficients.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 15227,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								15227,
-								15227
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 5564.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 12,
-					"type": "text"
-				},
-				{
-					"buffer": 4,
-					"file": "/D/SMWData/Source_Code/swb/src/water_balance.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 21662,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								21635,
-								21635
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 10542.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 4,
-					"type": "text"
-				},
-				{
-					"buffer": 5,
-					"file": "/D/SMWData/Source_Code/swb2/src/netcdf4_support.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 121590,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 161.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 7,
-					"type": "text"
-				},
-				{
-					"buffer": 6,
-					"file": "/D/SMWData/Source_Code/swb/src/stats.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 65872,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								53699,
-								53699
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 33860.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 11,
-					"type": "text"
-				},
-				{
-					"buffer": 7,
-					"file": "/D/SMWData/Source_Code/swb/src/sm_thornthwaite_mather.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 7414,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 2578.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 13,
-					"type": "text"
-				},
-				{
-					"buffer": 8,
-					"file": "/D/SMWData/Source_Code/swb/src/types.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 104197,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								12163,
-								12176
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 4368.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 10,
-					"type": "text"
-				},
-				{
-					"buffer": 9,
-					"file": "/D/SMWData/Source_Code/swb/src/main.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2592,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								737,
-								737
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 174.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 14,
-					"type": "text"
-				},
-				{
-					"buffer": 10,
-					"file": "/D/SMWData/Source_Code/swb/src/runoff_curve_number.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 9038,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								5653,
-								5653
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 3433.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 15,
-					"type": "text"
-				},
-				{
-					"buffer": 11,
-					"file": "/D/SMWData/Source_Code/swb/src/output.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 26507,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								17800,
-								17800
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 905.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 16,
-					"type": "text"
-				},
-				{
-					"buffer": 12,
-					"file": "/D/SMWData/Source_Code/swb/src/snow.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 8167,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 726.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 9,
-					"type": "text"
-				},
-				{
-					"buffer": 13,
-					"file": "/D/SMWData/Source_Code/swb/src/control.F90",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 87530,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								15537,
-								15537
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/MinimalFortran/MinimalFortran.tmLanguage",
-							"tab_size": 2,
-							"translate_tabs_to_spaces": true
-						},
-						"translation.x": 0.0,
-						"translation.y": 7506.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 2,
-					"type": "text"
-				},
-				{
-					"buffer": 14,
-					"file": "/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge.ctl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 2859,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								1038,
-								1048
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 0.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 1,
-					"type": "text"
-				},
-				{
-					"buffer": 15,
-					"file": "/D/SMWData/Source_Code/SWB_TEST_CASES/GLASS_10km_2/swb_recharge_smw.ctl",
-					"semi_transient": false,
-					"settings":
-					{
-						"buffer_size": 3421,
-						"regions":
-						{
-						},
-						"selection":
-						[
-							[
-								0,
-								0
-							]
-						],
-						"settings":
-						{
-							"syntax": "Packages/Text/Plain text.tmLanguage"
-						},
-						"translation.x": 0.0,
-						"translation.y": 330.0,
-						"zoom_level": 1.0
-					},
-					"stack_index": 0,
-					"type": "text"
-				},
-				{
-					"buffer": 16,
 					"file": "/D/SMWData/Source_Code/swb/src/grid.F90",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 87727,
+						"buffer_size": 87751,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								77491,
-								77491
+								23862,
+								23862
 							]
 						],
 						"settings":
@@ -969,10 +395,10 @@
 							"translate_tabs_to_spaces": true
 						},
 						"translation.x": 0.0,
-						"translation.y": 44442.0,
+						"translation.y": 12246.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 5,
+					"stack_index": 0,
 					"type": "text"
 				}
 			]
