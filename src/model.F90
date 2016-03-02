@@ -217,8 +217,11 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     call model_InitializeLanduseRelatedParams( pGrd, pConfig )
     call sm_thornthwaite_mather_UpdatePctSM( pGrd )
 
-    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE )         &
+    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
+      write(UNIT=LU_LOG,FMT=*)  "model.F90: reinitializing irrigation table " &
+        //"-- calling model_CreateIrrigationTableIndex"
       call model_CreateIrrigationTableIndex(pGrd, pConfig )
+    endif
 
     write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
     flush(unit=LU_LOG)
