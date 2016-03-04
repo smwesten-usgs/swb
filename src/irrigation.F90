@@ -93,7 +93,7 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
             cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
                                         * rIrrigationAmount, kind=c_double )
 
-            !> @todo Must difinitively figure out what to do with water that
+            !> @todo Must definitively figure out what to do with water that
             !! is calculated to be used as part of the inefficiency in the
             !! delivery system.
 

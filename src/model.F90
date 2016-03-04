@@ -1041,7 +1041,7 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   logical (kind=c_bool) :: lAssertTest
 
   ! zero out growing degree day at start of calendar year
-!  if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
+  if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest-changing
