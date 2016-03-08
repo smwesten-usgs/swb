@@ -5,9 +5,9 @@ rmdir /S /Q CMake*
 del /S /Q *.txt
 
 :: set CMAKE-related and build-related variables
-set CMAKEROOT=C:\Program Files (x86)\CMake 2.8
+set CMAKEROOT=C:\Program Files (x86)\CMake
 set MINGWBASE=c:\MinGW64
-set MINGW_VERSION=4.8.0
+set MINGW_VERSION=4.9.3
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 set Fortran_COMPILER_NAME=gfortran
 set R_HOME="C:\Program Files\R\R-3.0.1\bin"
@@ -17,7 +17,7 @@ set OMP_NUM_THREADS=8
 set INSTALL_PREFIX=d:\DOS
 
 :: define other variables for use in the CMakeList.txt file
-:: options are "Release", "Profile" or "Debug"
+:: options are "Release" or "Debug"
 set BUILD_TYPE="Release"
 :: options are "x86" (32-bit) or "x64" (64-bit)
 set PLATFORM_TYPE="x64"
@@ -36,9 +36,8 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=generic -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+::set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
+set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
 :: IMPORTANT!! Make sure a valid TEMP directory exists!!
 set TEMP=d:\TEMP
@@ -54,6 +53,8 @@ set PATH=%PATH%;%CMAKEROOT%\bin;%CMAKEROOT%\share
 :: not every installation will have these; I (SMW) find them useful
 set PATH=%PATH%;c:\Program Files (x86)\Zeus
 set PATH=%PATH%;D:\DOS\gnuwin32\bin
+
+echo "mingw32-make.exe" > make.bat
 
 :: set important environment variables
 set FC=%MINGWBASE%\bin\gfortran.exe
@@ -72,7 +73,7 @@ set LIBRARY_PATH=%MINGWBASE%\lib;%MINGWBASE%\lib\gcc\%COMPILER_TRIPLET%\%MINGW_V
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
 set CFLAGS="-DCURL_STATICLIB"
-set CPPFLAGS="DgFortran -DCURL_STATICLIB"
+set CPPFLAGS="-DgFortran -DCURL_STATICLIB"
 
 set CMAKE_INCLUDE_PATH=%INCLUDE%
 set CMAKE_LIBRARY_PATH=%LIB%
@@ -88,7 +89,7 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DPLATFORM_TYPE=%PLATFORM_TYPE% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^
--DCMAKE_MAKE_PROGRAM:FILEPATH=%MINGWBASE%\bin\make.exe ^
+-DCMAKE_MAKE_PROGRAM=%MINGWBASE%\bin\mingw32-make.exe ^
 -DCMAKE_RANLIB:FILEPATH=%MINGWBASE%\bin\ranlib.exe ^
 -DCMAKE_C_COMPILER:FILEPATH=%MINGWBASE%\bin\gcc.exe ^
 -DCMAKE_Fortran_COMPILER:FILEPATH=%MINGWBASE%\bin\gfortran.exe ^
@@ -102,5 +103,4 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DOPTION__STRICT_DATE_CHECKING=%OPTION__STRICT_DATE_CHECKING% ^
 -DOPTION__DEBUG_PRINT=%OPTION__DEBUG_PRINT% ^
 -DCMAKE_Fortran_FLAGS_DEBUG=%CMAKE_Fortran_FLAGS_DEBUG% ^
--DCMAKE_Fortran_FLAGS_RELEASE=%CMAKE_Fortran_FLAGS_RELEASE% ^
--DCMAKE_Fortran_FLAGS_PROFILE=%CMAKE_Fortran_FLAGS_PROFILE%
+-DCMAKE_Fortran_FLAGS_RELEASE=%CMAKE_Fortran_FLAGS_RELEASE%
