@@ -1294,6 +1294,12 @@ subroutine control_setModelOptions(sControlFile)
       call model_ReadLanduseLookupTable( pConfig )
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "ENABLE_IRRIGATION" ) then
+      write(UNIT=LU_LOG,FMT=*) "The 'ENABLE_IRRIGATION' directive is deprecated."
+      write(UNIT=LU_LOG,FMT=*) "  ==> Ensure that you have a 'Irrigation Application Scheme' column"
+      write(UNIT=LU_LOG,FMT=*) "      in your irrigation lookup table. It should be placed to the right"
+      write(UNIT=LU_LOG,FMT=*) "      of the 'Irrigation End Date' column."      
+
     else if ( sItem == "IRRIGATION_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading irrigation lookup table"
       call Chomp ( sRecord, pConfig%sIrrigationLookupFilename )

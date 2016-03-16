@@ -16,7 +16,7 @@ set LIB_PATH2=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION%
 
 set MAKE_EXECUTABLE_NAME=mingw32-make.exe
 set Fortran_COMPILER_NAME=gfortran
-set R_HOME=C:\Program Files\R\R-3.1.2\bin
+set R_HOME=C:\Program Files\R\R-3.2.1\bin
 set OMP_NUM_THREADS=8
 
 :: define where 'make copy' will place executables

@@ -1,6 +1,9 @@
 myargs <- commandArgs(trailingOnly = TRUE)
-
 swb_exe <- myargs[1]
+
+# constants for testing purposes
+#swb_exe <- "d:\\DOS\\swb.exe"
+#setwd("D:\\SMWData\\Source_Code\\swb\\build\\win_x64\\gfortran\\tests\\irrigation")
 
 nash_sutcliffe <- function(cw, swb)  {
   
@@ -49,7 +52,7 @@ retval <- system2(command=swb_exe,
                   stdout="SWB_stdout.txt",
                   wait=FALSE)
 
-Sys.sleep(4)
+Sys.sleep(5)
 
 pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 

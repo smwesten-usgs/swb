@@ -2746,6 +2746,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
   real (kind=c_float) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
+  character (len=256) :: sBuf 
 	integer (kind=c_int) :: iCol,iRow
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
 
@@ -3019,6 +3020,18 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
     else
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_NONE
     endif
+    select case ( pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme )
+      case ( CONFIG_IRRIGATION_APPLICATION_NONE )
+        sBuf = "'none'"
+      case ( CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT )  
+        sBuf = "'constant application amount'"
+      case ( CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY )
+        sBuf = "'replenish soil to field capacity'"
+      case default
+        call assert(lFALSE, "Unhandled configuration file option associated with "                   &
+          //"'Irrigation Application Scheme' choice", trim(__FILE__), __LINE__ )  
+    end select  
+    write(unit=LU_LOG, fmt=*) "  irrigation application scheme is "//trim( sBuf )
 
     call chomp(sRecord, sItem, sTAB)
     read( unit=sItem, fmt=*, iostat=iStat) pConfig%IRRIGATION(iLandUseIndex)%rIrrigationAmount
