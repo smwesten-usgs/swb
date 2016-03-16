@@ -408,6 +408,9 @@ module types
     !> Day of year after which no irrigation is assumed to take place
     integer (kind=c_int) :: iEndIrrigation = 240
 
+    !> Irrigation scheme for simulated application; 0=none
+    integer (kind=c_int) :: iApplication_Scheme = 0
+
     !> Maximum irrigation amount, in inches, per irrigation event.
     !! Values near zero or less indicate irrigation until soil reaches saturation!
     real (kind=c_float) :: rIrrigationAmount = rZERO
@@ -833,6 +836,14 @@ module types
   integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_CALCULATE = 0
   integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_CONSTANT = 1
   integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
+  !> @}
+
+  !> @name Constants: Irrigation application method
+  !> Configuration information for irrigation application method
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_NONE             = 0
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY   = 1
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT    = 2
   !> @}
 
   !> @name Constants: Thornthwaite-Mather implementation method

@@ -1303,6 +1303,7 @@ subroutine control_setModelOptions(sControlFile)
          "The irrigation module cannot be activated before specifying " &
          //"a land use lookup table", trim(__FILE__), __LINE__ )
       call model_ReadIrrigationLookupTable( pConfig, pGrd )
+      pConfig%lEnableIrrigation = lTRUE
       flush(UNIT=LU_LOG)
 
     else if ( sItem == "BASIN_MASK" ) then
@@ -1868,10 +1869,6 @@ subroutine control_setModelOptions(sControlFile)
         call Assert( lFALSE, "Illegal FAO56 option specified" )
       end if
       flush(UNIT=LU_LOG)
-
-    else if ( sItem == "ENABLE_IRRIGATION" ) then
-      write(UNIT=LU_LOG,FMT=*) "Allowing swb to supplement soil moisture by means of irrigation"
-      pConfig%lEnableIrrigation = lTRUE
 
     else if ( sItem == "OUTPUT_FORMAT" ) then
       call Chomp ( sRecord, sOption )

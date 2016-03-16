@@ -3005,6 +3005,21 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
     write(UNIT=LU_LOG,FMT=*)  "   irrigation ends on day ", &
       pConfig%IRRIGATION(iLandUseIndex)%iEndIrrigation
 
+
+    call chomp(sRecord, sItem, sTAB)
+    call uppercase( sItem )
+    if ( index( sItem, "CAPACITY") > 0 ) then
+      pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY
+!      elseif ( str_buffer .contains. "deficit") then
+      !   pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = APP_DEFINED_DEFICIT
+    elseif ( index( sItem, "CONSTANT") > 0 ) then
+      pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT
+      ! elseif ( str_buffer .contains. "demand") then
+      !   pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = APP_HWB_DEMAND_BASED        
+    else
+      pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_NONE
+    endif
+
     call chomp(sRecord, sItem, sTAB)
     read( unit=sItem, fmt=*, iostat=iStat) pConfig%IRRIGATION(iLandUseIndex)%rIrrigationAmount
     call Assert( iStat == 0, &

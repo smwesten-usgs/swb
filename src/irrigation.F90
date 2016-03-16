@@ -81,28 +81,56 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
             !> NEW as of 4/23/2014: irrigation amount can either be the amount
             !! of the current soil moisture deficit *or* a specified maximum
             !! daily amount
-            if (pIRRIGATION%rIrrigationAmount <= rNEAR_ZERO) then
+            if ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY ) then
+
+              !! Replenish to field capacity: add all moisture to soil reservoir such that the deficit is
+              !!                              completely eliminated; adjust GW and SW irrigation figures 
+              !!                              upward to adjust for any inefficiencies in water delivery.
+
               rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
-            else
-              rIrrigationAmount = pIRRIGATION%rIrrigationAmount
+
+              cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
+                                          * rIrrigationAmount, kind=c_double )                            &
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+
+              cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
+                                          * rIrrigationAmount, kind=c_double )                            &
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+            elseif ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT ) then
+
+              !! Defined amount: assume we know the total amount of water applied; adjust amount that
+              !!                 gets to the root zone by efficiency fraction.
+
+              cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
+                                          * pIRRIGATION%rIrrigationAmount, kind=c_double )
+
+              cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
+                                          * pIRRIGATION%rIrrigationAmount, kind=c_double )                            
+
+              rIrrigationAmount =   cel%rIrrigationFromGW                                                   &
+                                      * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )          &
+                                  +   cel%rIrrigationFromSW                                                 & 
+                                      * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+            else 
+              cel%rIrrigationAmount = rZERO
+              cel%rIrrigationFromGW = rZERO
+              cel%rIrrigationFromSW = rZERO
             endif
 
-            cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
-                                        * rIrrigationAmount, kind=c_double )
+            cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
+                                        * rIrrigationAmount, kind=c_double )                            &
+                                        / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
 
-            cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
-                                        * rIrrigationAmount, kind=c_double )
+            cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
+                                        * rIrrigationAmount, kind=c_double )                            &
+                                        / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
 
-            !> @todo Must definitively figure out what to do with water that
-            !! is calculated to be used as part of the inefficiency in the
-            !! delivery system.
-
-            ! rIrrigationAmount is the value that actually enters the mass balance
-            ! NOTE!! Currently we are assuming that the amounts from GW and SW are the amounts a grower
-            !        would estimate based on pumping rates and times; it is assumed that the inefficiencies
-            !        in delivery result in water that bypasses the root zone.
-            cel%rIrrigationAmount = cel%rIrrigationFromGW * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double ) &
-                                  + cel%rIrrigationFromSW * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+            !! @NOTE: it is unlikely that the standard published "application efficiency" numbers are applicable
+            !!        here. SWB will calculate evaporative, runoff, and deep percolation losses. Efficiencies
+            !!        supplied to SWB should be close to 1.0 unless there is a really good reason for them to 
+            !!        be less...
 
           else
 
