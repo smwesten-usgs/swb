@@ -3,9 +3,9 @@
 !/**                                                            **/
 !/** Module file for DISLIN Fortran 90.                         **/
 !/**                                                            **/
-!/** Date     :  15.01.2014                                     **/
-!/** Routines :  767                                            **/
-!/** Version  :  10.4 / explicit-shape                          **/
+!/** Date     :  28.01.2015                                     **/
+!/** Routines :  772                                            **/
+!/** Version  :  10.5 / explicit-shape                          **/
 !/****************************************************************/
 
 module dislin
@@ -43,10 +43,11 @@ module dislin
   integer, parameter :: LINE_SOLID         =    0
   integer, parameter :: LINE_DOT           =    1
   integer, parameter :: LINE_DASH          =    2
-  integer, parameter :: LINE_CHNDOT        =    3
-  integer, parameter :: LINE_DASHM         =    4
-  integer, parameter :: LINE_DASHL         =    5
+  integer, parameter :: LINE_CHNDSH        =    3
+  integer, parameter :: LINE_CHNDOT        =    4
+  integer, parameter :: LINE_DASHM         =    5
   integer, parameter :: LINE_DOTL          =    6
+  integer, parameter :: LINE_DASHL         =    7
 
 ! Constants for shading patterns
   integer, parameter :: SHADING_NONE       =   -1
@@ -125,6 +126,9 @@ module dislin
       implicit none
       integer, intent (in) :: n
     end subroutine axsbgd
+
+    subroutine axsers()
+    end subroutine axsers
  
     subroutine axslen(i,j)
       implicit none
@@ -847,6 +851,12 @@ module dislin
       integer, intent (out) :: nw,nh,iret 
     end subroutine filsiz
 
+    subroutine filtyp(cfl,iret)
+      implicit none
+      character (len = *), intent (in) :: cfl
+      integer, intent (out) :: iret 
+    end subroutine filtyp
+
     subroutine filwin(nx,ny,nw,nh)
       implicit none
       integer, intent (in) :: nx,ny,nw,nh
@@ -1060,6 +1070,11 @@ module dislin
       integer, intent (out) :: i,j,k
     end subroutine getscl
 
+    subroutine getscm(i,j,k)
+      implicit none
+      integer, intent (out) :: i,j,k
+    end subroutine getscm
+
     subroutine getscr(i,j)
       implicit none
       integer, intent (out) :: i,j
@@ -1242,6 +1257,11 @@ module dislin
       integer, intent (in) :: id
       real, intent (out) :: xv
     end subroutine gwgflt
+
+    subroutine gwggui(ival)
+      implicit none
+      integer, intent (out) :: ival
+    end subroutine gwggui
 
     subroutine gwgint(id,iv)
       implicit none
@@ -1491,6 +1511,13 @@ module dislin
       character (len=*), intent (in out) :: clis
       character (len=*), intent (in) :: cstr
     end subroutine itmcat
+
+    subroutine itmncat(clis,nmx,cstr)
+      implicit none
+      character (len=*), intent (in out) :: clis
+      character (len=*), intent (in) :: cstr
+      integer, intent (in) :: nmx
+    end subroutine itmncat
  
     function itmcnt(clis)
       implicit none

@@ -6,7 +6,7 @@ set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a")
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
     ENV R_HOME
-	${PATH_TO_R}
+  ${PATH_TO_R}
     PATHS
     "c:/Program Files/R"
     "c:/Program Files/R/R-3.0.1/bin"
@@ -50,6 +50,7 @@ find_library(LIBZ
         /usr/local/opt/zlib/lib
         ${SWB_LIBPATH}
         ${LIB_PATH}
+        NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBSZ
@@ -83,14 +84,16 @@ find_library(LIBHDF5_HL
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBCURL
-        NAMES curl libcurl libcurl.a
-        PATHS /usr/local/opt/curl/lib
-        ${SWB_LIBPATH}
+        NAMES curl libcurl libcurl.a libcurl.dylib
+        PATHS 
+        /usr/local/Cellar/curl/7.47.1/lib
         ${LIB_PATH}
+        NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
-        NAMES dismg libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.dylib
+        NAMES
+        dismg libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.5.0.dylib
         PATHS
         /usr/local/lib
         /usr/local/dislin/lib
@@ -99,12 +102,15 @@ find_library(LIBDISLIN
 
 find_library(LIBGCC
         NAMES gcc libgcc libgcc.a
-        PATHS /usr/local/opt/gcc48/lib/gcc/x86_64-apple-darwin13.0.0/4.8.2
+        PATHS 
+        /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
         ${LIB_PATH} )
 
 find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
-        PATHS ${LIB_PATH} )
+        PATHS 
+        /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5
+        ${LIB_PATH} )
 
 set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
                    ${LIBSZ} ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} )
