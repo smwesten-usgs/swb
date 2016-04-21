@@ -342,6 +342,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                  ! Don't route any further; the water enters a surface water feature.
                  ! nothing to do; leave rDailyRejectedRecharge value alone
                 elseif(pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
+                  ! should never reach this point in any case if routing is disabled;
+                  ! Tgt_Row and Tgt_Col should be zero, and should fall out of the 
+                  ! if-then logic
+                  
                   ! add cell rejected recharge to target cell inflow
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow = &
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow + &
