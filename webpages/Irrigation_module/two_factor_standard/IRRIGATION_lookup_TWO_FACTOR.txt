@@ -1,6 +1,0 @@
-#	LU	Maximum					L	L	L	L	L	Measures of									Plant Stress	GDD	GDD	Maximum	Irrigation	Irrigation	Fraction of	Fractional	Fractional
-#	Description	Crop	Kcb	Kcb	Kcb	Kcb	planting	initial	dev	mid	late	Growth	REW	REW	REW	REW	TEW	TEW	TEW	TEW	Depletion	Base 	Max	Allowable	Start	End	Irrigation	Irrigation	Irrigation
-# LU	assumed FAO56 classification is given following the semicolon	Height (feet)	initial	mid	late	min	(DOY/GDD)	(DOY/GDD)	(DOY/GDD)	(DOY/GDD)	(DOY/GDD)	('DOY' or 'GDD')	A SOILS	B SOILS	C SOILS	D SOILS	A SOILS	B SOILS	C SOILS	D SOILS	Fraction	Temperature (F) 	Temperature (F)	Depletion	Date	Date	from GW	Efficiency (GW)	Efficiency (SW)
-7	Irrigated corn or soybeans	4.9	0.15	1.1	1.0	0.15	5/10	30	40	50	50	DOY	0.196	0.295	0.393	0.472	0.354	0.669	0.906	1.063	0.5	50	130	0.5	5/15	9/5	1	1	0.75
-8	Irrigated corn or soybeans	4.9	0.15	1.1	1.0	0.15	130	30	40	50	50	DOY	0.196	0.295	0.393	0.472	0.354	0.669	0.906	1.063	0.5	50	130	1	5/15	9/5	1	1	0.75
-41	Forested	30	1	1	1	1	130	90	90	90	90	DOY	0.196	0.295	0.393	0.472	0.354	0.669	0.906	1.063	0.3	50	130	1	5/1	9/5	1	0.85	0.75
