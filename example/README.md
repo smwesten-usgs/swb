@@ -21,7 +21,7 @@ The remainder of this document will provide annotation of the control file state
 
 The first section of the control file defines the number of gridcells, the coordinates of the lower left-hand corner, the gridcell resolution, and an optional *projection definition* needed for making use of datasets of varying geographic projections. *If all of your input grids match the initial SWB grid definition as defined in this first section, then `BASE_PROJECTION_DEFINITION` is not needed.*
 
-In this example, the SWB grid resolution may be changed by simply commenting out one SWB `GRID` definition and uncommenting an alternative `GRID` definition. Projection information may be found [here](http://spatialreference.org); PROJ4 strings are listed for many common projection systems. In our example we're using UTM16, with units of **feet**. *Note that changing the base project grid resolution is only possible if a *`BASE_PROJECTION_DEFINITION`* control file statement is present.*
+In this example, the SWB grid resolution may be changed by simply commenting out one SWB `GRID` definition and uncommenting an alternative `GRID` definition. Projection information may be found [here](http://spatialreference.org); PROJ4 strings are listed for many common projection systems. In our example we're using UTM16, with units of **feet**. *Note that changing the base project grid resolution is only possible if a* `BASE_PROJECTION_DEFINITION` *control file statement is present.*
 
     #      ncol  nrow XLL     YLL              resolution
     #GRID  520   695  1092610 16670600         100.0
