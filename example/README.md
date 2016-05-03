@@ -1,13 +1,13 @@
-# Test case description and annotated control file
+# Example description and annotated control file
 
-The test case presented here runs with the executable from March 2016. The first three lines of the logfile read:
+The example presented here runs with the executable from March 2016. The first three lines of the logfile read:
 > Soil Water Balance Code version 1.2 BETA (geographic transformations enabled)
 > 
 > Git branch and commit hash:  master (  51b330e )
 > 
 > Compiled on Mar 16 2016  13:43:05
 
-In order to make this test case work on your machine, you'll need to either download some Daymet climate data mosaics, or substitute some other source for tmax, tmin, and precipitation data. Running the batch file `make_output_directories.bat` will create the output and image directory structures discussed in the [official documentation](https://pubs.er.usgs.gov/publication/tm6A31).
+In order to make this example work on your machine, you'll need to either download some Daymet climate data mosaics, or substitute some other source for tmax, tmin, and precipitation data. Running the batch file `make_output_directories.bat` will create the output and image directory structures discussed in the [official documentation](https://pubs.er.usgs.gov/publication/tm6A31).
 
 This example demonstrates the use of the following new(er) SWB features not discussed in the official documentation:
 
@@ -21,7 +21,7 @@ The remainder of this document will provide annotation of the control file state
 
 The first section of the control file defines the number of gridcells, the coordinates of the lower left-hand corner, the gridcell resolution, and an optional *projection definition* needed for making use of datasets of varying geographic projections. *If all of your input grids match the initial SWB grid definition as defined in this first section, then `BASE_PROJECTION_DEFINITION` is not needed.*
 
-In this example, the SWB grid resolution may be changed by simply commenting out one SWB `GRID` definition and uncommenting an alternative `GRID` definition. Projection information may be found [here](http://spatialreference.org); PROJ4 strings are listed for many common projection systems. In our example we're using UTM16, with units of **feet**.
+In this example, the SWB grid resolution may be changed by simply commenting out one SWB `GRID` definition and uncommenting an alternative `GRID` definition. Projection information may be found [here](http://spatialreference.org); PROJ4 strings are listed for many common projection systems. In our example we're using UTM16, with units of **feet**. *Note that changing the base project grid resolution is only possible if a *`BASE_PROJECTION_DEFINITION`* control file statement is present.*
 
     #      ncol  nrow XLL     YLL              resolution
     #GRID  520   695  1092610 16670600         100.0
@@ -191,8 +191,8 @@ For each of the three major climate datasets (precipitation, minimum and maximum
 | _NETCDF_Z_VAR                      |  *string*        | name of the variable to be used as the "z" (value) axis | prcp |
 | _NETCDF_TIME_VAR                   |  *string*        | name of the variable to be used as the "time" axis | time |
 | _NETCDF_VARIABLE_ORDER             |  "xyt or txy"    | description of the order in which the gridded data were written | tyx |
-| _NETCDF_FLIP_VERTICAL               |  **none**        | if present, all gridded data will be "flipped" around the vertical axis. | NA |
-| _NETCDF_FLIP_HORIZONTAL            |  **none**        | if present, all gridded data will be "flipped" around the horizontal axis  |  |
+| _NETCDF_FLIP_VERTICAL               |  **none**        | if present, all gridded data will be "flipped" around the horizontal axis (data at the top of the grid become data at the bottom of the grid and vice versa). | NA |
+| _NETCDF_FLIP_HORIZONTAL            |  **none**        | if present, all gridded data will be "flipped" around the vertical axis (data at the left of the grid become data at the right of the grid and vice versa) |  |
 | _NETCDF_MAKE_LOCAL_ARCHIVE         |  |  |
 | _PROJECTION_DEFINITION             |  | PROJ.4 string describing the geographic projection of the dataset |  |
 | _MINIMUM_ALLOWED_VALUE             | *real value* | ceiling to be applied to the data; data above this value will be reset to this amount | |
