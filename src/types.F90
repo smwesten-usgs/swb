@@ -783,7 +783,6 @@ module types
   integer (kind=c_int),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
   !> @}
 
-
   !> @name Constants: Evapotranspiration algorithm
   !> Options for specifying the choice of evapotranspiration algorithm
   !> @{
@@ -1955,6 +1954,28 @@ function lowercase_fn ( s )                               result(sOut)
   end do
 
 end function lowercase_fn
+
+!--------------------------------------------------------------------------
+
+subroutine lowercase( s ) 
+
+  ! ARGUMENTS
+  character (len=*), intent(inout) :: s
+
+  ! LOCALS
+  integer (kind=c_int) :: i    ! do loop index
+  ! CONSTANTS
+  integer (kind=c_int), parameter :: UPPER_TO_LOWER = 32
+
+!  UPPER_TO_LOWER = ichar( "a" ) - ichar( "A" )
+
+  do i=1,len_trim(s)
+      if ( ichar(s(i:i) ) >= ichar("A") .and. ichar(s(i:i)) <= ichar("Z") ) then
+          s(i:i) = char( ichar( s(i:i) ) + UPPER_TO_LOWER )
+      end if
+  end do
+
+end subroutine lowercase
 
 !--------------------------------------------------------------------------
 
