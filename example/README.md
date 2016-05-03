@@ -76,10 +76,13 @@ Many other control file statements are available to inform SWB of conversion fac
     TMIN_ADD_OFFSET 32
     OUTPUT_GRID_SUFFIX asc
 
+    GROWING_SEASON 133 268 TRUE
     INITIAL_ABSTRACTION_METHOD HAWKINS
     INITIAL_FROZEN_GROUND_INDEX CONSTANT 100.0
     UPPER_LIMIT_CFGI 83.
     LOWER_LIMIT_CFGI 55.
+
+An experimental method for determining the length of the growing season is available by specifying `GROWING SEASON GDD`. In this method, the growing season is assumed to begin once the number of growing degree-days exceeds some threshold. The growing season is considered to end when the minimum daily air temperature falls below a killing frost threshold. Both of these thresholds may be changed. The growing season GDD threshold is set by means of the `GROWING_SEASON_STARTING_GDD` directive; the killing frost directive is set by means of the `GROWING_SEASON_KILLING_FROST` directive. If you wish to try this option out, it is strongly recommended that you also plot the daily growing season status ( `OUTPUT_OPTIONS GROWING_SEASON` )over time to make sure that the code is doing what you think it should.
 
     FLOW_DIRECTION ARC_GRID input\NED_10m_D8_Flow_Dir.asc
     FLOW_DIRECTION_PROJECTION_DEFINITION +proj=tmerc +lat_0=0.0 +lon_0=-90.0 +k=0.9996 +x_0=520000 +y_0=-4480000 +datum=NAD83 +units=m
@@ -129,7 +132,7 @@ The Hargraves-Samani method for estimating potential ET requires minimum and max
     OUTPUT_OPTIONS RUNOFF_OUTSIDE       NONE     NONE      BOTH
     OUTPUT_OPTIONS ACT_ET               NONE     NONE      BOTH
     OUTPUT_OPTIONS REFERENCE_ET         NONE     NONE      NONE
-    OUTPUT_OPTIONS GROWING_SEASON       NONE     NONE      PLOT
+    OUTPUT_OPTIONS GROWING_SEASON       NONE     NONE      NONE
 
     OUTPUT_FORMAT ARC_GRID
     SOLVE_NO_TS_FILE 1980 1981
