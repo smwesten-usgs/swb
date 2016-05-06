@@ -1834,6 +1834,7 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
 !         iRUNOFF_OUTSIDE,iMonth,iZERO)
 
   cel%rFlowOutOfGrid = rR
+
 !       cel%rOutFlow = rR
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

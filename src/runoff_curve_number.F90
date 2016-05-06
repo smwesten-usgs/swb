@@ -263,8 +263,8 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
                                    CONFIG_SM_INIT_ABSTRACTION_HAWKINS) then
 
     ! Equation 9, Hawkins and others, 2002
-    rCN_05 = 100_c_float / &
-      ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
+    !rCN_05 = 100_c_float / &
+    !  ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
 
 
 	  ! Equation 8, Hawkins and others, 2002
