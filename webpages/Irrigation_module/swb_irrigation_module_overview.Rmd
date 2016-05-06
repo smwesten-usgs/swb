@@ -1,6 +1,0 @@
-
-
-The irrigation module simply compares the maximum allowable deficit to the current soil moisture deficit (i.e. `field capacity - current soil moisture`). If the current soil moisture deficit exceeds a user-defined maximum, irrigation water is supplied to the cell in order to erase this deficit. In other words, the soil moisture in the cell is brought back up to field capacity, and the amount of water supplied is tracked as irrigation water demand.
-
-In order to direct swb to conduct irrigation calculations, a second lookup table must be supplised to swb, and the `ENABLE_IRRIGATION` directive included in the control file, as shown in the example snippet below:
-

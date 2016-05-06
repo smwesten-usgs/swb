@@ -1,0 +1,21 @@
+NUM_LANDUSE_TYPES	15																								
+NUM_SOIL_TYPES	5																								
+#																									
+#			CURVE NUMBER (AMCII)					MAX RECHARGE (inches/day)					Interception	Interception	ROOT ZONE (FT)						
+# LU code	Description	Assumed Imperviousness	A	B	C	D	organic	A	B	C	D	organic			A	B	C	D	organic
+11	 Open Water 	**	100	100	100	100	100	4.50	2.25	1.50	0.75	1.877	0	0	0	0	0	0	0
+21	" Developed, Open Space "	**	54	70	83	88	76	2.5	1.50	0.83	0.42	1.04	0.03	0	2.66	3.32	2.12	1.33	2.72
+22	" Developed, Low Intensity "	0.3	70	80	87	92	84	2.5	1.50	0.83	0.42	1.04	0.04	0	3.08	3.83	2.45	1.53	3.14
+23	" Developed, Medium Intensity "	0.6	82	90	95	97	93	2.5	1.50	0.83	0.42	1.04	0.04	0	3.08	3.83	2.45	1.53	3.14
+24	" Developed, High Intensity "	0.9	89	92	94	97	93	2.5	1.50	0.83	0.42	1.04	0.04	0	3.08	3.83	2.45	1.53	3.14
+31	 Barren Land (Rock/Sand/Clay) 	**	90	93	95	96	94	6.00	3.50	2.75	2.00	3.13	0.06	0	1.0	1.0	1.0	1.0	1.0
+41	 Deciduous Forest  	**	30	55	70	77	63	6.00	3.50	2.75	2.00	3.13	0.02	0	2.70	2.31	1.85	1.62	2.08
+42	 Evergreen Forest 	**	36	60	73	79	67	6.00	3.50	2.75	2.00	3.13	0.02	0.02	3.16	2.65	2.12	1.85	2.39
+43	 Mixed Forest 	**	33	58	72	78	65	6.00	3.50	2.75	2.00	3.13	0.02	0.02	2.93	2.48	1.99	1.74	2.24
+52	 Shrub/Scrub 	**	39	61	74	80	68	6.00	3.50	2.75	2.00	3.13	0.035	0.015	2.45	3.06	2.45	1.63	2.75
+71	 Grassland/Herbaceous 	**	39	61	74	80	68	6.00	3.50	2.75	2.00	3.13	0.035	0.015	2.24	2.80	2.24	1.49	2.51
+81	 Pasture/Hay  	**	49	69	79	84	74	6.00	3.50	2.75	2.00	3.13	0.035	0.015	2.56	3.20	2.56	1.70	2.87
+82	 Cultivated Crops 	**	67	78	85	89	82	6.00	3.50	2.75	2.00	3.13	0.035	0	2.12	1.93	1.89	1.35	1.91
+90	 Woody Wetlands 	**	60	60	60	60	60	2.0	1.0	0.67	0.33	0.83	0.02	0	1.30	1.44	1.30	1.14	1.37
+95	 Emergent Herbaceous Wetlands 	**	60	60	60	60	60	2.0	1.0	0.67	0.33	0.83	0.02	0	1.58	1.76	1.58	1.40	1.67
+
