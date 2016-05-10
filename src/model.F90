@@ -382,6 +382,8 @@ end if
 
   call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_DAILY)
 
+  call model_dumpvals( pGrd=pGrd, pConfig=pConfig )
+
   ! Write the results at each month-end
   if ( lMonthEnd ) then
 
@@ -3690,6 +3692,33 @@ subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
 end subroutine model_CreateIrrigationTableIndex
 
 !--------------------------------------------------------------------------
+
+subroutine model_dumpvals(pGrd, pConfig)
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+
+  ! [ LOCALS ]
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+  logical                 :: file_is_open
+
+  inquire(unit=DMPFILE, opened=file_is_open )
+
+  if ( file_is_open ) then
+
+    cel => pGrd%Cells( DMPCOL, DMPROW )
+
+    write( DMPFILE, "(i2,',',i2,',',i4,',',12(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay, pConfig%iYear,      &
+      cel%rNetPrecip, cel%rInterception, cel%rSnowMelt, cel%rReferenceET0, cel%rActualET,                     &
+      cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,        &
+      cel%rDailyRecharge, cel%rRejectedRecharge
+
+    flush( DMPFILE )  
+
+  endif
+
+end subroutine model_dumpvals     
+
 
 subroutine model_WriteGrids(pGrd, pConfig, iOutputType)
 !! Writes the monthly output arrays in the proper grid format

@@ -216,6 +216,7 @@ module types
 !      real (kind=c_float) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
       real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf = rZERO  ! Inflow buffer for moving avg
       real (kind=c_float) :: rDailyRecharge = rZERO  ! Daily recharge
+      real (kind=c_float) :: rRejectedRecharge = rZERO
       real (kind=c_float) :: rSUM_Irrigation = rZERO
       real (kind=c_float) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
       real (kind=c_float) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
@@ -1230,6 +1231,9 @@ module types
   integer(kind=c_int),parameter :: iDAILY = 1
   integer(kind=c_int),parameter :: iMONTHLY = 2
   integer(kind=c_int),parameter :: iANNUAL = 3
+
+  integer (kind=c_int)               :: DMPCOL, DMPROW, DMPFILE
+  character (len=:), allocatable     :: DMP_FILENAME
 
 !**********************************************************************
 !! GENERIC interfaces

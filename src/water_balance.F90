@@ -58,7 +58,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   real (kind=c_float) :: rAppliedPotentialET   ! this will be adjusted within loop to
   real (kind=c_float) :: rDailyRecharge           ! account for evap of interception
   real (kind=c_float) :: rStreamCapture
-  real (kind=c_float) :: rDailyRejectedRecharge
   real (kind=c_float) :: rMAXIMUM_RECHARGE
   real (kind=c_float) :: rMin, rMean, rMax, rSum
   integer (kind=c_int) :: iRowCount
@@ -158,14 +157,13 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             rMoistureSurplus = rZERO
             cel%rSM_AccumPotentWatLoss = rZERO
             rChangeInStorage = rZERO
-            rDailyRejectedRecharge = rZERO
+            cel%rRejectedRecharge = rZERO
 
           else ! MAIN: Execute remainder of block ONLY if non-WATER cell
 
             ! Zero out current estimate for daily recharge, rejected recharge
             rDailyRecharge = rZERO
             cel%rDailyRecharge = rZERO
-            rDailyRejectedRecharge = rZERO
 
             rPrevious_Soil_Moisture = cel%rSoilMoisture
             ! the following code block (L1) calculates current soil moisture values
@@ -320,19 +318,19 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
           ! and characterize the rest as "rejected recharge"
           if(rDailyRecharge > rMAXIMUM_RECHARGE) then
 
-            rDailyRejectedRecharge = rDailyRecharge - rMAXIMUM_RECHARGE
+            cel%rRejectedRecharge = rDailyRecharge - rMAXIMUM_RECHARGE
             cel%rDailyRecharge = rMAXIMUM_RECHARGE
             rDailyRecharge = rMAXIMUM_RECHARGE
 
             ! Now, figure out what to do with any rejected recharge
             if ( cel%iTgt_Col == iROUTE_LEFT_GRID .or. &
               cel%iTgt_Row == iROUTE_LEFT_GRID) then
-                cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDailyRejectedRecharge
-                rDailyRejectedRecharge = rZERO
+                cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
+                cel%rRejectedRecharge = rZERO
             elseif ( cel%iTgt_Col == iROUTE_DEPRESSION .or. &
               cel%iTgt_Row == iROUTE_DEPRESSION) then
               ! Don't route any further; the water pools here.
-              ! nothing to do; leave rDailyRejectedRecharge value alone
+              ! nothing to do; leave cel%rRejectedRecharge value alone
             elseif ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNX &
               .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNY) then
 
@@ -340,7 +338,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 if(pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%iLandUse == pConfig%iOPEN_WATER_LU &
                  .or. pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%rSoilWaterCap<rNEAR_ZERO) then
                  ! Don't route any further; the water enters a surface water feature.
-                 ! nothing to do; leave rDailyRejectedRecharge value alone
+                 ! nothing to do; leave cel%rRejectedRecharge value alone
                 elseif(pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
                   ! should never reach this point in any case if routing is disabled;
                   ! Tgt_Row and Tgt_Col should be zero, and should fall out of the 
@@ -349,14 +347,16 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                   ! add cell rejected recharge to target cell inflow
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow = &
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow + &
-                  rDailyRejectedRecharge * cel%rRouteFraction
-                  cel%rOutflow = &
-                    cel%rOutflow + &
-                    rDailyRejectedRecharge * cel%rRouteFraction
-                  rDailyRejectedRecharge = &
-                    rDailyRejectedRecharge * (rONE - cel%rRouteFraction)
+                  cel%rRejectedRecharge * cel%rRouteFraction
+                  cel%rOutflow = cel%rOutflow + cel%rRejectedRecharge * cel%rRouteFraction
+                  cel%rRejectedRecharge = cel%rRejectedRecharge * (rONE - cel%rRouteFraction)
                 end if
             end if
+
+          else
+
+            cel%rRejectedRecharge = rZERO
+
           end if
 
           if(cel%rSoilWaterCap > rNear_ZERO) then
@@ -382,7 +382,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                  - rChangeInStorage &
                  - cel%rActualET &
                  - rDailyRecharge &
-                 - rDailyRejectedRecharge
+                 - cel%rRejectedRecharge
 
           if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
             write(UNIT=LU_LOG,FMT=*) "** MASS BALANCE ERROR **"
@@ -424,8 +424,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               cel%rActualET
             write(UNIT=LU_LOG,FMT="('  (-) rDailyRecharge: ',t32,F14.4)") &
               rDailyRecharge
-            write(UNIT=LU_LOG,FMT="('  (-) rDailyRejectedRecharge: ',t32,F14.4)") &
-              rDailyRejectedRecharge
+            write(UNIT=LU_LOG,FMT="('  (-) cel%rRejectedRecharge: ',t32,F14.4)") &
+              cel%rRejectedRecharge
 #ifdef STREAM_INTERACTIONS
             write(UNIT=LU_LOG,FMT="('  (-) rStreamCapture: ',t32,F14.4)") &
               cel%rStreamCapture
@@ -466,7 +466,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
           rAppliedPotentialET = rZERO
           rDailyRecharge = rZERO
           rStreamCapture = rZERO
-          rDailyRejectedRecharge = rZERO
+          cel%rRejectedRecharge = rZERO
           rMAXIMUM_RECHARGE = rZERO
 
         endif L0
@@ -477,26 +477,26 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
 !#ifdef NETCDF_SUPPORT
 !      call output_to_netcdf(pGrd, pConfig, cel, iRow, iCol, iTime, &
-!        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+!        cel%rRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
 !        rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
 !        rChangeInStorage,rDailyRecharge)
 !#endif
 
       call output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
-        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+        cel%rRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
         rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
         rChangeInStorage,rDailyRecharge)
 
       call output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
         iMonth, iDay, iYear, &
-        rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+        cel%rRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
         rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
         rChangeInStorage,rDailyRecharge)
 
       ! UPDATE MONTHLY and ANNUAL ACCUMULATORS HERE
       if (pGrd%iMask(iCol, iRow) /= iINACTIVE_CELL ) then
         call output_update_accumulators(cel, iMonth, &
-          rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+          cel%rRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
           rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
           rChangeInStorage,rDailyRecharge)
 
@@ -505,7 +505,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
           cel%rSUM_Recharge = cel%rSUM_Recharge + rDailyRecharge
           cel%rSUM_Irrigation = cel%rSUM_Irrigation + cel%rIrrigationAmount
-          cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + rDailyRejectedRecharge
+          cel%rSUM_RejectedRecharge = cel%rSUM_RejectedRecharge + cel%rRejectedRecharge
 
         end if
 
@@ -517,7 +517,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
   ! now issue the following calls to trigger calculation of daily averages
   call output_finalize_accumulators(cel, iMonth, iNumGridCells, &
-    rDailyRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
+    cel%rRejectedRecharge,rNetInflow,rNetInfil,cel%rActualET, &
     rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
     rChangeInStorage,rDailyRecharge)
 

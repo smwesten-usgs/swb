@@ -470,6 +470,22 @@ subroutine control_setModelOptions(sControlFile)
           //" precipitation data: "//dquote(sArgument) )
       endif
 
+    elseif (sItem == "DUMP_VARIABLES_TO_FILE") then
+      call Chomp ( sRecord, sArgument )
+      DMP_FILENAME = trim(sArgument)
+      call Chomp ( sRecord, sArgument )
+      read ( unit=sArgument, fmt=*, iostat=iStat ) DMPCOL
+      call Chomp ( sRecord, sArgument )
+      read ( unit=sArgument, fmt=*, iostat=iStat ) DMPROW
+      open( newunit=DMPFILE, file=DMP_FILENAME, status='REPLACE' )
+!           write( DMPFILE, "(i2,',',i2,',',i4,',',11(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay, pConfig%iYear,      &
+!       cel%rNetPrecip, cel%rInterception, cel%rSnowMelt, cel%rReferenceET0, cel%rActualET,                     &
+!       cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,        &
+!       cel%rDailyRecharge
+      write( DMPFILE, fmt="(a)") &
+        "month, day, year, net_precip, interception, snowmelt, ref_et0, actual_et, SM_capacity, SM, adjCN, inflow, "   &
+          //"outflow, flowout, recharge, rejected_recharge"
+
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
       call Chomp ( sRecord, sOption )
