@@ -78,9 +78,6 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
           if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
 
-            !> NEW as of 4/23/2014: irrigation amount can either be the amount
-            !! of the current soil moisture deficit *or* a specified maximum
-            !! daily amount
             if ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY ) then
 
               !! Replenish to field capacity: add all moisture to soil reservoir such that the deficit is
@@ -96,6 +93,26 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
               cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
                                           * cel%rIrrigationAmount, kind=c_double )                        &
                                           / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+            elseif ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ ) then
+
+              !! Replenish to field capacity: add all moisture to soil reservoir such that the deficit is
+              !!                              completely eliminated; adjust GW and SW irrigation figures 
+              !!                              upward to adjust for any inefficiencies in water delivery.
+              !!                              additional water owing to inefficiencies is *ADDED* to root zone.
+
+              cel%rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+
+              cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
+                                          * cel%rIrrigationAmount, kind=c_double )                        &
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+
+              cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
+                                          * cel%rIrrigationAmount, kind=c_double )                        &
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+              ! assume that this inflated amount of water makes it to the root zone as well.
+              cel%rIrrigationAmount = cel%rIrrigationFromSW + cel%rIrrigationFromGW
 
             elseif ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT ) then
 

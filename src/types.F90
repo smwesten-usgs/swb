@@ -841,9 +841,10 @@ module types
   !> @name Constants: Irrigation application method
   !> Configuration information for irrigation application method
   !> @{
-  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_NONE             = 0
-  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY   = 1
-  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT    = 2
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_NONE               = 0
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY     = 1
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT      = 2
+  integer (kind=c_int),parameter :: CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ  = 3
   !> @}
 
   !> @name Constants: Thornthwaite-Mather implementation method

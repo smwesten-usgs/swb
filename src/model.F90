@@ -3012,7 +3012,9 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
 
     call chomp(sRecord, sItem, sTAB)
     call uppercase( sItem )
-    if ( index( sItem, "CAPACITY") > 0 ) then
+    if ( index( sItem, "CAPACITY_PLUS") > 0 ) then
+      pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ
+    elseif ( index( sItem, "CAPACITY") > 0 ) then
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY
 !      elseif ( str_buffer .contains. "deficit") then
       !   pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = APP_DEFINED_DEFICIT
@@ -3029,7 +3031,9 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
       case ( CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT )  
         sBuf = "'constant application amount'"
       case ( CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY )
-        sBuf = "'replenish soil to field capacity'"
+        sBuf = "'replenish soil to field capacity, inefficiencies assumed lost from mass balance'"
+      case ( CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ )
+        sBuf = "'replenish soil to field capacity, inefficiencies delivered to root zone'"
       case default
         call assert(lFALSE, "Unhandled configuration file option associated with "                   &
           //"'Irrigation Application Scheme' choice", trim(__FILE__), __LINE__ )  
