@@ -222,7 +222,7 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   ! ensure that whatever modification have been made to the curve number
   ! remain within reasonable bounds
   cel%rAdjCN = MIN(cel%rAdjCN,rHUNDRED)
-  cel%rAdjCN = MAX(cel%rAdjCN,rZERO)
+  cel%rAdjCN = MAX(cel%rAdjCN,30.0_c_float)
 
 end subroutine runoff_UpdateCurveNumber
 
