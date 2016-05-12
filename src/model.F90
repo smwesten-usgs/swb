@@ -3012,7 +3012,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
 
     call chomp(sRecord, sItem, sTAB)
     call uppercase( sItem )
-    if ( index( sItem, "CAPACITY_PLUS") > 0 ) then
+    if ( ( index( sItem, "CAPACITY PLUS") > 0 ) .or. ( index( sItem, "CAPACITY ORIGINAL") > 0 ) )  then
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ
     elseif ( index( sItem, "CAPACITY") > 0 ) then
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY
@@ -3708,11 +3708,15 @@ subroutine model_dumpvals(pGrd, pConfig)
 
   inquire(unit=DMPFILE, opened=file_is_open )
 
-  if ( file_is_open ) then
+  if (       file_is_open                                                &
+       .and. ( DMPCOL > 0 )                                              &
+       .and. ( DMPCOL <= ubound( pGrd%Cells, 1) )                        &
+       .and. ( DMPROW > 0 )                                              &
+       .and. (DMPROW <= ubound( pGrd%Cells, 2) )  ) then
 
     cel => pGrd%Cells( DMPCOL, DMPROW )
 
-    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i8,','),30(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,       &
+    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),30(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,       &
       pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
       cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
       cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rNetPrecip, cel%rInterception,        &
