@@ -1260,11 +1260,17 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   call stats_WriteMinMeanMax(LU_LOG, "MEAN RECHARGE", &
           pTmpGrd%rData)
 
-  write(LU_LOG,FMT="('MEAN RECHARGE, EXCLUDING OPEN WATER CELLS:',f14.3)") &
-    SUM(pTmpGrd%rData,pGrd%Cells%rSoilWaterCap > rNear_ZERO &
-            .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU) / &
+  where (pGrd%iMask == iINACTIVE_CELL)
+    pTmpGrd%rData = rNO_DATA_NCDC
+  endwhere
+
+  write(LU_LOG,FMT="('MEAN RECHARGE, EXCLUDING OPEN WATER, INACTIVE CELLS:',f14.3)") &
+    SUM(pTmpGrd%rData,pGrd%Cells%rSoilWaterCap > rNear_ZERO         &
+            .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU     &
+            .and. pGrd%iMask == iACTIVE_CELL ) / &
     COUNT(pGrd%Cells%rSoilWaterCap > rNear_ZERO &
-            .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU)
+            .and. pGrd%Cells%iLandUse /= pConfig%iOPEN_WATER_LU     &
+            .and. pGrd%iMask == iACTIVE_CELL )
 
   write(sBuf,FMT="(a,'MEAN_',a,'_',i4.4,'_',i4.4,'.asc')") &
     TRIM(pConfig%sOutputFilepath), &
