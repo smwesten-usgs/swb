@@ -1,7 +1,7 @@
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a")
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a" ".so" )
 
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
@@ -13,7 +13,7 @@ find_program( R_SCRIPT Rscript.exe Rscript
     "/usr/bin"
 )
 
-include_directories( ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
+include_directories( "/usr/local/dislin/gf" ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
 
 if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
@@ -48,29 +48,27 @@ find_library(LIBZ
         NAMES z libz libz.a
         PATHS
         /usr/local/opt/zlib/lib
+        ${LIBZ_PATH}
         ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-find_library(LIBSZ
-        NAMES sz libsz libsz.a
-        PATHS
-        /usr/local/opt/szip/lib
-        ${SWB_LIBPATH}
-        ${LIB_PATH} )
-
-
 find_library(LIBNETCDF
         NAMES netcdf libnetcdf libnetcdf.a
-        PATHS ${SWB_LIBPATH}
+        PATHS 
+        /usr/local/lib64
+        ${SWB_LIBPATH}
+        ${LIBNETCDF_PATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 
 find_library(LIBHDF5
         NAMES hdf5 libhdf5 libhdf5.a
-        PATHS /usr/local/opt/hdf5/lib
+        ${LIBHDF5_PATH}
+        PATHS 
+        /usr/local/lib64
         ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
@@ -78,22 +76,34 @@ find_library(LIBHDF5
 
 find_library(LIBHDF5_HL
         NAMES hdf5_hl libhdf5_hl libhdf5_hl.a
-        PATHS /usr/local/opt/hdf5/lib
-        ${SWB_LIBPATH}
+        PATHS 
+        /usr/local/lib64
         ${LIB_PATH}
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBCURL
+<<<<<<< HEAD
+        NAMES curl libcurl libcurl.so
+        PATHS 
+        /usr/lib64
+        ${LIBCURL_PATH}
+        ${SWB_LIBPATH}
+=======
         NAMES curl libcurl libcurl.a libcurl.dylib
         PATHS 
         /usr/local/Cellar/curl/7.47.1/lib
+>>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         ${LIB_PATH}
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
+<<<<<<< HEAD
+        NAMES dislin libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.dylib
+=======
         NAMES
         dismg libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.5.0.dylib
+>>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         PATHS
         /usr/local/lib
         /usr/local/dislin/lib
@@ -103,13 +113,25 @@ find_library(LIBDISLIN
 find_library(LIBGCC
         NAMES gcc libgcc libgcc.a
         PATHS 
+<<<<<<< HEAD
+        /usr/local/lib64
+        ${LIBGCC_PATH}
+        /usr/local/opt/gcc48/lib/gcc/x86_64-apple-darwin13.0.0/4.8.2
+=======
         /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
+>>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         ${LIB_PATH} )
 
 find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
+<<<<<<< HEAD
+        PATHS
+        /usr/local/lib64
+        ${LIBGCC_PATH}
+=======
         PATHS 
         /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5
+>>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         ${LIB_PATH} )
 
 set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
@@ -137,7 +159,7 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
 
-else()
+elseif ("${OS}" STREQUAL "mac_osx" )
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" "*.a")
 
@@ -148,11 +170,6 @@ else()
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBXM} )
-
-endif()
-
-if ("${OS}" STREQUAL "mac_osx" )
-
 
   find_library(LIBCRYPTO
           NAMES crypto libcrypto libcrypto.a
@@ -192,6 +209,75 @@ if ("${OS}" STREQUAL "mac_osx" )
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS}  ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}
         ${LIBSSH2} ${LIBSASL2} )
+
+else()
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".so" ".a" )
+
+  find_library(LIBXT
+          NAMES Xt libXt libXt.dylib libXt.so
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  find_library(LIBXEXT
+          NAMES Xext libXext
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  find_library(LIBX11
+          NAMES X11 libX11
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  find_library(LIBXM
+          NAMES Xm libXm
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  find_library(LIBGL
+          NAMES GL libGL
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+  
+  find_library(LIBXFT
+          NAMES Xft libXft
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  find_library(LIBCRYPTO
+          NAMES crypto libcrypto
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+ find_library(LIBSSH2
+          NAMES ssh2 libssh2 libssh2.dylib libssh2.so.1
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH})
+
+  find_library(LIBSSL
+          NAMES ssl libssl libssl.dylib
+          PATHS
+          /usr/lib
+          /usr/lib64
+          ${LIB_PATH} )
+
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBCRYPTO} ${LIBGL} ${LIBXM} ${LIBXT} ${LIBXFT} ${LIBXEXT} ${LIBX11} ${LIBSSH2} ${LIBSSL} )
 
 endif()
 
