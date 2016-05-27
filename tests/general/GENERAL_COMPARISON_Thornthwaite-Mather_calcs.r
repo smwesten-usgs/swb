@@ -45,7 +45,7 @@ my_control_file <- c(
   "RUNOFF C-N DOWNHILL",
   "ET T-M 43",
   "SM T-M EQUATIONS",
-  "SOLVE Coshocton_Climate_1999.txt test_ future_ T T",
+  "SOLVE Coshocton_climate_1999.txt test_ future_ T T",
   "EOJ")
 
 writeLines(text=my_control_file,
