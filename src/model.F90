@@ -515,8 +515,7 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   ! compressed binary files, if desired
 
   if(.not. pConfig%lUseSWBRead) &
-    call stats_RewriteGrids(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, pGrd%rX1, &
-      pGrd%rY1, pConfig, pGraph)
+    call stats_RewriteGrids(pGrd, pConfig, pGraph)
 
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)

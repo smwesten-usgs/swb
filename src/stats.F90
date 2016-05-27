@@ -734,28 +734,24 @@ end subroutine stats_WriteMSBReport
 
 !--------------------------------------------------------------------------
 
-subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
+subroutine stats_RewriteGrids(pGrd, pConfig, pGraph)
 
-  ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iNX, iNY       ! Grid dimensions
-  real (kind=c_double), intent(in) :: rX0, rY0          ! Lower-left corner (world coords)
-  real (kind=c_double), intent(in) :: rX1, rY1          ! Upper-right corner (world coords)
+  type ( T_GENERAL_GRID ),pointer :: pGrd
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-
   type (T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
      ! pointer to data structure that holds parameters for creating
      ! DISLIN plots
 
   ![LOCALS]
-  type ( T_GENERAL_GRID ),pointer :: pGrd
+  type ( T_GENERAL_GRID ),pointer :: pTempGrd
   integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
   integer (kind=c_int) :: iDay, iYear, iVar, iVal, iRep, iTemp
   integer (kind=c_int) :: iStartYear, iEndYear
   integer (kind=c_int) :: iNumGridCells
   integer (kind=c_int) :: iJulianDay, iCount, iDaysInMonthCount, iDaysInYearCount
   character(len=3) :: sMonthName
-  real(kind=c_float),dimension(iNX*iNY) :: rVal, rAnnualSum, rMonthlySum, rPad
+  real(kind=c_float),dimension(pGrd%iNX*pGrd%iNY) :: rVal, rAnnualSum, rMonthlySum, rPad
   real(kind=c_float) :: rZA, rZE, rZOR, rZSTEP
   real(kind=c_float) :: rZA_TEMP, rZE_TEMP, rZOR_TEMP, rZSTEP_TEMP
   character(len=256) :: sBuf
@@ -777,11 +773,12 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
   ! we need a grid data structure in order that we might call
   ! the grid-writing subroutines elsewhere in code
-  pGrd => grid_Create(iNX, iNY, rX0, rY0, rX1, rY1, DATATYPE_REAL)
+  pTempGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
+  pTempGrd%iMask = pGrd%iMask
 
   call stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
 
-  iNumGridCells = iNX * iNY
+  iNumGridCells = pGrd%iNX * pGrd%iNY
 
   !!!   *$OMP PARALLEL DO PRIVATE(k)
 
@@ -816,7 +813,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
       call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
                      sMonthName,lMonthEnd)
 
-      pGrd%rData = rZERO
+      pTempGrd%rData = rZERO
 
       ! name "RLE_readByte" is misleading, since the return value (rVal)
       ! is actually a vector of all daily values with dimension (iNY*iNX)
@@ -827,10 +824,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
       if(STAT_INFO(k)%iDailyOutput /= iNONE ) then
 
-        pGrd%rData(:,:)=RESHAPE(rVal,(/iNX,iNY/),PAD=rPad)
+        pTempGrd%rData(:,:)=RESHAPE(rVal,(/pGrd%iNX,pGrd%iNY/),PAD=rPad)
 
-        where (pGrd%iMask == iINACTIVE_CELL)
-          pGrd%rData = rNO_DATA_NCDC
+        where (pTempGrd%iMask == iINACTIVE_CELL)
+          pTempGrd%rData = rNO_DATA_NCDC
         endwhere
 
         write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2,'_',i2.2,'.')") &
@@ -843,7 +840,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) &
 
           call grid_WriteGrid(trim(pConfig%sOutputFilePathDaily)//trim(sFilePrefix) &
-            //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
+            //trim(pConfig%sOutputFileSuffix), pTempGrd, pConfig%iOutputFormat)
 
         if(STAT_INFO(k)%iDailyOutput==iGRAPH &
           .or. STAT_INFO(k)%iDailyOutput==iBOTH) then
@@ -860,7 +857,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             pGraph(k)%iTimeFrame = iDAILY
 
-            call makegraph(pGraph,pGrd,k)
+            call makegraph(pGraph,pTempGrd,k)
 
           end if
 
@@ -875,10 +872,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         if (lMonthEnd) then
 
-          pGrd%rData(:,:) = RESHAPE(rMonthlySum,(/iNX,iNY/),PAD=rPad)
+          pTempGrd%rData(:,:) = RESHAPE(rMonthlySum,(/pGrd%iNX,pGrd%iNY/),PAD=rPad)
 
-          where (pGrd%iMask == iINACTIVE_CELL)
-            pGrd%rData = rNO_DATA_NCDC
+          where (pTempGrd%iMask == iINACTIVE_CELL)
+            pTempGrd%rData = rNO_DATA_NCDC
           endwhere
 
           write(sFilePrefix,FMT="(A,A,A,'_',i4.4,'_',i2.2)") &
@@ -891,7 +888,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) &
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly)//trim(sFilePrefix)//"_SUM." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
+              //trim(pConfig%sOutputFileSuffix), pTempGrd, pConfig%iOutputFormat)
 
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
@@ -909,14 +906,14 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
               pGraph(k)%iTimeFrame = iMONTHLY
 
-              call makegraph(pGraph,pGrd,k)
+              call makegraph(pGraph,pTempGrd,k)
 
             end if
 
           end if
 
-          where (pGrd%iMask == iACTIVE_CELL)
-            pGrd%rData(:,:) = pGrd%rData(:,:) &
+          where (pTempGrd%iMask == iACTIVE_CELL)
+            pTempGrd%rData(:,:) = pTempGrd%rData(:,:) &
                / real(iDaysInMonthCount, kind=c_float)
           endwhere
 
@@ -925,7 +922,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathMonthly) &
               //trim(sFilePrefix)//"_MEAN." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
+              //trim(pConfig%sOutputFileSuffix), pTempGrd, pConfig%iOutputFormat)
 
           if(STAT_INFO(k)%iMonthlyOutput==iGRAPH &
             .or. STAT_INFO(k)%iMonthlyOutput==iBOTH) then
@@ -943,7 +940,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
               pGraph(k)%iTimeFrame = iMONTHLY
 
-              call makegraph(pGraph,pGrd,k)
+              call makegraph(pGraph,pTempGrd,k)
 
             end if
 
@@ -964,10 +961,10 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
         if (lMonthEnd .and. iMonth == 12) then
 
-          pGrd%rData(:,:) = RESHAPE(rAnnualSum,(/iNX,iNY/),PAD=rPad)
+          pTempGrd%rData(:,:) = RESHAPE(rAnnualSum,(/pGrd%iNX,pGrd%iNY/),PAD=rPad)
 
-          where (pGrd%iMask == iINACTIVE_CELL)
-            pGrd%rData = rNO_DATA_NCDC
+          where (pTempGrd%iMask == iINACTIVE_CELL)
+            pTempGrd%rData = rNO_DATA_NCDC
           endwhere
 
           write(sFilePrefix,FMT="(A,A,A,'_',i4.4)") &
@@ -981,7 +978,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual) &
               //trim(sFilePrefix)//"_SUM." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
+              //trim(pConfig%sOutputFileSuffix), pTempGrd, pConfig%iOutputFormat)
 
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
@@ -999,15 +996,15 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
               pGraph(k)%iTimeFrame = iANNUAL
 
-              call makegraph(pGraph,pGrd,k)
+              call makegraph(pGraph,pTempGrd,k)
 
             end if
 
           end if
 
-          where (pGrd%iMask == iACTIVE_CELL)
+          where (pTempGrd%iMask == iACTIVE_CELL)
 
-            pGrd%rData(:,:) = pGrd%rData(:,:) &
+            pTempGrd%rData(:,:) = pTempGrd%rData(:,:) &
                / real(iDaysInYearCount, kind=c_float)
 
           endwhere
@@ -1017,7 +1014,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) &
 
             call grid_WriteGrid(trim(pConfig%sOutputFilePathAnnual)//trim(sFilePrefix)//"_MEAN." &
-              //trim(pConfig%sOutputFileSuffix), pGrd, pConfig%iOutputFormat)
+              //trim(pConfig%sOutputFileSuffix), pTempGrd, pConfig%iOutputFormat)
 
           if(STAT_INFO(k)%iAnnualOutput==iGRAPH &
             .or. STAT_INFO(k)%iAnnualOutput==iBOTH) then
@@ -1034,7 +1031,7 @@ subroutine stats_RewriteGrids(iNX, iNY, rX0, rY0, rX1, rY1, pConfig, pGraph)
 
               pGraph(k)%iTimeFrame = iANNUAL
 
-              call makegraph(pGraph,pGrd,k)
+              call makegraph(pGraph,pTempGrd,k)
 
             end if
 

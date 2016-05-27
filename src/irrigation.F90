@@ -78,6 +78,39 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
           if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
 
+
+
+    ! code snippet from SWB, 8/15/2013
+    ! ! NOTE: we are assuming that the inefficiencies in delivery are *not*
+    !       ! added to the soil moisture reservoir
+    !       cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
+
+    !       cel%rIrrigationFromGW = cel%rIrrigationFromGW &
+    !          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+    !       cel%rIrrigationFromSW = cel%rIrrigationFromSW &
+    !          * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+        
+        ! code snippet from SWB, 8/30/2013
+        ! if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
+        !   rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+        !   cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
+        !                               * rDepletionAmount, kind=c_double )
+
+        !   cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
+        !                               * rDepletionAmount, kind=c_double )
+
+        !   !> NOTE!! Formerly the assumption was that any inefficiencies in
+        !   !> delivery were *lost* altogether from the system; changed
+        !   !> as of 30 AUG 2013 so that the extra water is instead applied
+        !   !> to the soil moisture reservoir
+        !   cel%rIrrigationFromGW = cel%rIrrigationFromGW &
+        !      * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+        !   cel%rIrrigationFromSW = cel%rIrrigationFromSW &
+        !      * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+
+        !   cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
+
+
             if ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY ) then
 
               !! Replenish to field capacity: add all moisture to soil reservoir such that the deficit is
