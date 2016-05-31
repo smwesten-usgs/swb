@@ -760,7 +760,7 @@ subroutine stats_RewriteGrids(pGrd, pConfig, pGraph)
   logical (kind=c_bool) :: lMonthEnd
   logical (kind=c_bool) :: lEOF
 
-  rPad = -9999_c_float
+  rPad = rNO_DATA_NCDC
   iCount = 0; iDaysInMonthCount = 0; iDaysInYearCount = 0
   rMonthlySum = 0.0; rAnnualSum = 0.0; rVal = 0.0
 !  iNumGridCells = iNX * iNY
@@ -1239,6 +1239,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
 
   pTmpGrd => grid_Create(pGrd%iNX, pGrd%iNY, pGrd%rX0, pGrd%rY0, &
       pGrd%rX1, pGrd%rY1, DATATYPE_REAL)
+  pTmpGrd%iMask = pGrd%iMask
 
   if(pConfig%iStartYearforCalculation<pConfig%iStartYear) &
     pConfig%iStartYearforCalculation = pConfig%iStartYear
@@ -1257,7 +1258,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
   call stats_WriteMinMeanMax(LU_LOG, "MEAN RECHARGE", &
           pTmpGrd%rData)
 
-  where (pGrd%iMask == iINACTIVE_CELL)
+  where (pTmpGrd%iMask == iINACTIVE_CELL)
     pTmpGrd%rData = rNO_DATA_NCDC
   endwhere
 

@@ -1,8 +1,6 @@
 
 set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
 
-set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a" ".so" )
-
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
     ENV R_HOME
@@ -13,18 +11,22 @@ find_program( R_SCRIPT Rscript.exe Rscript
     "/usr/bin"
 )
 
-include_directories( "/usr/local/dislin/gf" ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
-
 if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" )
   set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb.exe )
+
+elseif( "${OS}" STREQUAL "mac" OR "${OS}" STREQUAL "mac_osx" )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ".a" )
+  set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
+  set ( EXTRA_INCLUDEDIR "/usr/local/dislin/gf")
 
 else()
 
-  set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
-
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
+  
 endif()
-
 
 ################################################################
 ## NOTE: CMAKE_FIND_LIBRARY_SUFFIXES works...
@@ -54,7 +56,16 @@ find_library(LIBZ
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-find_library(LIBNETCDF
+find_library(LIBSZ
+        NAMES sz libsz libsz.a
+        PATHS
+        ${LIBSZ_PATH}
+        ${SWB_LIBPATH}
+        ${LIB_PATH}
+        NO_SYSTEM_ENVIRONMENT_PATH
+        NO_CMAKE_SYSTEM_PATH )
+
+        find_library(LIBNETCDF
         NAMES netcdf libnetcdf libnetcdf.a
         PATHS 
         /usr/local/lib64
@@ -82,28 +93,18 @@ find_library(LIBHDF5_HL
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBCURL
-<<<<<<< HEAD
-        NAMES curl libcurl libcurl.so
+        NAMES curl libcurl libcurl.so libcurl.dylib
         PATHS 
         /usr/lib64
-        ${LIBCURL_PATH}
-        ${SWB_LIBPATH}
-=======
-        NAMES curl libcurl libcurl.a libcurl.dylib
-        PATHS 
         /usr/local/Cellar/curl/7.47.1/lib
->>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
+        ${LIBCURL_PATH}
         ${LIB_PATH}
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
 find_library(LIBDISLIN
-<<<<<<< HEAD
-        NAMES dislin libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.dylib
-=======
         NAMES
         dismg libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.5.0.dylib
->>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         PATHS
         /usr/local/lib
         /usr/local/dislin/lib
@@ -113,25 +114,17 @@ find_library(LIBDISLIN
 find_library(LIBGCC
         NAMES gcc libgcc libgcc.a
         PATHS 
-<<<<<<< HEAD
         /usr/local/lib64
         ${LIBGCC_PATH}
-        /usr/local/opt/gcc48/lib/gcc/x86_64-apple-darwin13.0.0/4.8.2
-=======
         /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
->>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         ${LIB_PATH} )
 
 find_library(LIBGFORTRAN
         NAMES gfortran libgfortran libgfortran.a
-<<<<<<< HEAD
         PATHS
         /usr/local/lib64
         ${LIBGCC_PATH}
-=======
-        PATHS 
         /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5
->>>>>>> 7c1e956f326a5e3d27cf442b9060c3370ad2980b
         ${LIB_PATH} )
 
 set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
@@ -283,3 +276,4 @@ endif()
 
 
 link_libraries( ${EXTERNAL_LIBS} )
+include_directories( ${EXTRA_INCLUDEDIR} ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
