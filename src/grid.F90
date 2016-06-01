@@ -2006,13 +2006,14 @@ end subroutine grid_DumpGridExtent
 
 !----------------------------------------------------------------------
 
-subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
+subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajorityFilter )
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
-  type ( T_GENERAL_GRID ),pointer :: pGrdTo     ! pointer to destination grid
-  integer (kind=c_int), dimension(:,:) :: iArrayFrom
+  type ( T_GENERAL_GRID ),pointer                     :: pGrdFrom   ! pointer to source grid
+  type ( T_GENERAL_GRID ),pointer                     :: pGrdTo     ! pointer to destination grid
+  integer (kind=c_int), dimension(:,:)                :: iArrayFrom
   integer (kind=c_int), dimension(:,:), intent(inout) :: iArrayTo
+  logical (kind=c_bool), intent(in)                   :: lUseMajorityFilter
 
 
   ! [ LOCALS ]
@@ -2033,9 +2034,11 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
   fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
 
   ! if target grid resolution is much more coarse than source grid resolution: MAJORITY FILTER
-  if ( fGridcellRatio > 2.5_c_float ) then
+  if ( lUseMajorityFilter ) then
 
     iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
+
+    print *, "using majority filter..."
 
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
@@ -2091,13 +2094,14 @@ end subroutine grid_GridToGrid_int
 
 !--------------------------------------------------------------------------------------------------
 
-subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
+subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajorityFilter )
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
-  type ( T_GENERAL_GRID ),pointer :: pGrdTo     ! pointer to destination grid
-  integer (kind=c_int), dimension(:,:) :: iArrayFrom
+  type ( T_GENERAL_GRID ),pointer                       :: pGrdFrom   ! pointer to source grid
+  type ( T_GENERAL_GRID ),pointer                       :: pGrdTo     ! pointer to destination grid
+  integer (kind=c_int), dimension(:,:)                  :: iArrayFrom
   integer (kind=c_short), dimension(:,:), intent(inout) :: iArrayTo
+  logical (kind=c_bool), intent(in)                     :: lUseMajorityFilter
 
 
   ! [ LOCALS ]
@@ -2116,8 +2120,7 @@ subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo)
 
   fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
 
-  ! if target grid resolution is much more coarse than source grid resolution: MAJORITY FILTER
-  if ( fGridcellRatio > 2.5_c_float ) then
+  if ( lUseMajorityFilter ) then
 
     iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
 
@@ -2175,13 +2178,13 @@ end subroutine grid_GridToGrid_short
 
 !----------------------------------------------------------------------
 
-subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo)
+subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo )
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrdFrom   ! pointer to source grid
-  type ( T_GENERAL_GRID ),pointer :: pGrdTo     ! pointer to destination grid
-  real (kind=c_float), dimension(:,:) :: rArrayFrom
-  real (kind=c_float), dimension(:,:), intent(inout) :: rArrayTo
+  type ( T_GENERAL_GRID ),pointer                     :: pGrdFrom   ! pointer to source grid
+  type ( T_GENERAL_GRID ),pointer                     :: pGrdTo     ! pointer to destination grid
+  real (kind=c_float), dimension(:,:)                 :: rArrayFrom
+  real (kind=c_float), dimension(:,:), intent(inout)  :: rArrayTo
 
   ! [ LOCALS ]
   integer (kind=c_int), dimension(2) :: iColRow

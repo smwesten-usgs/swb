@@ -47,6 +47,7 @@ module data_factory
     logical (kind=c_bool) :: lMissingFilesAreAllowed = lFALSE
     logical (kind=c_bool) :: lFlipHorizontal = lFALSE
     logical (kind=c_bool) :: lFlipVertical = lFALSE
+    logical (kind=c_bool) :: lUseMajorityFilter = lFALSE
 
     integer (kind=c_int)  :: iDaysToPadAtYearsEnd = 0
     integer (kind=c_int)  :: iDaysToPadIfLeapYear = 1
@@ -126,6 +127,8 @@ module data_factory
  !   procedure :: destroy => create_data_object_sub
     procedure :: get_filetype => get_source_filetype_fn
 
+    procedure, public :: set_majority_filter_flag => set_majority_filter_flag_sub
+
     procedure, public :: set_filecount => set_filecount
     procedure, public :: reset_filecount => reset_filecount
     procedure, public :: reset_at_yearend_filecount => reset_at_yearend_filecount
@@ -183,6 +186,17 @@ module data_factory
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
 
 contains
+
+  subroutine set_majority_filter_flag_sub(this, lUseMajorityFilter)
+   
+     class (T_DATA_GRID) :: this
+     logical (kind=c_bool)        :: lUseMajorityFilter
+  
+     this%lUseMajorityFilter = lUseMajorityFilter
+  
+  end subroutine set_majority_filter_flag_sub
+
+!--------------------------------------------------------------------------------------------------
 
   subroutine initialize_constant_real_data_object_sub( this, &
      sDescription, &
@@ -619,10 +633,11 @@ subroutine transform_grid_to_grid(this, pGrdBase)
 
         case ( GRID_DATATYPE_INT )
 
-          call grid_gridToGrid(pGrdFrom=this%pGrdNative,&
-                            iArrayFrom=this%pGrdNative%iData, &
-                            pGrdTo=pGrdBase, &
-                            iArrayTo=pGrdBase%iData )
+          call grid_gridToGrid(pGrdFrom=this%pGrdNative,                 &
+                            iArrayFrom=this%pGrdNative%iData,            &
+                            pGrdTo=pGrdBase,                             &  
+                            iArrayTo=pGrdBase%iData,                     &
+                            lUseMajorityFilter=this%lUseMajorityFilter )
         case default
 
           call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &

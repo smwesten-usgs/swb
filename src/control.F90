@@ -1716,6 +1716,16 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) &
         "DRIPPS_COMPATIBILITY is no longer a valid directive. Ignoring."
 
+    else if ( sItem == "USE_MAJORITY_FILTER" ) then
+
+      DAT(LANDUSE_DATA)%lUseMajorityFilter = lTRUE
+      DAT(SOILS_GROUP_DATA)%lUseMajorityFilter = lTRUE
+      DAT(FLOWDIR_DATA)%lUseMajorityFilter = lTRUE
+      DAT(MASK_DATA)%lUseMajorityFilter = lTRUE
+      DAT(IRRIGATED_LAND_MASK_DATA)%lUseMajorityFilter = lTRUE
+
+      write(UNIT=LU_LOG,FMT="(/,a,/)")  "** A MAJORITY FILTER will be applied to all integer input grids **"
+
     else if ( sItem == "OUTPUT_OPTIONS" ) then
       call Chomp ( sRecord, sArgument )
       write(UNIT=LU_LOG,FMT=*) "Setting the output options (daily, monthly, annual)"
