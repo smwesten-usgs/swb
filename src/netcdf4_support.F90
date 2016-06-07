@@ -2108,7 +2108,7 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
         iErrorCount = iErrorCount + 1
         call echolog( "** netCDF I/O error; possible network issues or conflicting applications." ) 
         call echolog( "   ==> making another attempt to access netCDF data." )
-        
+        call sleep_for_x_seconds( 2.0 )
         cycle
       endif
         
