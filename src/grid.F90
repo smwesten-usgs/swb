@@ -2038,8 +2038,6 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajor
 
     iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
 
-    print *, "using majority filter..."
-
     do iRow=1,pGrdTo%iNY
       do iCol=1,pGrdTo%iNX
 

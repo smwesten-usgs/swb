@@ -103,7 +103,9 @@ module netcdf4_support
   integer (kind=c_int), public, parameter :: NC_TOP    = 0
   integer (kind=c_int), public, parameter :: NC_BOTTOM = 1
 
-  integer (kind=c_int), parameter   :: NETCDF_IO_ERROR = -68
+  integer (kind=c_int), parameter   :: NETCDF_IO_ERROR           = -68
+  integer (kind=c_int), parameter   :: NETCDF_HDF_LAYER_ERROR    = -101
+  integer (kind=c_int), parameter   :: NETCDF_CANNOT_READ_ERROR  = -102
 
   ! how many times should SWB attempt to read data via a THREDDs URL
   ! before declaring an error and halting?
@@ -2098,12 +2100,15 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
       stridep=[iNC_Stride],                                  &
       vars=rNC_Vars )
 
-    if ( iResultCode == NETCDF_IO_ERROR ) then
+    if ( iResultCode == NETCDF_IO_ERROR                                 &
+         .or. iResultCode == NETCDF_HDF_LAYER_ERROR                     &
+         .or. iResultCode == NETCDF_CANNOT_READ_ERROR ) then
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues or conflicting applications." ) 
         call echolog( "   ==> making another attempt to access netCDF data." )
+        
         cycle
       endif
         

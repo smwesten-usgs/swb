@@ -1296,6 +1296,33 @@ module types
 
 contains
 
+subroutine sleep_for_x_seconds( seconds )
+
+  real (kind=c_float), intent(in) :: seconds
+
+  ! [ LOCALS ]
+  integer                   :: datetime(8)
+  integer                   :: msec1, msec2, sec1, sec2, msec_threshold, msec_diff
+  enum, bind(c)             
+    enumerator :: YEAR=1, MONTH, DAY, TIME_DIFF_UTC, HOUR, MIN, SEC, MSEC 
+  end enum  
+
+  msec_threshold = seconds * 1000.
+
+  call date_and_time( values=datetime )
+
+  msec1 = ( datetime( HOUR ) * 3600 + datetime( MIN ) * 60 + datetime( SEC ) + datetime( MSEC ) )
+  msec_diff = 0
+
+  do while ( msec_diff < msec_threshold ) 
+    
+    call date_and_time( values=datetime )
+    msec2 = ( datetime( HOUR ) * 3600 + datetime( MIN ) * 60 + datetime( SEC ) + datetime( MSEC ) )
+    msec_diff = msec2 - msec1
+
+  enddo  
+
+end subroutine sleep_for_x_seconds  
 
 function nextunit(iLU)  result(iUnit)
 

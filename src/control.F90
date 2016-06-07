@@ -1718,11 +1718,7 @@ subroutine control_setModelOptions(sControlFile)
 
     else if ( sItem == "USE_MAJORITY_FILTER" ) then
 
-      DAT(LANDUSE_DATA)%lUseMajorityFilter = lTRUE
-      DAT(SOILS_GROUP_DATA)%lUseMajorityFilter = lTRUE
-      DAT(FLOWDIR_DATA)%lUseMajorityFilter = lTRUE
-      DAT(MASK_DATA)%lUseMajorityFilter = lTRUE
-      DAT(IRRIGATED_LAND_MASK_DATA)%lUseMajorityFilter = lTRUE
+      DAT(:)%lUseMajorityFilter = lTRUE
 
       write(UNIT=LU_LOG,FMT="(/,a,/)")  "** A MAJORITY FILTER will be applied to all integer input grids **"
 
