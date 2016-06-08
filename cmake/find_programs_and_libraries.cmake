@@ -25,6 +25,7 @@ elseif( "${OS}" STREQUAL "mac" OR "${OS}" STREQUAL "mac_osx" )
 else()
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
+  set ( EXTRA_INCLUDEDIR "/usr/local/dislin/gf")
   
 endif()
 
@@ -56,16 +57,7 @@ find_library(LIBZ
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-find_library(LIBSZ
-        NAMES sz libsz libsz.a
-        PATHS
-        ${LIBSZ_PATH}
-        ${SWB_LIBPATH}
-        ${LIB_PATH}
-        NO_SYSTEM_ENVIRONMENT_PATH
-        NO_CMAKE_SYSTEM_PATH )
-
-        find_library(LIBNETCDF
+find_library(LIBNETCDF
         NAMES netcdf libnetcdf libnetcdf.a
         PATHS 
         /usr/local/lib64
@@ -128,7 +120,7 @@ find_library(LIBGFORTRAN
         ${LIB_PATH} )
 
 set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ}
-                   ${LIBSZ} ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} )
+                   ${LIBDISLIN} ${LIBGCC} ${LIBGFORTRAN} )
 
 # Now, add platform-specific libraries as needed
 
@@ -137,6 +129,16 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 #  find_library(LIBWINPTHREAD
 #          NAMES libwinpthread.a winpthread winpthread
 #          PATHS ${LIB_PATH} )
+
+
+  find_library(LIBSZ
+          NAMES sz libsz libsz.a
+          PATHS
+          ${LIBSZ_PATH}
+          ${SWB_LIBPATH}
+          ${LIB_PATH}
+          NO_SYSTEM_ENVIRONMENT_PATH
+          NO_CMAKE_SYSTEM_PATH )
 
   find_library(LIBWS2_32
           NAMES ws2_32 libws2_32 libws2_32.a
@@ -150,7 +152,7 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
           NAMES gdi32 libgdi32 libgdi32.a
           PATHS ${LIB_PATH} )
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBSZ} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
 
 elseif ("${OS}" STREQUAL "mac_osx" )
 

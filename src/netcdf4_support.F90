@@ -2086,8 +2086,11 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
 
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iErrorCount
-  integer (kind=c_int) :: iResultCode
+  integer (kind=c_int)            :: iErrorCount
+  integer (kind=c_int)            :: iResultCode
+  integer (kind=c_int), parameter :: MAX_RETRIES = 12
+  real (kind=c_float)             :: pause_length
+  real (kind=c_float)             :: random_num
 
   iErrorCount = 0
 
@@ -2106,9 +2109,14 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
+        call random_number( random_num )
+        pause_length = iErrorCount * 6.0 * random_num
+        if ( iErrorCount > MAX_RETRIES ) exit
         call echolog( "** netCDF I/O error; possible network issues or conflicting applications." ) 
+        call echolog("    filename: "//squote( NCFILE%sFilename ) )
         call echolog( "   ==> making another attempt to access netCDF data." )
-        call sleep_for_x_seconds( 2.0 )
+        call echolog( "       PAUSING for "//asCharacter(pause_length)//" seconds before attempting to re-read the data." )
+        call sleep_for_x_seconds( pause_length )
         cycle
       endif
         

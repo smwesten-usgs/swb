@@ -85,9 +85,14 @@
 	[
 	],
 	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
 	"command_palette":
 	{
 		"height": 392.0,
+		"last_filter": "",
 		"selected_items":
 		[
 		],
@@ -112,6 +117,7 @@
 	},
 	"expanded_folders":
 	[
+		"/Users/smwesten/SMWData/Source_Code/swb"
 	],
 	"file_history":
 	[
@@ -286,6 +292,7 @@
 	{
 		"height": 0.0
 	},
+	"pinned_build_system": "",
 	"project": "swb_cmake.sublime-project",
 	"replace":
 	{
@@ -295,6 +302,7 @@
 	"select_file":
 	{
 		"height": 0.0,
+		"last_filter": "",
 		"selected_items":
 		[
 			[
@@ -311,6 +319,7 @@
 	"select_project":
 	{
 		"height": 0.0,
+		"last_filter": "",
 		"selected_items":
 		[
 		],
@@ -319,6 +328,7 @@
 	"select_symbol":
 	{
 		"height": 392.0,
+		"last_filter": "",
 		"selected_items":
 		[
 		],
