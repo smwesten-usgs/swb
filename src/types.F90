@@ -1311,13 +1311,13 @@ subroutine sleep_for_x_seconds( seconds )
 
   call date_and_time( values=datetime )
 
-  msec1 = ( datetime( HOUR ) * 3600 + datetime( MIN ) * 60 + datetime( SEC ) + datetime( MSEC ) )
+  msec1 = ( datetime( HOUR ) * 3.6e6 + datetime( MIN ) * 6e4 + datetime( SEC ) * 1000 + datetime( MSEC ) )
   msec_diff = 0
 
   do while ( msec_diff < msec_threshold ) 
     
     call date_and_time( values=datetime )
-    msec2 = ( datetime( HOUR ) * 3600 + datetime( MIN ) * 60 + datetime( SEC ) + datetime( MSEC ) )
+    msec2 = ( datetime( HOUR ) * 3.6e6 + datetime( MIN ) * 6e4 + datetime( SEC ) * 1000 + datetime( MSEC ) )
     msec_diff = msec2 - msec1
 
   enddo  
