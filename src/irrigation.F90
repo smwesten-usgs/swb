@@ -117,14 +117,17 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
               !!                              completely eliminated; adjust GW and SW irrigation figures 
               !!                              upward to adjust for any inefficiencies in water delivery.
 
-              cel%rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+              ! calculate amount of water needed to replenish deficit completely
+              rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
 
-              cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
-                                          * cel%rIrrigationAmount, kind=c_double )                        &
+              ! assume water associated with inefficient delivery and application is LOST from root zone
+              cel%rIrrigationAmount = rDepletionAmount
+
+              ! inflate the GW and SW irrigation amounts to account for inefficient delivery and application
+              cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW * rDepletionAmount                          &
                                           / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
 
-              cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
-                                          * cel%rIrrigationAmount, kind=c_double )                        &
+              cel%rIrrigationFromSW = (1.0_c_double - pIRRIGATION%rFractionOfIrrigationFromGW) * cel%rIrrigationAmount    &
                                           / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
 
             elseif ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ ) then
@@ -134,14 +137,14 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
               !!                              upward to adjust for any inefficiencies in water delivery.
               !!                              additional water owing to inefficiencies is *ADDED* to root zone.
 
-              cel%rIrrigationAmount = cel%rSoilWaterCap - cel%rSoilMoisture
+              ! calculate amount of water needed to replenish deficit completely
+              rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
 
-              cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
-                                          * cel%rIrrigationAmount, kind=c_double )                        &
+              ! inflate the GW and SW irrigation amounts to account for inefficient delivery and application
+              cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW * rDepletionAmount                          &
                                           / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
 
-              cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
-                                          * cel%rIrrigationAmount, kind=c_double )                        &
+              cel%rIrrigationFromSW = (1.0_c_double - pIRRIGATION%rFractionOfIrrigationFromGW) * cel%rIrrigationAmount    &
                                           / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
 
               ! assume that this inflated amount of water makes it to the root zone as well.
@@ -158,9 +161,10 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
               cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
                                           * pIRRIGATION%rIrrigationAmount, kind=c_double )                            
 
-              cel%rIrrigationAmount =   cel%rIrrigationFromGW                                               &
-                                          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )      &
-                                       +    cel%rIrrigationFromSW                                           & 
+              ! ** not all water associated with the APPLICATION AMOUNT is assumed to make it to the root zone 
+              cel%rIrrigationAmount =   cel%rIrrigationFromGW                                                   &
+                                          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )          &
+                                       +    cel%rIrrigationFromSW                                               & 
                                           * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
 
             else 
