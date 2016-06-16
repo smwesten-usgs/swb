@@ -1175,6 +1175,11 @@ module types
   integer(kind=c_int),parameter :: iMONTHLY = 2
   integer(kind=c_int),parameter :: iANNUAL = 3
 
+  integer (kind=c_int)               :: DMPCOL        = -999
+  integer (kind=c_int)               :: DMPROW        = -999
+  integer (kind=c_int)               :: DMPFILE       = 0
+  character (len=:), allocatable     :: DMP_FILENAME
+
 !**********************************************************************
 !! GENERIC interfaces
 !**********************************************************************

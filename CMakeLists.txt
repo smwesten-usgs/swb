@@ -91,7 +91,7 @@ option (TARGET__SWBSTATS
 #------------------------------------------------------------------------
 
 option (OPTION__GRAPHICS_SUPPORT
-      "Compile the code with graphics (DISLIN) support?" OFF)
+      "Compile the code with graphics (DISLIN) support?" ON)
 if(OPTION__GRAPHICS_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "GRAPHICS_SUPPORT")
 endif()
@@ -104,7 +104,7 @@ if(OPTION__STREAM_INTERACTIONS)
 endif()
 
 option (OPTION__NETCDF_SUPPORT
-      "Compile the code with NETCDF support?" OFF)
+      "Compile the code with NETCDF support?" ON)
 if(OPTION__NETCDF_SUPPORT)
   set ( PREPROCESSOR_DEFINES ${PREPROCESSOR_DEFINES} "NETCDF_SUPPORT")
 endif()
@@ -188,7 +188,7 @@ if(CMAKE_HOST_WIN32)
        set(USER32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libuser32.a)
        set(GDI32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libgdi32.a)
        set(OPENGL32_LIB ${MINGWBASE}/${COMPILER_TRIPLET}/lib/libopengl32.a)
-       set(GCC_LIB ${MINGWBASE}/lib/gcc/${COMPILER_TRIPLET}/${MINGW_VERSION}/libgcc.a)
+       set(GCC_LIB ${MINGWBASE}/lib/libgcc.a)
      endif()
 
      set(GFORTRAN_LIB ${MINGWBASE}/lib/libgfortran.a)

@@ -375,24 +375,9 @@ end if
 
   end if
 
-  ! write OFFSET VALUE to the unformatted fortran file(s)
-!  do k=1,iNUM_VARIABLES
-!    if(STAT_INFO(k)%iDailyOutput > iNONE &
-!      .or. STAT_INFO(k)%iMonthlyOutput > iNONE &
-!      .or. STAT_INFO(k)%iAnnualOutput > iNONE)  then
-!      ! get current file position
-!      inquire(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!      ! rewind to location of today's header, at the location
-!      ! where the offset is to be written
-!      write(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
-!      ! write an offset amount at the end of the current header
-!      write(UNIT=STAT_INFO(k)%iLU) iTempval - STAT_INFO(k)%iPos
-!      ! return to last file position
-!      write(UNIT=STAT_INFO(k)%iLU, POS=iTempval)
-!    end if
-!  end do
-
   call model_WriteGrids(pGrd=pGrd, pConfig=pConfig, iOutputType=WRITE_ASCII_GRID_DAILY)
+
+  call model_dumpvals( pGrd=pGrd, pConfig=pConfig )
 
   ! Write the results at each month-end
   if ( lMonthEnd ) then
@@ -3658,6 +3643,46 @@ integer (kind=c_int), intent(in) :: iOutputType
    end if
 
 end subroutine model_WriteGrids
+
+!--------------------------------------------------------------------------------------------------
+
+subroutine model_dumpvals(pGrd, pConfig)
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+
+  ! [ LOCALS ]
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+  logical                 :: file_is_open
+
+  inquire(unit=DMPFILE, opened=file_is_open )
+
+  if (       file_is_open                                                &
+       .and. ( DMPCOL > 0 )                                              &
+       .and. ( DMPCOL <= ubound( pGrd%Cells, 1) )                        &
+       .and. ( DMPROW > 0 )                                              &
+       .and. (DMPROW <= ubound( pGrd%Cells, 2) )  ) then
+
+    cel => pGrd%Cells( DMPCOL, DMPROW )
+
+    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),29(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,      &
+      pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
+      cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
+      cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rNetPrecip, cel%rInterception,        &
+      cel%rNetRainfall, cel%rSnowCover,                                                                          &
+      cel%rSnowMelt, cel%rIrrigationAmount, cel%rKcb, cel%rCropETc, cel%rBareSoilEvap, cel%rReferenceET0,        &
+      cel%rActualET,                                                                                             &
+      cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,           &
+      cel%rDailyRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                                            &
+      cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
+
+    flush( DMPFILE )  
+
+  endif
+
+end subroutine model_dumpvals     
+
+!--------------------------------------------------------------------------------------------------
 
 !> @brief This subroutine reads a single line from a single-station
 !> climate data file, parses the values, and returns a pointer to a
