@@ -81,6 +81,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+      cel %rDailyRejectedRecharge = 0.0
+
   L0: if (cel%iActive /= iINACTIVE_CELL) then
 
         rMAXIMUM_RECHARGE = pConfig%MAX_RECHARGE(cel%iLandUseIndex, cel%iSoilGroup)
@@ -499,6 +501,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         end if
 
       endif
+
+      cel%rDailyRejectedRecharge = rDailyRejectedRecharge
 
     end do col_idx
 

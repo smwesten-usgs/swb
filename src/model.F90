@@ -3665,7 +3665,7 @@ subroutine model_dumpvals(pGrd, pConfig)
 
     cel => pGrd%Cells( DMPCOL, DMPROW )
 
-    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),29(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,      &
+    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),30(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,      &
       pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
       cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
       cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rNetPrecip, cel%rInterception,        &
@@ -3673,7 +3673,7 @@ subroutine model_dumpvals(pGrd, pConfig)
       cel%rSnowMelt, cel%rIrrigationAmount, cel%rKcb, cel%rCropETc, cel%rBareSoilEvap, cel%rReferenceET0,        &
       cel%rActualET,                                                                                             &
       cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,           &
-      cel%rDailyRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                                            &
+      cel%rDailyRecharge, cel%rDailyRejectedRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                &
       cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
 
     flush( DMPFILE )  
