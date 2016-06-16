@@ -364,12 +364,13 @@ module graph
 
 !----------------------------------------------------------------------------------
 
-  subroutine make_shaded_contour(pGrd, sOutputFilename, sTitleTxt, sAxisTxt)
+  subroutine make_shaded_contour(pGrd, sOutputFilename, sTitleTxt, sAxisTxt, iMinZ )
 
     type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
     character (len=*) :: sOutputFilename
     character (len=*) :: sTitleTxt
     character (len=*) :: sAxisTxt
+    integer ( kind=c_int), optional :: iMinZ
 
     ! [ LOCALS ]
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
@@ -441,7 +442,10 @@ module graph
 
       case(DATATYPE_INT)
 
-        if(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
+        if ( present( iMinZ ) ) then
+          ZA = iMinZ
+          ZE = maxval(pGrd%iData)
+        elseif(minval(pGrd%iData) <= 0 .and. maxval(pGrd%iData) <= 0) then
           ZA = maxval(pGrd%iData)
           ZE = minval(pGrd%iData)
         else

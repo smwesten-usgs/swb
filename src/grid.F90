@@ -980,7 +980,7 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
   ! dynamically create the Fortran output format
   write(sBuf,FMT="(a,a,a)") '(',TRIM(int2char(iNumCols)),'(a,1x))'
 
-  open ( LU_TEMP, file=sFilename, iostat=istat, status="REPLACE" )
+  open ( LU_TEMP, file=sFilename, access='stream', form='formatted', iostat=istat, status='REPLACE' )
   call Assert( istat==0, "Could not open output file "//dQuote(sFilename), &
       TRIM(__FILE__),__LINE__)
 
@@ -1001,11 +1001,15 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
 
   if ( pGrd%iDataType == DATATYPE_INT ) then
 
+    sBuf = "("//TRIM(int2char(iNumCols+1))//"(i0,1x))"
+
+    print *, "FORMAT STRING: ", trim( sBuf )
+
     write ( unit=LU_TEMP, fmt="('NODATA_VALUE ',i14)", iostat=istat ) pGrd%iNoDataValue
     call Assert( istat==0, "Error writing NODATA value", trim(__FILE__), __LINE__)
+
     do iRow=1,iNumRows
-      write( unit=LU_TEMP, fmt=TRIM(sBuf), iostat=istat ) &
-        (TRIM( asCharacter(pGrd%iData(iCol,iRow) ) ),iCol=1,iNumCols)
+      write( unit=LU_TEMP, fmt=trim(sBuf), iostat=istat ) pGrd%iData(:,iRow)
       call Assert( istat==0, "Error writing Arc ASCII INTEGER grid data", &
         trim(__FILE__), __LINE__)
     end do
@@ -1014,6 +1018,7 @@ subroutine grid_WriteArcGrid(sFilename, pGrd)
 
     write ( unit=LU_TEMP, fmt="('NODATA_VALUE ',f14.3)", iostat=istat ) pGrd%rNoDataValue
     call Assert( istat==0, "Error writing NODATA value", trim(__FILE__), __LINE__)
+    
     do iRow=1,iNumRows
       write( unit=LU_TEMP, fmt=TRIM(sBuf), iostat=istat ) &
         (TRIM(asCharacter( pGrd%rData(iCol,iRow) )),iCol=1,iNumCols)

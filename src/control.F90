@@ -147,7 +147,7 @@ subroutine control_setModelOptions(sControlFile)
   pConfig%rStreamMaxCapture = rBIGVAL
 #endif
 
-  iVarNum = -99999
+  iVarNum = NODATA
 
   ! Attempt to open CONTROL file
   open ( LU_CONTROL, file=sControlFile, status="OLD", iostat=iStat )

@@ -182,13 +182,13 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
   call stats_InitializeDailyAccumulators()
 
   ! blow away any remnant climate values
-  pTS%rPrecip = iNO_DATA_NCDC
-  pTS%rRH = iNO_DATA_NCDC
-  pTS%rMaxT = iNO_DATA_NCDC
-  pTS%rMinT = iNO_DATA_NCDC
-  pTS%rWindSpd = iNO_DATA_NCDC
-  pTS%rMinRH = iNO_DATA_NCDC
-  pTS%rSunPct = iNO_DATA_NCDC
+  pTS%rPrecip = NODATA
+  pTS%rRH = NODATA
+  pTS%rMaxT = NODATA
+  pTS%rMinT = NODATA
+  pTS%rWindSpd = NODATA
+  pTS%rMinRH = NODATA
+  pTS%rSunPct = NODATA
   pTS%lEOF = lFALSE
 
   ! if we are not using gridded climate data, here is where we read in
@@ -289,7 +289,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph, pLandUseGrid)
     write(UNIT=STAT_INFO(k)%iLU) pConfig%iDay,pConfig%iMonth, &
       pConfig%iYear, pConfig%iDayOfYear
 !    inquire(UNIT=STAT_INFO(k)%iLU, POS=STAT_INFO(k)%iPos)
-!    write(UNIT=STAT_INFO(k)%iLU) iNO_DATA_NCDC  ! dummy value for now
+!    write(UNIT=STAT_INFO(k)%iLU) NODATA  ! dummy value for now
     end if
   end do
 
@@ -3174,19 +3174,19 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
   call make_shaded_contour(pGrd=pGenericGrd_int, &
      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Flow_Direction_Grid.png", &
      sTitleTxt="D8 Flow Direction Grid", &
-     sAxisTxt="Flow Direction" )
+     sAxisTxt="Flow Direction", iMinZ=0 )
 
   call DAT(SOILS_GROUP_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%iSoilGroup = pGrd%iData
-
   pGenericGrd_int%iData = pGrd%Cells%iSoilGroup
+
   call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group" // &
     "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
   call make_shaded_contour(pGrd=pGenericGrd_int, &
       sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Hydrologic_Soils_Group.png", &
       sTitleTxt="Hydrologic Soils Group", &
-      sAxisTxt="HSG" )
+      sAxisTxt="HSG", iMinZ=0 )
 
   call DAT(AWC_DATA)%getvalues( pGrdBase=pGrd)
   pGrd%Cells%rSoilWaterCapInput = pGrd%rData

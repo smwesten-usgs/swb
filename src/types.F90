@@ -84,7 +84,7 @@ module types
   integer (kind=c_int), parameter :: iROUTE_CELL_MARKED = -1
   integer (kind=c_int), parameter :: iROUTE_DEPRESSION = -999
   integer (kind=c_int), parameter :: iROUTE_LEFT_GRID = -1000
-  integer (kind=c_int), parameter :: iNO_DATA_NCDC = -99999
+  integer (kind=c_int), parameter :: NODATA = -9999
   integer (kind=c_int), parameter :: iNUM_DIGITS = 3
   integer (kind=c_int), parameter :: iFIELD_WIDTH = 10
   integer (kind=c_int), parameter :: iZERO = 0
@@ -210,17 +210,18 @@ module types
 !      real (kind=c_float) :: rMaximumAllowableDepletion = 100_c_float ! by default, no irrigation
                                                                   ! will be performed
 
-      real (kind=c_float) :: rSnowAlbedo = rZERO      ! Snow albedo value
-      integer (kind=c_int) :: iDaysSinceLastSnow = iZERO  ! Number of days since last snowfall
-!      real (kind=c_float) :: rNetInfil               ! NetPrecip + InFlow + SnowMelt - OutFlow
+      real (kind=c_float) :: rSnowAlbedo = rZERO                ! Snow albedo value
+      integer (kind=c_int) :: iDaysSinceLastSnow = iZERO        ! Number of days since last snowfall
+!      real (kind=c_float) :: rNetInfil                         ! NetPrecip + InFlow + SnowMelt - OutFlow
       real (kind=c_float),dimension(iMOVING_AVG_TERMS) :: rNetInflowBuf = rZERO  ! Inflow buffer for moving avg
-      real (kind=c_float) :: rDailyRecharge = rZERO  ! Daily recharge
-      real (kind=c_float) :: rSUM_Recharge = rZERO   ! SUM of all daily recharge values for entire run
-      real (kind=c_float) :: rSUM_RejectedRecharge = rZERO   ! SUM of all daily rejected recharge values for entire run
-      real (kind=c_float) :: rMSB = rZERO            ! cellular mass balance
-      integer(kind=c_short) :: iNumFilesSSF = 0    ! number of SSF files associated with grid cell
+      real (kind=c_float) :: rDailyRecharge = rZERO             ! Daily recharge
+      real (kind=c_float) :: rDailyRejectedRecharge = rZERO     ! Daily *REJECTED* recharge      
+      real (kind=c_float) :: rSUM_Recharge = rZERO              ! SUM of all daily recharge values for entire run
+      real (kind=c_float) :: rSUM_RejectedRecharge = rZERO      ! SUM of all daily rejected recharge values for entire run
+      real (kind=c_float) :: rMSB = rZERO                       ! cellular mass balance
+      integer(kind=c_short) :: iNumFilesSSF = 0                 ! number of SSF files associated with grid cell
 
-      logical (kind=c_bool) :: lDownhillMarked = lFALSE  ! Has been marked for downhill solution
+      logical (kind=c_bool) :: lDownhillMarked = lFALSE         ! Has been marked for downhill solution
   end type T_CELL
 
   ! Generic grid data type identifier constants
@@ -263,12 +264,12 @@ module types
       character (len=256)  :: sProj4_string         ! proj4 string defining coordinate system of grid
       character (len=256)  :: sFilename             ! original file name that the data was read from
       real (kind=c_double)    :: rGridCellSize         ! size of one side of a grid cell
-      integer (kind=c_int) :: iLengthUnits= -99999  ! length units code
+      integer (kind=c_int) :: iLengthUnits= NODATA  ! length units code
       real (kind=c_double)    :: rX0, rX1              ! World-coordinate range in X
       real (kind=c_double)    :: rY0, rY1              ! World-coordinate range in Y
       integer (kind=c_int), dimension(:,:), pointer :: iData ! Integer data
-      integer (kind=c_int) :: iNoDataValue = -99999
-      real (kind=c_float) :: rNoDataValue = -99999.0
+      integer (kind=c_int) :: iNoDataValue = NODATA
+      real (kind=c_float) :: rNoDataValue = real( NODATA )
       real (kind=c_float), dimension(:,:), pointer :: rData    ! Real data
       real (kind=c_double), dimension(:,:), allocatable :: rX    ! x coordinate associated with data
       real (kind=c_double), dimension(:,:), allocatable :: rY    ! y coordinate associated with data
@@ -929,7 +930,7 @@ module types
       integer (kind=c_int) :: iStartJulianDay
       integer (kind=c_int) :: iCurrentJulianDay
       integer (kind=c_int) :: iEndJulianDay
-      integer (kind=c_int) :: iStartYearforCalculation = -99999
+      integer (kind=c_int) :: iStartYearforCalculation = NODATA
       integer (kind=c_int) :: iEndYearforCalculation = 99999
       integer (kind=c_int) :: iNumberOfLanduses
       integer (kind=c_int) :: iNumberOfSoilTypes
@@ -1065,7 +1066,7 @@ module types
       real (kind=c_float) :: rUL_CFGI = 9999.0
 
       ! define the land use category associated with open water
-      integer(kind=c_int) :: iOPEN_WATER_LU = -99999
+      integer(kind=c_int) :: iOPEN_WATER_LU = NODATA
 
       ! define southern and northern latitude values bounding the grid
 	  real (kind=c_float) :: rSouthernLatitude
@@ -2631,7 +2632,7 @@ elemental function int2char(iValue)  result(sBuf)
   character (len=14) :: sBuf
 
   write(UNIT=sBuf,FMT="(i14)") iValue
-  sBuf = ADJUSTL(sBuf)
+  sBuf = trim( ADJUSTL(sBuf) ) 
 
 end function int2char
 
