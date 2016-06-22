@@ -90,10 +90,11 @@ end function et_kc_CalcEvaporationReductionCoefficient
 !> This function estimates the fraction of the ground covered by
 !> vegetation during the growing season
 !> @note Implemented as equation 76, FAO-56, Allen and others
-function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
+function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, rKcb )   result (r_few)
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP), pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=c_float)                 :: rKcb
 
   ! [ RESULT ]
   real (kind=c_float) :: r_few
@@ -104,7 +105,11 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )   result (r_few)
   real (kind=c_float) :: rDenominator
   real (kind=c_float) :: rExponent
 
-  rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKcb_min
+!  rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKcb_min
+!
+! BUG? if Kcb is tracked for each cell, the value contained in the irrigation table is undefined(?)
+!
+  rNumerator = rKcb - pIRRIGATION%rKcb_min
   rDenominator = pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_min
   rExponent = 1.0 + 0.5 * pIRRIGATION%rMeanPlantHeight * rM_PER_FOOT
 
@@ -176,17 +181,17 @@ end function et_kc_CalcEffectiveRootDepth
 !> This function estimates Ke, the bare surface evaporation
 !> coefficient
 !> @note Implemented as equation 71, FAO-56, Allen and others
-function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
-      rKr )     result(rKe)
+function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, rKcb, rKr )     result(rKe)
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=c_float) :: rKcb
   real (kind=c_float) :: rKr
 
   ! [ RESULT ]
   real (kind=c_float) :: rKe
 
-  rKe = rKr * ( pIRRIGATION%rKcb_max - pIRRIGATION%rKcb )
+  rKe = rKr * ( pIRRIGATION%rKcb_max - rKcb )
 
 end function et_kc_CalcSurfaceEvaporationCoefficient
 
@@ -330,13 +335,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				 ! stress and resulting decrease in ET during dry conditions).
 
          rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
-         r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
-         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
-                 rKr ), r_few * pIRRIGATION%rKcb_mid )
-
-         if (rKe < 0) print *, "rKe < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKe, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
-         if (rKr < 0) print *, "rKr < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, rKr, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
-         if (r_few < 0) print *, "r_few < 0: ", cel%iIrrigationTableIndex, iRow, iCol, cel%iLandUse, cel%iSoilGroup, r_few, pIRRIGATION%rKcb, pIRRIGATION%rKcb_max
+         r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
+         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, rKr ), &
+                   r_few * pIRRIGATION%rKcb_mid )
 
          rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
@@ -365,9 +366,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 				 ! NO reductions in Kc due to water availability
 
          rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
-         r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION )
-         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, &
-                 rKr ), r_few * pIRRIGATION%rKcb_mid )
+         r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
+         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, rKr ), &
+                   r_few * pIRRIGATION%rKcb_mid )
 
          cel%rBareSoilEvap = cel%rReferenceET0 * rKe
          cel%rCropETc = cel%rReferenceET0 * cel%rKcb
