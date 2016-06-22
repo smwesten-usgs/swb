@@ -86,7 +86,7 @@ module types
   integer (kind=c_int), parameter :: iROUTE_LEFT_GRID = -1000
 
   integer (kind=c_int), parameter :: NODATA = -9999
-  real (kind=c_float), parameter  :: real( NODATA, kind=c_float )
+  real (kind=c_float), parameter  :: rNO_DATA_NCDC = real( NODATA, kind=c_float )
   integer (kind=c_int), parameter :: iNUM_DIGITS = 3
   integer (kind=c_int), parameter :: iFIELD_WIDTH = 10
   integer (kind=c_int), parameter :: iZERO = 0
