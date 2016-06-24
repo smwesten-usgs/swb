@@ -87,7 +87,6 @@ module swb_grid
 
   interface grid_gridToGrid
     module procedure grid_gridToGrid_int
-    module procedure grid_gridToGrid_short
     module procedure grid_gridToGrid_sgl
   end interface grid_gridToGrid
 
@@ -2006,15 +2005,14 @@ end subroutine grid_DumpGridExtent
 
 !----------------------------------------------------------------------
 
-subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajorityFilter )
+subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, iFilterType )
 
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer                     :: pGrdFrom   ! pointer to source grid
   type ( T_GENERAL_GRID ),pointer                     :: pGrdTo     ! pointer to destination grid
   integer (kind=c_int), dimension(:,:)                :: iArrayFrom
   integer (kind=c_int), dimension(:,:), intent(inout) :: iArrayTo
-  logical (kind=c_bool), intent(in)                   :: lUseMajorityFilter
-
+  integer (kind=c_int), intent(in)                    :: iFilterType
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iCol, iRow
@@ -2034,7 +2032,7 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajor
   fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
 
   ! if target grid resolution is much more coarse than source grid resolution: MAJORITY FILTER
-  if ( lUseMajorityFilter ) then
+  if ( iFilterType == MAJORITY_FILTER ) then
 
     iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
 
@@ -2063,6 +2061,36 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajor
 
       enddo
     enddo
+
+! if target grid resolution is much more coarse than source grid resolution: NEAREST-NEIGHBOR MAJORITY FILTER
+elseif ( iFilterType == NEAREST_NEIGHBOR_MAJORITY_FILTER ) then
+
+      iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
+
+      do iRow=1,pGrdTo%iNY
+        do iCol=1,pGrdTo%iNX
+
+          iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
+                     rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
+                     rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
+
+          call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
+            "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
+            trim(__FILE__), __LINE__)
+
+          call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
+            "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
+            trim(__FILE__), __LINE__)
+
+          iArrayTo(iCol,iRow) = grid_majorityFilter_nearest_int(iValues=iArrayFrom, &
+            iNX=pGrdFrom%iNX, &
+            iNY=pGrdFrom%iNY, &
+            iTargetCol=iColRow(COLUMN), &
+            iTargetRow=iColRow(ROW), &
+            iNoDataValue=pGrdFrom%iNoDataValue )
+
+        enddo
+      enddo
 
   else  ! target grid resolution similar to or more dense than source grid resolution: NEAREST NEIGHBOR
 
@@ -2091,90 +2119,6 @@ subroutine grid_GridToGrid_int(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajor
 end subroutine grid_GridToGrid_int
 
 !--------------------------------------------------------------------------------------------------
-
-subroutine grid_GridToGrid_short(pGrdFrom, iArrayFrom, pGrdTo, iArrayTo, lUseMajorityFilter )
-
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer                       :: pGrdFrom   ! pointer to source grid
-  type ( T_GENERAL_GRID ),pointer                       :: pGrdTo     ! pointer to destination grid
-  integer (kind=c_int), dimension(:,:)                  :: iArrayFrom
-  integer (kind=c_short), dimension(:,:), intent(inout) :: iArrayTo
-  logical (kind=c_bool), intent(in)                     :: lUseMajorityFilter
-
-
-  ! [ LOCALS ]
-  integer (kind=c_int) :: iCol, iRow
-  integer (kind=c_int), dimension(2) :: iColRow
-  integer (kind=c_int) :: iSpread
-  real (kind=c_float)  :: fGridcellRatio
-
-  ! must ensure that there are coordinates associated with the "to" grid...
-  ! by default, these are left unpopulated during a "normal" swb run
-  if(.not. allocated(pGrdTo%rX) )  call grid_PopulateXY(pGrdTo)
-  if(.not. allocated(pGrdFrom%rX) )  call grid_PopulateXY(pGrdFrom)
-
-  call echolog("Target grid resolution: "//trim(asCharacter( pGrdTo%rGridCellSize )))
-  call echolog("Source grid resolution: "//trim(asCharacter( pGrdFrom%rGridCellSize )))
-
-  fGridcellRatio = pGrdTo%rGridCellSize / pGrdFrom%rGridCellSize
-
-  if ( lUseMajorityFilter ) then
-
-    iSpread = max( 1, nint( fGridcellRatio / 2.0_c_float ) )
-
-    do iRow=1,pGrdTo%iNY
-      do iCol=1,pGrdTo%iNX
-
-        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
-                   rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
-                   rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
-
-        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-          trim(__FILE__), __LINE__)
-
-        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-          trim(__FILE__), __LINE__)
-
-        iArrayTo(iCol,iRow) = grid_majorityFilter_int(iValues=iArrayFrom, &
-          iNX=pGrdFrom%iNX, &
-          iNY=pGrdFrom%iNY, &
-          iTargetCol=iColRow(COLUMN), &
-          iTargetRow=iColRow(ROW), &
-          iNoDataValue=pGrdFrom%iNoDataValue, &
-          iSpread=iSpread)
-
-      enddo
-    enddo
-
-  else  ! target grid resolution similar to or more dense than source grid resolution: NEAREST NEIGHBOR
-
-    do iRow=1,pGrdTo%iNY
-      do iCol=1,pGrdTo%iNX
-
-        iColRow = grid_GetGridColRowNum(pGrd=pGrdFrom, &
-                   rX=real(pGrdTo%rX(iCol, iRow), kind=c_double), &
-                   rY=real(pGrdTo%rY(iCol, iRow), kind=c_double))
-
-        call assert(iColRow(COLUMN) > 0 .and. iColRow(COLUMN) <= pGrdFrom%iNX, &
-          "Illegal column number supplied: "//trim(asCharacter(iColRow(COLUMN))), &
-          trim(__FILE__), __LINE__)
-
-        call assert(iColRow(ROW) > 0 .and. iColRow(ROW) <= pGrdFrom%iNY, &
-          "Illegal row number supplied: "//trim(asCharacter(iColRow(ROW))), &
-          trim(__FILE__), __LINE__)
-
-        iArrayTo(iCol,iRow) = iArrayFrom( iColRow(COLUMN), iColRow(ROW) )
-
-      enddo
-    enddo
-
-  endif
-
-end subroutine grid_GridToGrid_short
-
-!----------------------------------------------------------------------
 
 subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo )
 
@@ -2228,6 +2172,70 @@ subroutine grid_GridToGrid_sgl(pGrdFrom, rArrayFrom, pGrdTo, rArrayTo )
 end subroutine grid_GridToGrid_sgl
 
 !----------------------------------------------------------------------
+
+
+function grid_MajorityFilter_nearest_int(iValues, iNX, iNY, iTargetCol, &
+   iTargetRow, iNoDataValue)  result(iRetVal)
+
+  ! [ ARGUMENTS ]
+  integer (kind=c_int), dimension(iNX, iNY) :: iValues
+  integer (kind=c_int) :: iNX
+  integer (kind=c_int) :: iNY
+  integer (kind=c_int) :: iTargetCol          ! column number of target cell
+  integer (kind=c_int) :: iTargetRow          ! row number of target cell
+  integer (kind=c_int) :: iNoDataValue
+  integer (kind=c_int) :: iRetVal
+
+  ! [ LOCALS ]
+  integer (kind=c_int), dimension(9) :: iValue
+  integer (kind=c_int), dimension(9) :: iCount
+  logical (kind=c_bool) :: lMatch
+  integer (kind=c_int) :: iRow
+  integer (kind=c_int) :: iCol
+  integer (kind=c_int), dimension(9) :: iMask
+  integer (kind=c_int) :: i, iSize, iLast, iIndex, iCellNum
+
+  iValue = 0
+  iCount = 0
+  iLast = 0
+  iCellNum = 0
+
+  ! four-point kernel: take majority from cells, N, S, E, W of current cell
+  iMask = (/0, 1, 0, 1, 1, 1, 0, 1, 0/)
+
+   do iRow=max(1,iTargetRow - 1), min(iNY, iTargetRow + 1)
+     do iCol=max(1,iTargetCol - 1), min(iNX, iTargetCol + 1)
+
+       iCellNum = iCellNum + 1
+
+       if( iMask(iCellNum) == 0 ) cycle
+
+       lMatch = lFALSE
+
+       do i=1, iLast
+         if (iValue(i) == iValues(iCol, iRow) ) then
+           iCount(i) = iCount(i) + iMask(iCellNum)
+           lMatch = lTRUE
+           exit
+         endif
+       enddo
+
+       if (.not. lMatch) then
+         iLast = iLast + 1
+         iValue(iLast) = iValues(iCol, iRow)
+         iCount(iLast) = iCount(iLast) + iMask(iCellNum)
+         lMatch = lTRUE
+       endif
+     enddo
+   enddo
+
+   iIndex = MAXLOC(iCount, dim=1)
+
+   iRetVal = iValue(iIndex)
+
+end function grid_majorityFilter_nearest_int
+
+!---------------------------------------------------------------------------------------------------
 
 function grid_MajorityFilter_int(iValues, iNX, iNY, iTargetCol, &
    iTargetRow, iNoDataValue, iSpread)  result(iRetVal)
@@ -2308,8 +2316,8 @@ end function grid_majorityFilter_int
 function grid_Convolve_sgl(pGrd, iTargetCol, iTargetRow, rKernel)  result(rRetVal)
 
   type ( T_GENERAL_GRID ),pointer     :: pGrd
-  integer (kind=c_int), intent(in)    :: iTargetCol          
-  integer (kind=c_int), intent(in)    :: iTargetRow          
+  integer (kind=c_int), intent(in)    :: iTargetCol
+  integer (kind=c_int), intent(in)    :: iTargetRow
   real (kind=c_float), intent(in)     :: rKernel(:,:)
   real (kind=c_float) :: rRetVal
 
@@ -2349,11 +2357,11 @@ function grid_Convolve_sgl(pGrd, iTargetCol, iTargetRow, rKernel)  result(rRetVa
       iColnum = iCol + iColmin
 
       if (iRownum > iNY .or. iColnum > iNX) then
-        
-        cycle   
+
+        cycle
 
       elseif ( .not. pGrd%lMask( iCol, iRow ) ) then
-        
+
         cycle
 
       else
@@ -2394,10 +2402,10 @@ function grid__most_common_int( iValues, iFloor, iCeiling, lMask )    result( iV
     if ( iCount > iMaxCount ) then
       iMaxCount = iCount
       iValue = iIndex
-    endif  
+    endif
 
   enddo
 
-end function grid__most_common_int  
+end function grid__most_common_int
 
 end module swb_grid

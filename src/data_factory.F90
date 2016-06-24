@@ -47,7 +47,7 @@ module data_factory
     logical (kind=c_bool) :: lMissingFilesAreAllowed = lFALSE
     logical (kind=c_bool) :: lFlipHorizontal = lFALSE
     logical (kind=c_bool) :: lFlipVertical = lFALSE
-    logical (kind=c_bool) :: lUseMajorityFilter = lFALSE
+    integer (kind=c_int)  :: iMajorityFilterType = NO_MAJORITY_FILTER
 
     integer (kind=c_int)  :: iDaysToPadAtYearsEnd = 0
     integer (kind=c_int)  :: iDaysToPadIfLeapYear = 1
@@ -100,7 +100,7 @@ module data_factory
                              init_gridded
 
     procedure, public :: set_user_offset => set_user_offset_sub
-    procedure, public :: set_user_scale => set_user_scale_sub 
+    procedure, public :: set_user_scale => set_user_scale_sub
     procedure, public :: set_X_offset => set_X_coord_offset_sub
     procedure, public :: set_Y_offset => set_Y_coord_offset_sub
 
@@ -127,8 +127,6 @@ module data_factory
  !   procedure :: destroy => create_data_object_sub
     procedure :: get_filetype => get_source_filetype_fn
 
-    procedure, public :: set_majority_filter_flag => set_majority_filter_flag_sub
-
     procedure, public :: set_filecount => set_filecount
     procedure, public :: reset_filecount => reset_filecount
     procedure, public :: reset_at_yearend_filecount => reset_at_yearend_filecount
@@ -150,7 +148,7 @@ module data_factory
     procedure, private :: enforce_limits_int => data_GridEnforceLimits_int
     generic, public    :: enforce_limits => enforce_limits_real, enforce_limits_int
 
-    procedure, private :: create_missing_values_mask_real => data_CreateMissingValuesMask_real                                      
+    procedure, private :: create_missing_values_mask_real => data_CreateMissingValuesMask_real
     procedure, private :: create_missing_values_mask_int  => data_CreateMissingValuesMask_int
     generic, public    :: create_missing_values_mask => create_missing_values_mask_real, &
                                                         create_missing_values_mask_int
@@ -158,7 +156,7 @@ module data_factory
     procedure, private :: apply_scale_and_offset_real => data_GridApplyScaleAndOffset_real
     procedure, private :: apply_scale_and_offset_int  => data_GridApplyScaleAndOffset_int
     generic, public    :: apply_scale_and_offset => apply_scale_and_offset_int, &
-                                                    apply_scale_and_offset_real   
+                                                    apply_scale_and_offset_real
 
     procedure, public :: calc_project_boundaries => calc_project_boundaries
     procedure, public :: test_for_need_to_pad_values => test_for_need_to_pad_values
@@ -186,17 +184,6 @@ module data_factory
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1
 
 contains
-
-  subroutine set_majority_filter_flag_sub(this, lUseMajorityFilter)
-   
-     class (T_DATA_GRID) :: this
-     logical (kind=c_bool)        :: lUseMajorityFilter
-  
-     this%lUseMajorityFilter = lUseMajorityFilter
-  
-  end subroutine set_majority_filter_flag_sub
-
-!--------------------------------------------------------------------------------------------------
 
   subroutine initialize_constant_real_data_object_sub( this, &
      sDescription, &
@@ -635,9 +622,9 @@ subroutine transform_grid_to_grid(this, pGrdBase)
 
           call grid_gridToGrid(pGrdFrom=this%pGrdNative,                 &
                             iArrayFrom=this%pGrdNative%iData,            &
-                            pGrdTo=pGrdBase,                             &  
+                            pGrdTo=pGrdBase,                             &
                             iArrayTo=pGrdBase%iData,                     &
-                            lUseMajorityFilter=this%lUseMajorityFilter )
+                            iFilterType=this%iMajorityFilterType )
         case default
 
           call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: value=" &
@@ -787,7 +774,7 @@ end subroutine set_constant_value_real
       lMatch = lFALSE
 
       if (present(iYear) ) then
-        
+
         iPos_Y = max(index(sNewFilename, "%Y"), index(sNewFilename, "%y") )
 
         if (iPos_Y > 0) then
@@ -798,7 +785,7 @@ end subroutine set_constant_value_real
 
         endif
 
-      endif  
+      endif
 
       ! evaluate template string for "#" characters
       iPos = index(sNewFilename, "#")
@@ -872,7 +859,7 @@ end subroutine set_constant_value_real
               sBuf = YEAR_INFO( iMonth )%sName
 
           end select
-            
+
           iLen=len_trim(sNewFilename)
           sNewFilename = sNewFilename(1:iPos_B - 1)//trim(sBuf) &
                          //sNewFilename(iPos_B + 2:iLen)
@@ -891,7 +878,7 @@ end subroutine set_constant_value_real
             case ( FILE_TEMPLATE_LOWERCASE_MONTHNAME )
 
               sBuf = YEAR_INFO( iMonth )%sFullName
-              call lowercase( sBuf )              
+              call lowercase( sBuf )
 
             case default
 
@@ -901,7 +888,7 @@ end subroutine set_constant_value_real
 
           iLen=len_trim(sNewFilename)
           sNewFilename = sNewFilename(1:iPos_BF - 1)//trim(sBuf) &
-                         //sNewFilename( ( iPos_BF + len_trim(sBuf) - 1):iLen)                         
+                         //sNewFilename( ( iPos_BF + len_trim(sBuf) - 1):iLen)
 
         endif
 
@@ -1239,7 +1226,7 @@ end subroutine set_constant_value_real
     if (this%iNC_ARCHIVE_STATUS == NETCDF_FILE_CLOSED) then
 
   !> @todo finish the logic in this section: really want to output X(:,:) and Y(:,:)
-  !!       as grid of latitude and longitude so that external NetCDF viewers can 
+  !!       as grid of latitude and longitude so that external NetCDF viewers can
   !!       plot the archived data correctly
 
 !       if ( len_trim(this%sPROJ4_string ) > 0 ) then
@@ -1388,7 +1375,7 @@ subroutine set_X_coord_offset_sub(this, rXOffset)
    real (kind=c_double) :: rXOffset
 
    this%rX_Coord_AddOffset = rXOffset
-   
+
 end subroutine set_X_coord_offset_sub
 
 !----------------------------------------------------------------------
@@ -1399,7 +1386,7 @@ subroutine set_Y_coord_offset_sub(this, rYOffset)
    real (kind=c_double) :: rYOffset
 
    this%rY_Coord_AddOffset = rYOffset
-   
+
 end subroutine set_Y_coord_offset_sub
 
 subroutine set_user_scale_sub(this, rUserScaleFactor)
@@ -1408,7 +1395,7 @@ subroutine set_user_scale_sub(this, rUserScaleFactor)
    real (kind=c_float) :: rUserScaleFactor
 
    this%rUserScaleFactor = rUserScaleFactor
-   
+
 end subroutine set_user_scale_sub
 
 
@@ -1418,7 +1405,7 @@ subroutine set_user_offset_sub(this, rUserOffset)
    real (kind=c_float) :: rUserOffset
 
    this%rUserOffset = rUserOffset
-   
+
 end subroutine set_user_offset_sub
 
 !----------------------------------------------------------------------
@@ -1586,10 +1573,10 @@ end subroutine set_maximum_allowable_value_real_sub
 
     associate ( values => rValues )
 
-      where ( values < rMin )   values = rMin 
+      where ( values < rMin )   values = rMin
       where ( values > rMax )   values = rMax
 
-    end associate    
+    end associate
 
   end subroutine data_GridEnforceLimits_real
 
@@ -1599,7 +1586,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
     class (T_DATA_GRID)                   :: this
     real (kind=c_float), intent(inout)    :: rValues(:,:)
-    
+
     ! [ LOCALS ]
     real (kind=c_float)  :: rMean, rSum
     integer (kind=c_int) :: iCount
@@ -1616,9 +1603,9 @@ end subroutine set_maximum_allowable_value_real_sub
             values = values * scale_factor + add_offset
 
           elsewhere
-          
-            values = rZERO  
-         
+
+            values = rZERO
+
          endwhere
 
         case (MISSING_VALUES_REPLACE_WITH_MEAN)
@@ -1634,16 +1621,16 @@ end subroutine set_maximum_allowable_value_real_sub
             values = values * scale_factor + add_offset
 
           elsewhere
-          
+
             values = rMean
-         
+
          endwhere
 
         case default
 
           call assert( lFALSE, "Unhandled case select", __FILE__, __LINE__ )
 
-      end select  
+      end select
 
     end associate
 
@@ -1655,7 +1642,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
     class (T_DATA_GRID)                    :: this
     integer (kind=c_int), intent(inout)    :: iValues(:,:)
-    
+
     ! [ LOCALS ]
     integer (kind=c_int) :: iMode
 
@@ -1671,9 +1658,9 @@ end subroutine set_maximum_allowable_value_real_sub
             values = real( values, kind=c_float ) * scale_factor + add_offset
 
           elsewhere
-          
-            values = iZERO  
-         
+
+            values = iZERO
+
          endwhere
 
         case (MISSING_VALUES_REPLACE_WITH_MEAN)
@@ -1685,16 +1672,16 @@ end subroutine set_maximum_allowable_value_real_sub
             values = real( values, kind=c_float ) * scale_factor + add_offset
 
           elsewhere
-          
+
             values = iMode
-         
+
          endwhere
 
         case default
 
           call assert( lFALSE, "Unhandled case select", __FILE__, __LINE__ )
 
-      end select  
+      end select
 
     end associate
 
@@ -1747,7 +1734,7 @@ end subroutine set_maximum_allowable_value_real_sub
 
       ! scan for NaNs
       !> @TODO Replace isnan function with ieee_is_nan once gfortran supports it (gcc 5.1)
-      where ( isnan( values) )  mask = lFALSE      
+      where ( isnan( values) )  mask = lFALSE
 
     end associate
 

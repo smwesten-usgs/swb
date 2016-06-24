@@ -767,6 +767,10 @@ module types
   integer (kind=c_int), parameter :: STREAM_INTERACTIONS_MAX = 100
 #endif
 
+  integer (kind=c_int), parameter :: NO_MAJORITY_FILTER                 = 0
+  integer (kind=c_int), parameter :: MAJORITY_FILTER                    = 1
+  integer (kind=c_int), parameter :: NEAREST_NEIGHBOR_MAJORITY_FILTER   = 2
+
   !> @anchor const_runoffCalc
   !> @name Constants: Runoff calculation
   !> Options controlling the selection of a runoff calculation algorithm
@@ -1303,9 +1307,9 @@ subroutine sleep_for_x_seconds( seconds )
   ! [ LOCALS ]
   integer                   :: datetime(8)
   integer                   :: msec1, msec2, sec1, sec2, msec_threshold, msec_diff
-  enum, bind(c)             
-    enumerator :: YEAR=1, MONTH, DAY, TIME_DIFF_UTC, HOUR, MIN, SEC, MSEC 
-  end enum  
+  enum, bind(c)
+    enumerator :: YEAR=1, MONTH, DAY, TIME_DIFF_UTC, HOUR, MIN, SEC, MSEC
+  end enum
 
   msec_threshold = seconds * 1000.
 
@@ -1314,15 +1318,15 @@ subroutine sleep_for_x_seconds( seconds )
   msec1 = ( datetime( HOUR ) * 3.6e6 + datetime( MIN ) * 6e4 + datetime( SEC ) * 1000 + datetime( MSEC ) )
   msec_diff = 0
 
-  do while ( msec_diff < msec_threshold ) 
-    
+  do while ( msec_diff < msec_threshold )
+
     call date_and_time( values=datetime )
     msec2 = ( datetime( HOUR ) * 3.6e6 + datetime( MIN ) * 6e4 + datetime( SEC ) * 1000 + datetime( MSEC ) )
     msec_diff = msec2 - msec1
 
-  enddo  
+  enddo
 
-end subroutine sleep_for_x_seconds  
+end subroutine sleep_for_x_seconds
 
 function nextunit(iLU)  result(iUnit)
 
@@ -1991,7 +1995,7 @@ end function lowercase_fn
 
 !--------------------------------------------------------------------------
 
-subroutine lowercase( s ) 
+subroutine lowercase( s )
 
   ! ARGUMENTS
   character (len=*), intent(inout) :: s
@@ -2305,7 +2309,7 @@ function approx_equal_dbl(rA, rB, rTol)  result(lTest)
    else
      lTest = lFALSE
    endif
- 
+
 end function approx_equal_dbl
 
 
@@ -2755,7 +2759,7 @@ subroutine writeMultiLine(sMessageText, iLU)
 
     if( sMessageText(1:1) == "~" ) then
       sMessageText = sMessageText(2:len(sMessageText))
-      write(UNIT=iLU,FMT="(/)") 
+      write(UNIT=iLU,FMT="(/)")
     endif
 
     sRecord = trim(sMessageText)

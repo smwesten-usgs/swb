@@ -323,7 +323,7 @@ subroutine control_setModelOptions(sControlFile)
       endif
 
     elseif ( str_compare(sItem, "GROWING_SEASON_STARTING_GDD") ) then
-      call Chomp ( sRecord, sArgument )    
+      call Chomp ( sRecord, sArgument )
       read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonStart_Minimum_GDD
       call Assert ( iStat == 0, "Could not read growing degree day (GDD) associated with " &
         //"the start of the growing season" )
@@ -331,7 +331,7 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%fGrowingSeasonStart_Minimum_GDD
 
     elseif ( str_compare(sItem, "GROWING_SEASON_KILLING_FROST") ) then
-      call Chomp ( sRecord, sArgument )    
+      call Chomp ( sRecord, sArgument )
       read ( sArgument, fmt=*, iostat=iStat) pConfig%fGrowingSeasonEnd_KillingFrostTemp
       call Assert ( iStat == 0, "Could not read killing frost temperature associated with " &
         //"the end of the growing season" )
@@ -339,7 +339,7 @@ subroutine control_setModelOptions(sControlFile)
         //" growing season set to: ", pConfig%fGrowingSeasonEnd_KillingFrostTemp
 
     elseif ( str_compare(sItem, "INTERCEPTION_METHOD") ) then
-      call Chomp ( sRecord, sOption )    
+      call Chomp ( sRecord, sOption )
       if ( str_compare( sOption, "HORTON") ) then
         pConfig%iConfigureInterception = CONFIG_INTERCEPTION_HORTON
         write(UNIT=LU_LOG,FMT=*) "Interception method set to HORTON; lookup table must contain columns for " &
@@ -1323,7 +1323,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "The 'ENABLE_IRRIGATION' directive is deprecated."
       write(UNIT=LU_LOG,FMT=*) "  ==> Ensure that you have a 'Irrigation Application Scheme' column"
       write(UNIT=LU_LOG,FMT=*) "      in your irrigation lookup table. It should be placed to the right"
-      write(UNIT=LU_LOG,FMT=*) "      of the 'Irrigation End Date' column."      
+      write(UNIT=LU_LOG,FMT=*) "      of the 'Irrigation End Date' column."
 
     else if ( sItem == "IRRIGATION_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading irrigation lookup table"
@@ -1719,9 +1719,15 @@ subroutine control_setModelOptions(sControlFile)
 
     else if ( sItem == "USE_MAJORITY_FILTER" ) then
 
-      DAT(:)%lUseMajorityFilter = lTRUE
+      DAT(:)%iMajorityFilterType = MAJORITY_FILTER
 
       write(UNIT=LU_LOG,FMT="(/,a,/)")  "** A MAJORITY FILTER will be applied to all integer input grids **"
+
+    else if ( sItem == "USE_NEAREST_NEIGHBOR_MAJORITY_FILTER" ) then
+
+      DAT(:)%iMajorityFilterType = NEAREST_NEIGHBOR_MAJORITY_FILTER
+
+      write(UNIT=LU_LOG,FMT="(/,a,/)")  "** A NEAREST NEIGHBOR MAJORITY FILTER will be applied to all integer input grids **"
 
     else if ( sItem == "OUTPUT_OPTIONS" ) then
       call Chomp ( sRecord, sArgument )
