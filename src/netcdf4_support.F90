@@ -202,7 +202,7 @@ module netcdf4_support
     real (kind=c_double), allocatable, dimension(:) :: rX_Coords
     real (kind=c_double), allocatable, dimension(:) :: rY_Coords
     real (kind=c_double)                            :: rX_Coord_AddOffset = 0.0_c_double
-    real (kind=c_double)                            :: rY_Coord_AddOffset = 0.0_c_double    
+    real (kind=c_double)                            :: rY_Coord_AddOffset = 0.0_c_double
     real (kind=c_double), allocatable, dimension(:) :: rDateTimeValues
     real (kind=c_double) :: rGridCellSizeX
     real (kind=c_double) :: rGridCellSizeY
@@ -318,7 +318,7 @@ end function nf_dayvalue_to_julian_day
 !--------------------------------------------------------------------------------------------------
 
 !> Given the current Julian Date of the simulation, return the corresponding
-!! index value for the NetCDF file. 
+!! index value for the NetCDF file.
 function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
   type (T_NETCDF4_FILE ) :: NCFILE
@@ -333,7 +333,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
   integer (kind=c_int)              :: iIterations
   integer (kind=c_int), parameter   :: MAX_ITERATIONS = 100
 
-  ! return value of this function represents the *starting* index of the time dimension 
+  ! return value of this function represents the *starting* index of the time dimension
   ! if no value is found in association with the current Julian Date, return -9999
   iStart = -9999
   iIterations = 0
@@ -349,7 +349,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
     ! determine Julian Date associated with the current date/time value at this index position
     rJD_atIndex = nf_dayvalue_to_julian_day( NCFILE=NCFILE, rDayValue=NCFILE%rDateTimeValues(iIndex) )
-    
+
     ! index value is relative to zero in C API;
     ! first day's data should be associated with index value of zero
     iJD_Difference = aint( rJD_atIndex ) - aint( rJulianDay )
@@ -359,7 +359,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
       ! difference between estimated Julian Date and current is zero; we've found the desired index
       case ( 0 )
 
-        iStart = iIndex        
+        iStart = iIndex
         exit
 
       ! difference between estimated JD and current JD is < 0; JD at index is *less* than
@@ -379,7 +379,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
     end select
 
-    ! we've examined the Julian Dates in a reasonable subset of the date/time variable; 
+    ! we've examined the Julian Dates in a reasonable subset of the date/time variable;
     ! if we haven't found it yet, we're probably not going to.
     if ( iIterations > MAX_ITERATIONS ) exit
 
@@ -753,7 +753,7 @@ subroutine netcdf_open_and_prepare_as_output(NCFILE, NCFILE_ARCHIVE, &
   integer (kind=c_int) :: iEndYear
   real (kind=c_double), optional :: rX(:,:)
   real (kind=c_double), optional :: rY(:,:)
-  
+
   ! [ LOCALS ]
   type (T_NETCDF_VARIABLE), pointer :: pNC_VAR
   type (T_NETCDF_DIMENSION), pointer :: pNC_DIM
@@ -1778,15 +1778,15 @@ subroutine nf_get_variable_array_as_vector_short(NCFILE, iNC_VarID, iNC_Start, i
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -1824,15 +1824,15 @@ subroutine nf_get_variable_vector_int(NCFILE, iNC_VarID, iNC_Start, iNC_Count, &
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -1870,15 +1870,15 @@ subroutine nf_get_variable_vector_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -1917,15 +1917,15 @@ subroutine nf_get_variable_array_double(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -1964,15 +1964,15 @@ subroutine nf_get_variable_array_as_vector_double(NCFILE, iNC_VarID, iNC_Start, 
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -2010,15 +2010,15 @@ subroutine nf_get_variable_vector_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count,
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -2057,15 +2057,15 @@ subroutine nf_get_variable_array_float(NCFILE, iNC_VarID, iNC_Start, iNC_Count, 
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
-        call echolog( "** netCDF I/O error; possible network issues." ) 
+        call echolog( "** netCDF I/O error; possible network issues." )
         call echolog( "   ==> making another attempt to access netCDF data." )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -2086,11 +2086,11 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
 
 
   ! [ LOCALS ]
-  integer (kind=c_int)            :: iErrorCount
-  integer (kind=c_int)            :: iResultCode
-  integer (kind=c_int), parameter :: MAX_RETRIES = 12
-  real (kind=c_float)             :: pause_length
-  real (kind=c_float)             :: random_num
+  integer (kind=c_int)              :: iErrorCount
+  integer (kind=c_int)              :: iResultCode
+  integer (kind=c_int), parameter   :: MAX_RETRIES = 12
+  real (kind=c_float)               :: pause_length
+  real (kind=c_float)               :: random_num
 
   iErrorCount = 0
 
@@ -2109,21 +2109,24 @@ subroutine nf_get_variable_array_as_vector_float(NCFILE, iNC_VarID, iNC_Start, i
 
       if ( iErrorCount < NETCDF_IO_ERROR_RETRIES ) then
         iErrorCount = iErrorCount + 1
+
+        call set_random_number_generator_seed()
         call random_number( random_num )
+
         pause_length = iErrorCount * 6.0 * random_num
         if ( iErrorCount > MAX_RETRIES ) exit
-        call echolog( "** netCDF I/O error; possible network issues or conflicting applications." ) 
+        call echolog( "** netCDF I/O error; possible network issues or conflicting applications." )
         call echolog("    filename: "//squote( NCFILE%sFilename ) )
         call echolog( "   ==> making another attempt to access netCDF data." )
         call echolog( "       PAUSING for "//trim( asCharacter(pause_length) )//" seconds before attempting to re-read the data." )
         call sleep_for_x_seconds( pause_length )
         cycle
       endif
-        
+
     endif
 
-    call nf_trap(iResultCode, __FILE__, __LINE__ )     
-      
+    call nf_trap(iResultCode, __FILE__, __LINE__ )
+
     exit
 
   enddo
@@ -2338,7 +2341,7 @@ subroutine nf_calculate_time_range(NCFILE)
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
 
-  ! [ LOCALS ] 
+  ! [ LOCALS ]
   integer (kind=c_int) :: iMonth, iDay, iYear
 
   NCFILE%iOriginJD = julian_day(NCFILE%iOriginYear, &
@@ -2418,7 +2421,7 @@ subroutine nf_get_time_units(NCFILE)
       NCFILE%iOriginMM = 0
       NCFILE%iOriginSS = 0
     else
-      
+
       call chomp(sDateTime, sItem, ":")
       read(sItem, *, iostat=iStat) NCFILE%iOriginMM
       if (iStat /= 0)  NCFILE%iOriginMM = 0
@@ -2428,7 +2431,7 @@ subroutine nf_get_time_units(NCFILE)
 
     endif
 
-  endif  
+  endif
 
 end subroutine nf_get_time_units
 
@@ -2892,7 +2895,7 @@ subroutine nf_set_standard_attributes(NCFILE, sOriginText, rX, rY)
   type (T_NETCDF4_FILE ) :: NCFILE
   character (len=*) :: sOriginText
   real (kind=c_double), optional  :: rX(:,:)
-  real (kind=c_double), optional  :: rY(:,:)  
+  real (kind=c_double), optional  :: rY(:,:)
 
   ! [ LOCALS ]
   integer (kind=c_int) :: iStat

@@ -3183,5 +3183,51 @@ elemental function fortran_to_c_string( sText )  result(cCharacterString)
 
 end function fortran_to_c_string
 
+! This simple PRNG might not be good enough for real work, but is
+! sufficient for seeding a better PRNG. TAKEN from gfortran online docs.
+function lcg(s)
+  integer (kind=c_int)  :: lcg
+  integer (kind=c_long) :: s
+  if (s == 0) then
+     s = 104729
+  else
+     s = mod(s, 4294967296_c_long)
+  end if
+  s = mod(s * 279470273_c_long, 4294967291_c_long)
+  lcg = int(mod(s, int(huge(0), c_long) ), kind(0))
+end function lcg
+
+subroutine set_random_number_generator_seed()
+
+  ! [ LOCALS ]
+  integer (kind=c_int)              :: dt(8)
+  integer (kind=c_int)              :: pid, n, i
+  integer (kind=c_int), allocatable :: seed(:)
+  integer (kind=c_long)             :: t
+
+  if ( allocated( seed ) )  deallocate(seed)
+
+  call random_seed( size=n )
+  allocate( seed(n) )
+
+  call date_and_time(values=dt)
+
+  t = ( dt(1) - 1970 ) * 365_c_long * 24 * 60 * 60 *1000 &
+      + dt(2) * 31_c_long * 24 * 60 * 60 * 1000          &
+      + dt(3) * 24_c_long * 60 * 60 * 1000               &
+      + dt(5) * 60 * 60 * 1000                           &
+      + dt(6) * 60 * 1000                                &
+      + dt(7) * 1000                                     &
+      + dt(8)
+
+  pid = getpid()
+  t = ieor(t, int( pid, kind(t)))
+  do i=1, n
+    seed(i) = lcg(t)
+  enddo
+
+  call random_seed( put=seed )
+
+end subroutine set_random_number_generator_seed
 
 end module types
