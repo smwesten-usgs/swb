@@ -238,12 +238,23 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   real (kind=c_float) :: rOutFlow
   ! [ LOCALS ]
   real (kind=c_float) :: rP
+  real (kind=c_float) :: rP_avail
   real (kind=c_float) :: rCN_05
   real (kind=c_float) :: rSMax
 
-  rP = cel%rNetRainfall &
-       + cel%rSnowMelt &
-       + cel%rIrrigationAmount &
+  ! including interception in the amount of total water that the curve number
+  ! method 'sees'; the initial abstration term likely negates much of the
+  ! interception term
+  rP = cel%rNetRainfall          &
+       + cel%rSnowMelt           &
+       + cel%rinterception       &
+       + cel%rIrrigationAmount   &
+       + cel%rInFlow
+
+  ! same as above, excluding the interception term
+  rP_avail = cel%rNetRainfall    &
+       + cel%rSnowMelt           &
+       + cel%rIrrigationAmount   &
        + cel%rInFlow
 
   call runoff_UpdateCurveNumber(pConfig,cel,iJulDay)
@@ -281,7 +292,9 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
     call Assert(lFALSE, "Illegal initial abstraction method specified" )
   end if
 
-  return
+  ! ensure that the calculated runoff doesn't exceed the amount of water
+  ! available at the cell surface  
+  rOutflow = min( rOutflow, rP_avail )
 
 end function runoff_CellRunoff_CurveNumber
 
