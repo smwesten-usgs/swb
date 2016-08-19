@@ -195,8 +195,8 @@ For each of the three major climate datasets (precipitation, minimum and maximum
 | _NETCDF_FLIP_HORIZONTAL            |  **none**        | if present, all gridded data will be "flipped" around the vertical axis (data at the left of the grid become data at the right of the grid and vice versa) |  |
 | _NETCDF_MAKE_LOCAL_ARCHIVE         |  |  |
 | _PROJECTION_DEFINITION             |  | PROJ.4 string describing the geographic projection of the dataset |  |
-| _MINIMUM_ALLOWED_VALUE             | *real value* | ceiling to be applied to the data; data above this value will be reset to this amount | |
-| _MAXIMUM_ALLOWED_VALUE             | *real value* | floor to be applied to the data; data beneath this value will be reset to this amount   
+| _MINIMUM_ALLOWED_VALUE             | *real value* | floor to be applied to the data; data above this value will be reset to this amount | |
+| _MAXIMUM_ALLOWED_VALUE             | *real value* | ceiling to be applied to the data; data beneath this value will be reset to this amount   
 | _MISSING_VALUES_CODE               | *real or integer value* | value |
 | _MISSING_VALUES_OPERATOR           | "<", "<=", ">", ">=" | trigger missing values action if the data value meets this condition |
 | _MISSING_VALUES_ACTION             | "mean" or "zero" | "mean" will substitute the mean value calculated over the remaining valid cells; "zero" will substitute a value of 0.0 in place of missing values
