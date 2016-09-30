@@ -3186,14 +3186,14 @@ end function fortran_to_c_string
 ! This simple PRNG might not be good enough for real work, but is
 ! sufficient for seeding a better PRNG. TAKEN from gfortran online docs.
 function lcg(s)
-  integer (kind=c_int)  :: lcg
-  integer (kind=c_long) :: s
+  integer (kind=c_int)       :: lcg
+  integer (kind=c_long_long) :: s
   if (s == 0) then
      s = 104729
   else
-     s = mod(s, 4294967296_c_long)
+     s = mod(s, 4294967296_c_long_long)
   end if
-  s = mod(s * 279470273_c_long, 4294967291_c_long)
+  s = mod(s * 279470273_c_long_long, 4294967291_c_long_long )
   lcg = int(mod(s, int(huge(0), c_long) ), kind(0))
 end function lcg
 
@@ -3203,7 +3203,7 @@ subroutine set_random_number_generator_seed()
   integer (kind=c_int)              :: dt(8)
   integer (kind=c_int)              :: pid, n, i
   integer (kind=c_int), allocatable :: seed(:)
-  integer (kind=c_long)             :: t
+  integer (kind=c_long_long)        :: t
 
   if ( allocated( seed ) )  deallocate(seed)
 
@@ -3212,7 +3212,7 @@ subroutine set_random_number_generator_seed()
 
   call date_and_time(values=dt)
 
-  t = ( dt(1) - 1970 ) * 365_c_long * 24 * 60 * 60 *1000 &
+  t = ( dt(1) - 1970 ) * 365 * 24 * 60 * 60 *1000        &
       + dt(2) * 31_c_long * 24 * 60 * 60 * 1000          &
       + dt(3) * 24_c_long * 60 * 60 * 1000               &
       + dt(5) * 60 * 60 * 1000                           &
