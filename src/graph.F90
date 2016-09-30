@@ -24,6 +24,8 @@ module graph
     integer (kind=c_int) :: iCol,iRow
     character (len=256) :: sBuf
 
+#ifdef GRAPHICS_SUPPORT
+
     ! [ LOCALS ]
 
     real :: XA,XE,XOR,XSTEP
@@ -367,6 +369,8 @@ module graph
     CALL DISFIN()
     return
 
+#endif
+
   end subroutine makegraph
 
 !----------------------------------------------------------------------------------
@@ -380,6 +384,8 @@ module graph
     character (len=*) :: sAxisTxt
     real (kind=c_float), optional :: rMinZVal
     real (kind=c_float), optional :: rMaxZVal
+
+#ifdef GRAPHICS_SUPPORT
 
     ! [ LOCALS ]
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
@@ -670,6 +676,8 @@ module graph
 
     CALL DISFIN()
 
+#endif
+
   end subroutine make_shaded_contour
 
 !----------------------------------------------------------------------
@@ -687,6 +695,8 @@ module graph
     XS = 0.9  ! saturation = 0.9 on a scale from 0. to 1.
     XV = 0.9  ! value (brightness) = 0.9 on a scale from 0. to 1.
 
+#ifdef GRAPHICS_SUPPORT
+
     do iIndex=0,255
 
       XH = rStartHue + real(iIndex) / 255. * rDeltaHue
@@ -698,8 +708,8 @@ module graph
 
  	  CALL SETIND (0, 0., 0., 0.)  !set first color in set to BLACK
 
+#endif
+
   end subroutine makeColorTable
-
-
 
 end module graph
