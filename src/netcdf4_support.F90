@@ -351,7 +351,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
     ! index value is relative to zero in C API;
     ! first day's data should be associated with index value of zero
-    iJD_Difference = aint( rJD_atIndex ) - aint( rJulianDay )
+    iJD_Difference = aint( rJD_atIndex, c_int ) - aint( rJulianDay, c_int )
 
     select case ( iJD_Difference )
 
@@ -389,7 +389,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
   if ( .not. lFound ) then
 
     write(LU_LOG, fmt="('JD (SWB start): ', i10, '   JD (NetCDF file): ', i10)" )  &
-      aint( rJulianDay ), aint( rJD_atIndex )
+      aint( rJulianDay, c_int ), aint( rJD_atIndex, c_int )
 
     call assert( lTRUE, "Problem finding the index number of the time " &
     //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
