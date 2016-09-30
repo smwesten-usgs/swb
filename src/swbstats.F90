@@ -35,7 +35,11 @@ module swbstats_support
 
   character (len=78), dimension(33), parameter :: sUsageText = &
     [ "Usage: swbstats [binary file name]                                            ", &
+#ifdef GRAPHICS_SUPPORT
       "                {GRID|PLOT|BOTH|STATS}                                        ", &
+#else
+      "                {GRID|STATS}                                                  ", &
+#endif
       "                {YEARLY|MONTHLY|DAILY}                                        ", &
       "                {SUM}                                                         ", &
       "                {SURFER}                                                      ", &
