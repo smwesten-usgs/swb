@@ -385,9 +385,16 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
     if ( iIterations > MAX_ITERATIONS ) exit
 
   enddo
-  
-  call assert( lFound, "Problem finding the index number of the time " &
+
+  if ( .not. lFound ) then
+
+    write(LU_LOG, fmt="('JD (SWB start): ', i10, '   JD (NetCDF file): ', i10)" )  &
+      aint( rJulianDay ), aint( rJD_atIndex )
+
+    call assert( lTRUE, "Problem finding the index number of the time " &
     //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+
+  endif
 
 end function nf_julian_day_to_index_adj
 
