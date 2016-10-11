@@ -349,6 +349,9 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET") ) then
+        pConfig%iConfigureActET_Interception = CONFIG_INTERCEPTION_IS_PART_OF_ACTET
+
     else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"
       call Chomp ( sRecord, sOption )
@@ -1748,6 +1751,8 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_TR55
       else if (trim(sOption) == "HAWKINS" ) then
         pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_HAWKINS
+      else if (trim(sOption) == "NONE" ) then
+        pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_NONE
       else
         call Assert( .false._c_bool, "Illegal initial abstraction method specified" )
       end if

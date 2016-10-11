@@ -29,7 +29,7 @@ else()
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
   set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
-  
+
 endif()
 
 ################################################################
@@ -62,7 +62,7 @@ find_library(LIBZ
 
 find_library(LIBNETCDF
         NAMES netcdf libnetcdf libnetcdf.a
-        PATHS 
+        PATHS
         /usr/local/lib64
         ${LIBNETCDF_PATH}
         ${LIB_PATH}
@@ -71,7 +71,7 @@ find_library(LIBNETCDF
 
 find_library(LIBHDF5
         NAMES hdf5 libhdf5 libhdf5.a
-        PATHS 
+        PATHS
         ${LIBHDF5_PATH}
         /usr/local/lib64
         ${LIB_PATH}
@@ -80,7 +80,7 @@ find_library(LIBHDF5
 
 find_library(LIBHDF5_HL
         NAMES hdf5_hl libhdf5_hl libhdf5_hl.a
-        PATHS 
+        PATHS
         ${LIBHDF5_PATH}
         /usr/local/lib64
         ${LIB_PATH}
@@ -88,7 +88,7 @@ find_library(LIBHDF5_HL
 
 find_library(LIBCURL
         NAMES curl libcurl libcurl.so libcurl.dylib
-        PATHS 
+        PATHS
         /usr/lib64
         /usr/local/Cellar/curl/7.47.1/lib
         ${LIBCURL_PATH}
@@ -96,7 +96,7 @@ find_library(LIBCURL
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-if( DOPTION__GRAPHICS_SUPPORT ) 
+if( OPTION__GRAPHICS_SUPPORT ) 
 
 find_library(LIBDISLIN
           NAMES
@@ -113,7 +113,7 @@ endif()
 
 find_library(LIBGCC
         NAMES gcc libgcc libgcc.a
-        PATHS 
+        PATHS
         /usr/local/lib64
         ${LIBGCC_PATH}
         /usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
@@ -231,7 +231,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
           NAMES mfhdf libmfhdf libmfhdf.a
 	  HINTS
           ENV LD_LIBRARY_PATH
-          PATHS 
+          PATHS
           /usr/local/lib64
           ${LIB_PATH}
           NO_CMAKE_SYSTEM_PATH )
@@ -240,7 +240,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
           NAMES df libdf libdf.a
 	  HINTS
           ENV LD_LIBRARY_PATH
-          PATHS 
+          PATHS
           /usr/local/lib64
           ${LIB_PATH}
           NO_CMAKE_SYSTEM_PATH )
@@ -249,7 +249,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
           NAMES jpeg libjpeg libjpeg.a
 	  HINTS
           ENV LD_LIBRARY_PATH
-          PATHS 
+          PATHS
           /usr/local/lib64
 	  /usr/lib64
           ${LIB_PATH}
@@ -259,7 +259,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
           NAMES sz libsz libsz.a
 	  HINTS
           ENV LD_LIBRARY_PATH
-          PATHS 
+          PATHS
           /usr/local/lib64
 	  /usr/lib64
           ${LIB_PATH}
@@ -271,7 +271,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
           NAMES c libc libc.so
 	  HINTS
           ENV LD_LIBRARY_PATH
-          PATHS 
+          PATHS
           /usr/local/lib64
 	  /usr/lib64
 	  /lib64
@@ -280,7 +280,7 @@ elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
 
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBPTHREAD} ${LIBMFHDF} ${LIBDF} ${LIBJPEG} ${LIBSZIP} ${LIBC} ) 
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBPTHREAD} ${LIBMFHDF} ${LIBDF} ${LIBJPEG} ${LIBSZIP} ${LIBC} )
 
 else()
 
@@ -320,7 +320,7 @@ else()
           /usr/lib
           /usr/lib64
           ${LIB_PATH} )
-  
+
   find_library(LIBXFT
           NAMES Xft libXft
           PATHS

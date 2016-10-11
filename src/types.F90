@@ -170,8 +170,10 @@ module types
       real (kind=c_float) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
       real (kind=c_float) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
       real (kind=c_float) :: rCropETc = rZERO            ! unadjusted crop ET
-      real (kind=c_float) :: rBareSoilEvap = rZERO
+      real (kind=c_float) :: rBareSoilEvap = rZERO       ! used in FAO-56 two-stage calcs
       real (kind=c_float) :: rActualET = rZERO           ! Actual Evapotranspiration
+      real (kind=c_float) :: rActual_ET_soil = rZERO
+      real (kind=c_float) :: rActual_ET_interception = rZERO
 
 !if_defined STREAM_INTERACTIONS
       integer (kind=c_int) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
@@ -317,6 +319,9 @@ module types
 
     !> Interception "a" coefficient (inches per day) during growing season
   	real (kind=c_float) :: rIntercept_GrowingSeason_a
+
+    !> Maximum interception storage value for determining % wet canopy
+    real (kind=c_float) :: rMax_Interception_Storage = 0.1_c_float
 
     !> Interception "a" coefficient (inches per day) outside of growing season
   	real (kind=c_float) :: rIntercept_NonGrowingSeason_a
@@ -531,7 +536,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=c_int), parameter :: iNUM_MONTHS = 12
-  integer(kind=c_int), parameter :: iNUM_VARIABLES = 37
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 39
 
   ! constants defining T_STATS output types
   integer(kind=c_int), parameter :: iNONE = 0
@@ -604,6 +609,15 @@ module types
 
     ! The following items are tracked and provided as outputs
     ! but are not part of the mass balance calculation...
+
+    T_STATS ('ACT_ET_SOIL',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','actual evapotranspiration from soil', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('ACT_ET_INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','actual evapotranspiration from interception', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
     T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','water equivalent of snow cover', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
@@ -724,43 +738,18 @@ module types
   !> for daily and annual reporting: sources first, then the sinks,
   !> and then all other informational items
   !> @{
-  integer (kind=c_int), parameter :: iGROSS_PRECIP = 1
-  integer (kind=c_int), parameter :: iSNOWMELT = 2
-  integer (kind=c_int), parameter :: iINFLOW = 3
-  integer (kind=c_int), parameter :: iIRRIGATION = 4
-  integer (kind=c_int), parameter :: iSNOWFALL_SWE = 5
-  integer (kind=c_int), parameter :: iINTERCEPTION = 6
-  integer (kind=c_int), parameter :: iOUTFLOW = 7
-  integer (kind=c_int), parameter :: iRUNOFF_OUTSIDE = 8
-  integer (kind=c_int), parameter :: iACT_ET = 9
-  integer (kind=c_int), parameter :: iCHG_IN_SOIL_MOIST = 10
-  integer (kind=c_int), parameter :: iRECHARGE = 11
-  integer (kind=c_int), parameter :: iREJECTED_RECHARGE = 12
-  integer (kind=c_int), parameter :: iSTREAM_CAPTURE = 13
-  integer (kind=c_int), parameter :: iSNOWCOVER = 14
-  integer (kind=c_int), parameter :: iCFGI = 15
-  integer (kind=c_int), parameter :: iMIN_TEMP = 16
-  integer (kind=c_int), parameter :: iMAX_TEMP = 17
-  integer (kind=c_int), parameter :: iAVG_TEMP = 18
-  integer (kind=c_int), parameter :: iCHG_IN_SNOW_COV = 19
-  integer (kind=c_int), parameter :: iNET_RAINFALL = 20
-  integer (kind=c_int), parameter :: iNET_INFLOW = 21
-  integer (kind=c_int), parameter :: iNET_INFIL = 22
-  integer (kind=c_int), parameter :: iREFERENCE_ET = 23
-  integer (kind=c_int), parameter :: iREFERENCE_ET_ADJ = 24
-  integer (kind=c_int), parameter :: iCROP_ET = 25
-  integer (kind=c_int), parameter :: iBARE_SOIL_EVAP = 26
-  integer (kind=c_int), parameter :: iP_MINUS_PET = 27
-  integer (kind=c_int), parameter :: iSM_DEFICIT = 28
-  integer (kind=c_int), parameter :: iSM_SURPLUS = 29
-  integer (kind=c_int), parameter :: iSM_APWL = 30
-  integer (kind=c_int), parameter :: iSOIL_MOISTURE = 31
-  integer (kind=c_int), parameter :: iGDD = 32
-  integer (kind=c_int), parameter :: iROOTING_DEPTH = 33
-  integer (kind=c_int), parameter :: iCROP_COEFFICIENT = 34
-  integer (kind=c_int), parameter :: iIRRIGATION_FROM_GW = 35
-  integer (kind=c_int), parameter :: iIRRIGATION_FROM_SW = 36
-  integer (kind=c_int), parameter :: iGROWING_SEASON = 37
+
+  enum, bind(c)
+    enumerator :: iGROSS_PRECIP = 1, iSNOWMELT, iINFLOW, iIRRIGATION, iSNOWFALL_SWE,       &
+                  iINTERCEPTION, iOUTFLOW, iRUNOFF_OUTSIDE, iACT_ET, iACT_ET_SOIL,         &
+                  iACT_ET_INTERCEPTION, iCHG_IN_SOIL_MOIST, iRECHARGE, iREJECTED_RECHARGE, &
+                  iSTREAM_CAPTURE, iSNOWCOVER, iCFGI, iMIN_TEMP, iMAX_TEMP, iAVG_TEMP,     &
+                  iCHG_IN_SNOW_COV, iNET_RAINFALL, iNET_INFLOW, iNET_INFIL, iREFERENCE_ET, &
+                  iREFERENCE_ET_ADJ, iCROP_ET, iBARE_SOIL_EVAP, iP_MINUS_PET, iSM_DEFICIT, &
+                  iSM_SURPLUS, iSM_APWL, iSOIL_MOISTURE, iGDD, iROOTING_DEPTH,             &
+                  iCROP_COEFFICIENT, iIRRIGATION_FROM_GW, iIRRIGATION_FROM_SW,             &
+                  iGROWING_SEASON
+  end enum
 
 #ifdef STREAM_INTERACTIONS
   ! The maximum number of fracture recharge entries
@@ -802,9 +791,15 @@ module types
   !> @name Constants: Interception algorithm
   !> Options for specifying the choice of interception algorithm
   !> @{
-  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_BUCKET = 0
-  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_HORTON = 1
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_BUCKET               = 0
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_HORTON               = 1
   !> @}
+
+  !> @name Constants: Treatment of intercepted water
+  !> Options for specifying whether intercepted water is counted against actual ET
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_NOT_PART_OF_ACTET = 0
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_IS_PART_OF_ACTET = 1
 
   !> @name Constants: Precipitation data format
   !> Options for specifying the method of input for precipitation data
@@ -882,6 +877,7 @@ module types
   !> @{
   integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
   integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_NONE = 2
   !> @}
 
   ! Define behavior in the case of missing data [UNIMPLEMENTED]
@@ -925,6 +921,9 @@ module types
 
       !> Interception calculation method
       integer (kind=c_int) :: iConfigureInterception = CONFIG_INTERCEPTION_BUCKET
+
+      !> Count evaporated intercepted watre against actual ET?
+      integer (kind=c_int) :: iConfigureActET_Interception = CONFIG_INTERCEPTION_NOT_PART_OF_ACTET
 
       !> Precipitation input option
       integer (kind=c_int) :: iConfigurePrecip = CONFIG_NONE
