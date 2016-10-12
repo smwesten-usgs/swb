@@ -100,7 +100,7 @@ if( OPTION__GRAPHICS_SUPPORT )
 
 find_library(LIBDISLIN
           NAMES
-          dismg libdismg libdismg.a disgf dislin-10.6 dislin-10.6.a libdisgf libdisgf.a dislin.10 dislin dislin.10.5.0.dylib
+          dismg libdismg libdismg.a disgf dislin-10.6 dislin-10.6.a libdisgf libdisgf.a dislin.10 dislin libdislin.10.5.0.dylib
           HINTS
           ${LIB_PATH}
 	  ENV LD_LIBRARY_PATH
