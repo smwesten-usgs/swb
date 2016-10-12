@@ -82,6 +82,15 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+    ! 88           ,a8888a,
+    ! 88         ,8P"'  `"Y8,
+    ! 88        ,8P        Y8,
+    ! 88        88          88
+    ! 88        88          88
+    ! 88        `8b        d8'
+    ! 88         `8ba,  ,ad8'
+    ! 88888888888  "Y8888P"
+
   L0: if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) then
 
         ! we're dealing with an inactive cell; zero out terms for storage and analysis
@@ -104,6 +113,14 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         rMAXIMUM_RECHARGE = pConfig%MAX_RECHARGE(cel%iLandUseIndex, cel%iSoilGroup)
         rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU(cel%iLandUseIndex)%rMax_Interception_Storage
 
+        ! Zero out current estimate for daily recharge, rejected recharge
+        cel%rDailyRecharge = rZERO
+        cel%rRejectedRecharge = rZERO
+        cel%rActual_ET_interception = rZERO
+
+        rMoistureDeficit = rZERO
+        rMoistureSurplus = rZERO
+
         ! calculate net infiltration
         rNetInfil = MAX(rZERO, &
                     cel%rNetRainfall &
@@ -111,9 +128,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                   + cel%rIrrigationAmount &
                   + cel%rInFlow &
                   - cel%rOutFlow &
-#ifdef STREAM_INTERACTIONS
-                  - cel%rStreamCapture &
-#endif
                   - cel%rFlowOutOfGrid)
 
         ! calculate net inflow to cell
@@ -121,9 +135,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                     cel%rNetRainfall &
                   + cel%rSnowMelt &
                   + cel%rIrrigationAmount &
-!#ifdef STREAM_INTERACTIONS
-!                  - cel%rStreamCapture &   ! "Net Inflow" is really just
-!#endif                                     ! a diagnostic internal variable
                   + cel%rInFlow )           ! Supposed to be the sum of all
                                             ! water sources to a grid cell
                                             ! *BEFORE* any routing has occurred
@@ -133,7 +144,15 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         !! A negative value indicates the amount by which precip
         !! fails to satisfy potential water needs of a vegetation-covered area
 
-        cel%rActual_ET_interception = rZERO
+    !  o8o                  .                                          .
+    !  `"'                .o8                                        .o8
+    ! oooo  ooo. .oo.   .o888oo  .ooooo.  oo.ooooo.        .oooo.o .o888oo  .ooooo.  oooo d8b  .oooo.    .oooooooo  .ooooo.
+    ! `888  `888P"Y88b    888   d88' `"Y8  888' `88b      d88(  "8   888   d88' `88b `888""8P `P  )88b  888' `88b  d88' `88b
+    !  888   888   888    888   888        888   888      `"Y88b.    888   888   888  888      .oP"888  888   888  888ooo888
+    !  888   888   888    888 . 888   .o8  888   888      o.  )88b   888 . 888   888  888     d8(  888  `88bod8P'  888    .o
+    ! o888o o888o o888o   "888" `Y8bod8P'  888bod8P'      8""888P'   "888" `Y8bod8P' d888b    `Y888""8o `8oooooo.  `Y8bod8P'
+    !                                      888                                                          d"     YD
+    !                                     o888o                                                         "Y88888P'
 
         if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) then
 
@@ -171,7 +190,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             if(rPrecipMinusPotentET <= rZERO) then
             ! Precip is *LESS THAN* Potential ET
 
-              ! all water that comes (precip, interception, inflow) evaporates
+              ! all water that comes in (precip, interception, inflow) evaporates
               cel%rActual_ET_soil = rNetInfil
 
               ! any outflow that has not already been routed elsewhere
@@ -193,15 +212,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             end if
 
             cel%rOutflow = rZERO
-            cel%rDailyRecharge = rZERO
             cel%rSoilMoisture = rZERO
             cel%rInterceptionStorage = rZERO
-            rMoistureDeficit = rZERO
-            rMoistureSurplus = rZERO
             cel%rSM_AccumPotentWatLoss = rZERO
             rChangeInStorage = rZERO
-            cel%rRejectedRecharge = rZERO
-            cel%rActual_ET_interception = rZERO
             cel%rSoilMoisturePct = rZERO
 
           else ! MAIN: Execute remainder of block ONLY if non-WATER cell
@@ -216,18 +230,20 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         ! ##    ##  #######  ##     ## ##     ## ##     ## ########     ######  ######## ######## ########
         ! **************************************************************************************************
 
-            ! Zero out current estimate for daily recharge, rejected recharge
-            cel%rDailyRecharge = rZERO
-            cel%rRejectedRecharge = rZERO
-            rMoistureDeficit = rZERO
-            rMoistureSurplus = rZERO
-
             rPrevious_Soil_Moisture = cel%rSoilMoisture
             ! the following code block (L1) calculates current soil moisture values
             ! and updates the daily soil moisture deficit or surplus terms...
             ! any moisture deficit adds to the accumulated potential water loss term
 
-        L1: if(rPrecipMinusPotentET <= rZERO) then  ! Precip *LESS THAN* PotentET
+        L1: if(rPrecipMinusPotentET <= rZERO) then  ! Precip *LESS THAN* Potential ET
+
+              ! ooooooooo.                     ooooooooo.   oooooooooooo                    .oooo.
+              ! `888   `Y88.                   `888   `Y88. `888'     `8         .dP       d8P'`Y8b
+              !  888   .d88'                    888   .d88'  888               .dP        888    888
+              !  888ooo88P'                     888ooo88P'   888oooo8         dP          888    888
+              !  888              8888888       888          888    "         Yb          888    888
+              !  888                            888          888       o       `Yb        `88b  d88'
+              ! o888o                          o888o        o888ooooood8         `Yb       `Y8bd8P'
 
               ! **precipitation FAILS to meet ET demands....**
               ! add precip minus potential ET term to accumulated
@@ -237,6 +253,14 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               cel%rSM_AccumPotentWatLoss = MAX(APWL_Cap, &
                                        (cel%rSM_AccumPotentWatLoss &
                                        + rPrecipMinusPotentET ))
+
+  !                     oooo                                     o8o  oooo                                    o8o               .
+  !                     `888                                     `"'  `888                                    `"'             .o8
+  !  .ooooo.   .oooo.    888   .ooooo.        .oooo.o  .ooooo.  oooo   888       ooo. .oo.  .oo.    .ooooo.  oooo   .oooo.o .o888oo
+  ! d88' `"Y8 `P  )88b   888  d88' `"Y8      d88(  "8 d88' `88b `888   888       `888P"Y88bP"Y88b  d88' `88b `888  d88(  "8   888
+  ! 888        .oP"888   888  888            `"Y88b.  888   888  888   888        888   888   888  888   888  888  `"Y88b.    888
+  ! 888   .o8 d8(  888   888  888   .o8      o.  )88b 888   888  888   888        888   888   888  888   888  888  o.  )88b   888 .
+  ! `Y8bod8P' `Y888""8o o888o `Y8bod8P'      8""888P' `Y8bod8P' o888o o888o      o888o o888o o888o `Y8bod8P' o888o 8""888P'   "888"
 
               ! determine soil moisture given updated accumulated potential water loss
          L1a: if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_ONE_FACTOR_NONSTANDARD &
@@ -287,13 +311,35 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
               endif L1a
 
+              !! calculate change in soil moisture storage
+              rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
+
+              !! change in storage will be negative; offset somewhat by whatever
+              !! enters as net infiltration
+              cel%rActual_ET_soil = rNetInfil - rChangeInStorage
+
+              ! 'rMoistureDeficit' represents the DEFICIT term in the
+              ! original Thornthwaite-Mather calculations. DEFICIT is supposed
+              ! to capture the amount of water demand that *cannot* be met
+              ! by precipitation and the soil reservoir
+              rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
+
             else  ! code block L1: Precip *EXCEEDS* Potential ET
+
+
+              ! ooooooooo.                     ooooooooo.   oooooooooooo                    .oooo.
+              ! `888   `Y88.                   `888   `Y88. `888'     `8      Yb           d8P'`Y8b
+              !  888   .d88'                    888   .d88'  888               `Yb        888    888
+              !  888ooo88P'                     888ooo88P'   888oooo8            `Yb      888    888
+              !  888              8888888       888          888    "            .dP      888    888
+              !  888                            888          888       o       .dP        `88b  d88'
+              ! o888o                          o888o        o888ooooood8      dP           `Y8bd8P'
+
 
               !! **precipitation EXCEEDS ET demands, recharging soil column**
               !! Precip - Potential ET > 0: add infiltrated water
               !! directly to the soil moisture term
 
-              rMoistureDeficit = rZERO
               rMoistureSurplus = MAX (rZERO, (cel%rSoilMoisture          &
                                               + rPrecipMinusPotentET     &
                                               - cel%rSoilWaterCap) )
@@ -302,8 +348,25 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                                 (cel%rSoilMoisture &
                                    + rPrecipMinusPotentET))
 
+             !! calculate change in soil moisture storage
+             !! new soil moisture value is greater than previous, so change in
+             !! storage should be positive here
+             rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
+
+             cel%rActual_ET_soil = rNetInfil - rChangeInStorage - rMoistureSurplus
+
               !! back-calculate new equivalent accumulated potential water loss term
               !! given current soil moisture
+
+
+              !       .o.       ooooooooo.   oooooo   oooooo     oooo ooooo
+              !      .888.      `888   `Y88.  `888.    `888.     .8'  `888'
+              !     .8"888.      888   .d88'   `888.   .8888.   .8'    888
+              !    .8' `888.     888ooo88P'     `888  .8'`888. .8'     888
+              !   .88ooo8888.    888             `888.8'  `888.8'      888
+              !  .8'     `888.   888              `888'    `888'       888       o
+              ! o88o     o8888o o888o              `8'      `8'       o888ooooood8
+
 
          L1c: if(pConfig%iConfigureSM == CONFIG_SM_TM_LOOKUP_TABLE ) then
 
@@ -322,36 +385,24 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 cel%rSM_AccumPotentWatLoss =                                                      &
                         MIN(rZERO,                                                                &
                         cel%rSM_AccumPotentWatLoss + cel%rSoilMoisture - rPrevious_Soil_Moisture)
-
               endif L1c
 
             end if L1
 
-            !! calculate change in soil moisture storage
-            rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
-
-            !! the following code block (L2) updates estimate of ACTUAL ET
-        L2: if(rPrecipMinusPotentET <= rZERO) then  ! Precip - Potential ET <= 0
-
-              !! cap actual ET at the estimate for potential ET
-              cel%rActual_ET_soil = MIN( rNetInfil + ABS(rChangeInStorage),     &
-                                         cel%rReferenceET0_adj )
-
-        		  ! 'rMoistureDeficit' represents the DEFICIT term in the
-	  					! original Thornthwaite-Mather calculations. DEFICIT is supposed
-		  				! to capture the amount of water demand that *cannot* be met
-			  			! by precipitation and the soil reservoir
-              rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
-
-            else  ! code block L2: Precip - Potential ET > 0
-
-              cel%rActual_ET_soil = cel%rReferenceET0_adj
-
-            end if L2
-
             ! ** CALCULATE RECHARGE
             ! based on SOIL MOISTURE SURPLUS
             cel%rDailyRecharge = rMoistureSurplus
+
+
+  ! ooo        ooooo                            ooooooooo.                       oooo
+  ! `88.       .888'                            `888   `Y88.                     `888
+  !  888b     d'888   .oooo.   oooo    ooo       888   .d88'  .ooooo.   .ooooo.   888 .oo.    .oooo.   oooo d8b  .oooooooo  .ooooo.
+  !  8 Y88. .P  888  `P  )88b   `88b..8P'        888ooo88P'  d88' `88b d88' `"Y8  888P"Y88b  `P  )88b  `888""8P 888' `88b  d88' `88b
+  !  8  `888'   888   .oP"888     Y888'          888`88b.    888ooo888 888        888   888   .oP"888   888     888   888  888ooo888
+  !  8    Y     888  d8(  888   .o8"'88b         888  `88b.  888    .o 888   .o8  888   888  d8(  888   888     `88bod8P'  888    .o
+  ! o8o        o888o `Y888""8o o88'   888o      o888o  o888o `Y8bod8P' `Y8bod8P' o888o o888o `Y888""8o d888b    `8oooooo.  `Y8bod8P'
+  !                                                                                                             d"     YD
+  !                                                                                                             "Y88888P'
 
           ! if calculated recharge exceeds the estimated Kv, cap at that value
           ! and characterize the rest as "rejected recharge"
@@ -392,10 +443,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 end if
             end if
 
-          else
-
-            cel%rRejectedRecharge = rZERO
-
           end if
 
           ! update soil moisture as a percentage of soil water capacity
@@ -403,18 +450,15 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
         endif MAIN
 
-          cel%rMSB = cel%rNetRainfall &
-                 + cel%rSnowMelt &
-                 + cel%rInFlow &
-                 + cel%rIrrigationAmount &
-                 - cel%rOutFlow &
-#ifdef STREAM_INTERACTIONS
-                 - cel%rStreamCapture &
-#endif
-                 - cel%rFlowOutOfGrid &
-                 - rChangeInStorage &
-                 - cel%rActual_ET_soil &
-                 - cel%rDailyRecharge &
+          cel%rMSB = cel%rNetRainfall           &
+                 + cel%rSnowMelt                &
+                 + cel%rInFlow                  &
+                 + cel%rIrrigationAmount        &
+                 - cel%rOutFlow                 &
+                 - cel%rFlowOutOfGrid           &
+                 - rChangeInStorage             &
+                 - cel%rActual_ET_soil          &
+                 - cel%rDailyRecharge           &
                  - cel%rRejectedRecharge
 
           if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
@@ -476,6 +520,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               rMoistureDeficit
             write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
               cel%rSoilMoisture
+            write(UNIT=LU_LOG,FMT="('  cel%rSoilMoistureCapacity: ',t32,F14.4)") &
+              cel%rSoilWaterCap
+            write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisturePct: ',t32,F14.4)") &
+              cel%rSoilMoisturePct
             write(UNIT=LU_LOG,FMT="('  rPrevious_Soil_Moisture: ',t32,F14.4)") &
               rPrevious_Soil_Moisture
             write(UNIT=LU_LOG,FMT="('  cel%rRouteFraction: ',t32,F14.4)") &
