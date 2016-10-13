@@ -87,4 +87,7 @@
 
   endif
 
+  ! exit with normal result code
+  call exit_with_code( 0 )
+
 end program main
