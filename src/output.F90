@@ -17,10 +17,20 @@ contains
 
 !----------------------------------------------------------------------
 
+! **************************************************************************************************
+! ########  #######     ########  #### ##    ##    ###    ########  ##    ##
+!    ##    ##     ##    ##     ##  ##  ###   ##   ## ##   ##     ##  ##  ##
+!    ##    ##     ##    ##     ##  ##  ####  ##  ##   ##  ##     ##   ####
+!    ##    ##     ##    ########   ##  ## ## ## ##     ## ########     ##
+!    ##    ##     ##    ##     ##  ##  ##  #### ######### ##   ##      ##
+!    ##    ##     ##    ##     ##  ##  ##   ### ##     ## ##    ##     ##
+!    ##     #######     ########  #### ##    ## ##     ## ##     ##    ##
+! **************************************************************************************************
+
 subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
   rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
   rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-  rChangeInStorage,rDailyRecharge)
+  rChangeInStorage )
 
 
   type (T_GENERAL_GRID),pointer :: pGrd          ! pointer to model grid
@@ -39,7 +49,6 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
   real (kind=c_float), intent(in) :: rMoistureDeficit
   real (kind=c_float), intent(in) :: rMoistureSurplus
   real (kind=c_float), intent(in) :: rChangeInStorage
-  real (kind=c_float), intent(in) :: rDailyRecharge
 
   ![ LOCALS ]
   integer (kind=c_int) :: iIndex
@@ -98,7 +107,7 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
         case(iSNOWMELT)
           call RLE_writeByte(STAT_INFO(iSNOWMELT)%iLU, &
             cel%rSnowmelt, pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSnowmelt)
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSNOWMELT)
 
         case(iINTERCEPTION)
           call RLE_writeByte(STAT_INFO(iINTERCEPTION)%iLU, &
@@ -165,6 +174,16 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
             rSM_ActualET, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iACT_ET)
 
+        case(iACT_ET_SOIL)
+          call RLE_writeByte(STAT_INFO(iACT_ET_SOIL)%iLU, &
+            cel%rActual_ET_soil, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iACT_ET_SOIL)
+
+        case(iACT_ET_INTERCEPTION)
+          call RLE_writeByte(STAT_INFO(iACT_ET_INTERCEPTION)%iLU, &
+            cel%rActual_ET_interception, pConfig%iRLE_MULT, &
+            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iACT_ET_INTERCEPTION)
+
         case(iP_MINUS_PET)
           call RLE_writeByte(STAT_INFO(iP_MINUS_PET)%iLU, &
             rPrecipMinusPotentET, pConfig%iRLE_MULT, &
@@ -197,7 +216,7 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
 
         case(iRECHARGE)
           call RLE_writeByte(STAT_INFO(iRECHARGE)%iLU, &
-            rDailyRecharge, pConfig%iRLE_MULT, &
+            cel%rDailyRecharge, pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iRECHARGE)
 
         case(iGDD)
@@ -230,23 +249,6 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
           cel%rIrrigationFromSW, pConfig%iRLE_MULT, &
           pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iIRRIGATION_FROM_SW)
 
-      ! NOTE to Vic: the following code block needs to be present in order
-      !              that the StreamCapture results will be available
-      !              at the end of the run
-      !
-      ! Thought process behind this gobbledy-gook was that we could minimize the
-      ! number of elements within the T_CELL structure by using a temp variable
-      ! within this module, writing the values to disk, and then moving on to
-      ! the next grid cell.
-      !
-      ! Unless rStreamCapture is operated on by other modules, it could be
-      ! converted to a local module variable
-
-        case(iSTREAM_CAPTURE)
-          call RLE_writeByte(STAT_INFO(iSTREAM_CAPTURE)%iLU, &
-            REAL(cel%rStreamCapture,kind=c_float), pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSTREAM_CAPTURE)
-
         case(iGROWING_SEASON)
           call RLE_writeByte(STAT_INFO(iGROWING_SEASON)%iLU, &
             REAL(cel%iGrowingSeason,kind=c_float), pConfig%iRLE_MULT, &
@@ -262,11 +264,22 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
 
 end subroutine output_to_SWB_binary
 
+
+! **************************************************************************************************
+! ########  #######      ######   ######  ########
+!    ##    ##     ##    ##    ## ##    ## ##
+!    ##    ##     ##    ##       ##       ##
+!    ##    ##     ##     ######   ######  ######
+!    ##    ##     ##          ##       ## ##
+!    ##    ##     ##    ##    ## ##    ## ##
+!    ##     #######      ######   ######  ##
+! **************************************************************************************************
+
 subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
   iMonth, iDay, iYear, &
   rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
   rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-  rChangeInStorage,rDailyRecharge)
+  rChangeInStorage )
 
   type (T_GENERAL_GRID),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
@@ -286,7 +299,6 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
   real (kind=c_float), intent(in) :: rMoistureDeficit
   real (kind=c_float), intent(in) :: rMoistureSurplus
   real (kind=c_float), intent(in) :: rChangeInStorage
-  real (kind=c_float), intent(in) :: rDailyRecharge
 
   !@todo
   ! figure out why *.SSF files are not written to if they reference the
@@ -379,6 +391,15 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
           case(iACT_ET)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, rSM_ActualET)
+
+          case(iACT_ET_SOIL)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rActual_ET_soil)
+
+          case(iACT_ET_INTERCEPTION)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rActual_ET_interception)
+
           case(iP_MINUS_PET)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, rPrecipMinusPotentET)
@@ -399,7 +420,7 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
               iYear, rChangeInStorage)
           case(iRECHARGE)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
-              iYear, rDailyRecharge)
+              iYear, cel%rDailyRecharge)
           case(iGDD)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rGDD)
@@ -424,10 +445,6 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rIrrigationFromSW)
 
-          case(iSTREAM_CAPTURE)
-            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
-              iYear, cel%rStreamCapture)
-
           case(iGROWING_SEASON)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, real( cel%iGrowingSeason, kind=c_float) )
@@ -445,26 +462,36 @@ end subroutine output_to_SSF
 
 !----------------------------------------------------------------------
 
+
+! **********************************************************************************************************
+! ##     ## ########  ########     ###    ######## ########     ######  ########    ###    ########  ######
+! ##     ## ##     ## ##     ##   ## ##      ##    ##          ##    ##    ##      ## ##      ##    ##    ##
+! ##     ## ##     ## ##     ##  ##   ##     ##    ##          ##          ##     ##   ##     ##    ##
+! ##     ## ########  ##     ## ##     ##    ##    ######       ######     ##    ##     ##    ##     ######
+! ##     ## ##        ##     ## #########    ##    ##                ##    ##    #########    ##          ##
+! ##     ## ##        ##     ## ##     ##    ##    ##          ##    ##    ##    ##     ##    ##    ##    ##
+!  #######  ##        ########  ##     ##    ##    ########     ######     ##    ##     ##    ##     ######
+! **********************************************************************************************************
+
 subroutine output_update_accumulators(cel, iMonth, &
   rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
   rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-  rChangeInStorage,rDailyRecharge)
+  rChangeInStorage )
 
   type (T_GENERAL_GRID),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
-  type ( T_CELL ), pointer :: cel
-  integer (kind=c_int), intent(in) :: iMonth
-  real (kind=c_float), intent(in) :: rDailyRejectedRecharge
-  real (kind=c_float), intent(in) :: rNetInflow
-  real (kind=c_float), intent(in) :: rNetInfil
-  real (kind=c_float), intent(in) :: rSM_ActualET
-  real (kind=c_float), intent(in) :: rPrecipMinusPotentET
-  real (kind=c_float), intent(in) :: rMoistureDeficit
-  real (kind=c_float), intent(in) :: rMoistureSurplus
-  real (kind=c_float), intent(in) :: rChangeInStorage
-  real (kind=c_float), intent(in) :: rDailyRecharge
+  type ( T_CELL ), pointer, intent(inout) :: cel
+  integer (kind=c_int), intent(in)        :: iMonth
+  real (kind=c_float), intent(in)         :: rDailyRejectedRecharge
+  real (kind=c_float), intent(in)         :: rNetInflow
+  real (kind=c_float), intent(in)         :: rNetInfil
+  real (kind=c_float), intent(in)         :: rSM_ActualET
+  real (kind=c_float), intent(in)         :: rPrecipMinusPotentET
+  real (kind=c_float), intent(in)         :: rMoistureDeficit
+  real (kind=c_float), intent(in)         :: rMoistureSurplus
+  real (kind=c_float), intent(in)         :: rChangeInStorage
 
   ! the following code block sends the appropriate cell value to the
   ! associated accumulator variables rDaily, rMonthly, and rAnnual,
@@ -484,7 +511,7 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rTAvg,kind=c_double), &
     iAVG_TEMP,iMonth,iZERO)
 
-  call stats_UpdateAllAccumulatorsByCell(REAL(rDailyRecharge,kind=c_double), &
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rDailyRecharge,kind=c_double), &
     iRECHARGE,iMonth,iZERO)
 
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rSoilMoisture,kind=c_double), &
@@ -532,18 +559,17 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(rSM_ActualET,kind=c_double), &
        iACT_ET,iMonth,iZERO)
 
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rActual_ET_soil,kind=c_double), &
+       iACT_ET_SOIL,iMonth,iZERO)
+
+  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rActual_ET_interception,kind=c_double), &
+       iACT_ET_INTERCEPTION,iMonth,iZERO)
+
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rInFlow,kind=c_double), &
        iINFLOW,iMonth,iZERO)
 
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rOutFlow,kind=c_double), &
        iOUTFLOW,iMonth,iZERO)
-
-#ifdef STREAM_INTERACTIONS
-
-  call stats_UpdateAllAccumulatorsByCell(REAL(cel%rStreamCapture,kind=c_double), &
-       iSTREAM_CAPTURE,iMonth,iZERO)
-
-#endif
 
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rGDD,kind=c_double), &
        iGDD,iMonth,iZERO)
@@ -569,7 +595,7 @@ end subroutine output_update_accumulators
 subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   rDailyRejectedRecharge,rNetInflow,rNetInfil,rSM_ActualET, &
   rPrecipMinusPotentET,rMoistureDeficit,rMoistureSurplus, &
-  rChangeInStorage,rDailyRecharge)
+  rChangeInStorage )
 
   type ( T_CELL ), pointer :: cel
   integer (kind=c_int), intent(in) :: iMonth
@@ -582,8 +608,6 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   real (kind=c_float), intent(in) :: rMoistureDeficit
   real (kind=c_float), intent(in) :: rMoistureSurplus
   real (kind=c_float), intent(in) :: rChangeInStorage
-  real (kind=c_float), intent(in) :: rDailyRecharge
-
   !
   ! NOTE: stats_UpdateAllAccumulatorsByCell may be called in one of two ways.
   !   The actual call syntax is:
@@ -610,6 +634,8 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_ET,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iBARE_SOIL_EVAP,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET_SOIL,iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iACT_ET_INTERCEPTION,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_DEFICIT,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iSM_SURPLUS,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCHG_IN_SOIL_MOIST,iMonth,iNumGridCells)
@@ -618,32 +644,13 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iNET_INFLOW,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iINFLOW,iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iOUTFLOW,iMonth,iNumGridCells)
-
-#ifdef STREAM_INTERACTIONS
-
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iSTREAM_CAPTURE, &
-      iMonth,iNumGridCells)
-
-#endif
-
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iGDD, &
-      iMonth,iNumGridCells)
-
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iGDD, iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iROOTING_DEPTH, iMonth,iNumGridCells)
-
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iCROP_COEFFICIENT, iMonth,iNumGridCells)
-
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, &
-      iMonth,iNumGridCells)
-
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_GW, &
-      iMonth,iNumGridCells)
-
-  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_SW, &
-      iMonth,iNumGridCells)
-
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_GW, iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_SW, iMonth,iNumGridCells)
 
 end subroutine output_finalize_accumulators
-
 
 end module output

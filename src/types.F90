@@ -170,8 +170,10 @@ module types
       real (kind=c_float) :: rReferenceET0 = rZERO       ! Reference ET0, presumably alfalfa
       real (kind=c_float) :: rReferenceET0_adj = rZERO        ! ADJUSTED crop ET
       real (kind=c_float) :: rCropETc = rZERO            ! unadjusted crop ET
-      real (kind=c_float) :: rBareSoilEvap = rZERO
+      real (kind=c_float) :: rBareSoilEvap = rZERO       ! used in FAO-56 two-stage calcs
       real (kind=c_float) :: rActualET = rZERO           ! Actual Evapotranspiration
+      real (kind=c_float) :: rActual_ET_soil = rZERO
+      real (kind=c_float) :: rActual_ET_interception = rZERO
 
 !if_defined STREAM_INTERACTIONS
       integer (kind=c_int) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
@@ -317,6 +319,9 @@ module types
 
     !> Interception "a" coefficient (inches per day) during growing season
   	real (kind=c_float) :: rIntercept_GrowingSeason_a
+
+    !> Maximum interception storage value for determining % wet canopy
+    real (kind=c_float) :: rMax_Interception_Storage = 0.1_c_float
 
     !> Interception "a" coefficient (inches per day) outside of growing season
   	real (kind=c_float) :: rIntercept_NonGrowingSeason_a
@@ -531,7 +536,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=c_int), parameter :: iNUM_MONTHS = 12
-  integer(kind=c_int), parameter :: iNUM_VARIABLES = 37
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 38
 
   ! constants defining T_STATS output types
   integer(kind=c_int), parameter :: iNONE = 0
@@ -593,17 +598,17 @@ module types
       'inches','recharge exceeding max recharge rate', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
-    T_STATS ('STREAM_CAPTURE',0,0,-1,lTRUE,lTRUE, &
-#ifdef STREAM_INTERACTIONS
-      lTRUE, &
-#else
-      lFALSE, &
-#endif
-        'inches','runoff or recharge captured by a stream or fracture', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
-
     ! The following items are tracked and provided as outputs
     ! but are not part of the mass balance calculation...
+
+    T_STATS ('ACT_ET_SOIL',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','actual evapotranspiration from soil', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
+    T_STATS ('ACT_ET_INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE, &
+      'inches','actual evapotranspiration from interception', &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+
     T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE, &
       'inches','water equivalent of snow cover', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
@@ -724,48 +729,18 @@ module types
   !> for daily and annual reporting: sources first, then the sinks,
   !> and then all other informational items
   !> @{
-  integer (kind=c_int), parameter :: iGROSS_PRECIP = 1
-  integer (kind=c_int), parameter :: iSNOWMELT = 2
-  integer (kind=c_int), parameter :: iINFLOW = 3
-  integer (kind=c_int), parameter :: iIRRIGATION = 4
-  integer (kind=c_int), parameter :: iSNOWFALL_SWE = 5
-  integer (kind=c_int), parameter :: iINTERCEPTION = 6
-  integer (kind=c_int), parameter :: iOUTFLOW = 7
-  integer (kind=c_int), parameter :: iRUNOFF_OUTSIDE = 8
-  integer (kind=c_int), parameter :: iACT_ET = 9
-  integer (kind=c_int), parameter :: iCHG_IN_SOIL_MOIST = 10
-  integer (kind=c_int), parameter :: iRECHARGE = 11
-  integer (kind=c_int), parameter :: iREJECTED_RECHARGE = 12
-  integer (kind=c_int), parameter :: iSTREAM_CAPTURE = 13
-  integer (kind=c_int), parameter :: iSNOWCOVER = 14
-  integer (kind=c_int), parameter :: iCFGI = 15
-  integer (kind=c_int), parameter :: iMIN_TEMP = 16
-  integer (kind=c_int), parameter :: iMAX_TEMP = 17
-  integer (kind=c_int), parameter :: iAVG_TEMP = 18
-  integer (kind=c_int), parameter :: iCHG_IN_SNOW_COV = 19
-  integer (kind=c_int), parameter :: iNET_RAINFALL = 20
-  integer (kind=c_int), parameter :: iNET_INFLOW = 21
-  integer (kind=c_int), parameter :: iNET_INFIL = 22
-  integer (kind=c_int), parameter :: iREFERENCE_ET = 23
-  integer (kind=c_int), parameter :: iREFERENCE_ET_ADJ = 24
-  integer (kind=c_int), parameter :: iCROP_ET = 25
-  integer (kind=c_int), parameter :: iBARE_SOIL_EVAP = 26
-  integer (kind=c_int), parameter :: iP_MINUS_PET = 27
-  integer (kind=c_int), parameter :: iSM_DEFICIT = 28
-  integer (kind=c_int), parameter :: iSM_SURPLUS = 29
-  integer (kind=c_int), parameter :: iSM_APWL = 30
-  integer (kind=c_int), parameter :: iSOIL_MOISTURE = 31
-  integer (kind=c_int), parameter :: iGDD = 32
-  integer (kind=c_int), parameter :: iROOTING_DEPTH = 33
-  integer (kind=c_int), parameter :: iCROP_COEFFICIENT = 34
-  integer (kind=c_int), parameter :: iIRRIGATION_FROM_GW = 35
-  integer (kind=c_int), parameter :: iIRRIGATION_FROM_SW = 36
-  integer (kind=c_int), parameter :: iGROWING_SEASON = 37
 
-#ifdef STREAM_INTERACTIONS
-  ! The maximum number of fracture recharge entries
-  integer (kind=c_int), parameter :: STREAM_INTERACTIONS_MAX = 100
-#endif
+  enum, bind(c)
+    enumerator :: iGROSS_PRECIP = 1, iSNOWMELT, iINFLOW, iIRRIGATION, iSNOWFALL_SWE,       &
+                  iINTERCEPTION, iOUTFLOW, iRUNOFF_OUTSIDE, iACT_ET, iCHG_IN_SOIL_MOIST,   &
+                  iRECHARGE, iREJECTED_RECHARGE, iACT_ET_SOIL, iACT_ET_INTERCEPTION,       &
+                  iSNOWCOVER, iCFGI, iMIN_TEMP, iMAX_TEMP, iAVG_TEMP,                      &
+                  iCHG_IN_SNOW_COV, iNET_RAINFALL, iNET_INFLOW, iNET_INFIL, iREFERENCE_ET, &
+                  iREFERENCE_ET_ADJ, iCROP_ET, iBARE_SOIL_EVAP, iP_MINUS_PET, iSM_DEFICIT, &
+                  iSM_SURPLUS, iSM_APWL, iSOIL_MOISTURE, iGDD, iROOTING_DEPTH,             &
+                  iCROP_COEFFICIENT, iIRRIGATION_FROM_GW, iIRRIGATION_FROM_SW,             &
+                  iGROWING_SEASON
+  end enum
 
   integer (kind=c_int), parameter :: NO_MAJORITY_FILTER                 = 0
   integer (kind=c_int), parameter :: MAJORITY_FILTER                    = 1
@@ -802,9 +777,15 @@ module types
   !> @name Constants: Interception algorithm
   !> Options for specifying the choice of interception algorithm
   !> @{
-  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_BUCKET = 0
-  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_HORTON = 1
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_BUCKET               = 0
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_HORTON               = 1
   !> @}
+
+  !> @name Constants: Treatment of intercepted water
+  !> Options for specifying whether intercepted water is counted against actual ET
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_NOT_PART_OF_ACTET = 0
+  integer (kind=c_int),parameter :: CONFIG_INTERCEPTION_IS_PART_OF_ACTET = 1
 
   !> @name Constants: Precipitation data format
   !> Options for specifying the method of input for precipitation data
@@ -882,6 +863,7 @@ module types
   !> @{
   integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_TR55 = 0
   integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_HAWKINS = 1
+  integer (kind=c_int), parameter :: CONFIG_SM_INIT_ABSTRACTION_NONE = 2
   !> @}
 
   ! Define behavior in the case of missing data [UNIMPLEMENTED]
@@ -925,6 +907,9 @@ module types
 
       !> Interception calculation method
       integer (kind=c_int) :: iConfigureInterception = CONFIG_INTERCEPTION_BUCKET
+
+      !> Count evaporated intercepted watre against actual ET?
+      integer (kind=c_int) :: iConfigureActET_Interception = CONFIG_INTERCEPTION_NOT_PART_OF_ACTET
 
       !> Precipitation input option
       integer (kind=c_int) :: iConfigurePrecip = CONFIG_NONE
@@ -1145,37 +1130,6 @@ module types
        ! data structure to hold information about which cells we
        ! want to write our SSF files for
        type (T_SSF_FILES), dimension(:), pointer :: SSF_FILES
-
-#ifdef STREAM_INTERACTIONS
- 	  !! Added by Vic Kelson, February 2008
-     !!
- 	  !! These arrays manage the "Stream Interactions" option. This option uses
- 	  !! special Curve Number values to remove water from the grid, e.g. to a
-     !! surface stream or to a fracture network. A grid of "stream" information
-     !! is read; non-zero entries in the grid capture water based on the index
-     !! number in the cell. For example, if the grid cell stream value is 3,
-     !! index 3 in the arrays below are used.
-     !!
-     !! Influent runoff water (IR) is captured by the stream capture code according
-     !! to the values below. For cells with non-zero stream index,
-     !!
-     !! If 0 < IR < rStreamMaxInflow, the cell captures proportionally
-     !!       IR = IR * (1 - rStreamMaxCapture / rStreamMaxInflow)
-     !! If IR >= rStreamMaxInflow the cell captures the cell captures its maximum
-     !!       IR = IR - rStreamMaxCapture
-     !!
-     !! The code defaults both values to a very large number, thus any amount of
-     !! inflow into a cell where the stream index is non-zero will be captured.
-     !! For most "surface water" applications, these values need not be changed
-     !! unless there are special cases. For "fracture recharge" problems, these
-     !! values allow the modeler to set the maximum amount that a fracture can
-     !! capture.
-     !!
- 	  !! The constant STREAM_INTERACTIONS_MAX is the maximum number of curve
- 	  !! number entries allowed for the fracture recharge option.
-	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxInflow
- 	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxCapture
-#endif
 
   end type T_MODEL_CONFIGURATION
 
@@ -3215,14 +3169,14 @@ end function fortran_to_c_string
 ! This simple PRNG might not be good enough for real work, but is
 ! sufficient for seeding a better PRNG. TAKEN from gfortran online docs.
 function lcg(s)
-  integer (kind=c_int)  :: lcg
-  integer (kind=c_long) :: s
+  integer (kind=c_int)       :: lcg
+  integer (kind=c_long_long) :: s
   if (s == 0) then
      s = 104729
   else
-     s = mod(s, 4294967296_c_long)
+     s = mod(s, 4294967296_c_long_long)
   end if
-  s = mod(s * 279470273_c_long, 4294967291_c_long)
+  s = mod(s * 279470273_c_long_long, 4294967291_c_long_long )
   lcg = int(mod(s, int(huge(0), c_long) ), kind(0))
 end function lcg
 
@@ -3232,7 +3186,7 @@ subroutine set_random_number_generator_seed()
   integer (kind=c_int)              :: dt(8)
   integer (kind=c_int)              :: pid, n, i
   integer (kind=c_int), allocatable :: seed(:)
-  integer (kind=c_long)             :: t
+  integer (kind=c_long_long)        :: t
 
   if ( allocated( seed ) )  deallocate(seed)
 
@@ -3241,7 +3195,7 @@ subroutine set_random_number_generator_seed()
 
   call date_and_time(values=dt)
 
-  t = ( dt(1) - 1970 ) * 365_c_long * 24 * 60 * 60 *1000 &
+  t = ( dt(1) - 1970 ) * 365 * 24 * 60 * 60 *1000        &
       + dt(2) * 31_c_long * 24 * 60 * 60 * 1000          &
       + dt(3) * 24_c_long * 60 * 60 * 1000               &
       + dt(5) * 60 * 60 * 1000                           &

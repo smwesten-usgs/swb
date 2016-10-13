@@ -6,13 +6,13 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_VERSION=5.3.0
+export COMPILER_VERSION=5.4.0
 export COMPILER_MAJ_VERSION=5
-export COMPILER_TRIPLET=x86_64-apple-darwin15.3.0
+export COMPILER_TRIPLET=x86_64-apple-darwin15.5.0
 export COMPILER_DIR=/usr/local
-export LIB_PATH1="/usr/local/lib/gcc/$COMPILER_MAJ_VERSION/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
+export LIB_PATH1=$(locate 5/libgfortran.a | grep 5.4.0 | sed -e 's/libgfortran.a//')
 export LIB_PATH2=/usr/OpenMotif/lib
-export LIB_PATH3=/usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
+export LIB_PATH3=/usr/local/Cellar/gcc5/5.4.0/lib/gcc/5/gcc/x86_64-apple-darwin15.5.0/5.4.0
 export LIB_PATH4="/usr/local/lib/"
 export LIB_PATH5="/usr/local/dislin/lib"
 export Fortran_COMPILER_NAME=gfortran
@@ -25,7 +25,7 @@ export INSTALL_PREFIX=/usr/local/bin
 # options are "Release" or "Debug"
 export BUILD_TYPE="Release"
 # options are "x86" (32-bit) or "x64" (64-bit)
-export OS="mac_osx"
+export SYSTEM_TYPE="mac_osx"
 
 # define which portions of swb to build (i.e. swbstats? as library?)
 export TARGET__SWB_EXECUTABLE="TRUE"
@@ -65,7 +65,7 @@ cmake ../../.. -G "Unix Makefiles" \
 -DLIB_PATH4="$LIB_PATH4 " \
 -DLIB_PATH5="$LIB_PATH5" \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS " \
--DOS="$OS " \
+-DSYSTEM_TYPE="$SYSTEM_TYPE " \
 -DCMAKE_BUILD_TYPE="$BUILD_TYPE " \
 -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX " \
 -DTARGET__SWB_EXECUTABLE:BOOLEAN="$TARGET__SWB_EXECUTABLE " \

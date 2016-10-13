@@ -27,7 +27,7 @@ set INSTALL_PREFIX=d:/DOS
 set BUILD_TYPE="Release"
 
 :: options are "x86" (32-bit) or "x64" (64-bit)
-set OS="win_x64"
+set SYSTEM_TYPE="win_x64"
 
 :: define which portions of swb to build (i.e. swbstats? as library?)
 set TARGET__SWB_EXECUTABLE="TRUE"
@@ -56,8 +56,6 @@ set PATH=%PATH%;C:\MinGW64\include;C:\MinGW64\lib
 :: set a useful alias for make
 echo %COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% %%1 > make.bat
 
-:: not every installation will have these; I (SMW) find them useful
-set PATH=%PATH%;c:\Program Files (x86)\Zeus
 set PATH=%PATH%;D:\DOS\gnuwin32\bin
 
 :: set compiler-specific link and compile flags
@@ -65,12 +63,11 @@ set LDFLAGS="-flto"
 set CFLAGS="-DCURL_STATICLIB"
 set CPPFLAGS="DgFortran -DCURL_STATICLIB"
 
-set COMPILER_LIB_PATH1=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION% 
+set COMPILER_LIB_PATH1=%COMPILER_DIR%/lib/gcc/%COMPILER_TRIPLET%/%COMPILER_VERSION%
 set COMPILER_LIB_PATH2=%COMPILER_DIR%/%COMPILER_TRIPLET%/lib
 set COMPILER_LIB_PATH3=%COMPILER_DIR%/lib
 
 set CTEST_OUTPUT_ON_FAILURE=1
-
 
 :: invoke CMake; add --trace to see copious details re: CMAKE
 for %%f in ( "CodeBlocks - MinGW Makefiles" "MinGW Makefiles" ) do ^
@@ -79,7 +76,7 @@ cmake ..\..\.. -G %%f ^
 -DLIB_PATH1=%COMPILER_LIB_PATH1% ^
 -DLIB_PATH2=%COMPILER_LIB_PATH2% ^
 -DFortran_COMPILER_NAME=%Fortran_COMPILER_NAME% ^
--DOS=%OS% ^
+-DSYSTEM_TYPE=%SYSTEM_TYPE% ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE% ^
 -DCMAKE_INSTALL_PREFIX:PATH=%INSTALL_PREFIX% ^
 -DCMAKE_MAKE_PROGRAM:FILEPATH=%COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% ^

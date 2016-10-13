@@ -332,18 +332,17 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
   integer (kind=c_int)              :: iMonth, iDay, iYear
   integer (kind=c_int)              :: iIterations
   integer (kind=c_int), parameter   :: MAX_ITERATIONS = 100
+  logical (kind=c_bool)             :: lFound
 
   ! return value of this function represents the *starting* index of the time dimension
   ! if no value is found in association with the current Julian Date, return -9999
   iStart = -9999
   iIterations = 0
+  lFound = lFALSE
 
   !> First guess at what the appropriate index value should be.
   !> Current JD minus the Origin JD is a good guess.
-  iIndex = nf_julian_day_to_index(NCFILE, rJulianDay)
-
-  call assert(iIndex >=0, "Problem finding the index number of the time " &
-    //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+  iIndex = max(0, nf_julian_day_to_index(NCFILE, rJulianDay) )
 
   do
 
@@ -352,7 +351,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
     ! index value is relative to zero in C API;
     ! first day's data should be associated with index value of zero
-    iJD_Difference = aint( rJD_atIndex ) - aint( rJulianDay )
+    iJD_Difference = int( rJD_atIndex - rJulianDay )
 
     select case ( iJD_Difference )
 
@@ -360,6 +359,7 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
       case ( 0 )
 
         iStart = iIndex
+        lFound = lTRUE
         exit
 
       ! difference between estimated JD and current JD is < 0; JD at index is *less* than
@@ -367,7 +367,8 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
       case ( :-1 )
 
         iIndex = min( ubound(NCFILE%rDateTimeValues, 1) , iIndex + 1 )
-        iIndex = max( 0, iIndex - 1 )
+
+!        iIndex = max( 0, iIndex - 1 )
         iIterations = iIterations + 1
 
       ! difference between estimated JD and current JD is > 0; JD at index is *greater* than
@@ -384,6 +385,16 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
     if ( iIterations > MAX_ITERATIONS ) exit
 
   enddo
+
+  if ( .not. lFound ) then
+
+    write(LU_LOG, fmt="('JD (SWB start): ', i10, '   JD (NetCDF file): ', i10)" )  &
+      int( rJulianDay ), int( rJD_atIndex )
+
+    call assert( lTRUE, "Problem finding the index number of the time " &
+    //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+
+  endif
 
 end function nf_julian_day_to_index_adj
 

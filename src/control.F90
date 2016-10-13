@@ -349,6 +349,9 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET") ) then
+        pConfig%iConfigureActET_Interception = CONFIG_INTERCEPTION_IS_PART_OF_ACTET
+
     else if ( str_compare(sItem,"PRECIPITATION") ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring precipitation data input"
       call Chomp ( sRecord, sOption )
@@ -391,11 +394,13 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
-    else if ( str_compare(sItem,"PRECIPITATION_ADD_OFFSET") ) then
+    else if ( str_compare(sItem,"PRECIPITATION_ADD_OFFSET")               &
+         .or. str_compare(sItem,"PRECIPITATION_OFFSET")) then
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_user_offset(asReal(sArgument))
 
-    else if ( str_compare(sItem,"PRECIPITATION_SCALE_FACTOR") ) then
+    else if ( str_compare(sItem,"PRECIPITATION_SCALE_FACTOR")             &
+         .or. str_compare(sItem,"PRECIPITATION_SCALE")) then
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_user_scale(asReal(sArgument))
 
@@ -636,11 +641,11 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "TMAX_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
 
-    else if ( str_compare(sItem,"TMAX_ADD_OFFSET") ) then
+    else if ( str_compare(sItem,"TMAX_ADD_OFFSET") .or. str_compare(sItem,"TMAX_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMAX_DATA)%set_user_offset(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMAX_SCALE_FACTOR") ) then
+    else if ( str_compare(sItem,"TMAX_SCALE_FACTOR") .or. str_compare(sItem,"TMAX_SCALE") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMAX_DATA)%set_user_scale(asReal(sArgument))
 
@@ -678,11 +683,11 @@ subroutine control_setModelOptions(sControlFile)
     else if (sItem == "TMIN_GRID_PROJECTION_DEFINITION") then
       call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
 
-    else if ( str_compare(sItem,"TMIN_SCALE_FACTOR") ) then
+    else if ( str_compare(sItem,"TMIN_SCALE_FACTOR") .or. str_compare(sItem,"TMIN_SCALE") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMIN_DATA)%set_user_scale(asReal(sArgument))
 
-    else if ( str_compare(sItem,"TMIN_ADD_OFFSET") ) then
+    else if ( str_compare(sItem,"TMIN_ADD_OFFSET") .or. str_compare(sItem,"TMIN_OFFSET") ) then
       call Chomp ( sRecord, sArgument )
       call DAT(TMIN_DATA)%set_user_offset(asReal(sArgument))
 
@@ -1748,6 +1753,8 @@ subroutine control_setModelOptions(sControlFile)
         pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_TR55
       else if (trim(sOption) == "HAWKINS" ) then
         pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_HAWKINS
+      else if (trim(sOption) == "NONE" ) then
+        pConfig%iConfigureInitialAbstraction = CONFIG_SM_INIT_ABSTRACTION_NONE
       else
         call Assert( .false._c_bool, "Illegal initial abstraction method specified" )
       end if

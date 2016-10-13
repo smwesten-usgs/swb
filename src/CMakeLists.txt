@@ -195,9 +195,6 @@ if(TARGET__SWB_EXECUTABLE)
 
             )
 
-  set_target_properties(swb
-            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}")
-
   target_link_libraries(swb ${EXTRA_LIBS})
 
 endif()
@@ -401,9 +398,6 @@ if(TARGET__SWB_LIBRARY)
 
             )
 
-  set_target_properties(swblib
-            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}")
-
   target_link_libraries(swblib ${EXTRA_LIBS})
 
 endif()
@@ -588,9 +582,6 @@ if(TARGET__SWBSTATS)
             proj4/vector1.c
 
             )
-
-  set_target_properties(swbstats
-            PROPERTIES COMPILE_DEFINITIONS "${PREPROCESSOR_DEFINES}; GRAPHICS_SUPPORT")
 
   link_libraries(swbstats ${EXTRA_LIBS})
 

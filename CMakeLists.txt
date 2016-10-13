@@ -10,7 +10,7 @@
 # Fortran_FLAGS_RELEASE
 # Fortran_FLAGS_PROFILE
 # PATH_TO_R
-# OS                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
+# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_VERSION       | ex: "4.8.2"
 # LIB_PATH1
@@ -67,18 +67,15 @@ SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
 SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
 SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
 
-set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
-set(SWB_INCPATH ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
-
 set(LIB_PATH ${LIB_PATH1} ${LIB_PATH2} ${LIB_PATH3} ${LIB_PATH4} ${LIB_PATH5})
 
 set(CMAKE_LIBRARY_PATH ${SWB_LIBPATH} ${LIB_PATH} )
 
 include( cmake/find_programs_and_libraries.cmake )
 
-#set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
+#set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${SYSTEM_TYPE}/${Fortran_COMPILER_NAME} )
 
-if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
+if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
   )
