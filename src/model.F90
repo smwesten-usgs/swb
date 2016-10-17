@@ -3225,6 +3225,10 @@ subroutine model_setInactiveCells( pGrd, pConfig )
 
   endwhere
 
+  pGenericGrd_sgl%rData = real( pGrd%iMask, kind=c_float )
+  call grid_WriteGrid( &
+   sFilename="ACTIVE_MODEL_CELLS"//".asc", pGrd=pGenericGrd_sgl, iOutputFormat=OUTPUT_ARC)
+
   call echolog("Finished converting cells with missing data (negative values) to inactive cells." &
     //"~ A total of "//trim(asCharacter(count(pGrd%iMask==iINACTIVE_CELL))) &
     //" cells were inactivated out of "//trim(asCharacter(pConfig%iNumGridCells))//" cells.")

@@ -11,8 +11,7 @@ find_program( R_SCRIPT Rscript.exe Rscript
     "/usr/bin"
 )
 
-set( SYSTEM_TYPE_LC ${SYSTEM_TYPE} )
-string( TOLOWER ${SYSTEM_TYPE_LC} SYSTEM_TYPE_LC )
+string( TOLOWER ${SYSTEM_TYPE} SYSTEM_TYPE_LC )
 set( DISLIN_MODULE_DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SYSTEM_TYPE_LC}/${Fortran_COMPILER_NAME} )
 
 if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
@@ -96,7 +95,7 @@ find_library(LIBCURL
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-if( OPTION__GRAPHICS_SUPPORT ) 
+if( OPTION__GRAPHICS_SUPPORT )
 
 find_library(LIBDISLIN
           NAMES

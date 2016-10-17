@@ -536,7 +536,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=c_int), parameter :: iNUM_MONTHS = 12
-  integer(kind=c_int), parameter :: iNUM_VARIABLES = 39
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 38
 
   ! constants defining T_STATS output types
   integer(kind=c_int), parameter :: iNONE = 0
@@ -597,15 +597,6 @@ module types
     T_STATS ('REJECTED_RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
       'inches','recharge exceeding max recharge rate', &
       1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
-
-    T_STATS ('STREAM_CAPTURE',0,0,-1,lTRUE,lTRUE, &
-#ifdef STREAM_INTERACTIONS
-      lTRUE, &
-#else
-      lFALSE, &
-#endif
-        'inches','runoff or recharge captured by a stream or fracture', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
 
     ! The following items are tracked and provided as outputs
     ! but are not part of the mass balance calculation...
@@ -741,20 +732,15 @@ module types
 
   enum, bind(c)
     enumerator :: iGROSS_PRECIP = 1, iSNOWMELT, iINFLOW, iIRRIGATION, iSNOWFALL_SWE,       &
-                  iINTERCEPTION, iOUTFLOW, iRUNOFF_OUTSIDE, iACT_ET, iACT_ET_SOIL,         &
-                  iACT_ET_INTERCEPTION, iCHG_IN_SOIL_MOIST, iRECHARGE, iREJECTED_RECHARGE, &
-                  iSTREAM_CAPTURE, iSNOWCOVER, iCFGI, iMIN_TEMP, iMAX_TEMP, iAVG_TEMP,     &
+                  iINTERCEPTION, iOUTFLOW, iRUNOFF_OUTSIDE, iACT_ET, iCHG_IN_SOIL_MOIST,   &
+                  iRECHARGE, iREJECTED_RECHARGE, iACT_ET_SOIL, iACT_ET_INTERCEPTION,       &
+                  iSNOWCOVER, iCFGI, iMIN_TEMP, iMAX_TEMP, iAVG_TEMP,                      &
                   iCHG_IN_SNOW_COV, iNET_RAINFALL, iNET_INFLOW, iNET_INFIL, iREFERENCE_ET, &
                   iREFERENCE_ET_ADJ, iCROP_ET, iBARE_SOIL_EVAP, iP_MINUS_PET, iSM_DEFICIT, &
                   iSM_SURPLUS, iSM_APWL, iSOIL_MOISTURE, iGDD, iROOTING_DEPTH,             &
                   iCROP_COEFFICIENT, iIRRIGATION_FROM_GW, iIRRIGATION_FROM_SW,             &
                   iGROWING_SEASON
   end enum
-
-#ifdef STREAM_INTERACTIONS
-  ! The maximum number of fracture recharge entries
-  integer (kind=c_int), parameter :: STREAM_INTERACTIONS_MAX = 100
-#endif
 
   integer (kind=c_int), parameter :: NO_MAJORITY_FILTER                 = 0
   integer (kind=c_int), parameter :: MAJORITY_FILTER                    = 1
@@ -1145,37 +1131,6 @@ module types
        ! want to write our SSF files for
        type (T_SSF_FILES), dimension(:), pointer :: SSF_FILES
 
-#ifdef STREAM_INTERACTIONS
- 	  !! Added by Vic Kelson, February 2008
-     !!
- 	  !! These arrays manage the "Stream Interactions" option. This option uses
- 	  !! special Curve Number values to remove water from the grid, e.g. to a
-     !! surface stream or to a fracture network. A grid of "stream" information
-     !! is read; non-zero entries in the grid capture water based on the index
-     !! number in the cell. For example, if the grid cell stream value is 3,
-     !! index 3 in the arrays below are used.
-     !!
-     !! Influent runoff water (IR) is captured by the stream capture code according
-     !! to the values below. For cells with non-zero stream index,
-     !!
-     !! If 0 < IR < rStreamMaxInflow, the cell captures proportionally
-     !!       IR = IR * (1 - rStreamMaxCapture / rStreamMaxInflow)
-     !! If IR >= rStreamMaxInflow the cell captures the cell captures its maximum
-     !!       IR = IR - rStreamMaxCapture
-     !!
-     !! The code defaults both values to a very large number, thus any amount of
-     !! inflow into a cell where the stream index is non-zero will be captured.
-     !! For most "surface water" applications, these values need not be changed
-     !! unless there are special cases. For "fracture recharge" problems, these
-     !! values allow the modeler to set the maximum amount that a fracture can
-     !! capture.
-     !!
- 	  !! The constant STREAM_INTERACTIONS_MAX is the maximum number of curve
- 	  !! number entries allowed for the fracture recharge option.
-	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxInflow
- 	  real (kind=c_float), dimension(STREAM_INTERACTIONS_MAX) :: rStreamMaxCapture
-#endif
-
   end type T_MODEL_CONFIGURATION
 
   !> data structure to hold a line of input from the classic time-series file
@@ -1327,6 +1282,35 @@ subroutine sleep_for_x_seconds( seconds )
 
 end subroutine sleep_for_x_seconds
 
+!--------------------------------------------------------------------------------------------------
+
+subroutine exit_with_code( codeval )
+
+  integer (kind=c_int), intent(in), optional  :: codeval
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: codeval_
+
+  if ( present( codeval ) ) then
+    codeval_ = codeval
+  else
+    codeval_ = 0
+  endif
+
+#ifdef __GFORTRAN__
+
+  call exit( codeval_ )
+
+#else
+
+  stop codeval_
+
+#endif
+
+end subroutine exit_with_code
+
+!--------------------------------------------------------------------------------------------------
+
 function nextunit(iLU)  result(iUnit)
 
   integer (kind=c_int), intent(out), optional :: iLU
@@ -1452,7 +1436,7 @@ subroutine assert_simple_sub(lCondition,sErrorMessage)
       call writeMultiLine(trim(sErrorMessage), iLU(i))
     enddo
 
-    stop
+    call exit_with_code( -1 )
 
   endif
 
@@ -1499,7 +1483,7 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
       write(UNIT=iLU(i),FMT="('   module line number:',t27,a)") trim(adjustl(sLineNum))
     enddo
 
-    stop
+      call exit_with_code( -1 )
 
   endif
 
