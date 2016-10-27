@@ -1282,6 +1282,35 @@ subroutine sleep_for_x_seconds( seconds )
 
 end subroutine sleep_for_x_seconds
 
+!--------------------------------------------------------------------------------------------------
+
+subroutine exit_with_code( codeval )
+
+  integer (kind=c_int), intent(in), optional  :: codeval
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: codeval_
+
+  if ( present( codeval ) ) then
+    codeval_ = codeval
+  else
+    codeval_ = 0
+  endif
+
+#ifdef __GFORTRAN__
+
+  call exit( codeval_ )
+
+#else
+
+  stop codeval_
+
+#endif
+
+end subroutine exit_with_code
+
+!--------------------------------------------------------------------------------------------------
+
 function nextunit(iLU)  result(iUnit)
 
   integer (kind=c_int), intent(out), optional :: iLU
@@ -1407,7 +1436,7 @@ subroutine assert_simple_sub(lCondition,sErrorMessage)
       call writeMultiLine(trim(sErrorMessage), iLU(i))
     enddo
 
-    stop
+    call exit_with_code( -1 )
 
   endif
 
@@ -1454,7 +1483,7 @@ subroutine assert_module_details_sub(lCondition,sErrorMessage,sFilename,iLineNum
       write(UNIT=iLU(i),FMT="('   module line number:',t27,a)") trim(adjustl(sLineNum))
     enddo
 
-    stop
+      call exit_with_code( -1 )
 
   endif
 
