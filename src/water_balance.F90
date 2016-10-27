@@ -59,6 +59,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   real (kind=c_float) :: rMAXIMUM_RECHARGE
   real (kind=c_float) :: rMAXIMUM_INTERCEPTION_STORAGE
   real (kind=c_float) :: rPotential_Evaporated_Interception
+  real (kind=c_float) :: rPrevious_Interception_Storage
   real (kind=c_float) :: rFraction_Wet
   real (kind=c_float) :: rMin, rMean, rMax, rSum
   integer (kind=c_int) :: iRowCount
@@ -158,10 +159,11 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
           if ( cel%rInterceptionStorage > 0.0_c_float ) then
 
+            rPrevious_Interception_Storage = cel%rInterceptionStorage
             rFraction_Wet = ( cel%rInterceptionStorage / rMAXIMUM_INTERCEPTION_STORAGE )**0.66666667_c_float
-            rPotential_Evaporated_Interception = rFraction_Wet * cel%rInterceptionStorage
-            cel%rActual_ET_interception = min( cel%rReferenceET0_adj, rPotential_Evaporated_Interception )
-            cel%rInterceptionStorage = max( cel%rInterceptionStorage - cel%rActual_ET_interception, 0.0_c_float )
+            rPotential_Evaporated_Interception = min( cel%rReferenceET0_adj, rFraction_Wet * cel%rInterceptionStorage )
+            cel%rInterceptionStorage = max( cel%rInterceptionStorage - rPotential_Evaporated_Interception, 0.0_c_float )
+            cel%rActual_ET_interception = max( rPrevious_Interception_Storage - cel%rInterceptionStorage, 0.0_c_float )
             cel%rReferenceET0_adj = max( cel%rReferenceET0_adj - cel%rActual_ET_interception, 0.0_c_float)
 
           endif

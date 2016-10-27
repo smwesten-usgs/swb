@@ -1703,10 +1703,6 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
 
-#ifdef STREAM_INTERACTIONS
-    cel%rStreamCapture = rZERO
-#endif
-
     ! Compute the runoff
     cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
@@ -1744,18 +1740,8 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     endif
 
-#ifdef STREAM_INTERACTIONS
-
-    if(target_cel%iStreamIndex > 0) then
-      ! route outflow to a specific stream or fracture ID
-      cel%rStreamCapture = cel%rOutFlow
-      cel%rOutFlow = rZERO
-    else if &
-#else
-    if &
-#endif
-    (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
-    .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
+    if ( target_cel%iLandUse == pConfig%iOPEN_WATER_LU                   &
+        .or. target_cel%rSoilWaterCap < rNEAR_ZERO ) then
       ! Don't route any further; the water has joined a generic
       ! surface water feature. We assume that once the water hits a
       ! surface water feature that the surface water drainage
@@ -1765,9 +1751,9 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
       cel%rOutFlow = rZERO
 
     else
-      ! add cell outflow to target cell inflow
-      target_cel%rInFlow = &
-        target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
+      ! add cell outflow to target cell inflow; ROUTING FRACTION represents the fraction of
+      ! cell outflow that makes it to the downslope cell.
+      target_cel%rInFlow = target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
       cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
       cel%rOutflow = cel%rOutflow * cel%rRouteFraction
     end if
