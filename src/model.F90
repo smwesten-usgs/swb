@@ -1753,9 +1753,9 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     else
       ! add cell outflow to target cell inflow; ROUTING FRACTION represents the fraction of
       ! cell outflow that makes it to the downslope cell.
-      target_cel%rInFlow = target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
       cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
       cel%rOutflow = cel%rOutflow * cel%rRouteFraction
+      target_cel%rInFlow = cel%rOutFlow
     end if
 
   end do
@@ -1813,46 +1813,18 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  ! Compute the runoff for each cell
-  rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+    ! Compute the runoff for each cell
+    rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-  ! Now, remove any runoff from the model grid
-!      call stats_UpdateAllAccumulatorsByCell(REAL(rR,kind=c_double), &
-!         iRUNOFF_OUTSIDE,iMonth,iZERO)
+    ! Now, remove any runoff from the model grid
+    cel%rFlowOutOfGrid = rR
 
-  cel%rFlowOutOfGrid = rR
+    ! we've removed the water from the grid; it shouldn't be included in
+    ! "outflow" water
+    cel%rOutFlow = rZERO
 
-!       cel%rOutFlow = rR
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! What is the point of this? If we aren't routing,
-!! only a small amount of water (generated from a
-!! cell directly beneath a stream segment) will
-!! be captured...
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifdef STREAM_INTERACTIONS
-  ! Capture into streams or fractures
-  cel%rStreamCapture = rZERO
-  if ( cel%iStreamIndex /= 0 ) then
-    ! Compute the amount of fracture recharge
-    cel%rStreamCapture = cel%rInFlow * pconfig%rStreamMaxCapture(cel%iStreamIndex) &
-      / pconfig%rStreamMaxInflow(cel%iStreamIndex)
-    if (cel%rStreamCapture < rZERO) then
-      print *, "Negative!", cel%rInFlow, cel%rStreamCapture
-    endif
-    cel%rOutFlow = cel%rOutFlow - cel%rStreamCapture
-  end if
-#endif
-
-  ! we've removed the water from the grid; it shouldn't be included in
-  ! "outflow" water
-  cel%rOutFlow = rZERO
-
+    end do
   end do
-end do
-
-  return
 
 end subroutine model_Runoff_NoRouting
 

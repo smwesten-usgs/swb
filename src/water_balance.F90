@@ -197,6 +197,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
               ! any outflow that has not already been routed elsewhere
               ! is rerouted to flow out of grid
+              !
+              !
+              ! @NOTE: this is unnecessary, since cel%rOutFlow should have been zeroed our in the
+              !        even that flow routing is turned on
               cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rOutflow
 
             else  ! code block L3a: Precip EXCEEDS PotentialET
@@ -417,7 +421,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             if ( cel%iTgt_Col == iROUTE_LEFT_GRID .or. &
               cel%iTgt_Row == iROUTE_LEFT_GRID) then
                 cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
-                cel%rRejectedRecharge = rZERO
+                ! cel%rRejectedRecharge = rZERO
             elseif ( cel%iTgt_Col == iROUTE_DEPRESSION .or. &
               cel%iTgt_Row == iROUTE_DEPRESSION) then
               ! Don't route any further; the water pools here.
@@ -442,6 +446,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                   cel%rOutflow = cel%rOutflow + cel%rRejectedRecharge * cel%rRouteFraction
                   cel%rRejectedRecharge = cel%rRejectedRecharge * (rONE - cel%rRouteFraction)
+                  cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
                 end if
             end if
 
