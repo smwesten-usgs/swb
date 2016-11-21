@@ -2,17 +2,21 @@
 #remove existing Cmake cache and directories
 # remove existing Cmake cache and directories
 rm -fr CMake*
+rm -rf Testing
+rm -rf src
+rm -rf tests
+rm -f CPack*
 rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_VERSION=5.3.0
+export COMPILER_VERSION=5.4.0
 export COMPILER_MAJ_VERSION=5
-export COMPILER_TRIPLET=x86_64-apple-darwin15.3.0
+export COMPILER_TRIPLET=x86_64-apple-darwin15.5.0
 export COMPILER_DIR=/usr/local
-export LIB_PATH1="/usr/local/lib/gcc/$COMPILER_MAJ_VERSION/gcc/$COMPILER_TRIPLET/$COMPILER_VERSION"
+export LIB_PATH1=$(locate "$COMPILER_VERSION/libgcc.a" | sed -e 's/\/libgcc.a//')
 export LIB_PATH2=/usr/OpenMotif/lib
-export LIB_PATH3=/usr/local/Cellar/gcc5/5.3.0/lib/gcc/5/gcc/x86_64-apple-darwin15.3.0/5.3.0
+export LIB_PATH3=$(locate 5/libgfortran.a | grep "$COMPILER_VERSION" | sed -e 's/\/libgfortran.a//')
 export LIB_PATH4="/usr/local/lib/"
 export LIB_PATH5="/usr/local/dislin/lib"
 export Fortran_COMPILER_NAME=gfortran
@@ -33,14 +37,14 @@ export TARGET__SWB_LIBRARY="FALSE"
 export TARGET__SWBSTATS="FALSE"
 
 # define which conditional compilation statements to include
-export OPTION__GRAPHICS_SUPPORT="FALSE"
+export OPTION__GRAPHICS_SUPPORT="TRUE"
 export OPTION__STREAM_INTERACTIONS="FALSE"
 export OPTION__NETCDF_SUPPORT="TRUE"
 export OPTION__STRICT_DATE_CHECKING="FALSE"
 export OPTION__DEBUG_PRINT="FALSE"
 
 # define platform and compiler specific compilation flags
-export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fexceptions -ffree-line-length-none -static -static-libgcc -static-libgfortran"
+export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fexceptions -ffree-line-length-none"
 #set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 export CMAKE_Fortran_FLAGS_RELEASE="-O3 -cpp -mtune=native -ffree-line-length-none"
 
@@ -78,4 +82,3 @@ cmake ../../.. -G "Unix Makefiles" \
 -DOPTION__DEBUG_PRINT="$OPTION__DEBUG_PRINT " \
 -DCMAKE_Fortran_FLAGS_DEBUG="$CMAKE_Fortran_FLAGS_DEBUG " \
 -DCMAKE_Fortran_FLAGS_RELEASE="$CMAKE_Fortran_FLAGS_RELEASE"
-

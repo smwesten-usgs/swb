@@ -173,11 +173,6 @@ module types
       real (kind=c_float) :: rBareSoilEvap = rZERO
       real (kind=c_float) :: rActualET = rZERO           ! Actual Evapotranspiration
 
-!if_defined STREAM_INTERACTIONS
-      integer (kind=c_int) :: iStreamIndex = iZERO  ! ID of the fracture capture lookup table
-      real (kind=c_float) :: rStreamCapture = rZERO           ! Amount of water captured by the stream (or fracture)
-!end_if
-
       integer (kind=c_int) :: iTgt_Row = iZERO  ! Row: "i" index of target cell into which runoff flows
       integer (kind=c_int) :: iTgt_Col = iZERO  ! Col: "j" index of target cell into which runoff flows
       integer (kind=c_int) :: iSumUpslopeCells = iZERO
@@ -1240,7 +1235,7 @@ module types
   integer (kind=c_int)               :: DMPCOL        = -999
   integer (kind=c_int)               :: DMPROW        = -999
   integer (kind=c_int)               :: DMPFILE       = 0
-  character (len=:), allocatable     :: DMP_FILENAME
+  character (len=256)                :: DMP_FILENAME
 
 !**********************************************************************
 !! GENERIC interfaces

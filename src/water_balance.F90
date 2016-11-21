@@ -229,6 +229,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                 else  ! L1b: we are calculating soil moisture without T-M
                            ! soil-moisture retention tables (i.e. FAO56)
 
+                 ! ReferenceET0_adj is adjusted downward as the soil dries owing to the water stress
+                 ! coefficient calculations
                   cel%rSoilMoisture = MAX(rZERO, &
                                         cel%rSoilMoisture &
                                       + rPrecipMinusPotentET )
@@ -341,9 +343,9 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                  ! nothing to do; leave cel%rRejectedRecharge value alone
                 elseif(pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
                   ! should never reach this point in any case if routing is disabled;
-                  ! Tgt_Row and Tgt_Col should be zero, and should fall out of the 
+                  ! Tgt_Row and Tgt_Col should be zero, and should fall out of the
                   ! if-then logic
-                  
+
                   ! add cell rejected recharge to target cell inflow
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow = &
                   pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow + &

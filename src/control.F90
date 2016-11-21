@@ -63,7 +63,7 @@ subroutine control_setModelOptions(sControlFile)
   character (len=256) :: sArgument3               ! Key word read from sRecord
   character (len=256) :: sArgument4               ! Key word read from sRecord
   character (len=256) :: sArgument5               ! Key word read from sRecord
-  character (len=:), allocatable :: col_str, row_str
+  character (len=32)  :: col_str, row_str
   character (len=256) :: sDateStr, sDateStrPretty ! hold date and time of initiation of run
   character(len=256) :: sBuf
   integer (kind=c_int) :: iNX                     ! Number of cells in the x-direction
@@ -471,15 +471,48 @@ subroutine control_setModelOptions(sControlFile)
           //" precipitation data: "//dquote(sArgument) )
       endif
 
-    elseif (sItem == "DUMP_VARIABLES_TO_FILE") then
+    elseif (sItem == "DUMP_VARIABLES_TO_FILE" .or. sItem == "DUMP_VARIABLES") then
+
+
+
       call Chomp ( sRecord, sArgument )
-      col_str = trim(sArgument)
-      read ( unit=sArgument, fmt=*, iostat=iStat ) DMPCOL
-      call Chomp ( sRecord, sArgument )
-      row_str = trim(sArgument)
-      read ( unit=sArgument, fmt=*, iostat=iStat ) DMPROW
-      DMP_FILENAME = "SWB_variable_values__col_"//col_str//"__row_"//row_str//".csv"
-      open( newunit=DMPFILE, file=DMP_FILENAME, status='REPLACE' )
+
+      if(TRIM(sArgument)=="COORDS" .or. trim(sArgument)=="COORDINATES") then
+
+        call Chomp ( sRecord, sArgument )
+        read ( unit=sArgument, fmt=*, iostat=iStat ) rXp
+        DMPCOL = grid_GetGridColNum(pGrd,rXp)
+        call Chomp ( sRecord, sArgument )
+        read ( unit=sArgument, fmt=*, iostat=iStat ) rYp
+        DMPROW = grid_GetGridRowNum(pGrd,rYp)
+
+        write( col_str, fmt="(i8)") DMPCOL
+        write( row_str, fmt="(i8)") DMPROW
+
+      else
+
+        read ( unit=sArgument, fmt=*, iostat=iStat ) DMPCOL
+        col_str = trim(sArgument)
+
+        call Assert( iStat == 0, "Cannot read integer data value" )
+
+        call Chomp ( sRecord, sArgument )
+        row_str = trim(sArgument)
+        read ( unit=sArgument, fmt=*, iostat=iStat ) DMPROW
+        call Assert( iStat == 0, "Cannot read integer data value" )
+
+      end if
+
+      DMP_FILENAME = "SWB_variable_values__col_"//trim(adjustl(col_str))   &
+        //"__row_"//trim(adjustl(row_str))//".csv"
+
+      open( newunit=DMPFILE, file=DMP_FILENAME, status='REPLACE', iostat=iStat )
+
+      write(sBuf,fmt="(i8)") iStat
+
+      call assert( iStat == 0, "Could not open variable dump file '"//trim(DMP_FILENAME)     &
+  //" for writing. iostat = "//trim( sBuf ) )
+
 !      write( DMPFILE, "(i2,',',i2,',',i4,',',3(i8,','),12(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,       &
 !       pConfig%iYear, cel%iLandUseType, cel%iLandUseIndex, cel%iSoilGroup, cel%rTMin, cel%rTMax, cel%rTAvg,       &
 !       cel%rCFGI, cel%rGrossPrecip, cel%rNetPrecip, cel%rInterception, cel%rNetRainfall, cel%rSnowMelt,           &
@@ -492,7 +525,7 @@ subroutine control_setModelOptions(sControlFile)
         //"interception, net_rainfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, irrigation_fm_sw, "        &
         //"kcb, crop_etc, bare_soil_evap, total_available_water, readily_available_water,"                            &
         //"ref_et0, actual_et, ref_etc0_adj, soil_storage_max, soil_storage, "                                        &
-        //"curve_num_adj, runon, outflow, flowout, recharge, rejected_recharge, inflowbuf1, inflowbuf2, "             &
+        //"curve_num_adj, runon, outflow, flowout, potential_recharge, rejected_recharge, inflowbuf1, inflowbuf2, "   &
         //"inflowbuf3, inflowbuf4, inflowbuf5"
 
     else if ( sItem == "TEMPERATURE" ) then

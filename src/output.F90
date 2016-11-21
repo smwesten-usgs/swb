@@ -242,11 +242,6 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
       ! Unless rStreamCapture is operated on by other modules, it could be
       ! converted to a local module variable
 
-        case(iSTREAM_CAPTURE)
-          call RLE_writeByte(STAT_INFO(iSTREAM_CAPTURE)%iLU, &
-            REAL(cel%rStreamCapture,kind=c_float), pConfig%iRLE_MULT, &
-            pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSTREAM_CAPTURE)
-
         case(iGROWING_SEASON)
           call RLE_writeByte(STAT_INFO(iGROWING_SEASON)%iLU, &
             REAL(cel%iGrowingSeason,kind=c_float), pConfig%iRLE_MULT, &
@@ -423,10 +418,6 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
           case(iIRRIGATION_FROM_SW)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rIrrigationFromSW)
-
-          case(iSTREAM_CAPTURE)
-            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
-              iYear, cel%rStreamCapture)
 
           case(iGROWING_SEASON)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
