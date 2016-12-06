@@ -1,31 +1,33 @@
 
-set(CMAKE_FIND_LIBRARY_PREFIXES "lib")
+set(CMAKE_FIND_LIBRARY_PREFIXES "")
 
 find_program( R_SCRIPT Rscript.exe Rscript
     HINTS
     ENV R_HOME
-  ${PATH_TO_R}
+    ${PATH_TO_R}
     PATHS
     "c:/Program Files/R"
     "c:/Program Files/R/R-3.0.1/bin"
     "/usr/bin"
 )
 
-if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
+string( TOLOWER ${SYSTEM_TYPE} SYSTEM_TYPE_LC )
+set( DISLIN_MODULE_DIRECTORY ${PROJECT_SOURCE_DIR}/include/${SYSTEM_TYPE_LC}/${Fortran_COMPILER_NAME} )
+
+if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" )
   set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb.exe )
 
-elseif( "${OS}" STREQUAL "mac" OR "${OS}" STREQUAL "mac_osx" )
+elseif( "${SYSTEM_TYPE}" STREQUAL "mac" OR "${SYSTEM_TYPE}" STREQUAL "mac_osx" )
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".dylib")
   set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
-  set ( EXTRA_INCLUDEDIR "/usr/local/dislin/gf")
 
 else()
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
-  set ( EXTRA_INCLUDEDIR "/usr/local/dislin/gf")
+  set( SWB_EXECUTABLE ${CMAKE_INSTALL_PREFIX}/swb )
 
 endif()
 
@@ -53,8 +55,8 @@ find_library(LIBZ
         /usr/local/lib64
         /usr/local/lib
         /usr/local/opt/zlib/lib
+        /usr/lib64
         ${LIBZ_PATH}
-        ${SWB_LIBPATH}
         ${LIB_PATH}
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
@@ -72,6 +74,7 @@ find_library(LIBNETCDF
 
 find_library(LIBHDF5
         NAMES hdf5 libhdf5 libhdf5.a
+        PATHS
         ${LIBHDF5_PATH}
         PATHS
         /usr/local/lib64
@@ -84,6 +87,7 @@ find_library(LIBHDF5
 find_library(LIBHDF5_HL
         NAMES hdf5_hl libhdf5_hl libhdf5_hl.a
         PATHS
+        ${LIBHDF5_PATH}
         /usr/local/lib64
         /usr/local/lib
         ${LIB_PATH}
@@ -99,6 +103,8 @@ find_library(LIBCURL
         ${LIB_PATH}
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
+
+if( OPTION__GRAPHICS_SUPPORT )
 
 find_library(LIBDISLIN
         NAMES
@@ -154,7 +160,7 @@ set( EXTERNAL_LIBS ${LIBNETCDF} ${LIBHDF5_HL} ${LIBHDF5} ${LIBCURL} ${LIBZ} ${LI
 
 # Now, add platform-specific libraries as needed
 
-if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
+if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
 
 #  find_library(LIBWINPTHREAD
 #          NAMES libwinpthread.a winpthread winpthread
@@ -184,7 +190,7 @@ if ("${OS}" STREQUAL "win_x64" OR "${OS}" STREQUAL "win_x86")
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBSZ} ${LIBWINPTHREAD} ${LIBWS2_32} ${LIBOPENGL} ${LIBGDI32} )
 
-elseif ("${OS}" STREQUAL "mac_osx" )
+elseif ("${SYSTEM_TYPE}" STREQUAL "mac_osx" )
 
   set(CMAKE_FIND_LIBRARY_SUFFIXES "*.dylib")
 
@@ -245,6 +251,76 @@ elseif ("${OS}" STREQUAL "mac_osx" )
 
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBSZ} ${LIBLDAP} ${LIBCRYPTO} ${LIBSSL} ${LIBLBER}
         ${LIBSSH2} ${LIBSASL2} )
+
+elseif ("${SYSTEM_TYPE}" STREQUAL "Yeti" )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" )
+
+  find_library(LIBPTHREAD
+          NAMES pthread libpthread libpthread.so
+          HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/lib64
+          /usr/lib
+          ${LIB_PATH} )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
+
+  find_library(LIBMFHDF
+          NAMES mfhdf libmfhdf libmfhdf.a
+	  HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/local/lib64
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBDF
+          NAMES df libdf libdf.a
+	  HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/local/lib64
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBJPEG
+          NAMES jpeg libjpeg libjpeg.a
+	  HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/local/lib64
+	  /usr/lib64
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  find_library(LIBSZIP
+          NAMES sz libsz libsz.a
+	  HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/local/lib64
+	  /usr/lib64
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" )
+
+  find_library(LIBC
+          NAMES c libc libc.so
+	  HINTS
+          ENV LD_LIBRARY_PATH
+          PATHS
+          /usr/local/lib64
+	  /usr/lib64
+	  /lib64
+          ${LIB_PATH}
+          NO_CMAKE_SYSTEM_PATH )
+
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a" ".so" )
+
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIBPTHREAD} ${LIBMFHDF} ${LIBDF} ${LIBJPEG} ${LIBSZIP} ${LIBC} )
 
 else()
 
@@ -319,4 +395,4 @@ endif()
 
 
 link_libraries( ${EXTERNAL_LIBS} )
-include_directories( ${EXTRA_INCLUDEDIR} ${SWB_INCPATH} "${PROJECT_SOURCE_DIR}/src/proj4")
+include_directories( ${DISLIN_MODULE_DIRECTORY} "${PROJECT_SOURCE_DIR}/src/proj4")

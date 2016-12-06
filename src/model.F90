@@ -129,7 +129,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     pConfig%iYear = iTempYear
     pConfig%iMonth = iTempMonth
     pConfig%iDay = iTempDay
-    
+
   end if
 
   ! Zero out monthly and annual accumulators
@@ -177,7 +177,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     iDay=pConfig%iDay, iYear=pConfig%iYear )
 
   ! after the first call to getvalues, allow for landuse files to be missing.
-  ! if files are missing, the existing landuse values are retained. 
+  ! if files are missing, the existing landuse values are retained.
   DAT(LANDUSE_DATA)%lMissingFilesAreAllowed = lTRUE
 
   ! if a new landuse grid is found, then we need to perform a basic reinitialization
@@ -341,7 +341,7 @@ end if
   call model_UpdateGrowingSeason( pGrd, pConfig )
 
   call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
-  
+
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
@@ -955,8 +955,8 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
   implicit none
 
   ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer        :: pGrd    
-  type (T_MODEL_CONFIGURATION), pointer  :: pConfig 
+  type ( T_GENERAL_GRID ),pointer        :: pGrd
+  type (T_MODEL_CONFIGURATION), pointer  :: pConfig
 
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel              ! pointer to a particular cell
@@ -980,7 +980,7 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
               + (cel%rTAvg - pConfig%fGrowingSeasonEnd_KillingFrostTemp )
         else
           cel%rGDD_GrowingSeason = 0.
-        endif  
+        endif
 
         ! is this cell in active growing season?
         if ( cel%iGrowingSeason == iTRUE ) then
@@ -1215,10 +1215,10 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
             //int2char(iDayOfYear)//" iRow: "//trim(int2char(iRow)) &
             //"  iCol: "//trim(int2char(iCol)), &
             trim(__FILE__), __LINE__)
-        endif  
+        endif
 
         cel%rInterception = real(dpInterception, kind=c_double)
-!      cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
+        cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
 
         ! NOW we're through with INTERCEPTION calculations
         ! Next, we partition between snow and rain
@@ -1703,10 +1703,6 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
 
-#ifdef STREAM_INTERACTIONS
-    cel%rStreamCapture = rZERO
-#endif
-
     ! Compute the runoff
     cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
@@ -1744,18 +1740,8 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     endif
 
-#ifdef STREAM_INTERACTIONS
-
-    if(target_cel%iStreamIndex > 0) then
-      ! route outflow to a specific stream or fracture ID
-      cel%rStreamCapture = cel%rOutFlow
-      cel%rOutFlow = rZERO
-    else if &
-#else
-    if &
-#endif
-    (target_cel%iLandUse == pConfig%iOPEN_WATER_LU &
-    .or. target_cel%rSoilWaterCap<rNEAR_ZERO) then
+    if ( target_cel%iLandUse == pConfig%iOPEN_WATER_LU                   &
+        .or. target_cel%rSoilWaterCap < rNEAR_ZERO ) then
       ! Don't route any further; the water has joined a generic
       ! surface water feature. We assume that once the water hits a
       ! surface water feature that the surface water drainage
@@ -1765,11 +1751,11 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
       cel%rOutFlow = rZERO
 
     else
-      ! add cell outflow to target cell inflow
-      target_cel%rInFlow = &
-        target_cel%rInFlow + cel%rOutFlow * cel%rRouteFraction
+      ! add cell outflow to target cell inflow; ROUTING FRACTION represents the fraction of
+      ! cell outflow that makes it to the downslope cell.
       cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
       cel%rOutflow = cel%rOutflow * cel%rRouteFraction
+      target_cel%rInFlow = cel%rOutFlow
     end if
 
   end do
@@ -1827,46 +1813,18 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
     do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
-  ! Compute the runoff for each cell
-  rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+    ! Compute the runoff for each cell
+    rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
-  ! Now, remove any runoff from the model grid
-!      call stats_UpdateAllAccumulatorsByCell(REAL(rR,kind=c_double), &
-!         iRUNOFF_OUTSIDE,iMonth,iZERO)
+    ! Now, remove any runoff from the model grid
+    cel%rFlowOutOfGrid = rR
 
-  cel%rFlowOutOfGrid = rR
+    ! we've removed the water from the grid; it shouldn't be included in
+    ! "outflow" water
+    cel%rOutFlow = rZERO
 
-!       cel%rOutFlow = rR
-
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-!! What is the point of this? If we aren't routing,
-!! only a small amount of water (generated from a
-!! cell directly beneath a stream segment) will
-!! be captured...
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-#ifdef STREAM_INTERACTIONS
-  ! Capture into streams or fractures
-  cel%rStreamCapture = rZERO
-  if ( cel%iStreamIndex /= 0 ) then
-    ! Compute the amount of fracture recharge
-    cel%rStreamCapture = cel%rInFlow * pconfig%rStreamMaxCapture(cel%iStreamIndex) &
-      / pconfig%rStreamMaxInflow(cel%iStreamIndex)
-    if (cel%rStreamCapture < rZERO) then
-      print *, "Negative!", cel%rInFlow, cel%rStreamCapture
-    endif
-    cel%rOutFlow = cel%rOutFlow - cel%rStreamCapture
-  end if
-#endif
-
-  ! we've removed the water from the grid; it shouldn't be included in
-  ! "outflow" water
-  cel%rOutFlow = rZERO
-
+    end do
   end do
-end do
-
-  return
 
 end subroutine model_Runoff_NoRouting
 
@@ -2673,7 +2631,7 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "  Interception precipitation exponent ('n' coefficient) for growing season = ", &
       pConfig%LU(iRecNum)%rIntercept_GrowingSeason_n
 
-  endif      
+  endif
 
   call chomp(sRecord, sItem, sTAB)
   read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_a
@@ -2695,7 +2653,15 @@ subroutine model_ReadLanduseLookupTable( pConfig )
     write(UNIT=LU_LOG,FMT=*)  "  Interception precipitation exponent ('n' coefficient) for non-growing season = ", &
       pConfig%LU(iRecNum)%rIntercept_NonGrowingSeason_n
 
-  endif      
+  endif
+
+  if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) then
+    call chomp(sRecord, sItem, sTAB)
+    read ( unit=sItem, fmt=*, iostat=iStat ) pConfig%LU(iRecNum)%rMax_Interception_Storage
+    call Assert( iStat == 0, "Error reading maximum interception storage values in landuse file" )
+    write(UNIT=LU_LOG,FMT=*)  "  Maximum interception storage value = ", &
+      pConfig%LU(iRecNum)%rMax_Interception_Storage
+  endif
 
   ! now read in a rooting depth for each landuse/soil type combination
   do i=1,iNumSoilTypes
@@ -2711,12 +2677,12 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   if (len_trim(sItem) > 0 ) then
     read( sItem, fmt=*, iostat=iStat ) fTempVal
     ! test to see whether fTempVal was read correcly as a *REAL* value. if it is, we have extra data
-    ! columns present. the HORTON interception routine introduces 4 new columns of data that might be read 
+    ! columns present. the HORTON interception routine introduces 4 new columns of data that might be read
     ! in as rooting depths if the user is not careful.
     call assert( iStat /= 0, "Read a real value from a column of the landuse lookup table following what "   &
       //"was supposed~to be the final ROOTING DEPTH column. This file may contain HORTON interception" &
       //" values,~or other unknown data columns. Please check the landuse lookup table and rerun.", __FILE__, __LINE__)
-  endif  
+  endif
 
   iRecNum = iRecNum + 1
 
@@ -2748,7 +2714,7 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
   real (kind=c_float) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
-  character (len=256) :: sBuf 
+  character (len=256) :: sBuf
 	integer (kind=c_int) :: iCol,iRow
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
 
@@ -3020,14 +2986,14 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
     elseif ( index( sItem, "CONSTANT") > 0 ) then
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT
       ! elseif ( str_buffer .contains. "demand") then
-      !   pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = APP_HWB_DEMAND_BASED        
+      !   pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = APP_HWB_DEMAND_BASED
     else
       pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme = CONFIG_IRRIGATION_APPLICATION_NONE
     endif
     select case ( pConfig%IRRIGATION(iLandUseIndex)%iApplication_Scheme )
       case ( CONFIG_IRRIGATION_APPLICATION_NONE )
         sBuf = "'none'"
-      case ( CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT )  
+      case ( CONFIG_IRRIGATION_APPLICATION_CONSTANT_AMNT )
         sBuf = "'constant application amount'"
       case ( CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY )
         sBuf = "'replenish soil to field capacity, inefficiencies assumed lost from mass balance'"
@@ -3035,8 +3001,8 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
         sBuf = "'replenish soil to field capacity, inefficiencies delivered to root zone'"
       case default
         call assert(lFALSE, "Unhandled configuration file option associated with "                   &
-          //"'Irrigation Application Scheme' choice", trim(__FILE__), __LINE__ )  
-    end select  
+          //"'Irrigation Application Scheme' choice", trim(__FILE__), __LINE__ )
+    end select
     write(unit=LU_LOG, fmt=*) "  irrigation application scheme is "//trim( sBuf )
 
     call chomp(sRecord, sItem, sTAB)
@@ -3216,6 +3182,10 @@ subroutine model_setInactiveCells( pGrd, pConfig )
     pGrd%iMask = iACTIVE_CELL
 
   endwhere
+
+  pGenericGrd_sgl%rData = real( pGrd%iMask, kind=c_float )
+  call grid_WriteGrid( &
+   sFilename="ACTIVE_MODEL_CELLS"//".asc", pGrd=pGenericGrd_sgl, iOutputFormat=OUTPUT_ARC)
 
   call echolog("Finished converting cells with missing data (negative values) to inactive cells." &
     //"~ A total of "//trim(asCharacter(count(pGrd%iMask==iINACTIVE_CELL))) &
@@ -3728,11 +3698,11 @@ subroutine model_dumpvals(pGrd, pConfig)
       cel%rDailyRecharge, cel%rRejectedRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                     &
       cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
 
-    flush( DMPFILE )  
+    flush( DMPFILE )
 
   endif
 
-end subroutine model_dumpvals     
+end subroutine model_dumpvals
 
 
 subroutine model_WriteGrids(pGrd, pConfig, iOutputType)

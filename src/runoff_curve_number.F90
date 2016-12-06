@@ -144,28 +144,11 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   real (kind=c_float) :: rTempCN
   real (kind=c_float) :: rPf
 
-  !! update curve numbers based on antecedent moisture conditions
-! real (kind=c_float),dimension(5),parameter :: rDRY_COEFS = (/ &
-!                       1.44206581732462E-06_c_float, &
-!                      -2.54340415305462E-04_c_float, &
-!                       2.07018739405394E-02_c_float, &
-!                      -7.67877072822852E-03_c_float, &
-!                       2.09678222732103_c_float /)
-!  real (kind=c_float),dimension(5),parameter :: rWET_COEFS = (/ &
-!                      -6.20352282661163E-07_c_float, &
-!                       1.60650096926368E-04_c_float, &
-!                      -2.03362629006156E-02_c_float, &
-!                       2.01054923513527_c_float, &
-!                       3.65427885962651_c_float /)
-
-  ! Here goes...
   rTotalInflow = sum(cel%rNetInflowBuf)
 
   ! Correct the curve number...
   if(cel%rCFGI>pConfig%rLL_CFGI &
        .and. cel%rSoilWaterCap > rNEAR_ZERO) then
-!    cel%rAdjCN = MIN(98_c_float,cel%rAdjCN + &
-!       ((98_c_float-cel%rAdjCN) * cel%rSoilMoisture / cel%rSoilWaterCap))
 
      rPf = prob_runoff_enhancement(cel%rCFGI,pConfig%rLL_CFGI,pConfig%rUL_CFGI)
 
@@ -179,9 +162,6 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
 
     if ( rTotalInflow < pConfig%rDRY_GROWING ) then           ! AMC I
 
-
-!      cel%rAdjCN = polynomial(cel%rBaseCN,rDRY_COEFS)
-
 !      The following comes from page 192, eq. 3.145 of "SCS Curve Number
 !      Methodology"
 
@@ -194,15 +174,14 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
 
     else													  ! AMC III
 
-!      cel%rAdjCN = polynomial(cel%rBaseCN,rWET_COEFS)
       cel%rAdjCN = cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN)
+
     end if
 
   else ! dormant (non-growing) season
 
     if ( rTotalInflow < pConfig%rDRY_DORMANT ) then           ! AMC I
 
-!      cel%rAdjCN = polynomial(cel%rBaseCN,rDRY_COEFS)
       cel%rAdjCN = cel%rBaseCN / (2.281 - 0.01281 * cel%rBaseCN)
 
     else if ( rTotalInflow >= pConfig%rDRY_DORMANT &
@@ -212,7 +191,6 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
 
     else													  ! AMC III
 
-!      cel%rAdjCN = polynomial(cel%rBaseCN,rWET_COEFS)
       cel%rAdjCN = cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN)
 
     end if
@@ -259,10 +237,9 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
 
   call runoff_UpdateCurveNumber(pConfig,cel,iJulDay)
 
-  rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
+  if(pConfig%iConfigureInitialAbstraction == CONFIG_SM_INIT_ABSTRACTION_TR55) then
 
-  if(pConfig%iConfigureInitialAbstraction == &
-                                      CONFIG_SM_INIT_ABSTRACTION_TR55) then
+    rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
 
     if ( rP > rPOINT2*rSMax ) then
       rOutFlow = ( rP - rPOINT2*rSMax )**2  / (rP + rPOINT8*rSMax)
@@ -270,16 +247,14 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
       rOutFlow = rZERO
     end if
 
-  else if(pConfig%iConfigureInitialAbstraction == &
-                                   CONFIG_SM_INIT_ABSTRACTION_HAWKINS) then
+  else if(pConfig%iConfigureInitialAbstraction == CONFIG_SM_INIT_ABSTRACTION_HAWKINS) then
 
     ! Equation 9, Hawkins and others, 2002
     !rCN_05 = 100_c_float / &
     !  ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
 
-
 	  ! Equation 8, Hawkins and others, 2002
-    rSMax = 1.33_c_float * ( rSMax ) ** 1.15_c_float
+    rSMax = 1.33_c_float * ( (rTHOUSAND / cel%rAdjCN) - rTEN ) ** 1.15_c_float
 
     ! now consider runoff if Ia ~ 0.05S
     if ( rP > 0.05_c_float * rSMax ) then
@@ -288,12 +263,21 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
       rOutFlow = rZERO
     end if
 
+  else if(pConfig%iConfigureInitialAbstraction == CONFIG_SM_INIT_ABSTRACTION_NONE) then
+
+    ! convert from CN( Ia=0.2S ) to CN( Ia close to zero )
+    cel%rAdjCN = min(100.0_c_float, (0.0112*cel%rAdjCN**2 - 0.0347*cel%rAdjCN + 1.5226) )
+
+    rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
+
+    rOutFlow = rP_avail **2  / (rP_avail + rSMax)
+
   else
     call Assert(lFALSE, "Illegal initial abstraction method specified" )
   end if
 
   ! ensure that the calculated runoff doesn't exceed the amount of water
-  ! available at the cell surface  
+  ! available at the cell surface
   rOutflow = min( rOutflow, rP_avail )
 
 end function runoff_CellRunoff_CurveNumber

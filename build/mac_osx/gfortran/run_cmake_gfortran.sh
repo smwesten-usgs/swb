@@ -29,7 +29,7 @@ export INSTALL_PREFIX=/usr/local/bin
 # options are "Release" or "Debug"
 export BUILD_TYPE="Release"
 # options are "x86" (32-bit) or "x64" (64-bit)
-export OS="mac_osx"
+export SYSTEM_TYPE="mac_osx"
 
 # define which portions of swb to build (i.e. swbstats? as library?)
 export TARGET__SWB_EXECUTABLE="TRUE"
@@ -69,7 +69,7 @@ cmake ../../.. -G "Unix Makefiles" \
 -DLIB_PATH4="$LIB_PATH4 " \
 -DLIB_PATH5="$LIB_PATH5" \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS " \
--DOS="$OS " \
+-DSYSTEM_TYPE="$SYSTEM_TYPE " \
 -DCMAKE_BUILD_TYPE="$BUILD_TYPE " \
 -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX " \
 -DTARGET__SWB_EXECUTABLE:BOOLEAN="$TARGET__SWB_EXECUTABLE " \

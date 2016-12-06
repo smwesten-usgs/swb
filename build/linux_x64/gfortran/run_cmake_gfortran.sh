@@ -19,6 +19,7 @@ export INSTALL_PREFIX=/usr/local/bin
 export BUILD_TYPE="Release"
 # options are "x86" (32-bit) or "x64" (64-bit)
 export PLATFORM_TYPE="x64"
+export SYSTEM_TYPE="linux_x64"
 
 # define platform and compiler specific compilation flags
 export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -Wall -fbacktrace -fcheck=all -fexceptions -ffree-line-length-none -static"
@@ -72,10 +73,10 @@ cmake ../../.. -G "Unix Makefiles" \
 -DFC="$FC "                       \
 -DCC="$CC "                       \
 -DPLATFORM_TYPE="$PLATFORM_TYPE " \
+-DSYSTEM_TYPE="$SYSTEM_TYPE" \
 -DBUILD_TYPE="$BUILD_TYPE " \
 -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX " \
 -DLIB_PATH1="/usr//local/lib64" \
 -DLIB_PATH2="/usr/local/lib" \
 -DLIB_PATH3="/usr/lib64" \
 -DLIB_CURL="/usr/local/lib"
-
