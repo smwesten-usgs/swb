@@ -321,18 +321,20 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                                         cel%rSoilMoisture &
                                       + rPrecipMinusPotentET )
 
-              !! calculate change in soil moisture storage
-              rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
+                !! calculate change in soil moisture storage
+                rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
 
-              !! change in storage will be negative; offset somewhat by whatever
-              !! enters as net infiltration
-              cel%rActual_ET_soil = rNetInfil - rChangeInStorage
+                !! change in storage will be negative; offset somewhat by whatever
+                !! enters as net infiltration
+                cel%rActual_ET_soil = rNetInfil - rChangeInStorage
 
-              ! 'rMoistureDeficit' represents the DEFICIT term in the
-              ! original Thornthwaite-Mather calculations. DEFICIT is supposed
-              ! to capture the amount of water demand that *cannot* be met
-              ! by precipitation and the soil reservoir
-              rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
+                ! 'rMoistureDeficit' represents the DEFICIT term in the
+                ! original Thornthwaite-Mather calculations. DEFICIT is supposed
+                ! to capture the amount of water demand that *cannot* be met
+                ! by precipitation and the soil reservoir
+                rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
+
+              endif L1a
 
             else  ! code block L1: Precip *EXCEEDS* Potential ET
 

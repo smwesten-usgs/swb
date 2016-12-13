@@ -104,20 +104,9 @@ find_library(LIBCURL
         NO_SYSTEM_ENVIRONMENT_PATH
         NO_CMAKE_SYSTEM_PATH )
 
-if( OPTION__GRAPHICS_SUPPORT )
-
-find_library(LIBDISLIN
-        NAMES
-        dismg libdismg libdismg.a disgf libdisgf libdisgf.a dislin.10 dislin dislin.10.5.0.dylib
-        PATHS
-        /usr/local/lib64
-        /usr/local/lib
-        /usr/local/dislin/lib
-        /usr/local/dislin
-        ${SWB_LIBPATH} )
-
 find_library(LIBGCC
-        NAMES gcc libgcc libgcc.a
+        NAMES
+        gcc libgcc libgcc.a
         PATHS
         /usr/local/lib64
         /usr/local/lib
@@ -125,21 +114,36 @@ find_library(LIBGCC
         ${LIB_PATH} )
 
 find_library(LIBGFORTRAN
-        NAMES gfortran libgfortran libgfortran.a
+        NAMES
+        gfortran libgfortran libgfortran.a
         PATHS
         /usr/local/lib64
         /usr/local/lib
         ${LIBGCC_PATH}
         ${LIB_PATH} )
 
-find_library(LIBSZ
-        NAMES sz libsz libsz.a
+
+set(CMAKE_FIND_LIBRARY_SUFFIXES "*.dylib" "*.a")
+
+find_library(LIBDISLIN
+        NAMES
+        dismg libdismg libdismg.a libdislin.10.dylib /usr/local/lib/libdislin.10.dylib
         PATHS
         /usr/local/lib64
         /usr/local/lib
-        ${LIBSZ_PATH}
-        ${SWB_LIBPATH}
-        ${LIB_PATH} )
+        /usr/local/dislin/lib
+        /usr/local/dislin
+        ${LIB_PATH}
+        ${SWB_LIBPATH} )
+
+#find_library(LIBSZ
+#        NAMES sz libsz libsz.a
+#        PATHS
+#        /usr/local/lib64
+#        /usr/local/lib
+#        ${LIBSZ_PATH}
+#        ${SWB_LIBPATH}
+#        ${LIB_PATH} )
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES "*.dylib")
 

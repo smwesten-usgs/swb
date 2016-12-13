@@ -29,7 +29,7 @@ if(TARGET__SWB_EXECUTABLE)
             water_balance.F90
 
             generated/version_control.F90
-            
+
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -195,7 +195,7 @@ if(TARGET__SWB_EXECUTABLE)
 
             )
 
-  target_link_libraries(swb ${EXTRA_LIBS})
+  target_link_libraries(swb ${EXTERNAL_LIBS})
 
 endif()
 
@@ -231,7 +231,7 @@ if(TARGET__SWB_LIBRARY)
             water_balance.F90
 
             generated/version_control.F90
-            
+
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -398,7 +398,7 @@ if(TARGET__SWB_LIBRARY)
 
             )
 
-  target_link_libraries(swblib ${EXTRA_LIBS})
+  target_link_libraries(swblib ${${EXTERNAL_LIBS})
 
 endif()
 
@@ -583,7 +583,7 @@ if(TARGET__SWBSTATS)
 
             )
 
-  link_libraries(swbstats ${EXTRA_LIBS})
+  link_libraries(swbstats ${EXTERNAL_LIBS})
 
 
 endif()

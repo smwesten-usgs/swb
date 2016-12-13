@@ -13,11 +13,7 @@
 # SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_VERSION       | ex: "4.8.2"
-# LIB_PATH1
-# LIB_PATH2
-# LIB_PATH3
-# LIB_PATH4
-# LIB_PATH5
+# LIBRARIES
 
 message("Processing top-level CMakelists.txt for project swb")
 
@@ -61,22 +57,12 @@ include( cmake/options_and_targets.cmake )
 # Locate utility programs
 #------------------------------------------------------------------------
 
-# search for programs in the build host directories
-SET(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-# for libraries and headers in the target directories
-#SET(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-SET(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set( EXTERNAL_LIBS ${LIB_HDF5_HL} ${LIB_HDF5} ${LIB_NETCDF} ${LIB_Z} ${LIB_SZ} )
+set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} ${LIB_XM} )
+set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
 
-set(SWB_LIBPATH ${PROJECT_SOURCE_DIR}/lib/${OS}/${Fortran_COMPILER_NAME} )
-set(SWB_INCPATH ${EXTRA_INCLUDEDIR} ${PROJECT_SOURCE_DIR}/include/${OS}/${Fortran_COMPILER_NAME} )
-
-set(LIB_PATH ${LIB_PATH1} ${LIB_PATH2} ${LIB_PATH3} ${LIB_PATH4} ${LIB_PATH5} ${EXTRA_INCLUDEDIR} )
-
-set(CMAKE_LIBRARY_PATH ${SWB_LIBPATH} ${LIB_PATH} )
-
-include( cmake/find_programs_and_libraries.cmake )
-
-#set(MODULE_DIR ${INCLUDE_DIR} ${PROJECT_SOURCE_DIR}/include/${SYSTEM_TYPE}/${Fortran_COMPILER_NAME} )
+link_libraries( ${EXTERNAL_LIBS} )
+include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} "${PROJECT_SOURCE_DIR}/src/proj4" )
 
 if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
