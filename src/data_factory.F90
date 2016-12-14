@@ -423,38 +423,50 @@ subroutine getvalues_constant_sub( this, pGrdBase )
   class (T_DATA_GRID) :: this
   type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
+  ! [ LOCALS ]
+  integer (kind=c_int), save   :: call_number = 0
+
   this%lGridHasChanged = lFALSE
 
-  select case (this%iSourceDataType)
+  do
 
-    case ( DATATYPE_REAL )
+    if ( call_number > 0 ) exit
 
-      if (.not. all( pGrdBase%rData == this%rConstantValue ) ) then
+    select case (this%iSourceDataType)
 
-        this%lGridHasChanged = lTRUE
-        pGrdBase%rData = this%rConstantValue
+      case ( DATATYPE_REAL )
 
-      endif
+        if (.not. all( pGrdBase%rData == this%rConstantValue ) ) then
 
-    case ( DATATYPE_INT)
+          this%lGridHasChanged = lTRUE
+          pGrdBase%rData = this%rConstantValue
 
-      if (.not. all( pGrdBase%iData == this%iConstantValue ) ) then
+        endif
 
-        this%lGridHasChanged = lTRUE
-        pGrdBase%iData = this%iConstantValue
+      case ( DATATYPE_INT)
 
-      endif
+        if (.not. all( pGrdBase%iData == this%iConstantValue ) ) then
 
-    case default
+          this%lGridHasChanged = lTRUE
+          pGrdBase%iData = this%iConstantValue
 
-      call dump_data_structure_sub(this)
+        endif
 
-      call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: " &
-        //"name="//dquote(this%sDescription) &
-        //"; value="//trim(asCharacter(this%iSourceDataType)), &
-        trim(__FILE__), __LINE__)
+      case default
 
-    end select
+        call dump_data_structure_sub(this)
+
+        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: " &
+          //"name="//dquote(this%sDescription) &
+          //"; value="//trim(asCharacter(this%iSourceDataType)), &
+          trim(__FILE__), __LINE__)
+
+      end select
+
+      call_number = call_number + 1
+      exit
+
+    enddo
 
   end subroutine getvalues_constant_sub
 
