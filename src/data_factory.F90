@@ -76,6 +76,8 @@ module data_factory
     integer (kind=c_int) :: iConstantValue
     real (kind=c_float)  :: rConstantValue
 
+    integer (kind=c_int) :: iNumberOfGetCalls = 0
+
     ! pGrdNative is a grid created to serve as an intermediary between
     ! the native coordinate of the data source file and the project coordinates
     ! in use by swb
@@ -423,34 +425,23 @@ subroutine getvalues_constant_sub( this, pGrdBase )
   class (T_DATA_GRID) :: this
   type ( T_GENERAL_GRID ), pointer :: pGrdBase
 
-  ! [ LOCALS ]
-  integer (kind=c_int), save   :: call_number = 0
-
   this%lGridHasChanged = lFALSE
 
   do
 
-    if ( call_number > 0 ) exit
+    if ( this%iNumberOfGetCalls > 0 ) exit
 
     select case (this%iSourceDataType)
 
       case ( DATATYPE_REAL )
 
-        if (.not. all( pGrdBase%rData == this%rConstantValue ) ) then
-
-          this%lGridHasChanged = lTRUE
-          pGrdBase%rData = this%rConstantValue
-
-        endif
+        this%lGridHasChanged = lTRUE
+        pGrdBase%rData = this%rConstantValue
 
       case ( DATATYPE_INT)
 
-        if (.not. all( pGrdBase%iData == this%iConstantValue ) ) then
-
-          this%lGridHasChanged = lTRUE
-          pGrdBase%iData = this%iConstantValue
-
-        endif
+        this%lGridHasChanged = lTRUE
+        pGrdBase%iData = this%iConstantValue
 
       case default
 
@@ -463,7 +454,7 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
       end select
 
-      call_number = call_number + 1
+      this%iNumberOfGetCalls = this%iNumberOfGetCalls + 1
       exit
 
     enddo

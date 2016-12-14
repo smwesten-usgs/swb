@@ -311,10 +311,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               else  ! L1a: we are calculating soil moisture without T-M
                          ! soil-moisture retention tables (i.e. FAO56)
 
-                cel%rSoilMoisture = MAX(rZERO,                               &
-                                        cel%rSoilMoisture                    &
-                                        + rPrecipMinusPotentET )
-
                  ! ReferenceET0_adj is adjusted downward as the soil dries owing to the water stress
                  ! coefficient calculations
                   cel%rSoilMoisture = MAX(rZERO, &

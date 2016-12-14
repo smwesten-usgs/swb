@@ -10,7 +10,7 @@ module et_crop_coefficients
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
   use types
-	use sm_thornthwaite_mather
+  use sm_thornthwaite_mather
   implicit none
 
   contains
@@ -146,28 +146,28 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-	real (kind=c_float) :: rZr_max
-	integer (kind=c_int) :: iThreshold ! either GDD or DOY
+  real (kind=c_float) :: rZr_max
+  integer (kind=c_int) :: iThreshold ! either GDD or DOY
 
   ! [ RESULT ]
   real (kind=c_float) :: rZr_i
 
-	! [ LOCALS ]
-	! 0.328 feet equals 0.1 meters, which is seems to be the standard
-	! initial rooting depth in the FAO-56 methodology
-	real (kind=c_float), parameter :: rZr_min = 0.328
+  ! [ LOCALS ]
+  ! 0.328 feet equals 0.1 meters, which is seems to be the standard
+  ! initial rooting depth in the FAO-56 methodology
+  real (kind=c_float), parameter :: rZr_min = 0.328
 
-	if ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini < 0.1) then
-	  ! this is needed because for areas like forests, where the
-		 ! Kcb_ini and Kcb_mid are nearly the same, we assume that root depths are
-		 ! constant
-	  rZr_i = rZr_max
+  if ( pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_ini < 0.1) then
+    ! this is needed because for areas like forests, where the
+     ! Kcb_ini and Kcb_mid are nearly the same, we assume that root depths are
+     ! constant
+    rZr_i = rZr_max
 
-	elseif(iThreshold < pIRRIGATION%iL_plant) then
+  elseif(iThreshold < pIRRIGATION%iL_plant) then
 
-	  rZr_i = rZr_min
+    rZr_i = rZr_min
 
-	else
+  else
 
     rZr_i = rZr_min + (rZr_max - rZr_min) * ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
                                            / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
@@ -230,10 +230,8 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
     rKs = rONE
   elseif (rDeficit < cel%rTotalAvailableWater) then
 
-    rKs = ( cel%rTotalAvailableWater - rDeficit + 1.0e-6) &
-          / ( (1.0 - pIRRIGATION%rDepletionFraction) &
-          * (cel%rTotalAvailableWater + 1.0e-6) )
-
+    rKs = ( cel%rTotalAvailableWater - rDeficit )                                    &
+          / ( cel%rTotalAvailableWater - cel%rReadilyAvailableWater + 1.0e-6 )
   else
     rKs = rZERO
   endif
@@ -253,14 +251,12 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
   integer (kind=c_int) :: iRow, iCol
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL),pointer :: cel
-  real (kind=c_float) :: rTEW      ! Total evaporable water
-  real (kind=c_float) :: rREW      ! Readily evaporable water
-  real (kind=c_float) :: rKr       ! Evaporation reduction coefficient
-  real (kind=c_float) :: rDeficit  ! Soil moisture deficit
-  real (kind=c_float) :: r_few     ! Fraction exposed and wetted soil
-  real (kind=c_float) :: rKe       ! Surface evaporation coefficient
-  real (kind=c_float) :: rKs       ! Water stress coefficient
-	real (kind=c_float) :: rZr_max   ! Maximum rooting depth
+  real (kind=c_float) :: rTEW          ! Total evaporable water
+  real (kind=c_float) :: rREW          ! Readily evaporable water
+  real (kind=c_float) :: rDeficit      ! Soil moisture deficit
+  real (kind=c_float) :: rDepthOfEvap  ! Depth of evaporation
+  real (kind=c_float) :: r_few         ! Fraction exposed and wetted soil
+  real (kind=c_float) :: rZr_max       ! Maximum rooting depth
 
   integer (kind=c_int) :: iLBound
   integer (kind=c_int) :: iUBound
@@ -280,36 +276,36 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        if(cel%rSoilWaterCap <= rNear_ZERO &
             .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
 
-       
+
        if ( cel%iIrrigationTableIndex < iLBound                        &
               .or. cel%iIrrigationTableIndex > iUBound )               &
          call assert( lFALSE, "Index out of bounds. Index value: "//   &
            asCharacter(cel%iIrrigationTableIndex),                     &
            __FILE__, __LINE__ )
 
+       ! point to the line in the irrigation table pertaining to landuse of current cell
        pIRRIGATION => pConfig%IRRIGATION(cel%iIrrigationTableIndex)
 
-			 rZr_max = pConfig%ROOTING_DEPTH(cel%iLandUseIndex,cel%iSoilGroup)
+       rZr_max = pConfig%ROOTING_DEPTH(cel%iLandUseIndex,cel%iSoilGroup)
 
+       ! update crop coefficient and current rooting depth
        if(pIRRIGATION%lUnitsAreDOY) then
 
          cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
 
-				 if(pConfig%iDayOfYear < pIRRIGATION%iL_dev) then
-				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
-				     rZr_max, pConfig%iDayOfYear)
-!					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
-				 endif
+         if(pConfig%iDayOfYear < pIRRIGATION%iL_dev) then
+           cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
+             rZr_max, pConfig%iDayOfYear)
+         endif
 
        else
 
          cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=c_int))
 
-				 if(int(cel%rGDD, kind=c_int) < pIRRIGATION%iL_dev) then
-				   cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
-				     rZr_max,INT(cel%rGDD, kind=c_int))
-!					 cel%rSoilWaterCap = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
-				 endif
+         if(int(cel%rGDD, kind=c_int) < pIRRIGATION%iL_dev) then
+           cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
+             rZr_max,INT(cel%rGDD, kind=c_int))
+         endif
 
        endif
 
@@ -317,11 +313,18 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
 
        ! Deficit is defined in the sense of Thornthwaite and Mather
-       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
+!       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
+
        ! following call updates the total available water (TAW) and
        ! readily available water (RAW) on the basis of the current
        ! plant root depth
        call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
+
+       ! Deficit is defined in the sense of Thornthwaite and Mather, and
+       ! is calculated relative to the CURRENT ROOTING DEPTH
+       rDeficit = MAX(rZERO, cel%rTotalAvailableWater - cel%rSoilMoisture)
+
+       rDepthOfEvap = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
 
        ! "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
        ! "STANDARD" is used to refer to crop ET requirements under
@@ -331,29 +334,29 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
        if ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
-				 ! the adjustments for nonstandard growing conditions (e.g. plant
-				 ! stress and resulting decrease in ET during dry conditions).
+         ! the adjustments for nonstandard growing conditions (e.g. plant
+         ! stress and resulting decrease in ET during dry conditions).
 
-         rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
+         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDepthOfEvap)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
-         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, rKr ), &
+         cel%rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, cel%rKr ), &
                    r_few * pIRRIGATION%rKcb_mid )
 
-         rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
-         cel%rBareSoilEvap = cel%rReferenceET0 * rKe
-         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * rKs)
+         cel%rBareSoilEvap = cel%rReferenceET0 * cel%rKe
+         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * cel%rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
-				 ! the adjustments for nonstandard growing conditions (e.g. plant
-				 ! stress and resulting decrease in ET during dry conditions).
-				 ! *EXCLUDING* explicit calculation of BareSoilEvap
+         ! the adjustments for nonstandard growing conditions (e.g. plant
+         ! stress and resulting decrease in ET during dry conditions).
+         ! *EXCLUDING* explicit calculation of BareSoilEvap
 
-         rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
          cel%rBareSoilEvap = rZERO
-         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * rKs)
+         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * cel%rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_STANDARD ) then
 
@@ -363,29 +366,29 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          ! account for the fact that water becomes more difficult to extract
          ! as the APWL increases...
 
-				 ! NO reductions in Kc due to water availability
+         ! NO reductions in Kc due to water availability
 
-         rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)
+         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDepthOfEvap)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
-         rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, rKr ), &
+         cel%rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, cel%rKr ), &
                    r_few * pIRRIGATION%rKcb_mid )
 
-         cel%rBareSoilEvap = cel%rReferenceET0 * rKe
+         cel%rBareSoilEvap = cel%rReferenceET0 * cel%rKe
          cel%rCropETc = cel%rReferenceET0 * cel%rKcb
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_STANDARD ) then
 
-				 ! NO reductions in Kc due to water availability
-				 ! NO explicit calculation of BareSoilEvap
-				 ! no real calculations required because we're applying the crop coefficient directly
+         ! NO reductions in Kc due to water availability
+         ! NO explicit calculation of BareSoilEvap
+         ! no real calculations required because we're applying the crop coefficient directly
 
          cel%rBareSoilEvap = rZERO
          cel%rCropETc = cel%rReferenceET0 * cel%rKcb
 
-			 else
+       else
 
-			   call assert(lFALSE, "Programming error - unknown FAO56 configuration option", &
-				   trim(__FILE__), __LINE__)
+         call assert(lFALSE, "Programming error - unknown FAO56 configuration option", &
+           trim(__FILE__), __LINE__)
 
        endif
 

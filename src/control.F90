@@ -478,8 +478,6 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (sItem == "DUMP_VARIABLES_TO_FILE" .or. sItem == "DUMP_VARIABLES") then
 
-
-
       call Chomp ( sRecord, sArgument )
 
       if(TRIM(sArgument)=="COORDS" .or. trim(sArgument)=="COORDINATES") then
@@ -529,7 +527,8 @@ subroutine control_setModelOptions(sControlFile)
         //"tmin, tmax, tmean, cfgi, gdd, current_rooting_depth, gross_precip, net_precip, "                           &
         //"interception, net_rainfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, irrigation_fm_sw, "        &
         //"kcb, crop_etc, bare_soil_evap, total_available_water, readily_available_water,"                            &
-        //"ref_et0, actual_et, ref_etc0_adj, soil_storage_max, soil_storage, "                                        &
+        //"ref_et0, actual_et, ref_etc0_adj, surf_evap_coef_ke, plant_stress_coef_ks, evap_reduction_coef_kr,         &
+        // soil_storage_max, soil_storage, "                                                                          &
         //"curve_num_adj, runon, outflow, flowout, potential_recharge, rejected_recharge, inflowbuf1, inflowbuf2, "   &
         //"inflowbuf3, inflowbuf4, inflowbuf5"
 

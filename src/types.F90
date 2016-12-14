@@ -159,8 +159,11 @@ module types
       real (kind=c_float) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
 			real (kind=c_float) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
 			real (kind=c_float) :: rKcb = rZERO                 ! crop coefficient for this cell
-			real (kind=c_float) :: rTotalAvailableWater = rZERO
-			real (kind=c_float) :: rReadilyAvailableWater = rZERO
+			real (kind=c_float) :: rTotalAvailableWater = rZERO    ! plant available water
+			real (kind=c_float) :: rReadilyAvailableWater = rZERO  ! p * TAW
+      real (kind=c_float) :: rKs = rONE                      ! plant water stress coefficient
+      real (kind=c_float) :: rKe = rONE                      ! surface evaporation coefficient
+      real (kind=c_float) :: rKr = rONE                      ! evaporation reduction coefficient
 
       real (kind=c_float) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
       real (kind=c_float) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
