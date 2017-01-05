@@ -218,7 +218,6 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   real (kind=c_float) :: rP
   real (kind=c_float) :: rP_avail
   real (kind=c_float) :: rCN_05
-  real (kind=c_float) :: rSMax
 
   ! including interception in the amount of total water that the curve number
   ! method 'sees'; the initial abstration term likely negates much of the
@@ -228,6 +227,8 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
        + cel%rinterception       &
        + cel%rIrrigationAmount   &
        + cel%rInFlow
+
+print *, cel%rNetRainfall, cel%rSnowMelt, cel%rInterception, cel%rIrrigationAmount, cel%rInFlow
 
   ! same as above, excluding the interception term
   rP_avail = cel%rNetRainfall    &
@@ -239,10 +240,10 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
 
   if(pConfig%iConfigureInitialAbstraction == CONFIG_SM_INIT_ABSTRACTION_TR55) then
 
-    rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
+    cel%rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
 
-    if ( rP > rPOINT2*rSMax ) then
-      rOutFlow = ( rP - rPOINT2*rSMax )**2  / (rP + rPOINT8*rSMax)
+    if ( rP > rPOINT2*cel%rSMax ) then
+      rOutFlow = ( rP - rPOINT2*cel%rSMax )**2  / (rP + rPOINT8*cel%rSMax)
     else
       rOutFlow = rZERO
     end if
@@ -254,11 +255,13 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
     !  ((1.879_c_float * ((100_c_float / cel%rAdjCN) - 1_c_float )**1.15_c_float) +1_c_float)
 
 	  ! Equation 8, Hawkins and others, 2002
-    rSMax = 1.33_c_float * ( (rTHOUSAND / cel%rAdjCN) - rTEN ) ** 1.15_c_float
+    cel%rSMax = 1.33_c_float * ( ( rTHOUSAND / cel%rAdjCN - rTEN ) ** 1.15_c_float )
 
     ! now consider runoff if Ia ~ 0.05S
-    if ( rP > 0.05_c_float * rSMax ) then
-      rOutFlow = ( rP - 0.05_c_float * rSMax )**2  / (rP + 0.95_c_float*rSMax)
+
+    if ( rP > 0.05_c_float * cel%rSMax ) then
+      print *, ">>>>>>"
+      rOutFlow = ( rP - 0.05_c_float * cel%rSMax )**2  / (rP + 0.95_c_float*cel%rSMax)
     else
       rOutFlow = rZERO
     end if
@@ -268,9 +271,9 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
     ! convert from CN( Ia=0.2S ) to CN( Ia close to zero )
     cel%rAdjCN = min(100.0_c_float, (0.0112*cel%rAdjCN**2 - 0.0347*cel%rAdjCN + 1.5226) )
 
-    rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
+    cel%rSMax = (rTHOUSAND / cel%rAdjCN) - rTEN
 
-    rOutFlow = rP_avail **2  / (rP_avail + rSMax)
+    rOutFlow = rP_avail **2  / (rP_avail + cel%rSMax)
 
   else
     call Assert(lFALSE, "Illegal initial abstraction method specified" )
@@ -279,6 +282,9 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   ! ensure that the calculated runoff doesn't exceed the amount of water
   ! available at the cell surface
   rOutflow = min( rOutflow, rP_avail )
+  cel%rRunoff = rOutflow
+  print *, rP, cel%rGrossPrecip, cel%rNetRainfall, 0.05*cel%rSMax, cel%rAdjCN, cel%rSMax, cel%rRunoff
+
 
 end function runoff_CellRunoff_CurveNumber
 

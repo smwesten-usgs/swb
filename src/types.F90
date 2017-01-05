@@ -185,13 +185,13 @@ module types
 
       real (kind=c_float) :: rBaseCN = rZERO                 ! Curve number from landuse/soil group
       real (kind=c_float) :: rAdjCN = rZERO                  ! Curve number, adjusted for antecedent moisture
-!      real (kind=c_float) :: rSMax                   ! S_max parameter from runoff calculation
+      real (kind=c_float) :: rSMax                   ! S_max parameter from runoff calculation
       real (kind=c_float) :: rInFlow = rZERO         ! flow in from uphill
+      real (kind=c_float) :: rRunoff = rZERO         ! runoff as calculated by the runoff module in use
       real (kind=c_float) :: rOutFlow = rZERO        ! flow out downhill
       real (kind=c_float) :: rFlowOutOfGrid = rZERO  ! flow that leaves the grid
       real (kind=c_float) :: rRouteFraction = rONE   ! Fraction of outflow to route downslope
       real (kind=c_float) :: rGrossPrecip = rZERO    ! Precip - no interception applied
-      real (kind=c_float) :: rNetPrecip = rZERO
       real (kind=c_float) :: rInterception = rZERO   ! Interception term
       real (kind=c_float) :: rInterceptionStorage = rZERO ! This is a reservoir to hold intercepted moisture
       real (kind=c_float) :: rNetRainfall = rZERO    ! Net precipitation - precip minus interception

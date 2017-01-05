@@ -83,6 +83,26 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
     col_idx: do iCol=1,pGrd%iNX
       cel => pGrd%Cells(iCol,iRow)
 
+      cel%rDailyRecharge = rZERO
+      cel%rRejectedRecharge = rZERO
+      cel%rActual_ET_interception = rZERO
+      cel%rFlowOutOfGrid = rZERO
+      rPrevious_Soil_Moisture = rZERO
+      rPrecipMinusPotentET = rZERO
+      rMSB_DailyMassBalance = rZERO
+      rChangeInStorage = rZERO
+      rNetInfil = rZERO
+      rNetInflow = rZERO
+      cel%rDailyRecharge = rZERO
+      rStreamCapture = rZERO
+      cel%rRejectedRecharge = rZERO
+      cel%rActual_ET_soil = rZERO
+      cel%rActual_ET_interception = rZERO
+
+      rMoistureDeficit = rZERO
+      rMoistureSurplus = rZERO
+
+
     ! 88           ,a8888a,
     ! 88         ,8P"'  `"Y8,
     ! 88        ,8P        Y8,
@@ -95,32 +115,15 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   L0: if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) then
 
         ! we're dealing with an inactive cell; zero out terms for storage and analysis
-        rPrevious_Soil_Moisture = rZERO
-        rPrecipMinusPotentET = rZERO
-        rMSB_DailyMassBalance = rZERO
-        rMoistureDeficit = rZERO
-        rMoistureSurplus = rZERO
-        rChangeInStorage = rZERO
-        rNetInfil = rZERO
-        rNetInflow = rZERO
-        cel%rDailyRecharge = rZERO
-        rStreamCapture = rZERO
-        cel%rRejectedRecharge = rZERO
-        cel%rActual_ET_soil = rZERO
-        cel%rActual_ET_interception = rZERO
 
       else  ! we have an *ACTIVE* cell; proceed
 
         rMAXIMUM_RECHARGE = pConfig%MAX_RECHARGE(cel%iLandUseIndex, cel%iSoilGroup)
         rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU(cel%iLandUseIndex)%rMax_Interception_Storage
 
-        ! Zero out current estimate for daily recharge, rejected recharge
-        cel%rDailyRecharge = rZERO
-        cel%rRejectedRecharge = rZERO
-        cel%rActual_ET_interception = rZERO
-
-        rMoistureDeficit = rZERO
-        rMoistureSurplus = rZERO
+        ! by this point in the daily execution, runoff has been converted to
+        ! outflow (flow contributing to a downslope cell) and
+        ! flow_out_of_grid (flow to an unmodeled surfce water feature or model boundary)
 
         ! calculate net infiltration
         rNetInfil = MAX(rZERO, &
@@ -128,8 +131,9 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                   + cel%rSnowMelt &
                   + cel%rIrrigationAmount &
                   + cel%rInFlow &
-                  - cel%rOutFlow &
-                  - cel%rFlowOutOfGrid)
+                  - cel%rRunoff )
+!                  - cel%rOutFlow &
+!                  - cel%rFlowOutOfGrid)
 
         ! calculate net inflow to cell
         rNetInflow = MAX(rZERO, &
@@ -353,8 +357,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                                               - cel%rSoilWaterCap) )
 
               cel%rSoilMoisture = MIN(cel%rSoilWaterCap, &
-                                (cel%rSoilMoisture &
-                                   + rPrecipMinusPotentET))
+                                (cel%rSoilMoisture + rPrecipMinusPotentET))
 
              !! calculate change in soil moisture storage
              !! new soil moisture value is greater than previous, so change in
@@ -423,7 +426,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             if ( cel%iTgt_Col == iROUTE_LEFT_GRID .or. &
               cel%iTgt_Row == iROUTE_LEFT_GRID) then
                 cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
-                ! cel%rRejectedRecharge = rZERO
+               ! cel%rRejectedRecharge = rZERO
             elseif ( cel%iTgt_Col == iROUTE_DEPRESSION .or. &
               cel%iTgt_Row == iROUTE_DEPRESSION) then
               ! Don't route any further; the water pools here.
@@ -464,7 +467,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                  + cel%rInFlow                  &
                  + cel%rIrrigationAmount        &
                  - cel%rOutFlow                 &
-                 - cel%rFlowOutOfGrid           &
+!                 - cel%rFlowOutOfGrid           &
                  - rChangeInStorage             &
                  - cel%rActual_ET_soil          &
                  - cel%rDailyRecharge           &

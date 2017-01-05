@@ -524,13 +524,13 @@ subroutine control_setModelOptions(sControlFile)
 !       cel%rDailyRecharge, cel%rRejectedRecharge
       write( DMPFILE, fmt="(a)") &
         "month, day, year, landuse_code, landuse_index, soil_group, num_upslope_connections, sum_upslope_cells, "     &
-        //"tmin, tmax, tmean, cfgi, gdd, current_rooting_depth, gross_precip, net_precip, "                           &
+        //"tmin, tmax, tmean, cfgi, gdd, current_rooting_depth, gross_precip, "                                       &
         //"interception, net_rainfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, irrigation_fm_sw, "        &
         //"kcb, crop_etc, bare_soil_evap, total_available_water, readily_available_water,"                            &
-        //"ref_et0, actual_et, ref_etc0_adj, surf_evap_coef_ke, plant_stress_coef_ks, evap_reduction_coef_kr,         &
-        // soil_storage_max, soil_storage, "                                                                          &
-        //"curve_num_adj, runon, outflow, flowout, potential_recharge, rejected_recharge, inflowbuf1, inflowbuf2, "   &
-        //"inflowbuf3, inflowbuf4, inflowbuf5"
+        //"ref_et0, actual_et, ref_etc0_adj, surf_evap_coef_ke, plant_stress_coef_ks, evap_reduction_coef_kr, "       &
+        //"soil_storage_max, soil_storage, "                                                                          &
+        //"curve_num_adj, s_max, runon, runoff, outflow, flowout, potential_recharge, rejected_recharge, "            &
+        //"inflowbuf1, inflowbuf2, inflowbuf3, inflowbuf4, inflowbuf5"
 
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"

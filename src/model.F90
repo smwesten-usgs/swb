@@ -806,28 +806,6 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
 !!!   *$OMP END PARALLEL SECTIONS
 
-
-#ifdef STREAM_INTERACTIONS
-  !! Adjust cell-by-cell temperature
-  if ( pconfig%lElevAdjustment ) then
-    do iRow=1, pGrd%iNX
-      do iCol=1, pGrd%iNY
-        cel => pGrd%Cells(iCol,iRow)
-        if ( pConfig%rElevHumidityThreshold > 9990.0_c_float .or. rRH < 0.0_c_float ) then
-          rTFactor = pConfig%rElevDryFactor
-        else if ( rRH < pConfig%rElevHumidityThreshold ) then
-          rTFactor = pConfig%rElevDryFactor
-        else
-          rTFactor = pConfig%rElevHumidFactor
-        end if
-        cel%rTMin = cel%rTMin - rTFactor * (cel%rElevation - pconfig%rElevStationElevation)
-        cel%rTMax = cel%rTMax - rTFactor * (cel%rElevation - pconfig%rElevStationElevation)
-        cel%rTAvg = cel%rTAvg - rTFactor * (cel%rElevation - pconfig%rElevStationElevation)
-      end do
-    end do
-  end if
-#endif
-
   if(pConfig%lHaltIfMissingClimateData) then
 
     call Assert(iCount == 0,"Temperature values less than " &
@@ -1186,6 +1164,10 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
         end if
 
+
+        print *, "FRZ: ", lFREEZING, cel%rTAvg, cel%rTMax, cel%rTMin
+
+
         ! this simply retrieves the table value for the given landuse
         dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
 
@@ -1369,7 +1351,7 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   if ( iDayCtr > iMOVING_AVG_TERMS ) iDayCtr = 1
 
   ! Update the inflow buffer (used to determine antecedent runoff conditions)
-  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetPrecip &
+  pGrd%Cells(:,:)%rNetInflowBuf(iDayCtr) = pGrd%Cells(:,:)%rNetRainfall &
     + pGrd%Cells(:,:)%rSnowMelt + pGrd%Cells(:,:)%rInflow
 
   return
@@ -3685,17 +3667,18 @@ subroutine model_dumpvals(pGrd, pConfig)
 
     cel => pGrd%Cells( DMPCOL, DMPROW )
 
-    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),38(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,      &
+    write( DMPFILE, "(i2,',',i2,',',i4,',',5(i12,','),39(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,      &
       pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
       cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
-      cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rNetPrecip, cel%rInterception,        &
+      cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rInterception,        &
       cel%rNetRainfall, cel%rSnowCover,                                                                          &
       cel%rSnowMelt, cel%rIrrigationAmount, cel%rIrrigationFromGW, cel%rIrrigationFromSW,                        &
       cel%rKcb, cel%rCropETc, cel%rBareSoilEvap, cel%rTotalAvailableWater, cel%rReadilyAvailableWater,           &
       cel%rReferenceET0,                                                                                         &
       cel%rActualET, cel%rReferenceET0_adj,                                                                      &
       cel%rKe, cel%rKs, cel%rKr,                                                                                 &
-      cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,           &
+      cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rSMax, cel%rInflow, cel%rRunoff, &
+      cel%rOutflow, cel%rFlowOutOfGrid,           &
       cel%rDailyRecharge, cel%rRejectedRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                     &
       cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
 
