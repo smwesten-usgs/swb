@@ -183,49 +183,61 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
   ! if a new landuse grid is found, then we need to perform a basic reinitialization
   ! of active/inactive cells, total soil water capacity, etc.
   if ( DAT(LANDUSE_DATA)%lGridHasChanged ) then
-    pGrd%Cells%iLandUse = pGrd%iData
-    DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
 
-    pGenericGrd_int%iData = pGrd%Cells%iLandUse
-    pGenericGrd_int%iMask = pGrd%iMask
+    do
 
-    call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
-      trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
-      //"_"//trim(asCharacter(pConfig%iYear))// &
-      "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
+      ! if user has supplied a constant landuse data value, we don't want to
+      ! continue to update data structures and inactivate cells, etc.
+      if (      DAT(LANDUSE_DATA)%iSourceDataForm == CONSTANT_VALUE     &
+          .and. DAT(LANDUSE_DATA)%iNumberOfGetCalls > 1 ) exit
 
-    call make_shaded_contour(pGrd=pGenericGrd_int, &
-      sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
-      trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
-      //"_"//trim(asCharacter(pConfig%iYear))//".png", &
-      sTitleTxt="Landuse Grid", &
-      sAxisTxt="Landuse Code",  &
-      rMinZVal=0.0 )
+      pGrd%Cells%iLandUse = pGrd%iData
+      DAT(LANDUSE_DATA)%lGridHasChanged = lFALSE
 
-    if (pConfig%lFirstYearOfSimulation) then
-      ! read in flow direction, soil group, and AWC grids
-      call model_InitializeDataStructures( pGrd, pConfig )
-    endif
+      pGenericGrd_int%iData = pGrd%Cells%iLandUse
+      pGenericGrd_int%iMask = pGrd%iMask
 
-    call model_setInactiveCells( pGrd, pConfig )
+      call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
+        trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
+        //"_"//trim(asCharacter(pConfig%iYear))// &
+        "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_int, iOutputFormat=pConfig%iOutputFormat )
 
-    ! (Re)-initialize the model
-    ! calls the following:
-    ! 1) create landuse index values
-    ! 2) calculate soil moisture
-    ! 3) calculate runoff curve numbers
-    call model_InitializeLanduseRelatedParams( pGrd, pConfig )
-    call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+      call make_shaded_contour(pGrd=pGenericGrd_int, &
+        sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Landuse_Grid_" // &
+        trim(asCharacter(pConfig%iYear))//"_"//trim(asCharacter(pConfig%iMonth)) &
+        //"_"//trim(asCharacter(pConfig%iYear))//".png", &
+        sTitleTxt="Landuse Grid", &
+        sAxisTxt="Landuse Code",  &
+        rMinZVal=0.0 )
 
-    if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
-      write(UNIT=LU_LOG,FMT=*)  "model.F90: reinitializing irrigation table " &
-        //"-- calling model_CreateIrrigationTableIndex"
-      call model_CreateIrrigationTableIndex(pGrd, pConfig )
-    endif
+      if (pConfig%lFirstYearOfSimulation) then
+        ! read in flow direction, soil group, and AWC grids
+        call model_InitializeDataStructures( pGrd, pConfig )
+      endif
 
-    write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
-    flush(unit=LU_LOG)
-    call model_InitializeET( pGrd, pConfig )
+      call model_setInactiveCells( pGrd, pConfig )
+
+      ! (Re)-initialize the model
+      ! calls the following:
+      ! 1) create landuse index values
+      ! 2) calculate soil moisture
+      ! 3) calculate runoff curve numbers
+      call model_InitializeLanduseRelatedParams( pGrd, pConfig )
+      call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+
+      if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
+        write(UNIT=LU_LOG,FMT=*)  "model.F90: reinitializing irrigation table " &
+          //"-- calling model_CreateIrrigationTableIndex"
+        call model_CreateIrrigationTableIndex(pGrd, pConfig )
+      endif
+
+      write(UNIT=LU_LOG,FMT=*)  "model.F90: model_InitializeET"
+      flush(unit=LU_LOG)
+      call model_InitializeET( pGrd, pConfig )
+
+      exit
+
+    enddo
 
   endif
 
@@ -406,7 +418,6 @@ end if
     iTempYear, iTempMonth, iTempDay)
 
   call MODEL_SIM%addDay()
-
   if(pConfig%iYear /= iTempYear) then
     close(unit=LU_TS)
     exit MAIN_LOOP
@@ -611,8 +622,6 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   ! We are ignoring any missing or bogus values in this calculation
   rMean = rSum / iCount
 
-print *, "Precip: ", rMin, rMax, rSum, iCount
-
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
       //trim(real2char(pConfig%rMinValidPrecip))//" are not allowed. " &
@@ -690,28 +699,23 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
 
   iCount = 0
 
-!$OMP PARALLEL SECTIONS PRIVATE(pGrd)
-!$OMP SECTION
   call DAT(TMAX_DATA)%set_constant(rMaxT)
+
   call DAT(TMAX_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMax)
-!$OMP SECTION
+
   call DAT(TMIN_DATA)%set_constant(rMinT)
   call DAT(TMIN_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, rValues=pGrd%Cells%rTMin)
-!$OMP SECTION
+
   call DAT(PRECIP_DATA)%set_constant(rPrecip)
   call DAT(PRECIP_DATA)%getvalues( pGrdBase=pGrd, &
       iMonth=iMonth, iDay=iDay, iYear=iYear, &
       iJulianDay=iJulianDay, &
       rValues=pGrd%Cells%rGrossPrecip)
-!$OMP END PARALLEL SECTIONS
 
-!!!   *$OMP PARALLEL SECTIONS
-!!!   *$OMP SECTION
-!!!   *$OMP PARALLEL DO PRIVATE(iRow, iCol, cel, rTempVal)
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
       cel=>pGrd%Cells(iCol,iRow)
@@ -728,10 +732,6 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
   enddo
 
   pGrd%Cells%rTAvg = (pGrd%Cells%rTMax + pGrd%Cells%rTMin) / 2_c_float
-
-!!!   *$OMP END PARALLEL DO
-
-!!!   *$OMP SECTION
 
 
   rMin = minval(pGrd%Cells%rGrossPrecip, pGrd%iMask == iACTIVE_CELL )
@@ -760,8 +760,6 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
   endif
 
   call stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iGROSS_PRECIP,iMonth)
-
-!!!   *$OMP END PARALLEL SECTIONS
 
 end subroutine model_GetDailyPrecipAndTemperatureValue
 
@@ -1163,10 +1161,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           lFREEZING = lFALSE
           cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
         end if
-
-
-        print *, "FRZ: ", lFREEZING, cel%rTAvg, cel%rTMax, cel%rTMin
-
 
         ! this simply retrieves the table value for the given landuse
         dpPotentialInterception = rf_model_GetInterception(pConfig,cel)

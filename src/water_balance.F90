@@ -61,6 +61,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   real (kind=c_float) :: rPotential_Evaporated_Interception
   real (kind=c_float) :: rPrevious_Interception_Storage
   real (kind=c_float) :: rFraction_Wet
+  real (kind=c_float) :: rSoilMoistureTemp
   real (kind=c_float) :: rMin, rMean, rMax, rSum
   integer (kind=c_int) :: iRowCount
 
@@ -203,7 +204,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               ! is rerouted to flow out of grid
               !
               !
-              ! @NOTE: this is unnecessary, since cel%rOutFlow should have been zeroed our in the
+              ! @NOTE: this is unnecessary, since cel%rOutFlow should have been zeroed out in the
               !        even that flow routing is turned on
               cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rOutflow
 
@@ -352,19 +353,20 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               !! Precip - Potential ET > 0: add infiltrated water
               !! directly to the soil moisture term
 
-              rMoistureSurplus = MAX (rZERO, (cel%rSoilMoisture          &
-                                              + rPrecipMinusPotentET     &
-                                              - cel%rSoilWaterCap) )
+              cel%rActual_ET_soil = cel%rReferenceET0_adj
 
-              cel%rSoilMoisture = MIN(cel%rSoilWaterCap, &
-                                (cel%rSoilMoisture + rPrecipMinusPotentET))
+              rSoilMoistureTemp = cel%rSoilMoisture + rPrecipMinusPotentET
+
+              ! extra water available after ET demands have been met are converted to
+              ! Healy's 'net infiltration' (potential recharge)
+              rMoistureSurplus = MAX(rZERO, rSoilMoistureTemp - cel%rSoilWaterCap)
+
+              cel%rSoilMoisture = MIN(cel%rSoilWaterCap, rSoilMoistureTemp )
 
              !! calculate change in soil moisture storage
              !! new soil moisture value is greater than previous, so change in
              !! storage should be positive here
              rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
-
-             cel%rActual_ET_soil = rNetInfil - rChangeInStorage - rMoistureSurplus
 
               !! back-calculate new equivalent accumulated potential water loss term
               !! given current soil moisture
@@ -466,8 +468,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                  + cel%rSnowMelt                &
                  + cel%rInFlow                  &
                  + cel%rIrrigationAmount        &
-                 - cel%rOutFlow                 &
-!                 - cel%rFlowOutOfGrid           &
+                 - cel%rRunoff                  &
                  - rChangeInStorage             &
                  - cel%rActual_ET_soil          &
                  - cel%rDailyRecharge           &
@@ -503,10 +504,8 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
               cel%rIrrigationAmount
             write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") &
               cel%rInFlow
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rOutFlow: ',t32,F14.4)") &
-              cel%rOutFlow
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rFlowOutOfGrid: ',t32,F14.4)") &
-              cel%rFlowOutOfGrid
+            write(UNIT=LU_LOG,FMT="('  (-) cel%rRunoff: ',t32,F14.4)") &
+              cel%rRunoff
             write(UNIT=LU_LOG,FMT="('  (-) rChangeInStorage: ',t32,F14.4)") &
               rChangeInStorage
             write(UNIT=LU_LOG,FMT="('  (-) cel%rActual_ET_soil: ',t32,F14.4)") &

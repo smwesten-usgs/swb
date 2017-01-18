@@ -163,9 +163,13 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
      ! constant
     rZr_i = rZr_max
 
-  elseif(iThreshold < pIRRIGATION%iL_plant) then
+  elseif( iThreshold < pIRRIGATION%iL_plant ) then
 
     rZr_i = rZr_min
+
+  elseif( iThreshold > pIRRIGATION%iL_mid ) then
+
+    rZr_i = rZr_max
 
   else
 

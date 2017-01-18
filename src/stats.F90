@@ -691,9 +691,6 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   - rDaily(iSUM,iREJECTED_RECHARGE) &
                   - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
                   - rDaily(iSUM,iACT_ET) &
-#ifdef STREAM_INTERACTIONS
-                  - rDaily(iSUM,iSTREAM_CAPTURE) &
-#endif
                   - rDaily(iSUM,iRECHARGE)
 
       write( unit=LU_MSB_REPORT, &
@@ -722,9 +719,6 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iREJECTED_RECHARGE)*dpVolConvert, &
                          rDaily(iSUM,iACT_ET)*dpVolConvert, &
                          rDaily(iSUM,iRECHARGE)*dpVolConvert, &
-#ifdef STREAM_INTERACTIONS
-                         rDaily(iSUM,iSTREAM_CAPTURE)*dpVolConvert, &
-#endif
                          rDailyMSB*dpVolConvert
 
 

@@ -228,8 +228,6 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
        + cel%rIrrigationAmount   &
        + cel%rInFlow
 
-print *, cel%rNetRainfall, cel%rSnowMelt, cel%rInterception, cel%rIrrigationAmount, cel%rInFlow
-
   ! same as above, excluding the interception term
   rP_avail = cel%rNetRainfall    &
        + cel%rSnowMelt           &
@@ -260,7 +258,7 @@ print *, cel%rNetRainfall, cel%rSnowMelt, cel%rInterception, cel%rIrrigationAmou
     ! now consider runoff if Ia ~ 0.05S
 
     if ( rP > 0.05_c_float * cel%rSMax ) then
-      print *, ">>>>>>"
+
       rOutFlow = ( rP - 0.05_c_float * cel%rSMax )**2  / (rP + 0.95_c_float*cel%rSMax)
     else
       rOutFlow = rZERO
@@ -283,8 +281,6 @@ print *, cel%rNetRainfall, cel%rSnowMelt, cel%rInterception, cel%rIrrigationAmou
   ! available at the cell surface
   rOutflow = min( rOutflow, rP_avail )
   cel%rRunoff = rOutflow
-  print *, rP, cel%rGrossPrecip, cel%rNetRainfall, 0.05*cel%rSMax, cel%rAdjCN, cel%rSMax, cel%rRunoff
-
 
 end function runoff_CellRunoff_CurveNumber
 

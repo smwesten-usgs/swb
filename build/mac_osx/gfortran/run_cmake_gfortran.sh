@@ -39,7 +39,7 @@ export LIB_XM=$(locate libXm.dylib | grep $OPENMOTIF_VERSION | grep -v "386" )
 
 export DISLIN_MODULE_DIR=$(locate "gf/dislin.mod" | sed -e "s/dislin.mod//g")
 
-export R_HOME=/usr/bin/R
+export R_SCRIPT=/usr/local/bin/Rscript
 export SWB_EXECUTABLE=/usr/local/bin/swb
 
 # define where 'make copy' will place executables
@@ -91,6 +91,7 @@ cmake ../../.. -G "Unix Makefiles" \
 -DLIB_GCC="$LIB_GCC "            \
 -DLIB_GFORTRAN="$LIB_GFORTRAN "  \
 -DLIB_XM="$LIB_XM"               \
+-DR_SCRIPT="$R_SCRIPT"           \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS " \
 -DSYSTEM_TYPE="$SYSTEM_TYPE " \
 -DCMAKE_BUILD_TYPE="$BUILD_TYPE " \

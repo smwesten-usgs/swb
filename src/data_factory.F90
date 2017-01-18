@@ -197,7 +197,7 @@ contains
 
      this%rConstantValue = rConstant
      this%sDescription = trim(sDescription)
-     this%iSourceDataForm = CONSTANT_GRID
+     this%iSourceDataForm = CONSTANT_VALUE
      this%iSourceDataType = DATATYPE_REAL
      this%iTargetDataType = DATATYPE_REAL
      this%iSourceFileType = FILETYPE_NONE
@@ -219,7 +219,7 @@ contains
 
     this%iConstantValue = iConstant
     this%sDescription = trim(sDescription)
-    this%iSourceDataForm = CONSTANT_GRID
+    this%iSourceDataForm = CONSTANT_VALUE
     this%iSourceDataType = DATATYPE_INT
     this%iTargetDataType = DATATYPE_INT
     this%iSourceFileType = FILETYPE_NONE
@@ -376,10 +376,13 @@ end subroutine initialize_netcdf_data_object_sub
     integer (kind=c_int) :: iPadDays
     integer (kind=c_int) :: iLocalJulianDay
 
+    ! would like to track the number of times SWB has attempted to update this
+    ! data source
+    this%iNumberOfGetCalls = this%iNumberOfGetCalls + 1
+
     if(this%iSourceDataForm == DYNAMIC_GRID ) then
 
       call getvalues_gridded_sub( this, pGrdBase, iMonth, iDay, iYear)
-
 
     elseif ( this%iSourceDataForm == DYNAMIC_NETCDF_GRID ) then
 
@@ -387,12 +390,11 @@ end subroutine initialize_netcdf_data_object_sub
       call getvalues_dynamic_netcdf_sub( this, &
                            pGrdBase,  iMonth, iDay, iYear, iLocalJulianDay)
 
-
     elseif(this%iSourceDataForm == STATIC_GRID ) then
 
       call getvalues_gridded_sub( this, pGrdBase)
 
-    elseif(this%iSourceDataForm == CONSTANT_GRID ) then
+    elseif(this%iSourceDataForm == CONSTANT_VALUE ) then
 
       call getvalues_constant_sub( this, pGrdBase )
 
@@ -427,37 +429,28 @@ subroutine getvalues_constant_sub( this, pGrdBase )
 
   this%lGridHasChanged = lFALSE
 
-  do
+  select case (this%iSourceDataType)
 
-    if ( this%iNumberOfGetCalls > 0 ) exit
+    case ( DATATYPE_REAL )
 
-    select case (this%iSourceDataType)
+      this%lGridHasChanged = lTRUE
+      pGrdBase%rData = this%rConstantValue
 
-      case ( DATATYPE_REAL )
+    case ( DATATYPE_INT)
 
-        this%lGridHasChanged = lTRUE
-        pGrdBase%rData = this%rConstantValue
+      this%lGridHasChanged = lTRUE
+      pGrdBase%iData = this%iConstantValue
 
-      case ( DATATYPE_INT)
+    case default
 
-        this%lGridHasChanged = lTRUE
-        pGrdBase%iData = this%iConstantValue
+      call dump_data_structure_sub(this)
 
-      case default
+      call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: " &
+        //"name="//dquote(this%sDescription) &
+        //"; value="//trim(asCharacter(this%iSourceDataType)), &
+        trim(__FILE__), __LINE__)
 
-        call dump_data_structure_sub(this)
-
-        call assert(lFALSE, "INTERNAL PROGRAMMING ERROR - Unhandled data type: " &
-          //"name="//dquote(this%sDescription) &
-          //"; value="//trim(asCharacter(this%iSourceDataType)), &
-          trim(__FILE__), __LINE__)
-
-      end select
-
-      this%iNumberOfGetCalls = this%iNumberOfGetCalls + 1
-      exit
-
-    enddo
+    end select
 
   end subroutine getvalues_constant_sub
 
