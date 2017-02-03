@@ -4,7 +4,7 @@ if(TARGET__SWB_EXECUTABLE)
   add_executable(swb
             control.F90
             data_factory.F90
-			datetime.F90
+            datetime.F90
             et_FAO56_crop_coefficients.F90
             et_blaney_criddle.F90
             et_hargreaves.F90
@@ -213,13 +213,13 @@ if(TARGET__SWB_LIBRARY)
             et_turc.F90
             graph.F90
             grid.F90
-#			interpolators.F90
+#      interpolators.F90
             irrigation.F90
             main.F90
             meteorological_functions.F90
             model.F90
             netcdf4_support.F90
-			netcdf_c_api_interfaces.F90
+            netcdf_c_api_interfaces.F90
             output.F90
             RLE.F90
             runoff_curve_number.F90
@@ -398,7 +398,7 @@ if(TARGET__SWB_LIBRARY)
 
             )
 
-  target_link_libraries(swblib ${${EXTERNAL_LIBS})
+  target_link_libraries(swblib ${EXTERNAL_LIBS})
 
 endif()
 
@@ -407,9 +407,9 @@ if(TARGET__SWBSTATS)
 
   add_executable(swbstats
             data_factory.F90
-			netcdf4_support.F90
-			netcdf_c_api_interfaces.F90
-			graph.F90
+  netcdf4_support.F90
+  netcdf_c_api_interfaces.F90
+  graph.F90
             grid.F90
             RLE.F90
             stats.F90
@@ -583,7 +583,6 @@ if(TARGET__SWBSTATS)
 
             )
 
-  link_libraries(swbstats ${EXTERNAL_LIBS})
-
+  target_link_libraries(swbstats ${EXTERNAL_LIBS})
 
 endif()

@@ -611,8 +611,6 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   ! We are ignoring any missing or bogus values in this calculation
   rMean = rSum / iCount
 
-print *, "Precip: ", rMin, rMax, rSum, iCount
-
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
       //trim(real2char(pConfig%rMinValidPrecip))//" are not allowed. " &
@@ -1163,10 +1161,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           lFREEZING = lFALSE
           cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
         end if
-
-
-        print *, "FRZ: ", lFREEZING, cel%rTAvg, cel%rTMax, cel%rTMin
-
 
         ! this simply retrieves the table value for the given landuse
         dpPotentialInterception = rf_model_GetInterception(pConfig,cel)

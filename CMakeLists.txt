@@ -58,7 +58,7 @@ include( cmake/options_and_targets.cmake )
 #------------------------------------------------------------------------
 
 set( EXTERNAL_LIBS ${LIB_HDF5_HL} ${LIB_HDF5} ${LIB_NETCDF} ${LIB_Z} ${LIB_SZ} )
-set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} ${LIB_XM} )
+set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} ${LIB_XM} ${LIB_OPENGL32})
 set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
 
 link_libraries( ${EXTERNAL_LIBS} )
