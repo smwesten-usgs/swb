@@ -258,6 +258,7 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
     ! now consider runoff if Ia ~ 0.05S
 
     if ( rP > 0.05_c_float * cel%rSMax ) then
+
       rOutFlow = ( rP - 0.05_c_float * cel%rSMax )**2  / (rP + 0.95_c_float*cel%rSMax)
     else
       rOutFlow = rZERO

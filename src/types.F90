@@ -227,7 +227,7 @@ module types
   end type T_CELL
 
   ! Generic grid data type identifier constants
-  integer (kind=c_int), parameter :: CONSTANT_GRID = 0
+  integer (kind=c_int), parameter :: CONSTANT_VALUE = 0
   integer (kind=c_int), parameter :: STATIC_GRID = 1
   integer (kind=c_int), parameter :: STATIC_NETCDF_GRID = 2
   integer (kind=c_int), parameter :: DYNAMIC_GRID = 3
