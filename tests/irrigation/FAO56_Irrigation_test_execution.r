@@ -36,23 +36,23 @@ if ( windows_sys ) {
 retval <- system2(command="cleanup.bat", 
                   stderr="stderr.txt",
                   stdout="stdout.txt",
-                  wait=FALSE)
+                  wait=TRUE)
 
 } else {
 
   retval <- system2(command="./cleanup.sh", 
                     stderr="stderr.txt",
                     stdout="stdout.txt",
-                    wait=FALSE)  
+                    wait=TRUE)  
 }
 
 retval <- system2(command=swb_exe,
                   args=swb_ctl,
                   stderr="SWB_stderr.txt",
                   stdout="SWB_stdout.txt",
-                  wait=FALSE)
+                  wait=TRUE)
 
-Sys.sleep(5)
+#Sys.sleep(2)
 
 pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 

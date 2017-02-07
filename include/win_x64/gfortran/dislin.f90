@@ -3,9 +3,9 @@
 !/**                                                            **/
 !/** Module file for DISLIN Fortran 90.                         **/
 !/**                                                            **/
-!/** Date     :  15.01.2014                                     **/
-!/** Routines :  767                                            **/
-!/** Version  :  10.4 / explicit-shape                          **/
+!/** Date     :  23.06.2016                                     **/
+!/** Routines :  784                                            **/
+!/** Version  :  10.6 / explicit-shape                          **/
 !/****************************************************************/
 
 module dislin
@@ -43,10 +43,11 @@ module dislin
   integer, parameter :: LINE_SOLID         =    0
   integer, parameter :: LINE_DOT           =    1
   integer, parameter :: LINE_DASH          =    2
-  integer, parameter :: LINE_CHNDOT        =    3
-  integer, parameter :: LINE_DASHM         =    4
-  integer, parameter :: LINE_DASHL         =    5
+  integer, parameter :: LINE_CHNDSH        =    3
+  integer, parameter :: LINE_CHNDOT        =    4
+  integer, parameter :: LINE_DASHM         =    5
   integer, parameter :: LINE_DOTL          =    6
+  integer, parameter :: LINE_DASHL         =    7
 
 ! Constants for shading patterns
   integer, parameter :: SHADING_NONE       =   -1
@@ -125,6 +126,9 @@ module dislin
       implicit none
       integer, intent (in) :: n
     end subroutine axsbgd
+
+    subroutine axsers()
+    end subroutine axsers
  
     subroutine axslen(i,j)
       implicit none
@@ -847,10 +851,63 @@ module dislin
       integer, intent (out) :: nw,nh,iret 
     end subroutine filsiz
 
+    subroutine filtyp(cfl,iret)
+      implicit none
+      character (len = *), intent (in) :: cfl
+      integer, intent (out) :: iret 
+    end subroutine filtyp
+
     subroutine filwin(nx,ny,nw,nh)
       implicit none
       integer, intent (in) :: nx,ny,nw,nh
     end subroutine filwin
+
+    subroutine fitscls()
+    end subroutine fitscls
+
+    subroutine fitsflt(ckey,xv)
+      implicit none
+      character (len = *), intent (in) :: ckey 
+      real, intent (out) :: xv 
+    end subroutine fitsflt
+
+    subroutine fitshdu(nhdu,n)
+      implicit none
+      integer, intent (in) :: nhdu
+      integer, intent (out) :: n
+    end subroutine fitshdu
+
+    subroutine fitsimg(iray,nmax,n)
+      implicit none
+      character (len=1), intent (in), dimension (*) :: iray
+      integer, intent (in) :: nmax
+      integer, intent (out) :: n
+    end subroutine fitsimg
+  
+    subroutine fitsopn(cfl,iret)
+      implicit none
+      character (len = *), intent (in) :: cfl 
+      integer, intent (out) :: iret
+    end subroutine fitsopn
+
+    subroutine fitsstr(ckey,cval,nmax)
+      implicit none
+      character (len = *), intent (in) :: ckey
+      character (len = *), intent (out) :: cval
+      integer, intent (in) :: nmax 
+    end subroutine fitsstr
+
+    subroutine fitstyp(ckey,iv)
+      implicit none
+      character (len = *), intent (in) :: ckey 
+      integer, intent (out) :: iv
+    end subroutine fitstyp
+
+    subroutine fitsval(ckey,iv)
+      implicit none
+      character (len = *), intent (in) :: ckey 
+      integer, intent (out) :: iv
+    end subroutine fitsval
 
     subroutine fixspc(x)
       implicit none
@@ -1060,6 +1117,11 @@ module dislin
       integer, intent (out) :: i,j,k
     end subroutine getscl
 
+    subroutine getscm(i,j,k)
+      implicit none
+      integer, intent (out) :: i,j,k
+    end subroutine getscm
+
     subroutine getscr(i,j)
       implicit none
       integer, intent (out) :: i,j
@@ -1243,6 +1305,11 @@ module dislin
       real, intent (out) :: xv
     end subroutine gwgflt
 
+    subroutine gwggui(ival)
+      implicit none
+      integer, intent (out) :: ival
+    end subroutine gwggui
+
     subroutine gwgint(id,iv)
       implicit none
       integer, intent (in) :: id
@@ -1318,6 +1385,12 @@ module dislin
     subroutine helvet()
     end subroutine helvet
  
+    subroutine hidwin(i,copt)
+      implicit none
+      integer, intent (in) :: i
+      character (len = *), intent (in) :: copt
+    end subroutine hidwin
+
     subroutine histog(xray,n,x,y,m)
       implicit none
       integer, intent (in) :: n
@@ -1491,6 +1564,13 @@ module dislin
       character (len=*), intent (in out) :: clis
       character (len=*), intent (in) :: cstr
     end subroutine itmcat
+
+    subroutine itmncat(clis,nmx,cstr)
+      implicit none
+      character (len=*), intent (in out) :: clis
+      character (len=*), intent (in) :: cstr
+      integer, intent (in) :: nmx
+    end subroutine itmncat
  
     function itmcnt(clis)
       implicit none
@@ -4063,13 +4143,23 @@ module dislin
       implicit none
       character (len = *), intent (in) :: cfnt
     end subroutine winfnt
- 
+
+    subroutine winico(cstr)
+      implicit none
+      character (len = *), intent (in) :: cstr
+    end subroutine winico
+  
     subroutine winid(id)
       implicit none
       integer, intent (out) :: id
     end subroutine winid
+
+    subroutine winjus(cmod)
+      implicit none
+      character (len = *), intent (in) :: cmod
+    end subroutine winjus
  
-   subroutine winkey(cmod)
+    subroutine winkey(cmod)
       implicit none
       character (len = *), intent (in) :: cmod
     end subroutine winkey
@@ -4094,6 +4184,11 @@ module dislin
       implicit none
       character (len = *), intent (in) :: cstr
     end subroutine wintit
+
+    subroutine wintyp(cmod)
+      implicit none
+      character (len = *), intent (in) :: cmod
+    end subroutine wintyp
  
     subroutine wmfmod(cmod,ckey)
       implicit none

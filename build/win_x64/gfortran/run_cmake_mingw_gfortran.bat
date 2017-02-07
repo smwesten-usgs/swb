@@ -9,7 +9,7 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake
 set COMPILER_DIR=C:\MinGW64
-set COMPILER_VERSION=4.9.3
+set COMPILER_VERSION=5.4.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 
 set MAKE_EXECUTABLE_NAME=mingw32-make.exe
@@ -64,7 +64,7 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -mwindows -mtune=core2 -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -mwindows -mtune=core2 -march=core2 -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -cpp -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
