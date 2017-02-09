@@ -25,12 +25,12 @@
 
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
-  if(iNumArgs/=1) then
+  if(iNumArgs < 1) then
 
     write(UNIT=*,FMT="(/,a,/)") &
       "Soil Water Balance Code version "//trim(SWB_VERSION)
     write(UNIT=*,FMT="(a,/)") "Git branch and commit hash: " &
-      //trim(GIT_BRANCH_STRING)//" ( "//trim( GIT_COMMIT_HASH_STRING )//" )"
+      //trim(GIT_BRANCH_STRING)//" ( "//trim( adjustl( GIT_COMMIT_HASH_STRING ) )//" )"
 
     write(UNIT=*,FMT="(a,/)") "Compiled on "//trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
 

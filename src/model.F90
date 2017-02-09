@@ -1301,8 +1301,6 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   real (kind=c_double) :: xmin, xmax, ymin, ymax
   integer (kind=c_int), intent(in) :: iMonth     ! Integer month value (1-12)
   integer (kind=c_int) :: iNumGridCells
-  integer (kind=c_int), parameter :: iMAX_ITERATIONS = 200000
-  integer (kind=c_int) :: iIterationNum
 
   ! calculate number of cells in model grid
   iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -1311,23 +1309,8 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   pGrd%Cells(:,:)%rInFlow = rZERO
   pGrd%Cells(:,:)%rOutFlow = rZERO
   pGrd%Cells(:,:)%rFlowOutOfGrid = rZERO
-  iIterationNum = 0
 
-  if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_ITERATIVE ) then
-
-    do
-      iIterationNum = iIterationNum + 1
-      iCount = if_model_RunoffIteration( pGrd, pConfig, iDayOfYear, iMonth )
-      if ( iCount == 0 ) then
-        exit
-      endif
-      if (iIterationNum > iMAX_ITERATIONS) then
-        call assert(lFALSE, "Maximum number of iterations exceeded.", &
-        trim(__FILE__), __LINE__)
-      endif
-    end do
-
-  else if (pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
+  if (pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_DOWNHILL ) then
 
     call model_RunoffDownhill( pGrd, pConfig, iDayOfYear, iMonth )
 
@@ -1680,11 +1663,11 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     call model_DownstreamCell(pGrd,iOrderRow(ic),iOrderCol(ic),iTgt_Row,iTgt_Col)
 
     ! Compute the runoff
-    cel%rOutFlow = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+    cel%rRunoff = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
     ! Now, route the water
     if ( iTgt_Row == iROUTE_LEFT_GRID .or. iTgt_Col == iROUTE_LEFT_GRID ) then
-      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rFlowOutOfGrid = cel%rRunoff
       cel%rOutFlow = rZERO
       cycle
     elseif ( iTgt_Row == iROUTE_DEPRESSION  .or. iTgt_Col == iROUTE_DEPRESSION ) then
@@ -1710,7 +1693,7 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
     !> as flow out of grid
     if ( pGrd%iMask(iTgt_Col,iTgt_Row) == iINACTIVE_CELL) then
 
-      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rFlowOutOfGrid = cel%rRunoff
       cel%rOutFlow = rZERO
       cycle
 
@@ -1723,14 +1706,14 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
       ! surface water feature that the surface water drainage
       ! network transports the bulk of it
       ! out of the model domain quite rapidly
-      cel%rFlowOutOfGrid = cel%rOutflow
+      cel%rFlowOutOfGrid = cel%rRunoff
       cel%rOutFlow = rZERO
 
     else
       ! add cell outflow to target cell inflow; ROUTING FRACTION represents the fraction of
       ! cell outflow that makes it to the downslope cell.
-      cel%rFlowOutOfGrid = cel%rOutflow * (rONE - cel%rRouteFraction)
-      cel%rOutflow = cel%rOutflow * cel%rRouteFraction
+      cel%rFlowOutOfGrid = cel%rRunoff * (rONE - cel%rRouteFraction)
+      cel%rOutflow = cel%rRunoff * cel%rRouteFraction
       target_cel%rInFlow = cel%rOutFlow
     end if
 
@@ -1781,7 +1764,6 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
   integer (kind=c_int), intent(in) :: iMonth       ! Integer month value (1-12)
   ! [ LOCALS ]
   integer (kind=c_int) :: iCol,iRow, iFrac
-  real (kind=c_float) :: rR
   type (T_CELL),pointer :: cel
   ! [ CONSTANTS ]
 
@@ -1790,10 +1772,10 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
       cel => pGrd%Cells(iCol,iRow)
 
     ! Compute the runoff for each cell
-    rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
+    cel%rRunoff = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
 
     ! Now, remove any runoff from the model grid
-    cel%rFlowOutOfGrid = rR
+    cel%rFlowOutOfGrid = cel%rRunoff
 
     ! we've removed the water from the grid; it shouldn't be included in
     ! "outflow" water
@@ -1804,118 +1786,6 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
 
 end subroutine model_Runoff_NoRouting
 
-!!***
-
-!--------------------------------------------------------------------------
-!!****f* model/if_model_RunoffIteration
-! NAME
-!   if_model_RunoffIteration -
-!
-!
-! SYNOPSIS
-!
-! INPUTS
-!   pGrd - Pointer to the model grid data structure.
-!   pConfig - Pointer to the model configuration data structure.
-!   iDayOfYear - Day of the current year (January 1 = 1).
-!   iMonth - Month corresponding to the current model day (January = 1).
-!
-! OUTPUTS
-!   NONE
-!
-! NOTES
-!   ** Code refers to parameters that are set within types.f95.
-!   ** Code directly modifies model grid values through the manipulation
-!       of pointers.
-!
-! SOURCE
-
-function if_model_RunoffIteration(pGrd, pConfig, iDayOfYear, iMonth) result(iCount)
-  !! Performs one runoff iteration for the specified amount of precip.
-  ! [ ARGUMENTS ]
-  type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
-  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
-    ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  integer (kind=c_int), intent(in) :: iMonth       ! Integer month value (1-12)
-  ! [ RETURN VALUE ]
-  integer (kind=c_int) :: iCount
-  ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,iTgt_Row,iTgt_Col
-  real (kind=c_float) :: rR,rDelta
-  type (T_CELL),pointer :: cel,tcel
-  real (kind=c_double) :: xmin, xmax, ymin, ymax
-!  real (kind=c_float) :: rMonthlyRunoffOutside, rDailyRunoffOutside
-
-  ! [ CONSTANTS ]
-
-  ! reset the term for tracking outflow from one iteration to the next
-  rDelta = rZERO
-
-  ! Reset the upstream flows
-  iCount = 0
-
-  do iRow=1,pGrd%iNY
-    do iCol=1,pGrd%iNX
-      cel => pGrd%Cells(iCol,iRow)
-
-      if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
-
-      call model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
-
-      if ( iTgt_Row == iROUTE_DEPRESSION ) then
-        ! Don't route any further; the water pools here.
-        cel%rOutFlow = rZERO
-        cycle
-      end if
-
-      ! Compute the runoff
-      rR = rf_model_CellRunoff(pConfig, cel, iDayOfYear)
-
-      if( iTgt_Row == iROUTE_LEFT_GRID ) then
-        rDelta = rR - cel%rFlowOutOfGrid
-        cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
-        cycle
-      end if
-
-      if ( iTgt_Row < 1 .or. iTgt_Row > pGrd%iNY ) then
-        call Assert(lFALSE, "iTgt_Row out of bounds: iRow= "//int2char(iRow) &
-          //"  iCol= "//int2char(iCol), trim(__FILE__),__LINE__)
-      endif
-
-      if ( iTgt_Col < 1 .or. iTgt_Col > pGrd%iNX ) then
-        call Assert(lFALSE, "iTgt_Col out of bounds: iRow= "//int2char(iRow)&
-          //"  iCol= "//int2char(iCol), trim(__FILE__),__LINE__)
-      endif
-
-      tcel => pGrd%Cells(iTgt_Row,iTgt_Col)
-
-      if (tcel%iLandUse == pConfig%iOPEN_WATER_LU) then
-
-        rDelta = rR - cel%rFlowOutOfGrid
-        cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + rDelta
-
-      else  ! route water normally
-
-        rDelta = rR - cel%rOutFlow
-        tcel%rInFlow = tcel%rInFlow + rDelta
-        cel%rOutFlow = cel%rOutFlow + rDelta
-
-      end if
-
-      ! Did we make a change?
-      if ( rDelta > pConfig%rIterationTolerance ) then
-        iCount = iCount+1
-      end if
-
-    end do
-  end do
-
-  print *, "Number of cells with changes in outflow: ", iCount
-
-end function if_model_RunoffIteration
-
-!!***
 
 !--------------------------------------------------------------------------
 !!****f* model/rf_model_CellRunoff
@@ -3805,9 +3675,20 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
       cycle
     end if
 
-    if(pTS%rMaxT< -100 .or. pTS%rMinT < -100 .or. pTS%rMaxT < pTS%rMinT &
-      .or. pTS%rPrecip < 0.) then
-      call echolog( "Missing or corrupt data in climate file. ~" &
+    if ( pTS%rMaxT< -100. .or. pTS%rMinT < -100. ) then
+      call echolog( "Suspiciously low air temperature data detected in climate file. ~" &
+        //"Input: "//TRIM(sBuf))
+      call Assert(lFALSE, "",TRIM(__FILE__),__LINE__)
+    end if
+
+    if ( pTS%rMaxT < pTS%rMinT ) then
+      call echolog( "Maximum daily air temperature less than the minimum air temperature in climate file. ~" &
+        //"Input: "//TRIM(sBuf))
+      call Assert(lFALSE, "",TRIM(__FILE__),__LINE__)
+    end if
+
+    if( pTS%rPrecip < 0.) then
+      call echolog( "Negative precipitation value in climate file. ~" &
         //"Input: "//TRIM(sBuf))
       call Assert(lFALSE, "",TRIM(__FILE__),__LINE__)
     end if

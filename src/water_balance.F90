@@ -127,20 +127,20 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         ! flow_out_of_grid (flow to an unmodeled surfce water feature or model boundary)
 
         ! calculate net infiltration
-        rNetInfil = MAX(rZERO, &
-                    cel%rNetRainfall &
-                  + cel%rSnowMelt &
-                  + cel%rIrrigationAmount &
-                  + cel%rInFlow &
-                  - cel%rRunoff )
-!                  - cel%rOutFlow &
-!                  - cel%rFlowOutOfGrid)
+        rNetInfil = MAX(rZERO,                 &
+                    cel%rNetRainfall           &
+                  + cel%rSnowMelt              &
+                  + cel%rIrrigationAmount      &
+                  + cel%rInFlow                &
+!                  - cel%rRunoff )
+                  - cel%rOutFlow               &
+                  - cel%rFlowOutOfGrid)
 
         ! calculate net inflow to cell
-        rNetInflow = MAX(rZERO, &
-                    cel%rNetRainfall &
-                  + cel%rSnowMelt &
-                  + cel%rIrrigationAmount &
+        rNetInflow = MAX(rZERO,                &
+                    cel%rNetRainfall           &
+                  + cel%rSnowMelt              &
+                  + cel%rIrrigationAmount      &
                   + cel%rInFlow )           ! Supposed to be the sum of all
                                             ! water sources to a grid cell
                                             ! *BEFORE* any routing has occurred
@@ -199,14 +199,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
               ! all water that comes in (precip, interception, inflow) evaporates
               cel%rActual_ET_soil = rNetInfil
-
-              ! any outflow that has not already been routed elsewhere
-              ! is rerouted to flow out of grid
-              !
-              !
-              ! @NOTE: this is unnecessary, since cel%rOutFlow should have been zeroed out in the
-              !        even that flow routing is turned on
-              cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rOutflow
 
             else  ! code block L3a: Precip EXCEEDS PotentialET
 
@@ -274,7 +266,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   ! `Y8bod8P' `Y888""8o o888o `Y8bod8P'      8""888P' `Y8bod8P' o888o o888o      o888o o888o o888o `Y8bod8P' o888o 8""888P'   "888"
 
               ! determine soil moisture given updated accumulated potential water loss
-         L1a: if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_ONE_FACTOR_NONSTANDARD &
+         L1a: if ( pConfig%iConfigureFAO56 /= CONFIG_FAO56_ONE_FACTOR_NONSTANDARD             &
                 .and. pConfig%iConfigureFAO56 /= CONFIG_FAO56_TWO_FACTOR_NONSTANDARD ) then
 
                 if ( pConfig%iConfigureSM == CONFIG_SM_TM_LOOKUP_TABLE ) then
@@ -298,44 +290,42 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                 endif
 
-           L1b: if(ABS(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
-                   > ABS(rPrecipMinusPotentET)) then
+                  L1b: if(ABS(cel%rSoilMoisture - rPrevious_Soil_Moisture) &
+                         > ABS(rPrecipMinusPotentET)) then
 
-                  cel%rSoilMoisture = MAX(rZERO, &
-                                    (rPrevious_Soil_Moisture &
-                                        + rPrecipMinusPotentET ))
+                     cel%rSoilMoisture = MAX(rZERO,                                              &
+                                            (rPrevious_Soil_Moisture + rPrecipMinusPotentET ) )
 
-                  ! regardless of what Thornthwaite-Mather tables tell us,
-                  ! we are capping the total soil loss at the value of
-                  ! precip minus potential ET...   under some conditions
-                  ! it seems that the T-M tables dry out the soil at a
-                  ! rate that *exceeds* precip minus PET
+                    ! regardless of what Thornthwaite-Mather tables tell us,
+                    ! we are capping the total soil loss at the value of
+                    ! precip minus potential ET...   under some conditions
+                    ! it seems that the T-M tables dry out the soil at a
+                    ! rate that *exceeds* precip minus PET
 
-                endif L1b
+                  endif L1b
 
               else  ! L1a: we are calculating soil moisture without T-M
                          ! soil-moisture retention tables (i.e. FAO56)
 
                  ! ReferenceET0_adj is adjusted downward as the soil dries owing to the water stress
                  ! coefficient calculations
-                  cel%rSoilMoisture = MAX(rZERO, &
-                                        cel%rSoilMoisture &
-                                      + rPrecipMinusPotentET )
+                 cel%rSoilMoisture = MAX(rZERO,                                              &
+                                        (rPrevious_Soil_Moisture + rPrecipMinusPotentET ) )
 
-                !! calculate change in soil moisture storage
-                rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
+             endif L1a
 
-                !! change in storage will be negative; offset somewhat by whatever
-                !! enters as net infiltration
-                cel%rActual_ET_soil = rNetInfil - rChangeInStorage
+              !! calculate change in soil moisture storage
+              rChangeInStorage = cel%rSoilMoisture - rPrevious_Soil_Moisture
 
-                ! 'rMoistureDeficit' represents the DEFICIT term in the
-                ! original Thornthwaite-Mather calculations. DEFICIT is supposed
-                ! to capture the amount of water demand that *cannot* be met
-                ! by precipitation and the soil reservoir
-                rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
+              !! change in storage will be negative; offset somewhat by whatever
+              !! enters as net infiltration
+              cel%rActual_ET_soil = rNetInfil - rChangeInStorage
 
-              endif L1a
+              ! 'rMoistureDeficit' represents the DEFICIT term in the
+              ! original Thornthwaite-Mather calculations. DEFICIT is supposed
+              ! to capture the amount of water demand that *cannot* be met
+              ! by precipitation and the soil reservoir
+              rMoistureDeficit = cel%rReferenceET0_adj - cel%rActual_ET_soil
 
             else  ! code block L1: Precip *EXCEEDS* Potential ET
 
@@ -424,128 +414,126 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
             cel%rRejectedRecharge = cel%rDailyRecharge - rMAXIMUM_RECHARGE
             cel%rDailyRecharge = rMAXIMUM_RECHARGE
 
-            ! Now, figure out what to do with any rejected recharge
-            if ( cel%iTgt_Col == iROUTE_LEFT_GRID .or. &
-              cel%iTgt_Row == iROUTE_LEFT_GRID) then
+            if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_NO_ROUTING ) then
+
                 cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
-               ! cel%rRejectedRecharge = rZERO
-            elseif ( cel%iTgt_Col == iROUTE_DEPRESSION .or. &
-              cel%iTgt_Row == iROUTE_DEPRESSION) then
-              ! Don't route any further; the water pools here.
-              ! nothing to do; leave cel%rRejectedRecharge value alone
+
             elseif ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNX &
               .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNY) then
 
-                ! CAUTION!! We must *not* access illegal values for target cells
-                if(pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%iLandUse == pConfig%iOPEN_WATER_LU &
-                 .or. pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%rSoilWaterCap<rNEAR_ZERO) then
-                 ! Don't route any further; the water enters a surface water feature.
-                 ! nothing to do; leave cel%rRejectedRecharge value alone
-                elseif(pConfig%iConfigureRunoffMode /= CONFIG_RUNOFF_NO_ROUTING) then
-                  ! should never reach this point in any case if routing is disabled;
-                  ! Tgt_Row and Tgt_Col should be zero, and should fall out of the
-                  ! if-then logic
+              if(pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%iLandUse == pConfig%iOPEN_WATER_LU &
+               .or. pGrd%Cells(cel%iTgt_Col,cel%iTgt_Row)%rSoilWaterCap<rNEAR_ZERO) then
 
-                  ! add cell rejected recharge to target cell inflow
-                  pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow =                     &
-                              pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow           &
-                              + ( cel%rRejectedRecharge * cel%rRouteFraction )
+                cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
 
-                  cel%rOutflow = cel%rOutflow + cel%rRejectedRecharge * cel%rRouteFraction
-                  cel%rRejectedRecharge = cel%rRejectedRecharge * (rONE - cel%rRouteFraction)
-                  cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
-                end if
+              else
+
+                ! cell rejected recharge is added to outflow amount
+                cel%rOutflow = cel%rOutflow + cel%rRejectedRecharge
+                ! add rejected recharge to downslope cell
+                pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow =                             &
+                            pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%rInflow + cel%rOutflow
+
+              endif
+
+            else
+
+                cel%rFlowOutOfGrid = cel%rFlowOutOfGrid + cel%rRejectedRecharge
+
             end if
-
-          end if
+          endif
 
           ! update soil moisture as a percentage of soil water capacity
           cel%rSoilMoisturePct = cel%rSoilMoisture / cel%rSoilWaterCap * rHUNDRED
 
-        endif MAIN
+          cel%rMSB = cel%rNetRainfall              &
+                    + cel%rSnowMelt                &
+                    + cel%rInFlow                  &
+                    + cel%rIrrigationAmount        &
+                    - cel%rOutFlow                 &
+                    - cel%rFlowOutOfGrid           &
+                    - rChangeInStorage             &
+                    - cel%rActual_ET_soil          &
+                    - cel%rDailyRecharge
 
-          cel%rMSB = cel%rNetRainfall           &
-                 + cel%rSnowMelt                &
-                 + cel%rInFlow                  &
-                 + cel%rIrrigationAmount        &
-                 - cel%rRunoff                  &
-                 - rChangeInStorage             &
-                 - cel%rActual_ET_soil          &
-                 - cel%rDailyRecharge           &
-                 - cel%rRejectedRecharge
+           if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
+             write(UNIT=LU_LOG,FMT=*) "** MASS BALANCE ERROR **"
 
-          if(cel%rMSB>0.1 .or. cel%rMSB< -0.1 ) then
-            write(UNIT=LU_LOG,FMT=*) "** MASS BALANCE ERROR **"
+             write(UNIT=LU_LOG,FMT="(/,'  date: ',i2.2,'/',i2.2,'/',i4.4)") &
+               iMonth, iDay, iYear
+             write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :',i5,i5)") iRow,iCol
+             write(unit=LU_LOG,FMT="('  landuse    :',i4)") cel%iLandUse
+             write(unit=LU_LOG,FMT="('  soil group :',i4)") cel%iSoilGroup
+             if ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNY &
+              .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNX) then
+               write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :         ',i5,i5)") &
+                 cel%iTgt_Row, cel%iTgt_Col
+               write(unit=LU_LOG,FMT="('  target land use :  ',i4)") &
+                 pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iLandUse
+               write(unit=LU_LOG,FMT="('  target soil group :',i4)") &
+                 pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iSoilGroup
+             endif
 
-            write(UNIT=LU_LOG,FMT="(/,'  date: ',i2.2,'/',i2.2,'/',i4.4)") &
-              iMonth, iDay, iYear
-            write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :',i5,i5)") iRow,iCol
-            write(unit=LU_LOG,FMT="('  landuse    :',i4)") cel%iLandUse
-            write(unit=LU_LOG,FMT="('  soil group :',i4)") cel%iSoilGroup
-            if ( cel%iTgt_Col >0 .and. cel%iTgt_Col <= pGrd%iNY &
-             .and. cel%iTgt_Row >0 .and. cel%iTgt_Row <= pGrd%iNX) then
-              write(unit=LU_LOG,FMT="('  cell (iRow,iCol) :         ',i5,i5)") &
-                cel%iTgt_Row, cel%iTgt_Col
-              write(unit=LU_LOG,FMT="('  target land use :  ',i4)") &
-                pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iLandUse
-              write(unit=LU_LOG,FMT="('  target soil group :',i4)") &
-                pGrd%Cells( cel%iTgt_Col, cel%iTgt_Row)%iSoilGroup
-            endif
+             write(UNIT=LU_LOG,FMT="(/,'  MASS BALANCE: ',t32,F14.4)") cel%rMSB
 
-            write(UNIT=LU_LOG,FMT="(/,'  MASS BALANCE: ',t32,F14.4)") cel%rMSB
+             write(UNIT=LU_LOG,FMT="(/,'  (+) cel%rNetRainfall: ',t32,F14.4)") &
+               cel%rNetRainfall
+             write(UNIT=LU_LOG,FMT="('  (+) cel%rSnowMelt: ',t32,F14.4)") &
+               cel%rSnowMelt
+             write(UNIT=LU_LOG,FMT="('  (+) cel%rInterception: ',t32,F14.4)") &
+               cel%rInterception
+             write(UNIT=LU_LOG,FMT="('  (+) cel%rIrrigationAmount: ',t32,F14.4)") &
+               cel%rIrrigationAmount
+             write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") &
+               cel%rInFlow
+             write(UNIT=LU_LOG,FMT="('  (-) cel%rOutFlow: ',t32,F14.4)") &
+               cel%rOutFlow
+             write(UNIT=LU_LOG,FMT="('  (-) cel%rFlowOutOfGrid: ',t32,F14.4)") &
+               cel%rFlowOutOfGrid
+             write(UNIT=LU_LOG,FMT="('  (-) rChangeInStorage: ',t32,F14.4)") &
+               rChangeInStorage
+             write(UNIT=LU_LOG,FMT="('  (-) cel%rActual_ET_soil: ',t32,F14.4)") &
+               cel%rActual_ET_soil
+             write(UNIT=LU_LOG,FMT="('  (-) cel%rDailyRecharge: ',t32,F14.4)") &
+               cel%rDailyRecharge
+             write(UNIT=LU_LOG,FMT=*)
+             write(UNIT=LU_LOG,FMT="('  cel%rRejectedRecharge: ',t32,F14.4)") &
+               cel%rRejectedRecharge
+             write(UNIT=LU_LOG,FMT="('  rNetInfil: ',t32,F14.4)") &
+               rNetInfil
+             write(UNIT=LU_LOG,FMT="('  rNetInflow: ',t32,F14.4)") &
+               rNetInflow
+             write(UNIT=LU_LOG,FMT="('  rReferenceET: ',t32,F14.4)") &
+               cel%rReferenceET0
+             write(UNIT=LU_LOG,FMT="('  rReferenceET_adj: ',t32,F14.4)") &
+               cel%rReferenceET0_adj
+             write(UNIT=LU_LOG,FMT="('  rPrecipMinusPotentET: ',t32,F14.4)") &
+               rPrecipMinusPotentET
+             write(UNIT=LU_LOG,FMT="('  cel%rSM_AccumPotentWatLoss: ',t32,F14.4)") &
+               cel%rSM_AccumPotentWatLoss
+             write(UNIT=LU_LOG,FMT="('  rMoistureSurplus: ',t32,F14.4)") &
+               rMoistureSurplus
+             write(UNIT=LU_LOG,FMT="('  rMoistureDeficit: ',t32,F14.4)") &
+               rMoistureDeficit
+             write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
+               cel%rSoilMoisture
+             write(UNIT=LU_LOG,FMT="('  cel%rSoilMoistureCapacity: ',t32,F14.4)") &
+               cel%rSoilWaterCap
+             write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisturePct: ',t32,F14.4)") &
+               cel%rSoilMoisturePct
+             write(UNIT=LU_LOG,FMT="('  rPrevious_Soil_Moisture: ',t32,F14.4)") &
+               rPrevious_Soil_Moisture
+             write(UNIT=LU_LOG,FMT="('  cel%rRouteFraction: ',t32,F14.4)") &
+               cel%rRouteFraction
 
-            write(UNIT=LU_LOG,FMT="(/,'  (+) cel%rNetRainfall: ',t32,F14.4)") &
-              cel%rNetRainfall
-            write(UNIT=LU_LOG,FMT="('  (+) cel%rSnowMelt: ',t32,F14.4)") &
-              cel%rSnowMelt
-            write(UNIT=LU_LOG,FMT="('  (+) cel%rInterception: ',t32,F14.4)") &
-              cel%rInterception
-            write(UNIT=LU_LOG,FMT="('  (+) cel%rIrrigationAmount: ',t32,F14.4)") &
-              cel%rIrrigationAmount
-            write(UNIT=LU_LOG,FMT="('  (+) cel%rInFlow: ',t32,F14.4)") &
-              cel%rInFlow
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rRunoff: ',t32,F14.4)") &
-              cel%rRunoff
-            write(UNIT=LU_LOG,FMT="('  (-) rChangeInStorage: ',t32,F14.4)") &
-              rChangeInStorage
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rActual_ET_soil: ',t32,F14.4)") &
-              cel%rActual_ET_soil
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rDailyRecharge: ',t32,F14.4)") &
-              cel%rDailyRecharge
-            write(UNIT=LU_LOG,FMT="('  (-) cel%rRejectedRecharge: ',t32,F14.4)") &
-              cel%rRejectedRecharge
-#ifdef STREAM_INTERACTIONS
-            write(UNIT=LU_LOG,FMT="('  (-) rStreamCapture: ',t32,F14.4)") &
-              cel%rStreamCapture
-#endif
-            write(UNIT=LU_LOG,FMT=*)
-            write(UNIT=LU_LOG,FMT="('  rNetInfil: ',t32,F14.4)") &
-              rNetInfil
-            write(UNIT=LU_LOG,FMT="('  rNetInflow: ',t32,F14.4)") &
-              rNetInflow
-            write(UNIT=LU_LOG,FMT="('  rPrecipMinusPotentET: ',t32,F14.4)") &
-              rPrecipMinusPotentET
-            write(UNIT=LU_LOG,FMT="('  rMoistureSurplus: ',t32,F14.4)") &
-              rMoistureSurplus
-            write(UNIT=LU_LOG,FMT="('  rMoistureDeficit: ',t32,F14.4)") &
-              rMoistureDeficit
-            write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisture: ',t32,F14.4)") &
-              cel%rSoilMoisture
-            write(UNIT=LU_LOG,FMT="('  cel%rSoilMoistureCapacity: ',t32,F14.4)") &
-              cel%rSoilWaterCap
-            write(UNIT=LU_LOG,FMT="('  cel%rSoilMoisturePct: ',t32,F14.4)") &
-              cel%rSoilMoisturePct
-            write(UNIT=LU_LOG,FMT="('  rPrevious_Soil_Moisture: ',t32,F14.4)") &
-              rPrevious_Soil_Moisture
-            write(UNIT=LU_LOG,FMT="('  cel%rRouteFraction: ',t32,F14.4)") &
-              cel%rRouteFraction
-
-            write(UNIT=LU_LOG,FMT=*) "-----------------------------------------------"
-            write(UNIT=LU_LOG,FMT=*)
+             write(UNIT=LU_LOG,FMT=*) "-----------------------------------------------"
+             write(UNIT=LU_LOG,FMT=*)
 
           endif
 
-        endif L0
+        endif MAIN
+
+      endif L0
 
       cel%rActualET = cel%rActual_ET_soil + cel%rActual_ET_interception
 

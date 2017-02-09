@@ -29,6 +29,7 @@ for /f %%x in ('dir /b /s c:\MinGW64\*libdismg.a') do call set LIB_DISLIN=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libgcc.a') do call set LIB_GCC=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libgfortran.a') do call set LIB_GFORTRAN=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libopengl32.a') do call set LIB_OPENGL32=%%x
+for /f %%x in ('dir /b /s c:\MinGW64\*libgdi32.a') do call set LIB_GDI32=%%x
 
 set LIB_HDF5_HL=%LIB_HDF5_HL:\=/%
 set LIB_HDF5=%LIB_HDF5:\=/%
@@ -39,6 +40,7 @@ set LIB_GFORTRAN=%LIB_GFORTRAN:\=/%
 set LIB_Z=%LIB_Z:\=/%
 set LIB_SZ=%LIB_SZ:\=/%
 set LIB_OPENGL32=%LIB_OPENGL32:\=/%
+set LIB_GDI32=%LIB_GDI32:\=/%
 
 set DISLIN_MODULE_DIR="include/win_x64/gfortran"
 
@@ -64,7 +66,7 @@ set OPTION__DEBUG_PRINT="FALSE"
 
 :: define platform and compiler specific compilation flags
 set CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fstack-usage -fexceptions -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
-set CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -mwindows -mtune=core2 -march=core2 -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
+set CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -cpp -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
@@ -105,6 +107,7 @@ cmake ..\..\.. -G %%f ^
 -DLIB_GCC=%LIB_GCC%             ^
 -DLIB_GFORTRAN=%LIB_GFORTRAN%   ^
 -DLIB_OPENGL32=%LIB_OPENGL32%   ^
+-DLIB_GDI32=%LIB_GDI32%         ^
 -DR_SCRIPT="%R_SCRIPT%"           ^
 -DCMAKE_EXE_LINKER_FLAGS=%LINKER_FLAGS%  ^
 -DSYSTEM_TYPE=%SYSTEM_TYPE%  ^

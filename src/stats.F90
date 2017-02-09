@@ -652,15 +652,16 @@ subroutine stats_OpenMSBReport()
       // 'Max Adj CN,' &
       // 'Gross Precip,' &
       // 'Interception,' &
-      // 'Net Rainfall,' &
+      // 'Net Rainfall (+),' &
       // 'Snowfall,' &
       // 'TOTAL Surface Storage (snow),' &
       // 'Change in Surface Storage (snow),' &
-      // 'Snowmelt,' &
-      // 'Irrigation from Surface Water,' &
-      // 'Irrigation from Groundwater,' &
+      // 'Snowmelt (+),' &
+      // 'Irrigation from Surface Water (+),' &
+      // 'Irrigation from Groundwater (+),' &
       // 'TOTAL Soil Moisture Storage,' &
-      // 'Change in Soil Moisture Storage, Surface Flow Out of Grid,' &
+      // 'Change in Soil Moisture Storage,' &
+      // 'Surface Flow Out of Grid,' &
       // 'Rejected Recharge,' &
       // 'Actual Evapotranspiration,' &
       // 'Recharge,' &

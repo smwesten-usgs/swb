@@ -249,22 +249,15 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
           cel%rIrrigationFromSW, pConfig%iRLE_MULT, &
           pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iIRRIGATION_FROM_SW)
 
-      ! NOTE to Vic: the following code block needs to be present in order
-      !              that the StreamCapture results will be available
-      !              at the end of the run
-      !
-      ! Thought process behind this gobbledy-gook was that we could minimize the
-      ! number of elements within the T_CELL structure by using a temp variable
-      ! within this module, writing the values to disk, and then moving on to
-      ! the next grid cell.
-      !
-      ! Unless rStreamCapture is operated on by other modules, it could be
-      ! converted to a local module variable
-
         case(iGROWING_SEASON)
           call RLE_writeByte(STAT_INFO(iGROWING_SEASON)%iLU, &
             REAL(cel%iGrowingSeason,kind=c_float), pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iGROWING_SEASON)
+
+          case(iRUNOFF)
+            call RLE_writeByte(STAT_INFO(iRUNOFF)%iLU, &
+              cel%rRunoff, pConfig%iRLE_MULT, &
+              pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iRUNOFF)
 
         case default
           call Assert(lFALSE, "Internal programming error in " &
@@ -461,6 +454,10 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, real( cel%iGrowingSeason, kind=c_float) )
 
+          case(iRUNOFF)
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rRunoff)
+
           case default
             call Assert(lFALSE, "Internal programming error in " &
               //"select case structure",TRIM(__FILE__),__LINE__)
@@ -601,6 +598,12 @@ subroutine output_update_accumulators(cel, iMonth, &
   call stats_UpdateAllAccumulatorsByCell(REAL(cel%rIrrigationFromSW,kind=c_double), &
        iIRRIGATION_FROM_SW,iMonth,iZERO)
 
+ call stats_UpdateAllAccumulatorsByCell(REAL(cel%iGrowingSeason,kind=c_double), &
+      iGROWING_SEASON,iMonth,iZERO)
+
+ call stats_UpdateAllAccumulatorsByCell(REAL(cel%rRunoff,kind=c_double), &
+      iRUNOFF,iMonth,iZERO)
+
 end subroutine output_update_accumulators
 
 
@@ -662,6 +665,8 @@ subroutine output_finalize_accumulators(cel, iMonth, iNumGridCells, &
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION, iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_GW, iMonth,iNumGridCells)
   call stats_UpdateAllAccumulatorsByCell(dpZERO, iIRRIGATION_FROM_SW, iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iGROWING_SEASON, iMonth,iNumGridCells)
+  call stats_UpdateAllAccumulatorsByCell(dpZERO, iRUNOFF, iMonth,iNumGridCells)
 
 end subroutine output_finalize_accumulators
 

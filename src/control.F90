@@ -1864,8 +1864,8 @@ subroutine control_setModelOptions(sControlFile)
         call Chomp ( sRecord, sOption )
         call Uppercase ( sOption )
         if ( trim(sOption) == "ITERATIVE" ) then
-          pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_ITERATIVE
-          write(UNIT=LU_LOG,FMT=*) "Configuring the iterative runoff procedure"
+          call Assert( .false._c_bool, "The 'ITERATIVE' solution technique is obsolete and" &
+            //" has been removed." )
         else if ( trim(sOption) == "DOWNHILL" ) then
           pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_DOWNHILL
           write(UNIT=LU_LOG,FMT=*) "Configuring the downhill runoff procedure"

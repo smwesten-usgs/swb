@@ -534,7 +534,7 @@ module types
 
   !> Global parameter defining the number of elements in the YEAR_INFO array.
   integer (kind=c_int), parameter :: iNUM_MONTHS = 12
-  integer(kind=c_int), parameter :: iNUM_VARIABLES = 38
+  integer(kind=c_int), parameter :: iNUM_VARIABLES = 39
 
   ! constants defining T_STATS output types
   integer(kind=c_int), parameter :: iNONE = 0
@@ -544,164 +544,168 @@ module types
   integer(kind=c_int), parameter :: iSTATS = 4
 
   !> Define parameter values for working with accumulator arrays
-  type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = [ &
+  type ( T_STATS ), dimension(iNUM_VARIABLES) :: STAT_INFO = [                 &
 
     ! FIRST come the SOURCES (+) in the mass balance...
-    T_STATS ('GROSS_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE, &
-      'inches','gross precipitation', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
+    T_STATS ('GROSS_PRECIP',0,0,1,lTRUE,lTRUE, lTRUE,                          &
+      'inches','gross precipitation',                                          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0),                            &
 
-    T_STATS ('SNOWMELT',0,0,1,lTRUE,lTRUE, lTRUE, &
-       'inches','snowmelt', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
+    T_STATS ('SNOWMELT',0,0,1,lTRUE,lTRUE, lTRUE,                              &
+       'inches','snowmelt',                                                    &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0),                          &
 
-    T_STATS ('INFLOW',0,0,1,lTRUE,lTRUE, lTRUE, &
-      'inches','incoming flow from adjacent cells', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
+    T_STATS ('INFLOW',0,0,1,lTRUE,lTRUE, lTRUE,                                &
+      'inches','incoming flow from adjacent cells',                            &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0),                            &
 
-    T_STATS ('NET_IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE, &
-      lTRUE, 'inches','NET daily estimated irrigation amount', &
-        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0), &
+    T_STATS ('NET_IRRIGATION_AMOUNT',0,0,1,lTRUE,lTRUE,                        &
+      lTRUE, 'inches','NET daily estimated irrigation amount',                 &
+        1.,0.0,iNONE,iNONE,iNONE,iNONE,'source',0,0),                          &
 
     ! NOW make room for the SINKS (-) in the mass balance...
-    T_STATS ('SNOWFALL',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','precipitation falling as snow (SWE)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('SNOWFALL',0,0,-1,lTRUE,lTRUE, lTRUE,                             &
+      'inches','precipitation falling as snow (SWE)',                          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('INTERCEPTION',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','interception', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('INTERCEPTION',0,0,-1,lTRUE,lTRUE, lTRUE,                         &
+      'inches','interception',                                                 &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('OUTFLOW',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','outgoing flow to adjacent cells', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('OUTFLOW',0,0,-1,lTRUE,lTRUE, lTRUE,                              &
+      'inches','outgoing flow to adjacent cells',                              &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('RUNOFF_OUTSIDE',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','runoff leaving model domain', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('RUNOFF_OUTSIDE',0,0,-1,lTRUE,lTRUE, lTRUE,                       &
+      'inches','runoff leaving model domain',                                  &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('ACT_ET',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','actual evapotranspiration', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('ACT_ET',0,0,-1,lTRUE,lTRUE, lTRUE,                               &
+      'inches','actual evapotranspiration',                                    &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('CHG_IN_SOIL_MOIS',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','daily change in soil moisture', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('CHG_IN_SOIL_MOIS',0,0,-1,lTRUE,lTRUE, lTRUE,                     &
+      'inches','daily change in soil moisture',                                &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','daily potential recharge', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE,                             &
+      'inches','daily potential recharge',                                     &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
-    T_STATS ('REJECTED_RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE, &
-      'inches','recharge exceeding max recharge rate', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0), &
+    T_STATS ('REJECTED_RECHARGE',0,0,-1,lTRUE,lTRUE, lTRUE,                    &
+      'inches','recharge exceeding max recharge rate',                         &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'sink',0,0),                              &
 
     ! The following items are tracked and provided as outputs
     ! but are not part of the mass balance calculation...
 
-    T_STATS ('ACT_ET_SOIL',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','actual evapotranspiration from soil', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('ACT_ET_SOIL',0,2,0,lTRUE,lTRUE, lTRUE,                           &
+      'inches','actual evapotranspiration from soil',                          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('ACT_ET_INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','actual evapotranspiration from interception', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('ACT_ET_INTERCEPTION',0,2,0,lTRUE,lTRUE, lTRUE,                   &
+      'inches','actual evapotranspiration from interception',                  &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE, &
-      'inches','water equivalent of snow cover', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('SNOWCOVER',0,2,0,lFALSE,lTRUE, lTRUE,                            &
+      'inches','water equivalent of snow cover',                               &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('CFGI',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'unitless','continuous frozen ground index', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('CFGI',0,2,0,lFALSE,lFALSE, lTRUE,                                &
+      'unitless','continuous frozen ground index',                             &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('MIN_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'degrees F','minimum daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('MIN_TEMP',0,2,0,lFALSE,lFALSE, lTRUE,                            &
+      'degrees F','minimum daily air temperature',                             &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('MAX_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'degrees F','maximum daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('MAX_TEMP',0,2,0,lFALSE,lFALSE, lTRUE,                            &
+      'degrees F','maximum daily air temperature',                             &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('AVG_TEMP',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'degrees F','mean daily air temperature', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('AVG_TEMP',0,2,0,lFALSE,lFALSE, lTRUE,                            &
+      'degrees F','mean daily air temperature',                                &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('CHG_IN_SNOW_COV',0,2,0,lFALSE,lTRUE, lTRUE, &
-      'inches','snowfall minus snowmelt', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('CHG_IN_SNOW_COV',0,2,0,lFALSE,lTRUE, lTRUE,                      &
+      'inches','snowfall minus snowmelt',                                      &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('NET_RAINFALL',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','gross precipitation minus interception and snowfall', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('NET_RAINFALL',0,2,0,lTRUE,lTRUE, lTRUE,                          &
+      'inches','gross precipitation minus interception and snowfall',          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('NET_INFLOW',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','sum of net precip and inflow', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('NET_INFLOW',0,2,0,lTRUE,lTRUE, lTRUE,                            &
+      'inches','sum of net precip and inflow',                                 &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('NET_INFIL',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','precip and inflow minus outflow', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('NET_INFIL',0,2,0,lTRUE,lTRUE, lTRUE,                             &
+      'inches','precip and inflow minus outflow',                              &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('REFERENCE_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','reference evapotranspiration (ET0)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('REFERENCE_ET',0,2,0,lTRUE,lTRUE, lTRUE,                          &
+      'inches','reference evapotranspiration (ET0)',                           &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('REFERENCE_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','adjusted reference evapotranspiration (ET0_adj)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('REFERENCE_ET_ADJ',0,2,0,lTRUE,lTRUE, lTRUE,                      &
+      'inches','adjusted reference evapotranspiration (ET0_adj)',              &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('CROP_ET',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','crop evapotranspiration (ETc)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('CROP_ET',0,2,0,lTRUE,lTRUE, lTRUE,                               &
+      'inches','crop evapotranspiration (ETc)',                                &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE, &
-      'inches','evaporation from bare soil', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('BARE_SOIL_EVAP',0,2,0,lTRUE,lTRUE, lTRUE,                        &
+      'inches','evaporation from bare soil',                                   &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE, &
-      'inches','net inflow minus potential et', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('P_MINUS_PET',0,2,0,lTRUE,lFALSE, lTRUE,                          &
+      'inches','net inflow minus potential et',                                &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('SM_DEFICIT',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'inches','daily soil moisture deficit', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('SM_DEFICIT',0,2,0,lFALSE,lFALSE, lTRUE,                          &
+      'inches','daily soil moisture deficit',                                  &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('SM_SURPLUS',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'inches','daily soil moisture surplus', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('SM_SURPLUS',0,2,0,lFALSE,lFALSE, lTRUE,                          &
+      'inches','daily soil moisture surplus',                                  &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('SM_APWL',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'inches','accumulated potential water loss', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('SM_APWL',0,2,0,lFALSE,lFALSE, lTRUE,                             &
+      'inches','accumulated potential water loss',                             &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('SOIL_MOISTURE',0,2,0,lFALSE,lTRUE, lTRUE, &
-      'inches','daily soil moisture', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('SOIL_MOISTURE',0,2,0,lFALSE,lTRUE, lTRUE,                        &
+      'inches','daily soil moisture',                                          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('GDD',0,2,0,lFALSE,lFALSE,lTRUE, &
-      'degree-day','growing degree day', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('GDD',0,2,0,lFALSE,lFALSE,lTRUE,                                  &
+      'degree-day','growing degree day',                                       &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('ROOTING_DEPTH',0,2,0,lFALSE,lFALSE,lTRUE, &
-      'feet','current rooting depth', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('ROOTING_DEPTH',0,2,0,lFALSE,lFALSE,lTRUE,                        &
+      'feet','current rooting depth',                                          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('CROP_COEFFICIENT',0,2,0,lFALSE,lFALSE,lTRUE, &
-      'unitless','crop coefficient (Kcb)', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('CROP_COEFFICIENT',0,2,0,lFALSE,lFALSE,lTRUE,                     &
+      'unitless','crop coefficient (Kcb)',                                     &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'inches','amount of water required from groundwater for irrigation', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('IRRIGATION_FROM_GW',0,2,0,lFALSE,lFALSE, lTRUE,                  &
+      'inches','amount of water required from groundwater for irrigation',     &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'inches','amount of water required from surface water for irrigation', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0), &
+    T_STATS ('IRRIGATION_FROM_SW',0,2,0,lFALSE,lFALSE, lTRUE,                  &
+      'inches','amount of water required from surface water for irrigation',   &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
 
-    T_STATS ('GROWING_SEASON',0,2,0,lFALSE,lFALSE, lTRUE, &
-      'on/off','binary file: 1=growing season; 0=non-growing season', &
-      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0) &
+    T_STATS ('GROWING_SEASON',0,2,0,lFALSE,lFALSE, lTRUE,                      &
+      'on/off','binary file: 1=growing season; 0=non-growing season',          &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0),                              &
+
+    T_STATS ('RUNOFF',0,2,0,lFALSE,lFALSE, lTRUE,                              &
+      'inches','total amount of calculated runoff',                            &
+      1.,0.0,iNONE,iNONE,iNONE,iNONE,'info',0,0)                               &
 
     ]
 
@@ -737,7 +741,7 @@ module types
                   iREFERENCE_ET_ADJ, iCROP_ET, iBARE_SOIL_EVAP, iP_MINUS_PET, iSM_DEFICIT, &
                   iSM_SURPLUS, iSM_APWL, iSOIL_MOISTURE, iGDD, iROOTING_DEPTH,             &
                   iCROP_COEFFICIENT, iIRRIGATION_FROM_GW, iIRRIGATION_FROM_SW,             &
-                  iGROWING_SEASON
+                  iGROWING_SEASON, iRUNOFF
   end enum
 
   integer (kind=c_int), parameter :: NO_MAJORITY_FILTER                 = 0
@@ -756,9 +760,8 @@ module types
   !> @name Constants: Runoff routing calculation
   !> Options for routing mechanism selection
   !> @{
-  integer (kind=c_int),parameter :: CONFIG_RUNOFF_ITERATIVE = 0
-  integer (kind=c_int),parameter :: CONFIG_RUNOFF_DOWNHILL = 1
-  integer (kind=c_int),parameter :: CONFIG_RUNOFF_NO_ROUTING = 2
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_DOWNHILL = 0
+  integer (kind=c_int),parameter :: CONFIG_RUNOFF_NO_ROUTING = 1
   !> @}
 
   !> @name Constants: Evapotranspiration algorithm
@@ -1177,7 +1180,7 @@ module types
     integer(kind=c_int) :: iTimeFrame = 1
 
     real(kind=c_float),dimension(3) :: rZA = 0.
-    real(kind=c_float),dimension(3) :: rZE = 10.
+    real(kind=c_float),dimension(3) :: rZE = 20.
     real(kind=c_float),dimension(3) :: rZOR = 0.
     real(kind=c_float),dimension(3) :: rZSTEP = 1.
 

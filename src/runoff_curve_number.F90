@@ -280,7 +280,6 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rOutFlow)
   ! ensure that the calculated runoff doesn't exceed the amount of water
   ! available at the cell surface
   rOutflow = min( rOutflow, rP_avail )
-  cel%rRunoff = rOutflow
 
 end function runoff_CellRunoff_CurveNumber
 
