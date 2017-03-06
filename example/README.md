@@ -54,6 +54,7 @@ Wildcard       | Meaning | Example Filenames | SWB Template
     PRECIPITATION NETCDF  F:\SMWData2\COMMON_CLIMATE\Daymet_2015\prcp_%Y.nc4
     PRECIPITATION_GRID_PROJECTION_DEFINITION +proj=lcc +lat_1=25.0 +lat_2=60.0 +lat_0=42.5 +lon_0=-100.0 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
     PRECIPITATION_CONVERSION_FACTOR 0.03936996
+    PRECIPITATION_Z_VAR prcp
     PRECIPITATION_MISSING_VALUES_CODE -32768
     PRECIPITATION_MISSING_VALUES_OPERATOR <=
     PRECIPITATION_MISSING_VALUES_ACTION MEAN
@@ -63,6 +64,7 @@ Many other control file statements are available to inform SWB of conversion fac
     TEMPERATURE NETCDF F:\SMWData2\COMMON_CLIMATE\Daymet_2015\tmax_%Y.nc4  F:\SMWData2\COMMON_CLIMATE\Daymet_2015\tmin_%Y.nc4
     TMAX_GRID_PROJECTION_DEFINITION +proj=lcc +lat_1=25.0 +lat_2=60.0 +lat_0=42.5 +lon_0=-100.0 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
     TMAX_MISSING_VALUES_CODE -128
+    TMAX_Z_VAR tmax
     TMAX_MISSING_VALUES_OPERATOR <=
     TMAX_MISSING_VALUES_ACTION MEAN
     TMAX_SCALE_FACTOR 1.8
@@ -70,6 +72,7 @@ Many other control file statements are available to inform SWB of conversion fac
 
     TMIN_GRID_PROJECTION_DEFINITION +proj=lcc +lat_1=25.0 +lat_2=60.0 +lat_0=42.5 +lon_0=-100.0 +x_0=0.0 +y_0=0.0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs
     TMIN_MISSING_VALUES_CODE -128
+    TMIN_Z_VAR tmin
     TMIN_MISSING_VALUES_OPERATOR <=
     TMIN_MISSING_VALUES_ACTION MEAN
     TMIN_SCALE_FACTOR 1.8
