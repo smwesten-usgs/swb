@@ -1869,7 +1869,7 @@ subroutine control_setModelOptions(sControlFile)
         else if ( trim(sOption) == "DOWNHILL" ) then
           pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_DOWNHILL
           write(UNIT=LU_LOG,FMT=*) "Configuring the downhill runoff procedure"
-        else if ( trim(sOption) == "NO_ROUTING" ) then
+        else if ( trim(sOption) == "NO_ROUTING" .or. trim(sOption) == "NONE" ) then
           pConfig%iConfigureRunoffMode = CONFIG_RUNOFF_NO_ROUTING
           write(UNIT=LU_LOG,FMT=*) "NO FLOW ROUTING WILL BE PERFORMED"
         else
