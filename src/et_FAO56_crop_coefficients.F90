@@ -17,6 +17,37 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
+!> Adjust the depletion fraction based on current reference ET0.
+!!
+!! From FAO-56: "The fraction p is a function of the evaporation power of the atmosphere.
+!! At low rates of ETc, the p values listed in Table 22 are higher than at high rates of ETc.
+!! For hot dry weather conditions, where ETc is high, p is 10-25% less than the values
+!! presented in Table 22, and the soil is still relatively wet when the stress starts to occur.
+!! When the crop evapotranspiration is low, p will be up to 20% more than the listed values.
+!!
+!! @param[in] p_table_22 This is the unadjusted depletion fraction value; FAO-56
+!!     table 22 gives values of the depletion fraction relative to a reference ET0 value of 5mm.
+!! @param[in] reference_et0 The reference ET0 to which the depletion fraction will be
+!!     adjusted.
+!! @note Discussed as a footnote to Table 22, FAO-56, Allen and others.
+!!   See @ref http://www.fao.org/docrep/x0490e/x0490e0e.htm#TopOfPage for details.
+
+function adjust_depletion_fraction_p( pIRRIGATION, reference_et0 )   result( p )
+
+  type (T_IRRIGATION_LOOKUP),pointer   :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=c_float), intent(in)      :: reference_et0
+  real (kind=c_float)                  :: p
+
+  p = pIRRIGATION%rDepletionFraction                                       &
+          + 0.04_c_float * ( 5.0_c_float - in_to_mm( reference_et0 ) )
+
+  p = min( p, 0.8_c_float )
+  p = max( p, 0.1_c_float )
+
+end function adjust_depletion_fraction_p
+
+!--------------------------------------------------------------------------------------------------
+
  !> Update the current basal crop corfficient (Kcb) for
  !! a SINGLE irrigation table entry
  !!
@@ -210,10 +241,15 @@ subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL), pointer :: cel
 
-  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
-  cel%rReadilyAvailableWater = cel%rTotalAvailableWater * pIRRIGATION%rDepletionFraction
+  ! [ LOCALS ]
+  real (kind=c_float) :: p
 
-  end subroutine et_kc_CalcTotalAvailableWater
+  p = adjust_depletion_fraction_p( pIRRIGATION, cel%rReferenceET0 )
+
+  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+  cel%rReadilyAvailableWater = cel%rTotalAvailableWater * p
+
+end subroutine et_kc_CalcTotalAvailableWater
 
 !------------------------------------------------------------------------------
 

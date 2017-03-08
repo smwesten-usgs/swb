@@ -2522,6 +2522,34 @@ function count_fields(sRecord) result(iNumFields)
 
 end function count_fields
 
+
+!--------------------------------------------------------------------------
+!****f* types/in_to_mm
+! NAME
+!   in_to_mm - Converts inches to millimeters.
+!
+! SYNOPSIS
+!   Converts measurements in inches to millimeters.
+!
+! INPUTS
+!   r_in - Value in inches.
+!
+! OUTPUTS
+!   r_mm - Value in millimeters.
+!
+! SOURCE
+
+function in_to_mm(r_in)   result(r_mm)
+  ! Converts value in inches to millimeters
+  ! [ ARGUMENTS ]
+  real (kind=c_float),intent(in) :: r_in
+  ! [ RETURN VALUE ]
+  real (kind=c_float) :: r_mm
+
+  r_mm = r_in * rMM_PER_INCH
+
+end function in_to_mm
+
 !--------------------------------------------------------------------------
 !****f* types/mm_to_in
 ! NAME
