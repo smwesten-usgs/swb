@@ -178,7 +178,12 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       !> @NOTE At this point in the calculation, rReferenceET0_adj has been reduced by the amount
       !!       of interception that evaporates, if that option is activated
 
+      ! if FAO-56 being used: rReferenceET0_adj = bare_soil_evap + crop_etc
+      !                                           and should already reflect any
+      !                                           stress-related limitations
       rPrecipMinusPotentET = rNetInfil - cel%rReferenceET0_adj
+      !
+
 
       MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
               .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then

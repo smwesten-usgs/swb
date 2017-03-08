@@ -160,7 +160,7 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
 
   else if ( if_model_GrowingSeason(pConfig, iJulDay) == iTRUE ) then
 
-    if ( rTotalInflow < pConfig%rDRY_GROWING ) then           ! AMC I
+    if ( rTotalInflow < pConfig%rDRY_GROWING ) then           ! AMC I - LOW
 
 !      The following comes from page 192, eq. 3.145 of "SCS Curve Number
 !      Methodology"
@@ -168,11 +168,11 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
       cel%rAdjCN = cel%rBaseCN / (2.281 - 0.01281 * cel%rBaseCN)
 
     else if ( rTotalInflow >= pConfig%rDRY_GROWING &
-        .and. rTotalInflow < pConfig%rWET_GROWING ) then	  ! AMC II
+        .and. rTotalInflow < pConfig%rWET_GROWING ) then	  ! AMC II - AVERAGE
 
        cel%rAdjCN = real(cel%rBaseCN)
 
-    else													  ! AMC III
+    else													                          ! AMC III - HIGH
 
       cel%rAdjCN = cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN)
 
@@ -180,16 +180,16 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
 
   else ! dormant (non-growing) season
 
-    if ( rTotalInflow < pConfig%rDRY_DORMANT ) then           ! AMC I
+    if ( rTotalInflow < pConfig%rDRY_DORMANT ) then           ! AMC I - LOW
 
       cel%rAdjCN = cel%rBaseCN / (2.281 - 0.01281 * cel%rBaseCN)
 
     else if ( rTotalInflow >= pConfig%rDRY_DORMANT &
-        .and. rTotalInflow < pConfig%rWET_DORMANT ) then      ! AMC II
+        .and. rTotalInflow < pConfig%rWET_DORMANT ) then      ! AMC II - AVERAGE
 
       cel%rAdjCN = real(cel%rBaseCN)
 
-    else													  ! AMC III
+    else													                            ! AMC III - HIGH
 
       cel%rAdjCN = cel%rBaseCN / (0.427 + 0.00573 * cel%rBaseCN)
 
