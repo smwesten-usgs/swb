@@ -74,6 +74,7 @@ subroutine control_setModelOptions(sControlFile)
   integer (kind=c_int) :: i,iVarNum,iTimeFrame    ! loop counters
   integer (kind=c_int) :: idx                     ! index counter for STREAM_CAPTURE routines
   integer (kind=c_int) :: iLU_SSF = 300           ! last LU for SSF file
+  integer (kind=c_int) :: DMPCOL, DMPROW
   integer (kind=c_int) :: iCurrentLineNumber
   real (kind=c_double), dimension(0:1) :: rX_LL, rY_LL ! Model grid extent (lower-left)
   real (kind=c_double) :: rX0, rY0                     ! Model grid extent (lower-left)
@@ -506,14 +507,23 @@ subroutine control_setModelOptions(sControlFile)
 
       end if
 
-      DMP_FILENAME = "SWB_variable_values__col_"//trim(adjustl(col_str))   &
+      do idx=1, ubound( DUMP_VARS, 1 )
+
+        if ( ( DUMP_VARS( idx )%column_num <= 0 ) .and. ( DUMP_VARS( idx )%row_num <= 0 ) ) exit
+
+      enddo
+
+      sBuf = "SWB_variable_values__col_"//trim(adjustl(col_str))   &
         //"__row_"//trim(adjustl(row_str))//".csv"
 
-      open( newunit=DMPFILE, file=DMP_FILENAME, status='REPLACE', iostat=iStat )
+      DUMP_VARS( idx )%filename = trim( sBuf )
+
+      open( newunit=DUMP_VARS( idx )%file_unit, file=DUMP_VARS( idx )%filename, status='REPLACE',  &
+            iostat=iStat )
 
       write(sBuf,fmt="(i8)") iStat
 
-      call assert( iStat == 0, "Could not open variable dump file '"//trim(DMP_FILENAME)     &
+      call assert( iStat == 0, "Could not open variable dump file '"//trim(DUMP_VARS( idx )%filename)     &
   //" for writing. iostat = "//trim( sBuf ) )
 
 !      write( DMPFILE, "(i2,',',i2,',',i4,',',3(i8,','),12(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,       &
@@ -522,7 +532,7 @@ subroutine control_setModelOptions(sControlFile)
 !       cel%rReferenceET0, cel%rActualET,                                                                          &
 !       cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rInflow, cel%rOutflow, cel%rFlowOutOfGrid,           &
 !       cel%rDailyRecharge, cel%rRejectedRecharge
-      write( DMPFILE, fmt="(a)") &
+      write( DUMP_VARS( idx )%file_unit, fmt="(a)") &
         "month, day, year, landuse_code, landuse_index, soil_group, num_upslope_connections, sum_upslope_cells, "     &
         //"tmin, tmax, tmean, cfgi, gdd, current_rooting_depth, gross_precip, "                                       &
         //"interception, net_rainfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, irrigation_fm_sw, "        &

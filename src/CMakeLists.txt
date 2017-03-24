@@ -195,8 +195,6 @@ if(TARGET__SWB_EXECUTABLE)
 
             )
 
-  target_link_libraries(swb ${EXTERNAL_LIBS})
-
 endif()
 
 if(TARGET__SWB_LIBRARY)
@@ -398,8 +396,6 @@ if(TARGET__SWB_LIBRARY)
 
             )
 
-  target_link_libraries(swblib ${EXTERNAL_LIBS})
-
 endif()
 
 
@@ -582,7 +578,5 @@ if(TARGET__SWBSTATS)
             proj4/vector1.c
 
             )
-
-  target_link_libraries(swbstats ${EXTERNAL_LIBS})
 
 endif()

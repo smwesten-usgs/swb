@@ -17,23 +17,27 @@ export COMPILER_DIR=/usr/local
 
 # identify the versions for key libraries that SWB relies upon
 export HDF5_VERSION=1.8.17
-export NETCDF_VERSION=4.3.3
+export NETCDF_VERSION=4.4.1
 export DISLIN_VERSION=10.6.0
-export LIBZ_VERSION=1.2.8
+export LIBZ_VERSION=1.2.11
 export LIBSZ_VERSION=2.1
 
 export OPENMOTIF_VERSION=2.3.6
 
+# if locate is finding old library versions, run the following.
+# source https://superuser.com/questions/109590/whats-the-equivalent-of-linuxs-updatedb-command-for-the-mac#109592
+# sudo /usr/libexec/locate.updatedb
+
 # explicitly locate each key library
-export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep $HDF5_VERSION | grep -v "386" )
-export LIB_HDF5=$( locate libhdf5.a | grep $HDF5_VERSION | grep -v "386" )
+export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep $HDF5_VERSION | grep Cellar | grep -v "386" )
+export LIB_HDF5=$( locate libhdf5.a | grep $HDF5_VERSION | grep Cellar | grep -v "386" )
 # prevent locate from glomming onto the i386 version or the miniconda version
-export LIB_Z=$(locate libz.a | grep $LIBZ_VERSION | grep -v "386" | grep -v "conda" )
-export LIB_SZ=$(locate libsz.a | grep $LIBSZ_VERSION | grep -v "386" )
-export LIB_NETCDF=$( locate libnetcdf.a | grep $NETCDF_VERSION | grep -v "386" )
+export LIB_Z=$(locate libz.a | grep $LIBZ_VERSION | grep -v "386" | grep Cellar | grep -v "conda" )
+export LIB_SZ=$(locate libsz.a | grep $LIBSZ_VERSION | grep Cellar | grep -v "386" )
+export LIB_NETCDF=$( locate libnetcdf.dylib | grep $NETCDF_VERSION | grep Cellar | grep -v "386" )
 export LIB_DISLIN=$(locate libdislin.$DISLIN_VERSION.dylib | grep -v "386" )
-export LIB_GCC=$(locate libgcc.a | grep $COMPILER_VERSION | grep -v "386" )
-export LIB_GFORTRAN=$(locate libgfortran.a | grep $COMPILER_VERSION | grep -v "386" )
+export LIB_GCC=$(locate libgcc.a | grep $COMPILER_VERSION | grep Cellar | grep -v "386" )
+export LIB_GFORTRAN=$(locate libgfortran.a | grep $COMPILER_VERSION | grep Cellar | grep -v "386" )
 
 export LIB_XM=$(locate libXm.dylib | grep $OPENMOTIF_VERSION | grep -v "386" )
 
@@ -67,6 +71,8 @@ export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fexceptions -ff
 #set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 export CMAKE_Fortran_FLAGS_RELEASE="-O3 -cpp -mtune=native -ffree-line-length-none"
 
+export PATH=/usr/local/bin:/usr/local/lib:$PATH
+
 # set important environment variables
 export FC=gfortran-$COMPILER_MAJ_VERSION
 export CC=gcc-$COMPILER_MAJ_VERSION
@@ -77,25 +83,25 @@ export LD=/usr/bin/ld
 export STRIP=/usr/bin/strip
 export CMAKE_RANLIB=gcc-ranlib-$COMPILER_MAJ_VERSION
 
-cmake ../../.. -G "Unix Makefiles" \
--DDISLIN_MODULE_DIR="$DISLIN_MODULE_DIR "   \
--DFortran_COMPILER_NAME="$Fortran_COMPILER_NAME" \
--DSWB_EXECUTABLE="$SWB_EXECUTABLE"      \
--DCOMPILER_VERSION="$COMPILER_VERSION " \
--DLIB_HDF5_HL="$LIB_HDF5_HL "    \
--DLIB_HDF5="$LIB_HDF5 "          \
--DLIB_SZ="$LIB_SZ"               \
--DLIB_Z="$LIB_Z "                \
--DLIB_NETCDF="$LIB_NETCDF "      \
--DLIB_DISLIN="$LIB_DISLIN "      \
--DLIB_GCC="$LIB_GCC "            \
--DLIB_GFORTRAN="$LIB_GFORTRAN "  \
--DLIB_XM="$LIB_XM"               \
--DR_SCRIPT="$R_SCRIPT"           \
--DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS " \
--DSYSTEM_TYPE="$SYSTEM_TYPE " \
--DCMAKE_BUILD_TYPE="$BUILD_TYPE " \
--DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX " \
+cmake ../../.. -G "Unix Makefiles"                \
+-DDISLIN_MODULE_DIR="$DISLIN_MODULE_DIR "         \
+-DFortran_COMPILER_NAME="$Fortran_COMPILER_NAME"  \
+-DSWB_EXECUTABLE="$SWB_EXECUTABLE"                \
+-DCOMPILER_VERSION="$COMPILER_VERSION "           \
+-DLIB_HDF5_HL="$LIB_HDF5_HL "                     \
+-DLIB_HDF5="$LIB_HDF5 "                           \
+-DLIB_SZ="$LIB_SZ "                               \
+-DLIB_Z="$LIB_Z "                                 \
+-DLIB_NETCDF="$LIB_NETCDF "                       \
+-DLIB_DISLIN="$LIB_DISLIN "                       \
+-DLIB_GCC="$LIB_GCC "                             \
+-DLIB_GFORTRAN="$LIB_GFORTRAN "                   \
+-DLIB_XM="$LIB_XM "                               \
+-DR_SCRIPT="$R_SCRIPT "                           \
+-DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS "         \
+-DSYSTEM_TYPE="$SYSTEM_TYPE "                     \
+-DCMAKE_BUILD_TYPE="$BUILD_TYPE "                 \
+-DCMAKE_INSTALL_PREFIX:PATH="$INSTALL_PREFIX "    \
 -DTARGET__SWB_EXECUTABLE:BOOLEAN="$TARGET__SWB_EXECUTABLE " \
 -DTARGET__SWB_LIBRARY:BOOLEAN="$TARGET__SWB_LIBRARY " \
 -DTARGET__SWBSTATS:BOOLEAN="$TARGET__SWBSTATS " \

@@ -1192,10 +1192,14 @@ module types
   integer(kind=c_int),parameter :: iMONTHLY = 2
   integer(kind=c_int),parameter :: iANNUAL = 3
 
-  integer (kind=c_int)               :: DMPCOL        = -999
-  integer (kind=c_int)               :: DMPROW        = -999
-  integer (kind=c_int)               :: DMPFILE       = 0
-  character (len=256)                :: DMP_FILENAME
+  type T_DUMP_VAR
+    integer (kind=c_int)               :: column_num        = -999
+    integer (kind=c_int)               :: row_num           = -999
+    integer (kind=c_int)               :: file_unit         = 0
+    character (len=256)                :: filename
+  end type T_DUMP_VAR
+
+  type ( T_DUMP_VAR )                  :: DUMP_VARS( 20 )
 
 !**********************************************************************
 !! GENERIC interfaces
