@@ -517,6 +517,8 @@ subroutine control_setModelOptions(sControlFile)
         //"__row_"//trim(adjustl(row_str))//".csv"
 
       DUMP_VARS( idx )%filename = trim( sBuf )
+      DUMP_VARS( idx )%column_num = DMPCOL
+      DUMP_VARS( idx )%row_num = DMPROW
 
       open( newunit=DUMP_VARS( idx )%file_unit, file=DUMP_VARS( idx )%filename, status='REPLACE',  &
             iostat=iStat )
@@ -524,7 +526,7 @@ subroutine control_setModelOptions(sControlFile)
       write(sBuf,fmt="(i8)") iStat
 
       call assert( iStat == 0, "Could not open variable dump file '"//trim(DUMP_VARS( idx )%filename)     &
-  //" for writing. iostat = "//trim( sBuf ) )
+        //" for writing. iostat = "//trim( sBuf ) )
 
 !      write( DMPFILE, "(i2,',',i2,',',i4,',',3(i8,','),12(f12.3,','),f12.3 )") pConfig%iMonth, pConfig%iDay,       &
 !       pConfig%iYear, cel%iLandUseType, cel%iLandUseIndex, cel%iSoilGroup, cel%rTMin, cel%rTMax, cel%rTAvg,       &
@@ -541,6 +543,8 @@ subroutine control_setModelOptions(sControlFile)
         //"soil_storage_max, soil_storage, "                                                                          &
         //"curve_num_adj, s_max, runon, runoff, outflow, flowout, potential_recharge, rejected_recharge, "            &
         //"inflowbuf1, inflowbuf2, inflowbuf3, inflowbuf4, inflowbuf5"
+
+      flush( DUMP_VARS( idx )%file_unit )
 
     else if ( sItem == "TEMPERATURE" ) then
       write(UNIT=LU_LOG,FMT=*) "Configuring temperature data input"
