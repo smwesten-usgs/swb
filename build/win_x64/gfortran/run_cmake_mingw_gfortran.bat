@@ -70,18 +70,8 @@ set CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -ffree-line-length-none -static -stati
 set CMAKE_Fortran_FLAGS_PROFILE="-O2 -pg -g -cpp -fno-omit-frame-pointer -DNDEBUG -fno-inline-functions -fno-inline-functions-called-once -fno-optimize-sibling-calls -ffree-line-length-none -static -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 ::set CMAKE_Fortran_FLAGS_RELEASE="-O3 -mtune=native -fopenmp -flto -ffree-line-length-none -static-libgcc -static-libgfortran -DCURL_STATICLIB"
 
-:: recreate clean Windows environment
-set PATH=c:\windows;c:\windows\system32;c:\windows\system32\Wbem
-set PATH=%PATH%;C:\Program Files (x86)\7-Zip
-set PATH=%PATH%;%CMAKEROOT%\bin;%CMAKEROOT%\share
-set PATH=%PATH%;C:\MinGW64\bin
-set PATH=%PATH%;C:\Program Files (x86)\Git\bin
-set PATH=%PATH%;C:\MinGW64\include;C:\MinGW64\lib
-
 :: set a useful alias for make
 echo %COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% %%1 > make.bat
-
-set PATH=%PATH%;D:\DOS\gnuwin32\bin
 
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
