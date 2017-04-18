@@ -17,6 +17,37 @@ module et_crop_coefficients
 
 !------------------------------------------------------------------------------
 
+!> Adjust the depletion fraction based on current reference ET0.
+!!
+!! From FAO-56: "The fraction p is a function of the evaporation power of the atmosphere.
+!! At low rates of ETc, the p values listed in Table 22 are higher than at high rates of ETc.
+!! For hot dry weather conditions, where ETc is high, p is 10-25% less than the values
+!! presented in Table 22, and the soil is still relatively wet when the stress starts to occur.
+!! When the crop evapotranspiration is low, p will be up to 20% more than the listed values.
+!!
+!! @param[in] p_table_22 This is the unadjusted depletion fraction value; FAO-56
+!!     table 22 gives values of the depletion fraction relative to a reference ET0 value of 5mm.
+!! @param[in] reference_et0 The reference ET0 to which the depletion fraction will be
+!!     adjusted.
+!! @note Discussed as a footnote to Table 22, FAO-56, Allen and others.
+!!   See @ref http://www.fao.org/docrep/x0490e/x0490e0e.htm#TopOfPage for details.
+
+function adjust_depletion_fraction_p( pIRRIGATION, reference_et0 )   result( p )
+
+  type (T_IRRIGATION_LOOKUP),pointer   :: pIRRIGATION  ! pointer to an irrigation table entry
+  real (kind=c_float), intent(in)      :: reference_et0
+  real (kind=c_float)                  :: p
+
+  p = pIRRIGATION%rDepletionFraction                                       &
+          + 0.04_c_float * ( 5.0_c_float - in_to_mm( reference_et0 ) )
+
+  p = min( p, 0.8_c_float )
+  p = max( p, 0.1_c_float )
+
+end function adjust_depletion_fraction_p
+
+!--------------------------------------------------------------------------------------------------
+
  !> Update the current basal crop corfficient (Kcb) for
  !! a SINGLE irrigation table entry
  !!
@@ -64,8 +95,7 @@ end function et_kc_UpdateCropCoefficient
 !------------------------------------------------------------------------------
 
 !>
-function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, &
-   rDeficit)  result(rKr)
+function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)  result(rKr)
 
   ! [ ARGUMENTS ]
   real (kind=c_float) :: rTEW
@@ -75,12 +105,18 @@ function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, &
   ! [ RESULT ]
   real (kind=c_float) :: rKr
 
-  if(rDeficit > rREW .and. rDeficit < rTEW) then
+  if ( rDeficit <= rREW ) then
+
+    rKr = 1.0
+
+  elseif ( rDeficit < rTEW ) then
+
     rKr = (rTEW - rDeficit) / (rTEW - rREW)
-  elseif(rDeficit <= rREW) then
-    rKr = 1.
+
   else
+
     rKr = 0.
+
   endif
 
 end function et_kc_CalcEvaporationReductionCoefficient
@@ -142,12 +178,12 @@ end function et_kc_CalcFractionExposedAndWettedSoil
 !!     the time that the crop is planted.
 !! @retval rZr_i current active rooting depth.
 !! @note Implemented as equation 8-1 (Annex 8), FAO-56, Allen and others.
-function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(rZr_i)
+function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, rKcb) 	result(rZr_i)
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   real (kind=c_float) :: rZr_max
-  integer (kind=c_int) :: iThreshold ! either GDD or DOY
+  real (kind=c_float) :: rKcb
 
   ! [ RESULT ]
   real (kind=c_float) :: rZr_i
@@ -163,18 +199,14 @@ function et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, iThreshold) 	result(
      ! constant
     rZr_i = rZr_max
 
-  elseif( iThreshold < pIRRIGATION%iL_plant ) then
+  elseif( rKcb > pIRRIGATION%rKcb_min ) then
 
-    rZr_i = rZr_min
-
-  elseif( iThreshold > pIRRIGATION%iL_mid ) then
-
-    rZr_i = rZr_max
+    rZr_i = rZr_min + (rZr_max - rZr_min) * ( rKcb - pIRRIGATION%rKcb_min ) &
+                                           / ( pIRRIGATION%rKcb_max -  pIRRIGATION%rKcb_min )
 
   else
 
-    rZr_i = rZr_min + (rZr_max - rZr_min) * ( real(iThreshold) - real(pIRRIGATION%iL_plant)) &
-                                           / ( real(pIrrigation%iL_dev) -  real(pIRRIGATION%iL_plant) )
+    rZr_i = rZr_min
 
   endif
 
@@ -209,10 +241,15 @@ subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type (T_CELL), pointer :: cel
 
-  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
-  cel%rReadilyAvailableWater = cel%rTotalAvailableWater * pIRRIGATION%rDepletionFraction
+  ! [ LOCALS ]
+  real (kind=c_float) :: p
 
-  end subroutine et_kc_CalcTotalAvailableWater
+  p = adjust_depletion_fraction_p( pIRRIGATION, cel%rReferenceET0 )
+
+  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+  cel%rReadilyAvailableWater = cel%rTotalAvailableWater * p
+
+end subroutine et_kc_CalcTotalAvailableWater
 
 !------------------------------------------------------------------------------
 
@@ -231,11 +268,13 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
   real (kind=c_float) :: rKs
 
   if (rDeficit < cel%rReadilyAvailableWater) then
+
     rKs = rONE
+
   elseif (rDeficit < cel%rTotalAvailableWater) then
 
     rKs = ( cel%rTotalAvailableWater - rDeficit )                                    &
-          / ( cel%rTotalAvailableWater - cel%rReadilyAvailableWater + 1.0e-6 )
+             / ( cel%rTotalAvailableWater - cel%rReadilyAvailableWater + 1.0e-6 )
   else
     rKs = rZERO
   endif
@@ -297,22 +336,13 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
          cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
 
-         if(pConfig%iDayOfYear < pIRRIGATION%iL_dev) then
-           cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
-             rZr_max, pConfig%iDayOfYear)
-         endif
-
        else
 
          cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, INT(cel%rGDD, kind=c_int))
 
-         if(int(cel%rGDD, kind=c_int) < pIRRIGATION%iL_dev) then
-           cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, &
-             rZr_max,INT(cel%rGDD, kind=c_int))
-         endif
-
        endif
 
+       cel%rCurrentRootingDepth = et_kc_CalcEffectiveRootDepth(pIRRIGATION, rZr_max, cel%rKcb )
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
 
@@ -326,8 +356,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
        ! Deficit is defined in the sense of Thornthwaite and Mather, and
        ! is calculated relative to the CURRENT ROOTING DEPTH
-       rDeficit = MAX(rZERO, cel%rTotalAvailableWater - cel%rSoilMoisture)
-
+       ! ********* ????????
+!       rDeficit = MAX(rZERO, cel%rTotalAvailableWater - cel%rSoilMoisture)
+       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
        rDepthOfEvap = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
 
        ! "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
