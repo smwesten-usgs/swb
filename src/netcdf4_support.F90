@@ -150,6 +150,8 @@ module netcdf4_support
     integer (kind=c_int) :: iNC_VarType
     integer (kind=c_int) :: iNumberOfDimensions
     integer (kind=c_int), dimension(0:3) :: iNC_DimID = -9999
+    real (kind=c_double) :: rScaleFactor = 1_c_double
+    real (kind=c_double) :: rAddOffset = 0_c_double
     integer (kind=c_int) :: iNumberOfAttributes
     type (T_NETCDF_ATTRIBUTE), dimension(:), pointer :: pNC_ATT => null()
   end type T_NETCDF_VARIABLE
@@ -192,8 +194,6 @@ module netcdf4_support
     integer (kind=c_int), dimension(0:3) :: iVarType = -9999
     character (len=64), dimension(0:3) :: sVarUnits = "NA"
     integer (kind=c_int), dimension(0:3, 0:3) :: iVar_DimID = -9999
-    real (kind=c_double), dimension(0:3) :: rScaleFactor = 1_c_double
-    real (kind=c_double), dimension(0:3) :: rAddOffset = 0_c_double
     integer (kind=c_int), dimension(0:2) :: iRowIter
     integer (kind=c_int), dimension(0:2) :: iColIter
     logical (kind=c_bool) :: lFlipHorizontal = lFALSE
@@ -656,10 +656,14 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
 
   call nf_get_variable_id_and_type( NCFILE )
 
-  NCFILE%dpFirstAndLastTimeValues = nf_get_first_and_last(NCFILE=NCFILE, &
-      iVarIndex=NCFILE%iVarIndex(NC_TIME) )
-
   call nf_get_time_units(NCFILE=NCFILE)
+
+  NCFILE%dpFirstAndLastTimeValues = nf_get_first_and_last(NCFILE=NCFILE, &
+      iVarIndex=NCFILE%iVarIndex( NC_TIME ) )
+
+  !> retrieve the time values as included in the NetCDF file
+  call nf_get_time_vals(NCFILE)
+
   call nf_get_xyz_units(NCFILE=NCFILE)
 
   !> establish scale_factor and add_offset values, if present
@@ -669,9 +673,6 @@ subroutine netcdf_open_and_prepare_as_input(NCFILE, sFilename, &
 
   !> retrieve the X and Y coordinates from the NetCDF file...
   call nf_get_x_and_y(NCFILE)
-
-  !> retrieve the time values as included in the NetCDF file
-  call nf_get_time_vals(NCFILE)
 
   if (present(tGridBounds) ) then
 
@@ -978,48 +979,6 @@ end subroutine nf_return_native_coord_bounds
 
 !----------------------------------------------------------------------
 
-subroutine nf_get_time_vals(NCFILE)
-
-  type (T_NETCDF4_FILE ) :: NCFILE
-
-  integer (kind=c_int) :: iVarIndex_time
-  type (T_NETCDF_VARIABLE), pointer :: pNC_VAR_time
-  type (T_NETCDF_DIMENSION), pointer :: pNC_DIM_time
-  integer (kind=c_int) :: iLowerBound, iUpperBound
-  integer (kind=c_int) :: iStat
-
-  iStat = 0
-
-  iVarIndex_time = NCFILE%iVarIndex(NC_TIME)
-
-  call assert(iVarIndex_time >= lbound(NCFILE%pNC_VAR,1) &
-    .and. iVarIndex_time <= ubound(NCFILE%pNC_VAR,1), &
-    "INTERNAL PROGRAMMING ERROR - Index out of bounds", trim(__FILE__), __LINE__)
-
-  pNC_VAR_time => NCFILE%pNC_VAR(iVarIndex_time)
-  pNC_DIM_time => NCFILE%pNC_DIM( pNC_VAR_time%iNC_DimID(0) )
-
-  if (allocated(NCFILE%rDateTimeValues) ) deallocate(NCFILE%rDateTimeValues, stat=iStat)
-  call assert(iStat==0, "Failed to deallocate memory for time values", &
-    trim(__FILE__), __LINE__)
-
-  allocate( NCFILE%rDateTimeValues(0 : pNC_DIM_time%iNC_DimSize - 1 ), stat=iStat )
-    call assert(iStat==0, "Failed to allocate memory for time values", &
-    trim(__FILE__), __LINE__)
-
-  !> @todo allow time to be read in as float, short, or int as well
-
-  call nf_get_variable_vector_double(NCFILE=NCFILE, &
-       iNC_VarID=pNC_VAR_time%iNC_VarID, &
-       iNC_Start=0_c_size_t, &
-       iNC_Count=pNC_DIM_time%iNC_DimSize, &
-       iNC_Stride=1_c_size_t, &
-       dpNC_Vars=NCFILE%rDateTimeValues)
-
-end subroutine nf_get_time_vals
-
-!----------------------------------------------------------------------
-
 subroutine nf_get_x_and_y(NCFILE)
 
   type (T_NETCDF4_FILE ) :: NCFILE
@@ -1163,14 +1122,14 @@ subroutine netcdf_open_file(NCFILE, sFilename, iLU)
 
   if (present(iLU) ) then
 
-    call nf_open_file(NCFILE=NCFILE, &
-                    sFilename=sFilename, &
-                    iLU=iLU)
+    call nf_open_file(NCFILE=NCFILE,        &
+                      sFilename=sFilename,  &
+                      iLU=iLU)
 
   else
 
-    call nf_open_file(NCFILE=NCFILE, &
-                    sFilename=sFilename)
+    call nf_open_file(NCFILE=NCFILE,        &
+                      sFilename=sFilename)
 
   endif
 
@@ -1183,19 +1142,19 @@ subroutine netcdf_open_file(NCFILE, sFilename, iLU)
   !> SAME PROVIDER!! MUST UPDATE TO ENSURE THAT THE INDICES ARE STILL RELEVANT
   call nf_get_variable_id_and_type( NCFILE )
 
-  NCFILE%dpFirstAndLastTimeValues = nf_get_first_and_last(NCFILE=NCFILE, &
-      iVarIndex=NCFILE%iVarIndex(NC_TIME) )
-
-  !> retrieve the origin for the time units associated with this file
-  call nf_get_time_units(NCFILE=NCFILE)
+  !> retrieve the units used to encode the time variable (e.g. hours, days)
+  call nf_get_time_units( NCFILE )
 
   !> retrieve the time value specific to this file
-  call nf_get_time_vals(NCFILE)
+  call nf_get_time_vals( NCFILE )
+
+  NCFILE%dpFirstAndLastTimeValues = nf_get_first_and_last( NCFILE=NCFILE,                           &
+                                                           iVarIndex=NCFILE%iVarIndex( NC_TIME ) )
+
+  call nf_calculate_time_range(NCFILE)
 
   !> establish scale_factor and add_offset values, if present
   call nf_get_scale_and_offset(NCFILE=NCFILE)
-
-  call nf_calculate_time_range(NCFILE)
 
 end subroutine netcdf_open_file
 
@@ -1548,10 +1507,9 @@ function netcdf_update_time_starting_index(NCFILE, iJulianDay)  result(lDateTime
   ! [ LOCALS ]
   real (kind=c_double) :: rNC_DateTime
   integer (kind=c_int) :: iMonth, iDay, iYear
-  integer (kind=c_int) :: crap
 
-  NCFILE%iStart(NC_TIME) = nf_julian_day_to_index_adj( NCFILE=NCFILE, &
-                                     rJulianDay=real(iJulianDay, kind=c_double ) )
+  NCFILE%iStart(NC_TIME) = nf_julian_day_to_index_adj( NCFILE=NCFILE,                                &
+                                                       rJulianDay=real(iJulianDay, kind=c_double ) )
 
   if (NCFILE%iStart(NC_TIME) < 0) then
     NCFILE%iStart(NC_TIME) = 0
@@ -2281,7 +2239,7 @@ function nf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
       //"~Offending index value: "//trim(asCharacter(iVarIndex)), &
       trim(__FILE__), __LINE__)
 
-  pNC_VAR => NCFILE%pNC_VAR(iVarIndex)
+  pNC_VAR => NCFILE%pNC_VAR( iVarIndex )
   iDimSize = nf_return_DimSize(NCFILE, pNC_VAR%iNC_DimID(0) )
 
   if (iDimSize > 1) then
@@ -2292,7 +2250,7 @@ function nf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
     iStride = 1_c_size_t
   endif
 
-  select case (pNC_VAR%iNC_VarType )
+  select case ( pNC_VAR%iNC_VarType )
 
     case (NC_SHORT)
 
@@ -2340,6 +2298,11 @@ function nf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
 
   end select
 
+!print *, __FILE__, ": ", __LINE__, dpValues
+  dpValues = dpValues * pNC_VAR%rScaleFactor + NCFILE%pNC_VAR%rAddOffset
+!  print *, pNC_VAR%rScaleFactor, pNC_VAR%rAddOffset, pNC_VAR%sVariableName
+!print *, "MODIFIED: ", dpValues
+
   !> if there is only one day of data in this NetCDF file, the
   !> first day equals the last day
   if (iCount == 1) dpValues(NC_LAST) = dpValues(NC_FIRST)
@@ -2365,6 +2328,49 @@ end subroutine nf_calculate_time_range
 
 !----------------------------------------------------------------------
 
+subroutine nf_get_time_vals(NCFILE)
+
+  type (T_NETCDF4_FILE ) :: NCFILE
+
+  integer (kind=c_int) :: iVarIndex_time
+  type (T_NETCDF_VARIABLE), pointer :: pNC_VAR_time
+  type (T_NETCDF_DIMENSION), pointer :: pNC_DIM_time
+  integer (kind=c_int) :: iLowerBound, iUpperBound
+  integer (kind=c_int) :: iStat
+
+  iStat = 0
+
+  iVarIndex_time = NCFILE%iVarIndex( NC_TIME )
+
+  call assert( iVarIndex_time >= lbound( NCFILE%pNC_VAR, 1 )                             &
+    .and. iVarIndex_time <= ubound( NCFILE%pNC_VAR, 1 ),                                 &
+    "INTERNAL PROGRAMMING ERROR - Index out of bounds", trim(__FILE__), __LINE__)
+
+  pNC_VAR_time => NCFILE%pNC_VAR( iVarIndex_time )
+  pNC_DIM_time => NCFILE%pNC_DIM( pNC_VAR_time%iNC_DimID( 0 ) )
+
+  if ( allocated( NCFILE%rDateTimeValues ) )   deallocate( NCFILE%rDateTimeValues, stat=iStat )
+  call assert( iStat==0, "Failed to deallocate memory for time values", trim(__FILE__), __LINE__)
+
+  allocate( NCFILE%rDateTimeValues(0 : pNC_DIM_time%iNC_DimSize - 1 ), stat=iStat )
+    call assert(iStat==0, "Failed to allocate memory for time values", &
+    trim(__FILE__), __LINE__)
+
+  !> @todo allow time to be read in as float, short, or int as well
+
+  call nf_get_variable_vector_double(NCFILE=NCFILE, &
+       iNC_VarID=pNC_VAR_time%iNC_VarID, &
+       iNC_Start=0_c_size_t, &
+       iNC_Count=pNC_DIM_time%iNC_DimSize, &
+       iNC_Stride=1_c_size_t, &
+       dpNC_Vars=NCFILE%rDateTimeValues)
+
+  NCFILE%rDateTimeValues = NCFILE%rDateTimeValues * pNC_VAR_time%rScaleFactor + pNC_VAR_time%rAddOffset
+
+end subroutine nf_get_time_vals
+
+!----------------------------------------------------------------------
+
 subroutine nf_get_time_units(NCFILE)
 
   type (T_NETCDF4_FILE), intent(inout) :: NCFILE
@@ -2381,7 +2387,7 @@ subroutine nf_get_time_units(NCFILE)
     //"nf_get_time_units must be called only after a call is made to ~" &
     //"netcdf_get_variable_ids", trim(__FILE__), __LINE__)
 
-  pNC_VAR => NCFILE%pNC_VAR(NCFILE%iVarID(NC_TIME) )
+  pNC_VAR => NCFILE%pNC_VAR( NCFILE%iVarID(NC_TIME) )
 
   lFound = lFALSE
 
@@ -2401,6 +2407,33 @@ subroutine nf_get_time_units(NCFILE)
   sDateTime = pNC_VAR%pNC_ATT(iIndex)%sAttValue(0)
 
   call chomp(sDateTime, sItem)    !> should be "days"
+
+  select case ( lowercase_fn(sItem) )
+
+    case( "seconds")
+
+      pNC_VAR%rScaleFactor = 1.0_c_double / 86400.0_c_double
+      call echolog( "| *** NON-STANDARD TIME UNITS DETECTED: seconds ***")
+      call echolog( "|   ==> time units will be divided by 86400 to yield values of days.")
+
+    case( "minutes")
+
+      pNC_VAR%rScaleFactor = 1.0_c_double / 1440.0_c_double
+      call echolog( "| *** NON-STANDARD TIME UNITS DETECTED: minutes ***")
+      call echolog( "|   ==> time units will be divided by 1440 to yield values of days.")
+
+    case( "hours")
+
+      pNC_VAR%rScaleFactor = 1.0_c_double / 24.0_c_double
+      call echolog( "| *** NON-STANDARD TIME UNITS DETECTED: hours ***")
+      call echolog( "|   ==> time units will be divided by 24 to yield values of days.")
+
+    case default
+
+      pNC_VAR%rScaleFactor = 1.0_c_double
+
+  end select
+
   call chomp(sDateTime, sItem)    !> should be "since"
 
   call chomp(sDateTime, sItem, "/-")
@@ -2443,6 +2476,8 @@ subroutine nf_get_time_units(NCFILE)
     endif
 
   endif
+
+  !print *, __FILE__, ": ", __LINE__, "   |  ", pNC_VAR%rScaleFactor, pNC_VAR%rAddOffset, pNC_VAR%sVariableName
 
 end subroutine nf_get_time_units
 
@@ -2498,7 +2533,7 @@ subroutine nf_get_scale_and_offset(NCFILE)
   integer (kind=c_int) :: iStat
   character (len=32) :: sBuf
 
-  pNC_VAR => NCFILE%pNC_VAR(NCFILE%iVarID(NC_Z) )
+  pNC_VAR => NCFILE%pNC_VAR( NCFILE%iVarID( NC_Z ) )
 
   lFound = lFALSE
 
@@ -2513,7 +2548,7 @@ subroutine nf_get_scale_and_offset(NCFILE)
 
   if (lFound) then
     sBuf = trim(pNC_VAR%pNC_ATT(iIndex)%sAttValue(0) )
-    read(sBuf,*) NCFILE%rScaleFactor(NC_Z)
+    read(sBuf,*) pNC_VAR%rScaleFactor
   endif
 
   !> Now repeat the process for "add_offset" attribute
@@ -2530,7 +2565,7 @@ subroutine nf_get_scale_and_offset(NCFILE)
 
   if (lFound) then
     sBuf = trim(pNC_VAR%pNC_ATT(iIndex)%sAttValue(0) )
-    read(sBuf,*) NCFILE%rAddOffset(NC_Z)
+    read(sBuf,*) pNC_VAR%rAddOffset
   endif
 
 end subroutine nf_get_scale_and_offset

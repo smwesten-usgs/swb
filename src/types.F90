@@ -2913,7 +2913,7 @@ elemental function real2char(rValue, sFmt)  result(sBuf)
   if (present(sFmt) ) then
     sFormat = "("//sFmt//")"
   else
-    sFormat = "(F16.4)"
+    sFormat = "(G16.4)"
   endif
 
   write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue
@@ -2933,7 +2933,7 @@ elemental function dbl2char(rValue, sFmt)  result(sBuf)
   if (present(sFmt) ) then
     sFormat = "("//sFmt//")"
   else
-    sFormat = "(F16.4)"
+    sFormat = "(G16.4)"
   endif
 
   write(UNIT=sBuf,FMT=TRIM(sFormat) ) rValue

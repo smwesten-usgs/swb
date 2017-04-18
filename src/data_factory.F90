@@ -1119,8 +1119,12 @@ end subroutine set_constant_value_real
 
           ! populate these values with the scale and offset
           ! factor included in the NetCDF attribute data, if any.
-          this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
-          this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
+
+          this%rAddOffset = this%NCFILE%pNC_VAR( NC_Z )%rAddOffset
+          this%rScaleFactor = this%NCFILE%pNC_VAR( NC_Z )%rScaleFactor
+
+          ! this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
+          ! this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
 
           ! Amongst other things, the call to netcdf_open_and_prepare
           ! finds the nearest column and row that correspond to the
