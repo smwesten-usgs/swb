@@ -157,7 +157,7 @@ dev.off()
 
 # reference ET and crop ET are easier to get right; the soil moisture depends on
 # several other factors, so we'll accept a lower NS for it.
-lTEST <- ns_sm > 0.8 & ns_eto > 0.98 & ns_cropet > 0.98 & rpd_irr < 10.
+lTEST <- ns_sm > 0.75 & ns_eto > 0.98 & ns_cropet > 0.98 & rpd_irr < 10.
 
 if( lTEST == TRUE ) {
   cat("PASS")    

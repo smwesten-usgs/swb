@@ -158,6 +158,7 @@ module types
       real (kind=c_float) :: rSoilWaterCap = rZERO        ! Soil water capacity adjusted for LU/LC
       real (kind=c_float) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
       real (kind=c_float) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
+      real (kind=c_float) :: rMaximumRechargeRate = 999.  ! Maximum recharge rate
       real (kind=c_float) :: rKcb = rZERO                 ! crop coefficient for this cell
       real (kind=c_float) :: rTotalAvailableWater = rZERO    ! plant available water
       real (kind=c_float) :: rReadilyAvailableWater = rZERO  ! p * TAW
@@ -824,6 +825,15 @@ module types
   integer (kind=c_int),parameter :: CONFIG_SM_CAPACITY_FM_TABLE = 2
   !> @}
 
+  !> @name Constants: Maximum recharge rate input data format
+  !> Configuration information for maximum recharge rate values
+  !> @{
+  integer (kind=c_int),parameter :: CONFIG_MAX_RECHARGE_NONE      = 0
+  integer (kind=c_int),parameter :: CONFIG_MAX_RECHARGE_CONSTANT  = 1
+  integer (kind=c_int),parameter :: CONFIG_MAX_RECHARGE_TABLE     = 2
+  integer (kind=c_int),parameter :: CONFIG_MAX_RECHARGE_GRID      = 3
+  !> @}
+
   !> @name Constants: Irrigation application method
   !> Configuration information for irrigation application method
   !> @{
@@ -923,6 +933,9 @@ module types
 
       !> Soil moisture calculation option
       integer (kind=c_int) :: iConfigureSM = CONFIG_SM_NONE
+
+      !> Maximum recharge rate configuration
+      integer (kind=c_int) :: iConfigureMaxRecharge = CONFIG_MAX_RECHARGE_TABLE
 
       !> Growing season detemination method
       integer (kind=c_int) :: iConfigureGrowingSeason = CONFIG_GROWING_SEASON_CONTROL_FILE
