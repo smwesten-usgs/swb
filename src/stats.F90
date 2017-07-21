@@ -524,6 +524,10 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
     rAnnual(iSUM,iVarNum) = rAnnual(iSUM,iVarNum) + rDaily(iSUM,iVarNum)
 
     if (.not. int(rDaily(iLENGTH,iVarNum),kind=c_int) == iNumGridCells) then
+
+      print *, rDaily(iLENGTH,iVarNum)
+      print *, iNumGridCells
+
       call Assert(lFALSE, &
       "INTERNAL PROGRAMMING ERROR: call to UpdateAllAccumulators failed; number of calls" &
       // " must be equal to the number of grid cells~variable name: "//STAT_INFO(iVarNum)%sVARIABLE_NAME, &

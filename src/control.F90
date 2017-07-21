@@ -350,7 +350,8 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
-    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET") ) then
+    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET")    &
+        .or. str_compare(sItem, "INCLUDE_INTERCEPTION_AS_PART_OF_ACTUAL_ET")) then
         pConfig%iConfigureActET_Interception = CONFIG_INTERCEPTION_IS_PART_OF_ACTET
 
     else if ( str_compare(sItem,"PRECIPITATION") ) then
