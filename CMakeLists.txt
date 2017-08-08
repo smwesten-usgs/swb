@@ -57,8 +57,44 @@ include( cmake/options_and_targets.cmake )
 # Locate utility programs
 #------------------------------------------------------------------------
 
-set( EXTERNAL_LIBS ${LIB_NETCDF} ${LIB_HDF5_HL} ${LIB_HDF5} ${LIB_Z} ${LIB_SZ} )
-set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} ${LIB_XM} ${LIB_OPENGL32} ${LIB_GDI32} )
+set( EXTERNAL_LIBS ${LIB_NETCDF} ${LIB_HDF5_HL} ${LIB_HDF5} )
+
+if (NOT ${LIB_Z} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_Z} )
+endif()
+
+if (NOT ${LIB_SZ} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_SZ} )
+endif()
+
+set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} )
+
+if (NOT ${LIB_XM} STREQUAL "NOTFOUND" )
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_XM} )
+endif()
+
+if (NOT ${LIB_XT} STREQUAL "NOTFOUND" )
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_XT} )
+endif()
+
+if (NOT ${LIB_OPENGL32} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_OPENGL32} )
+endif()
+
+if (NOT ${LIB_GDI32} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GDI32} )
+endif()
+
+if (NOT ${LIB_CURL} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_CURL} )
+endif()
+
+list( LENGTH LIB_EXTRAS LEN_LIB_EXTRAS )
+
+if ( "${LEN_LIB_EXTRAS}" GREATER "0" )
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_EXTRAS} )
+endif()
+
 set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
 
 link_libraries( ${EXTERNAL_LIBS} )
