@@ -1174,9 +1174,9 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
         ! this simply retrieves the table value for the given landuse, with the amount
         ! zeroed out in the event that interception storage is already maxed out
-        dpPotentialInterception = max( rf_model_GetInterception(pConfig,cel)             &
-                                     - real( cel%rInterceptionStorage, kind=c_double ),  &
-                                       0.0_c_double )
+        dpPotentialInterception = max( rf_model_GetInterception(pConfig,cel), 0.0_c_double )   !  &
+!                                     - real( cel%rInterceptionStorage, kind=c_double ),  &
+!                                       0.0_c_double )
 
         ! save the current snowcover value, create local copy as well
         dpPreviousSnowCover = real(cel%rSnowCover, kind=c_double)

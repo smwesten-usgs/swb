@@ -15,8 +15,8 @@ WATER_CAPACITY CONSTANT 3.0
 INITIAL_SOIL_MOISTURE CONSTANT 100
 INITIAL_SNOW_COVER CONSTANT 0
 RUNOFF C-N DOWNHILL
-ET T-M 43
 DUMP_VARIABLES 1 1
-SM T-M soil-moisture-retention-extended.grd
-SOLVE Coshocton_Climate_1999.txt test_ future_ T T
+ET T-M 43
+SM T-M EQUATIONS
+SOLVE Coshocton_climate_1999.txt test_ future_ T T
 EOJ
