@@ -350,7 +350,8 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
-    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET") ) then
+    elseif ( str_compare(sItem, "INTERCEPTION_IS_PART_OF_ACTUAL_ET")    &
+        .or. str_compare(sItem, "INCLUDE_INTERCEPTION_AS_PART_OF_ACTUAL_ET")) then
         pConfig%iConfigureActET_Interception = CONFIG_INTERCEPTION_IS_PART_OF_ACTET
 
     else if ( str_compare(sItem,"PRECIPITATION") ) then
@@ -1360,6 +1361,33 @@ subroutine control_setModelOptions(sControlFile)
     elseif (sItem == "SOIL_GROUP_SET_MAXIMUM_ALLOWED" ) then
       call DAT(SOILS_GROUP_DATA)%set_valid_maximum(asInt(sRecord))
 
+    else if ( sItem == "MAXIMUM_RECHARGE_RATE" .or. sItem == "MAX_RECHARGE_RATE") then
+      write(UNIT=LU_LOG,FMT=*) "Populating maximum recharge rate grid"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      if ( trim(sOption) == "CONSTANT" ) then
+        pConfig%iConfigureMaxRecharge = CONFIG_MAX_RECHARGE_CONSTANT
+        read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
+        call Assert( iStat == 0, &
+          "Cannot read real data value" )
+        call DAT(MAXIMUM_RECHARGE_RATE_DATA)%initialize(sDescription=trim(sItem), &
+           rConstant=rValue )
+
+      else
+
+        pConfig%iConfigureMaxRecharge = CONFIG_MAX_RECHARGE_GRID
+        call DAT(MAXIMUM_RECHARGE_RATE_DATA)%initialize(sDescription=trim(sItem), &
+          sFileType=trim(sOption), &
+          sFilename=trim(sArgument), &
+          iDataType=DATATYPE_REAL )
+
+      end if
+      flush(UNIT=LU_LOG)
+
+    else if (sItem == "MAXIMUM_RECHARGE_RATE_PROJECTION_DEFINITION") then
+      call DAT(MAXIMUM_RECHARGE_RATE_DATA)%set_PROJ4( trim(sRecord) )
+
 
     else if ( sItem == "LAND_USE_LOOKUP_TABLE" ) then
       write(UNIT=LU_LOG,FMT=*) "Reading land-use lookup table"
@@ -1462,6 +1490,12 @@ subroutine control_setModelOptions(sControlFile)
          "Total water capacity must be in the range" &
          //" from 0 to 17.5 inches [of water].",TRIM(__FILE__),__LINE__)
       flush(UNIT=LU_LOG)
+
+
+
+
+
+
 
     else if ( sItem == "WATER_CAPACITY" .or. sItem == "AVAILABLE_WATER_CAPACITY") then
       write(UNIT=LU_LOG,FMT=*) "Populating available water capacity grid"

@@ -244,7 +244,7 @@ subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
   ! [ LOCALS ]
   real (kind=c_float) :: p
 
-  p = adjust_depletion_fraction_p( pIRRIGATION, cel%rReferenceET0 )
+  p = adjust_depletion_fraction_p( pIRRIGATION, cel%rReferenceET0_adj )
 
   cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
   cel%rReadilyAvailableWater = cel%rTotalAvailableWater * p
@@ -315,7 +315,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
        if ( pGrd%iMask(iCol, iRow) == iINACTIVE_CELL ) cycle
 
-!       if(cel%rReferenceET0 < rNEAR_ZERO) cycle
+!       if(cel%rReferenceET0_adj < rNEAR_ZERO) cycle
        if(cel%rSoilWaterCap <= rNear_ZERO &
             .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) cycle
 
@@ -379,8 +379,8 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
          cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
-         cel%rBareSoilEvap = cel%rReferenceET0 * cel%rKe
-         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * cel%rKs)
+         cel%rBareSoilEvap = cel%rReferenceET0_adj * cel%rKe
+         cel%rCropETc = cel%rReferenceET0_adj * (cel%rKcb * cel%rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_NONSTANDARD ) then
          ! we are using the full FAO56 soil water balance approach, *INCLUDING*
@@ -391,7 +391,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
 
          cel%rBareSoilEvap = rZERO
-         cel%rCropETc = cel%rReferenceET0 * (cel%rKcb * cel%rKs)
+         cel%rCropETc = cel%rReferenceET0_adj * (cel%rKcb * cel%rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_TWO_FACTOR_STANDARD ) then
 
@@ -408,8 +408,8 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          cel%rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, cel%rKr ), &
                    r_few * pIRRIGATION%rKcb_mid )
 
-         cel%rBareSoilEvap = cel%rReferenceET0 * cel%rKe
-         cel%rCropETc = cel%rReferenceET0 * cel%rKcb
+         cel%rBareSoilEvap = cel%rReferenceET0_adj * cel%rKe
+         cel%rCropETc = cel%rReferenceET0_adj * cel%rKcb
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_STANDARD ) then
 
@@ -418,7 +418,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          ! no real calculations required because we're applying the crop coefficient directly
 
          cel%rBareSoilEvap = rZERO
-         cel%rCropETc = cel%rReferenceET0 * cel%rKcb
+         cel%rCropETc = cel%rReferenceET0_adj * cel%rKcb
 
        else
 
@@ -428,6 +428,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        endif
 
        ! "Adjusted" Reference ET is the general term being used in the water balance
+       ! ** redefined here and may already reflect the evaporation of interception water
        cel%rReferenceET0_adj = cel%rCropETc + cel%rBareSoilEvap
 
      enddo

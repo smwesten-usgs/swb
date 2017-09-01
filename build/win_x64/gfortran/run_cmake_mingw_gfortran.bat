@@ -15,7 +15,7 @@ set COMPILER_TRIPLET=x86_64-w64-mingw32
 set MAKE_EXECUTABLE_NAME=mingw32-make.exe
 set Fortran_COMPILER_NAME=gfortran
 set CMAKE_C_COMPILER=gcc
-set R_SCRIPT=C:/Program Files/R/R-3.3.1/bin/Rscript.exe
+set R_SCRIPT=C:/Program Files/R/R-3.4.1/bin/Rscript.exe
 set SWB_EXECUTABLE=d:/DOS/swb.exe
 
 :: explicitly locate each key library

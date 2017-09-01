@@ -165,7 +165,7 @@ module data_factory
 
   end type T_DATA_GRID
 
-  type (T_DATA_GRID), dimension(13), public, target :: DAT
+  type (T_DATA_GRID), dimension(14), public, target :: DAT
   type (T_DATA_GRID), dimension(:), public, target, allocatable :: DAT_EXTRA
 
   integer (kind=c_int), parameter, public :: LANDUSE_DATA = 1
@@ -181,6 +181,7 @@ module data_factory
   integer (kind=c_int), parameter, public :: WIND_VEL_DATA = 11
   integer (kind=c_int), parameter, public :: MASK_DATA = 12
   integer (kind=c_int), parameter, public :: IRRIGATED_LAND_MASK_DATA = 13
+  integer (kind=c_int), parameter, public :: MAXIMUM_RECHARGE_RATE_DATA = 14
 
   integer (kind=c_int), parameter, public :: MISSING_VALUES_ZERO_OUT = 0
   integer (kind=c_int), parameter, public :: MISSING_VALUES_REPLACE_WITH_MEAN = 1

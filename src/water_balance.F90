@@ -56,11 +56,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   real (kind=c_float) :: rNetInfil
   real (kind=c_float) :: rNetInflow
   real (kind=c_float) :: rStreamCapture
-  real (kind=c_float) :: rMAXIMUM_RECHARGE
-  real (kind=c_float) :: rMAXIMUM_INTERCEPTION_STORAGE
-  real (kind=c_float) :: rPotential_Evaporated_Interception
-  real (kind=c_float) :: rPrevious_Interception_Storage
-  real (kind=c_float) :: rFraction_Wet
   real (kind=c_float) :: rSoilMoistureTemp
   real (kind=c_float) :: rMin, rMean, rMax, rSum
   integer (kind=c_int) :: iRowCount
@@ -86,7 +81,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
       cel%rDailyRecharge = rZERO
       cel%rRejectedRecharge = rZERO
-      cel%rActual_ET_interception = rZERO
       cel%rFlowOutOfGrid = rZERO
       rPrevious_Soil_Moisture = rZERO
       rPrecipMinusPotentET = rZERO
@@ -98,7 +92,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       rStreamCapture = rZERO
       cel%rRejectedRecharge = rZERO
       cel%rActual_ET_soil = rZERO
-      cel%rActual_ET_interception = rZERO
 
       rMoistureDeficit = rZERO
       rMoistureSurplus = rZERO
@@ -118,9 +111,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         ! we're dealing with an inactive cell; zero out terms for storage and analysis
 
       else  ! we have an *ACTIVE* cell; proceed
-
-        rMAXIMUM_RECHARGE = pConfig%MAX_RECHARGE(cel%iLandUseIndex, cel%iSoilGroup)
-        rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU(cel%iLandUseIndex)%rMax_Interception_Storage
 
         ! by this point in the daily execution, runoff has been converted to
         ! outflow (flow contributing to a downslope cell) and
@@ -150,31 +140,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
         !! A negative value indicates the amount by which precip
         !! fails to satisfy potential water needs of a vegetation-covered area
 
-    !  o8o                  .                                          .
-    !  `"'                .o8                                        .o8
-    ! oooo  ooo. .oo.   .o888oo  .ooooo.  oo.ooooo.        .oooo.o .o888oo  .ooooo.  oooo d8b  .oooo.    .oooooooo  .ooooo.
-    ! `888  `888P"Y88b    888   d88' `"Y8  888' `88b      d88(  "8   888   d88' `88b `888""8P `P  )88b  888' `88b  d88' `88b
-    !  888   888   888    888   888        888   888      `"Y88b.    888   888   888  888      .oP"888  888   888  888ooo888
-    !  888   888   888    888 . 888   .o8  888   888      o.  )88b   888 . 888   888  888     d8(  888  `88bod8P'  888    .o
-    ! o888o o888o o888o   "888" `Y8bod8P'  888bod8P'      8""888P'   "888" `Y8bod8P' d888b    `Y888""8o `8oooooo.  `Y8bod8P'
-    !                                      888                                                          d"     YD
-    !                                     o888o                                                         "Y88888P'
-
-        if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) then
-
-          if ( cel%rInterceptionStorage > 0.0_c_float ) then
-
-            rPrevious_Interception_Storage = cel%rInterceptionStorage
-            rFraction_Wet = ( cel%rInterceptionStorage / rMAXIMUM_INTERCEPTION_STORAGE )**0.66666667_c_float
-            rPotential_Evaporated_Interception = min( cel%rReferenceET0_adj, rFraction_Wet * cel%rInterceptionStorage )
-            cel%rInterceptionStorage = max( cel%rInterceptionStorage - rPotential_Evaporated_Interception, 0.0_c_float )
-            cel%rActual_ET_interception = max( rPrevious_Interception_Storage - cel%rInterceptionStorage, 0.0_c_float )
-            cel%rReferenceET0_adj = max( cel%rReferenceET0_adj - cel%rActual_ET_interception, 0.0_c_float)
-
-          endif
-
-        endif
-
       !> @NOTE At this point in the calculation, rReferenceET0_adj has been reduced by the amount
       !!       of interception that evaporates, if that option is activated
 
@@ -183,7 +148,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
       !                                           stress-related limitations
       rPrecipMinusPotentET = rNetInfil - cel%rReferenceET0_adj
       !
-
 
       MAIN: if(cel%rSoilWaterCap <= rNear_ZERO &
               .or. cel%iLandUse == pConfig%iOPEN_WATER_LU) then
@@ -414,10 +378,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
           ! if calculated recharge exceeds the estimated Kv, cap at that value
           ! and characterize the rest as "rejected recharge"
-          if(cel%rDailyRecharge > rMAXIMUM_RECHARGE) then
+          if(cel%rDailyRecharge > cel%rMaximumRechargeRate) then
 
-            cel%rRejectedRecharge = cel%rDailyRecharge - rMAXIMUM_RECHARGE
-            cel%rDailyRecharge = rMAXIMUM_RECHARGE
+            cel%rRejectedRecharge = cel%rDailyRecharge - cel%rMaximumRechargeRate
+            cel%rDailyRecharge = cel%rMaximumRechargeRate
 
             if ( pConfig%iConfigureRunoffMode == CONFIG_RUNOFF_NO_ROUTING ) then
 
@@ -540,7 +504,10 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
       endif L0
 
-      cel%rActualET = cel%rActual_ET_soil + cel%rActual_ET_interception
+      ! it only makes sense to add these terms if the soil actual et has been reduced
+      ! to account for evaporation of interception
+      if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) &
+        cel%rActualET = cel%rActual_ET_soil + cel%rActual_ET_interception
 
       ! *** CALL TO OUTPUT/ARCHIVE ROUTINES.... ****
       !  for each grid cell we must make a call to RLE_writeByte if

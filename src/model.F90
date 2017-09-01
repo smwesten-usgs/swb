@@ -224,6 +224,7 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
       ! 3) calculate runoff curve numbers
       call model_InitializeLanduseRelatedParams( pGrd, pConfig )
       call sm_thornthwaite_mather_UpdatePctSM( pGrd )
+      call model_InitializeMaxRecharge(pGrd, pConfig )
 
       if (pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
         write(UNIT=LU_LOG,FMT=*)  "model.F90: reinitializing irrigation table " &
@@ -352,11 +353,15 @@ end if
 
   call model_UpdateGrowingSeason( pGrd, pConfig )
 
-  call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
-
   call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
     pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
     pTS%rWindSpd, pTS%rSunPct )
+
+  call model_ProcessRain(pGrd, pConfig, pConfig%iDayOfYear, pConfig%iMonth)
+
+  ! call model_ProcessET( pGrd, pConfig, pConfig%iDayOfYear, &
+  !   pConfig%iNumDaysInYear, pTS%rRH, pTS%rMinRH, &
+  !   pTS%rWindSpd, pTS%rSunPct )
 
   if(pConfig%iConfigureFAO56 /= CONFIG_FAO56_NONE ) then
     call model_UpdateGrowingDegreeDay( pGrd , pConfig)
@@ -1125,6 +1130,11 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   integer (kind=c_int) :: iRowCount
   real (kind=c_float) ::  rMonthlySnowRunoff
   logical (kind=c_bool) :: lFREEZING
+  real (kind=c_float)   :: rPotential_Evaporated_Interception
+  real (kind=c_float)   :: rPrevious_Interception_Storage
+  real (kind=c_float)   :: rMAXIMUM_INTERCEPTION_STORAGE
+  real (kind=c_float)   :: rFraction_Wet
+
 
   ! [ LOCAL PARAMETERS ]
   real (kind=c_float), parameter :: rMELT_INDEX = 1.5_c_float
@@ -1162,8 +1172,11 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
           cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
         end if
 
-        ! this simply retrieves the table value for the given landuse
-        dpPotentialInterception = rf_model_GetInterception(pConfig,cel)
+        ! this simply retrieves the table value for the given landuse, with the amount
+        ! zeroed out in the event that interception storage is already maxed out
+        dpPotentialInterception = max( rf_model_GetInterception(pConfig,cel), 0.0_c_double )   !  &
+!                                     - real( cel%rInterceptionStorage, kind=c_double ),  &
+!                                       0.0_c_double )
 
         ! save the current snowcover value, create local copy as well
         dpPreviousSnowCover = real(cel%rSnowCover, kind=c_double)
@@ -1195,6 +1208,26 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
         cel%rInterception = real(dpInterception, kind=c_double)
         cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
+
+        rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU( cel%iLandUseIndex )%rMax_Interception_Storage
+
+        if ( cel%rInterceptionStorage > 0.0_c_float ) then
+
+          rPrevious_Interception_Storage = cel%rInterceptionStorage
+          rFraction_Wet = ( cel%rInterceptionStorage / ( rMAXIMUM_INTERCEPTION_STORAGE + 1.0e-6) )**0.66666667_c_float
+          rPotential_Evaporated_Interception = min( cel%rReferenceET0, rFraction_Wet * cel%rInterceptionStorage )
+          cel%rInterceptionStorage = max( cel%rInterceptionStorage - rPotential_Evaporated_Interception, 0.0_c_float )
+          cel%rActual_ET_interception = max( rPrevious_Interception_Storage - cel%rInterceptionStorage, 0.0_c_float )
+            ! modify ReferenceET0_adj if evaporation of interception is considered to decrease reference ET0
+          if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) &
+            cel%rReferenceET0_adj = max( cel%rReferenceET0 - cel%rActual_ET_interception, 0.0_c_float)
+
+        else
+
+          cel%rActual_ET_interception = 0.0_c_float
+          cel%rReferenceET0_adj = cel%rReferenceET0
+
+        endif
 
         ! NOW we're through with INTERCEPTION calculations
         ! Next, we partition between snow and rain
@@ -3133,7 +3166,6 @@ subroutine model_InitializeDataStructures( pGrd, pConfig )
 
   endif
 
-
   if (DAT(IRRIGATED_LAND_MASK_DATA)%iSourceDataType == DATATYPE_NA) then
 
     call DAT(IRRIGATED_LAND_MASK_DATA)%initialize(sDescription="Irrigated land mask data", &
@@ -3389,8 +3421,7 @@ subroutine model_InitializeSM(pGrd, pConfig )
                  trim(__FILE__), __LINE__)
             endif
 
-            cel%rSoilWaterCap = cel%rSoilWaterCapInput * &
-               pConfig%ROOTING_DEPTH(k,cel%iSoilGroup)
+            cel%rSoilWaterCap = cel%rSoilWaterCapInput * pConfig%ROOTING_DEPTH(k,cel%iSoilGroup)
             lMatch=lTRUE
             exit
           end if
@@ -3421,6 +3452,93 @@ subroutine model_InitializeSM(pGrd, pConfig )
 end subroutine model_InitializeSM
 
 !--------------------------------------------------------------------------
+
+subroutine model_InitializeMaxRecharge(pGrd, pConfig )
+
+  type ( T_GENERAL_GRID ),pointer :: pGrd         ! pointer to model grid
+  type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
+    ! model options, flags, and other settings
+
+  ! [ LOCALS ]
+  integer (kind=c_int) :: iCol,iRow,k
+  type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
+  type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
+  logical ( kind=c_bool ) :: lMatch
+
+  if(pConfig%iConfigureMaxRecharge == CONFIG_MAX_RECHARGE_TABLE ) then
+    ! Update the maximum recharge based on land-cover and soil type
+    do iRow=1,pGrd%iNY
+      do iCol=1,pGrd%iNX
+
+        lMatch = lFALSE
+        cel => pGrd%Cells(iCol,iRow)
+
+        if (pGrd%iMask(iCol, iRow) == iINACTIVE_CELL) cycle
+
+        ! loop over all LAND use types...
+        do k=1,size(pConfig%LU,1)
+          pLU => pConfig%LU(k)
+          if ( pLU%iLandUseType == cel%iLandUse ) then
+
+            !> must guard against segfaulting due to illegal values of
+            !> soil type
+            if (cel%iSoilGroup > uBound(pConfig%MAX_RECHARGE,2) &
+                 .or. cel%iSoilGroup < lBound(pConfig%MAX_RECHARGE,2) ) then
+
+              call assert(lFALSE, &
+                 "Soil group value is out of bounds: " &
+                 //"col: "//trim(asCharacter(iCol)) &
+                 //"  row: "//trim(asCharacter(iRow)) &
+                 //"  value: "//trim(asCharacter(cel%iSoilGroup)), &
+                 trim(__FILE__), __LINE__)
+            endif
+
+            cel%rMaximumRechargeRate = pConfig%MAX_RECHARGE(k,cel%iSoilGroup)
+            lMatch=lTRUE
+            exit
+          end if
+        end do
+
+        if(.not. lMATCH) then
+          call Assert(lFALSE,&
+            "Failed to match landuse grid with landuse table during maximum recharge rate initialization~" &
+            //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
+            //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=c_int) ) ) )
+        endif
+      end do
+    end do
+
+  elseif (DAT(MAXIMUM_RECHARGE_RATE_DATA)%iSourceDataType /= DATATYPE_NA) then
+
+    call DAT(MAXIMUM_RECHARGE_RATE_DATA)%getvalues( pGrdBase=pGrd)
+    pGrd%Cells%rMaximumRechargeRate = pGrd%rData
+
+  endif
+
+  ! regardless of source of maximum recharge rate values, we want to summarize the values
+  ! that SWB will be using
+  write(LU_LOG, fmt="(a, f14.3)") "  Minimum maximum recharge rate: ", minval(pGrd%Cells%rMaximumRechargeRate)
+  write(LU_LOG, fmt="(a, f14.3)") "  Maximum maximum recharge rate: ", maxval(pGrd%Cells%rMaximumRechargeRate)
+
+  pGenericGrd_sgl%rData = pGrd%Cells%rMaximumRechargeRate
+
+  where(pGenericGrd_sgl%rData< 0)
+    pGenericGrd_sgl%iMask = iINACTIVE_CELL
+  elsewhere
+    pGenericGrd_sgl%iMask = iACTIVE_CELL
+  endwhere
+
+  call grid_WriteGrid(sFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Maximum_Recharge_Rate" // &
+    "."//trim(pConfig%sOutputFileSuffix), pGrd=pGenericGrd_sgl, iOutputFormat=pConfig%iOutputFormat )
+
+  call make_shaded_contour(pGrd=pGenericGrd_sgl, &
+     sOutputFilename=trim(pConfig%sOutputFilePrefix) // "INPUT_Maximum_Recharge_Rate.png", &
+     sTitleTxt="Maximum Recharge Rate", &
+     sAxisTxt="Maximum Recharge Rate (inches)" )
+
+end subroutine model_InitializeMaxRecharge
+
+
 
 subroutine model_CreateLanduseIndex(pGrd, pConfig )
 
