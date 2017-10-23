@@ -10,36 +10,32 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_VERSION=5.4.0
-export COMPILER_MAJ_VERSION=5
-export COMPILER_TRIPLET=x86_64-apple-darwin15.5.0
+export COMPILER_MAJ_VERSION=7
 export COMPILER_DIR=/usr/local
-
-# identify the versions for key libraries that SWB relies upon
-export HDF5_VERSION=1.8.17
-export NETCDF_VERSION=4.4.1
-export DISLIN_VERSION=10.6.0
-export LIBZ_VERSION=1.2.11
-export LIBSZ_VERSION=2.1
-
-export OPENMOTIF_VERSION=2.3.6
+export DISLIN_VERSION=10
 
 # if locate is finding old library versions, run the following.
 # source https://superuser.com/questions/109590/whats-the-equivalent-of-linuxs-updatedb-command-for-the-mac#109592
 # sudo /usr/libexec/locate.updatedb
 
 # explicitly locate each key library
-export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep $HDF5_VERSION | grep Cellar | grep -v "386" )
-export LIB_HDF5=$( locate libhdf5.a | grep $HDF5_VERSION | grep Cellar | grep -v "386" )
+export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep Cellar | grep -v "386" )
+export LIB_HDF5=$( locate libhdf5.a | grep Cellar | grep -v "386" )
 # prevent locate from glomming onto the i386 version or the miniconda version
-export LIB_Z=$(locate libz.a | grep $LIBZ_VERSION | grep -v "386" | grep Cellar | grep -v "conda" )
-export LIB_SZ=$(locate libsz.a | grep $LIBSZ_VERSION | grep Cellar | grep -v "386" )
-export LIB_NETCDF=$( locate libnetcdf.dylib | grep $NETCDF_VERSION | grep Cellar | grep -v "386" )
-export LIB_DISLIN=$(locate libdislin.$DISLIN_VERSION.dylib | grep -v "386" )
-export LIB_GCC=$(locate libgcc.a | grep $COMPILER_VERSION | grep Cellar | grep -v "386" )
-export LIB_GFORTRAN=$(locate libgfortran.a | grep $COMPILER_VERSION | grep Cellar | grep -v "386" )
+export LIB_Z=$(locate libz.a | grep -v "386" | grep Cellar | grep -v "conda" )
+export LIB_SZ=$(locate libsz.a | grep Cellar | grep -v "386" )
+export LIB_NETCDF=$( locate libnetcdf.dylib | grep Cellar | grep -v "386" )
+export LIB_DISLIN=/usr/local/dislin/libdislin.dylib
 
-export LIB_XM=$(locate libXm.dylib | grep $OPENMOTIF_VERSION | grep -v "386" )
+# DISLIN can be a pain to get running without resorting to modification of the
+# environment variable DYLD_LIBRARY_PATH, which is generally frowned upon.
+# setting up a soft link is one way to avoid this.
+ln -s /usr/local/dislin/libdislin.10.dylib /usr/local/lib/libdislin.10.dylib
+
+export LIB_GCC=$(locate libgcc.a | grep Cellar | grep -v "386" )
+export LIB_GFORTRAN=$(locate libgfortran.a | grep Cellar | grep -v "386" )
+
+export LIB_XM=$(locate libXm.dylib | grep -v "386" )
 
 export DISLIN_MODULE_DIR=$(locate "gf/dislin.mod" | sed -e "s/dislin.mod//g")
 

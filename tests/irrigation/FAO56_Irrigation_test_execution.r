@@ -6,23 +6,23 @@ swb_exe <- myargs[1]
 #setwd("D:\\SMWData\\Source_Code\\swb\\build\\win_x64\\gfortran\\tests\\irrigation")
 
 nash_sutcliffe <- function(cw, swb)  {
-  
+
   numerator <- sum((cw - swb)^2)
   avg <- mean(cw)
   denominator <- sum((cw - avg)^2)
-  
+
   E <- 1.0 - numerator / denominator
-  
+
   return(E)
-  
+
 }
 
 rpd <- function(arg1, arg2) {
-  
+
   res <- abs(arg1 - arg2) / mean(c(arg1,arg2)) * 100
-  
+
   return(res)
-  
+
 }
 
 swb_ctl <- "recharge_single_factor_nonstandard.ctl"
@@ -33,17 +33,17 @@ windows_sys <- length( grep( "mingw", version$os) ) > 0
 
 if ( windows_sys ) {
 # cleanup
-retval <- system2(command="cleanup.bat", 
+retval <- system2(command="cleanup.bat",
                   stderr="stderr.txt",
                   stdout="stdout.txt",
                   wait=TRUE)
 
 } else {
 
-  retval <- system2(command="./cleanup.sh", 
+  retval <- system2(command="cleanup.sh", 
                     stderr="stderr.txt",
                     stdout="stdout.txt",
-                    wait=TRUE)  
+                    wait=TRUE)
 }
 
 retval <- system2(command=swb_exe,
@@ -56,7 +56,7 @@ retval <- system2(command=swb_exe,
 
 pdf(file="FAO56_Irrigation_Test__R_Plots.pdf", width=11, height=8.5)
 
-sm <- read.table("SOIL_MOISTURE_2_2.ssf", 
+sm <- read.table("SOIL_MOISTURE_2_2.ssf",
                  colClasses=c("character","character","character","numeric"))
 
 colnames(sm) <- c("row_col", "date", "time", "value")
@@ -104,7 +104,7 @@ cw_msb$rain_in <- cw_msb$rain_mm / 25.4
 cw_msb$gross_irr_in <- cw_msb$gross_irr_mm / 25.4
 cw_msb$eta_in_day <- cw_msb$eta_mm_day / 25.4
 cw_msb$deficit_in <- cw_msb$deficit_mm / 25.4
-cw_msb$sm <- sm$value[sm$date == as.Date("1990-05-10")] - cw_msb$deficit_in 
+cw_msb$sm <- sm$value[sm$date == as.Date("1990-05-10")] - cw_msb$deficit_in
 
 with(cw_msb, plot(date, gross_irr_in, pch=21, main="GROSS IRRIGATION AMOUNT"))
 with(irr, lines(date, value, col="green"))
@@ -160,8 +160,7 @@ dev.off()
 lTEST <- ns_sm > 0.75 & ns_eto > 0.98 & ns_cropet > 0.98 & rpd_irr < 10.
 
 if( lTEST == TRUE ) {
-  cat("PASS")    
+  cat("PASS")
 } else {
-  cat("FAIL")  
+  cat("FAIL")
 }
-
