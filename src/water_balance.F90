@@ -506,8 +506,11 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
       ! it only makes sense to add these terms if the soil actual et has been reduced
       ! to account for evaporation of interception
-      if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) &
+      if ( pConfig%iConfigureActET_Interception == CONFIG_INTERCEPTION_IS_PART_OF_ACTET ) then
         cel%rActualET = cel%rActual_ET_soil + cel%rActual_ET_interception
+      else
+        cel%rActualET = cel%rActual_ET_soil
+      endif
 
       ! *** CALL TO OUTPUT/ARCHIVE ROUTINES.... ****
       !  for each grid cell we must make a call to RLE_writeByte if
