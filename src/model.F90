@@ -1206,7 +1206,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
             trim(__FILE__), __LINE__)
         endif
 
-        cel%rInterception = real(dpInterception, kind=c_double)
+        cel%rInterception = real(dpInterception, kind=c_float)
         cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
 
         rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU( cel%iLandUseIndex )%rMax_Interception_Storage
@@ -2971,11 +2971,15 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
   ! Default is zero
   rIntRate = rZERO
   if ( cel%iGrowingSeason == iTRUE ) then
-    if ( pLU%rIntercept_GrowingSeason_n < 1.0_c_float )  fTempPrecip = fTempPrecip ** pLU%rIntercept_GrowingSeason_n
-    rIntRate = pLU%rIntercept_GrowingSeason_a + pLU%rIntercept_GrowingSeason_b * fTempPrecip
+
+    rIntRate = pLU%rIntercept_GrowingSeason_a                                                          &
+               + pLU%rIntercept_GrowingSeason_b * fTempPrecip ** pLU%rIntercept_GrowingSeason_n
+
   else
-    if ( pLU%rIntercept_NonGrowingSeason_n < 1.0_c_float )  fTempPrecip = fTempPrecip ** pLU%rIntercept_NonGrowingSeason_n
-    rIntRate = pLU%rIntercept_NonGrowingSeason_a + pLU%rIntercept_NonGrowingSeason_b * fTempPrecip
+
+    rIntRate = pLU%rIntercept_NonGrowingSeason_a                                                       &
+               + pLU%rIntercept_NonGrowingSeason_b * fTempPrecip ** pLU%rIntercept_NonGrowingSeason_n
+
   end if
 
   if (rIntRate < rZero) then

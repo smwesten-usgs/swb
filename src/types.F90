@@ -332,10 +332,10 @@ module types
     real (kind=c_float) :: rIntercept_NonGrowingSeason_b = 0.0_c_float
 
     !> Interception "n" precipitation exponent during growing season
-    real (kind=c_float) :: rIntercept_GrowingSeason_n = 0.0_c_float
+    real (kind=c_float) :: rIntercept_GrowingSeason_n = 1.0_c_float
 
     !> Interception "n" precipitation exponent outside of growing season
-    real (kind=c_float) :: rIntercept_NonGrowingSeason_n = 0.0_c_float
+    real (kind=c_float) :: rIntercept_NonGrowingSeason_n = 1.0_c_float
 
   end type T_LANDUSE_LOOKUP
 

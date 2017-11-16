@@ -693,8 +693,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   + rDaily(iSUM,iIRRIGATION_FROM_GW) &
                   - rDaily(iSUM,iOUTFLOW) &
                   - rDaily(iSUM,iRUNOFF_OUTSIDE) &
-                  - rDaily(iSUM,iREJECTED_RECHARGE) &
-                  - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &
+!                  - rDaily(iSUM,iREJECTED_RECHARGE) &     !! rejected recharge is now added to
+                  - rDaily(iSUM,iCHG_IN_SOIL_MOIST) &      !! outflow term in water_balance.F90
                   - rDaily(iSUM,iACT_ET) &
                   - rDaily(iSUM,iRECHARGE)
 
