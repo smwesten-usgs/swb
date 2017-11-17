@@ -81,7 +81,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
       cel%rDailyRecharge = rZERO
       cel%rRejectedRecharge = rZERO
-      cel%rFlowOutOfGrid = rZERO
       rPrevious_Soil_Moisture = rZERO
       rPrecipMinusPotentET = rZERO
       rMSB_DailyMassBalance = rZERO
@@ -122,7 +121,6 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
                   + cel%rSnowMelt              &
                   + cel%rIrrigationAmount      &
                   + cel%rInFlow                &
-!                  - cel%rRunoff )
                   - cel%rOutFlow               &
                   - cel%rFlowOutOfGrid)
 

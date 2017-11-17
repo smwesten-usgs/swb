@@ -353,10 +353,9 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
               iYear, cel%rSnowmelt)
 
           case(iINTERCEPTION)
-!
-!           ==> STAT_INFO(iINTERCEPTION) is updated at the time
-!               interception is calculated in subroutine model_ProcessRain
-!
+            call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
+              iYear, cel%rInterception)
+
           case(iNET_RAINFALL)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, cel%rNetRainfall)
