@@ -10,34 +10,35 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_MAJ_VERSION=7
+export COMPILER_MAJ_VERSION=8
+export COMPILER_VERSION=8.1.0
 export COMPILER_DIR=/usr/local
-export DISLIN_VERSION=10
+export DISLIN_VERSION=11
 
 # if locate is finding old library versions, run the following.
 # source https://superuser.com/questions/109590/whats-the-equivalent-of-linuxs-updatedb-command-for-the-mac#109592
 # sudo /usr/libexec/locate.updatedb
 
 # explicitly locate each key library
-export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep Cellar | grep -v "386" )
-export LIB_HDF5=$( locate libhdf5.a | grep Cellar | grep -v "386" )
+export LIB_HDF5_HL=$( glocate libhdf5_hl.a | grep Cellar | grep -v "386" )
+export LIB_HDF5=$( glocate libhdf5.a | grep Cellar | grep -v "386" )
 # prevent locate from glomming onto the i386 version or the miniconda version
-export LIB_Z=$(locate libz.a | grep -v "386" | grep Cellar | grep -v "conda" )
-export LIB_SZ=$(locate libsz.a | grep Cellar | grep -v "386" )
-export LIB_NETCDF=$( locate libnetcdf.dylib | grep Cellar | grep -v "386" )
+export LIB_Z=$(glocate libz.a | grep -v "386" | grep Cellar | grep -v "conda" )
+export LIB_SZ=$(glocate libsz.a | grep Cellar | grep -v "386" )
+export LIB_NETCDF=$( glocate libnetcdf.dylib | grep Cellar | grep -v "386" )
 export LIB_DISLIN=/usr/local/dislin/libdislin.dylib
 
 # DISLIN can be a pain to get running without resorting to modification of the
 # environment variable DYLD_LIBRARY_PATH, which is generally frowned upon.
 # setting up a soft link is one way to avoid this.
-ln -s /usr/local/dislin/libdislin.10.dylib /usr/local/lib/libdislin.10.dylib
+ln -s /usr/local/dislin/libdislin.$DISLIN_VERSION.dylib /usr/local/lib/libdislin.$DISLIN_VERSION.dylib
 
-export LIB_GCC=$(locate libgcc.a | grep Cellar | grep -v "386" )
-export LIB_GFORTRAN=$(locate libgfortran.a | grep Cellar | grep -v "386" )
+export LIB_GCC=$(glocate libgcc.a | grep Cellar | grep -v "386" | grep $COMPILER_VERSION)
+export LIB_GFORTRAN=$(glocate libgfortran.a | grep Cellar | grep -v "386" | grep $COMPILER_VERSION )
 
-export LIB_XM=$(locate libXm.dylib | grep -v "386" )
+export LIB_XM=$(glocate libXm.dylib | grep -v "386" | grep Cellar )
 
-export DISLIN_MODULE_DIR=$(locate "gf/dislin.mod" | sed -e "s/dislin.mod//g")
+export DISLIN_MODULE_DIR=$(glocate "gf/dislin.mod" | sed -e "s/dislin.mod//g")
 
 export R_SCRIPT=/usr/local/bin/Rscript
 export SWB_EXECUTABLE=/usr/local/bin/swb
@@ -65,7 +66,7 @@ export OPTION__DEBUG_PRINT="FALSE"
 # define platform and compiler specific compilation flags
 export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fexceptions -ffree-line-length-none"
 #set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
-export CMAKE_Fortran_FLAGS_RELEASE="-O3 -cpp -mtune=native -ffree-line-length-none"
+export CMAKE_Fortran_FLAGS_RELEASE="-O2 -cpp -mtune=native -ffree-line-length-none"
 
 export PATH=/usr/local/bin:/usr/local/lib:$PATH
 

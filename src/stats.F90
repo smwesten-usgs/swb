@@ -668,6 +668,8 @@ subroutine stats_OpenMSBReport()
       // 'Surface Flow Out of Grid,' &
       // 'Rejected Recharge,' &
       // 'Actual Evapotranspiration,' &
+      // 'Actual ET (soil),' &
+      // 'Actual ET (interception),'  &
       // 'Recharge,' &
 #ifdef STREAM_INTERACTIONS
       // 'Stream Capture,' &
@@ -699,7 +701,7 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                   - rDaily(iSUM,iRECHARGE)
 
       write( unit=LU_MSB_REPORT, &
-           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",23(F14.2,","),F14.2)' ) &
+           fmt='(I2.2,",",I2.2,",",I4,",",I2.2,"/",I2.2,"/",I4,",",I3,",",25(F14.2,","),F14.2)' ) &
                          iMonth,iDay,iYear,iMonth,iDay,iYear,iDayOfyear, &
                          SUM(pGrd%Cells(:,:)%rTAvg)/SIZE(pGrd%Cells(:,:)%rTAvg), &
                          SUM(pGrd%Cells(:,:)%rTMin)/SIZE(pGrd%Cells(:,:)%rTMin), &
@@ -723,6 +725,8 @@ subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
                          rDaily(iSUM,iRUNOFF_OUTSIDE)*dpVolConvert, &
                          rDaily(iSUM,iREJECTED_RECHARGE)*dpVolConvert, &
                          rDaily(iSUM,iACT_ET)*dpVolConvert, &
+                         rDaily(iSUM,iACT_ET_SOIL)*dpVolConvert, &
+                         rDaily(iSUM,iACT_ET_INTERCEPTION)*dpVolConvert, &
                          rDaily(iSUM,iRECHARGE)*dpVolConvert, &
                          rDailyMSB*dpVolConvert
 
