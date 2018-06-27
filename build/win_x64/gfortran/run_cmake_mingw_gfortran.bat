@@ -9,14 +9,14 @@ del /S /Q *.txt
 :: set CMAKE-related and build-related variables
 set CMAKEROOT=C:\Program Files (x86)\CMake
 set COMPILER_DIR=C:\MinGW64
-set COMPILER_VERSION=5.4.0
+set COMPILER_VERSION=8.1.0
 set COMPILER_TRIPLET=x86_64-w64-mingw32
 
 set MAKE_EXECUTABLE_NAME=mingw32-make.exe
 set Fortran_COMPILER_NAME=gfortran
 set CMAKE_C_COMPILER=gcc
-set R_SCRIPT=C:/Program Files/R/R-3.4.1/bin/Rscript.exe
-set SWB_EXECUTABLE=d:/DOS/swb.exe
+set R_SCRIPT=C:/Program Files/R/R-3.5.0/bin/Rscript.exe
+set SWB_EXECUTABLE=c:/mingw64/bin/swb.exe
 
 :: explicitly locate each key library
 for /f %%x in ('dir /b /s c:\MinGW64\*libhdf5_hl.a') do call set LIB_HDF5_HL=%%x
@@ -28,8 +28,13 @@ for /f %%x in ('dir /b /s c:\MinGW64\*libdismg.a') do call set LIB_DISLIN=%%x
 ::set LIB_DISLIN=$(locate libdislin.$DISLIN_VERSION.dylib | grep -v "386" )
 for /f %%x in ('dir /b /s c:\MinGW64\*libgcc.a') do call set LIB_GCC=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libgfortran.a') do call set LIB_GFORTRAN=%%x
+
 for /f %%x in ('dir /b /s c:\MinGW64\*libopengl32.a') do call set LIB_OPENGL32=%%x
+for /f %%x in ('dir /b /s c:\MinGW64\*libglu32.a') do call set LIB_GLU32=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libgdi32.a') do call set LIB_GDI32=%%x
+:: for /f %%x in ('dir /b /s c:\MinGW64\*libuser32.a') do call set LIB_USER32=%%x
+:: for /f %%x in ('dir /b /s c:\MinGW64\*libkernel32.a') do call set LIB_KERNEL32=%%x
+:: for /f %%x in ('dir /b /s c:\MinGW64\*libmsvcrt.a') do call set LIB_MSVCRT=%%x
 
 set LIB_HDF5_HL=%LIB_HDF5_HL:\=/%
 set LIB_HDF5=%LIB_HDF5:\=/%
@@ -40,7 +45,11 @@ set LIB_GFORTRAN=%LIB_GFORTRAN:\=/%
 set LIB_Z=%LIB_Z:\=/%
 set LIB_SZ=%LIB_SZ:\=/%
 set LIB_OPENGL32=%LIB_OPENGL32:\=/%
+set LIB_GLU32=%LIB_GLU32:\=/%
 set LIB_GDI32=%LIB_GDI32:\=/%
+:: set LIB_USER32=%LIB_USER32:\=/%
+:: set LIB_KERNEL32=%LIB_KERNEL32:\=/%
+:: set LIB_MSVCRT=%LIB_MSVCRT:\=/%
 
 set DISLIN_MODULE_DIR="include/win_x64/gfortran"
 
@@ -77,12 +86,13 @@ echo %COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% %%1 > make.bat
 set LDFLAGS="-flto"
 set CFLAGS="-DCURL_STATICLIB"
 set CPPFLAGS="DgFortran -DCURL_STATICLIB"
+set LINKER_FLAGS="-static"
 
 set CTEST_OUTPUT_ON_FAILURE=1
 
 :: invoke CMake; add --trace to see copious details re: CMAKE
-for %%f in ( "CodeBlocks - MinGW Makefiles" "MinGW Makefiles" ) do ^
-cmake ..\..\.. -G %%f ^
+
+cmake ..\..\.. -G "MinGW Makefiles" ^
 -DDISLIN_MODULE_DIR=%DISLIN_MODULE_DIR%    ^
 -DCMAKE_Fortran_COMPILER=%Fortran_COMPILER_NAME% ^
 -DCMAKE_C_COMPILER=%CMAKE_C_COMPILER% ^
@@ -97,8 +107,9 @@ cmake ..\..\.. -G %%f ^
 -DLIB_GCC=%LIB_GCC%             ^
 -DLIB_GFORTRAN=%LIB_GFORTRAN%   ^
 -DLIB_OPENGL32=%LIB_OPENGL32%   ^
+-DLIB_GLU32=%LIB_GLU32%         ^
 -DLIB_GDI32=%LIB_GDI32%         ^
--DR_SCRIPT="%R_SCRIPT%"           ^
+-DR_SCRIPT="%R_SCRIPT%"         ^
 -DCMAKE_EXE_LINKER_FLAGS=%LINKER_FLAGS%  ^
 -DSYSTEM_TYPE=%SYSTEM_TYPE%  ^
 -DCMAKE_BUILD_TYPE=%BUILD_TYPE%  ^

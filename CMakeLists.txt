@@ -56,8 +56,11 @@ include( cmake/options_and_targets.cmake )
 #------------------------------------------------------------------------
 # Locate utility programs
 #------------------------------------------------------------------------
+SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+SET(BUILD_SHARED_LIBS OFF)
 
 set( EXTERNAL_LIBS ${LIB_NETCDF} ${LIB_HDF5_HL} ${LIB_HDF5} )
+set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
 
 if (NOT ${LIB_Z} STREQUAL "NOTFOUND")
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_Z} )
@@ -85,6 +88,22 @@ if (NOT ${LIB_GDI32} STREQUAL "NOTFOUND")
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GDI32} )
 endif()
 
+if (NOT ${LIB_GLU32} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GLU32} )
+endif()
+
+if (NOT ${LIB_KERNEL32} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_KERNEL32} )
+endif()
+
+if (NOT ${LIB_USER32} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_USER32} )
+endif()
+
+if (NOT ${LIB_MSVCRT} STREQUAL "NOTFOUND")
+  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_MSVCRT} )
+endif()
+
 if (NOT ${LIB_CURL} STREQUAL "NOTFOUND")
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_CURL} )
 endif()
@@ -94,8 +113,6 @@ list( LENGTH LIB_EXTRAS LEN_LIB_EXTRAS )
 if ( "${LEN_LIB_EXTRAS}" GREATER "0" )
   set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_EXTRAS} )
 endif()
-
-set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
 
 link_libraries( ${EXTERNAL_LIBS} )
 include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} "${PROJECT_SOURCE_DIR}/src/proj4" )
