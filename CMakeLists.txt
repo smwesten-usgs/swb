@@ -44,9 +44,9 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
 set(PACKAGE_NAME "swb")
-set(PACKAGE_STRING "swb 1.2 BETA")
+set(PACKAGE_STRING "swb 1.2")
 set(PACKAGE_TARNAME "swb")
-set(PACKAGE_VERSION "1.2 BETA")
+set(PACKAGE_VERSION "1.2")
 
 cmake_minimum_required(VERSION 2.8)
 
@@ -131,5 +131,6 @@ include( cmake/print_summary.cmake )
 
 enable_testing()
 add_subdirectory(src)
+add_subdirectory(test/unit_tests)
 add_subdirectory(tests/general)
 add_subdirectory(tests/irrigation)

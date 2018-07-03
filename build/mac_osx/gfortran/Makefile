@@ -157,6 +157,32 @@ copy/fast:
 .PHONY : copy/fast
 
 #=============================================================================
+# Target rules for targets named swblib
+
+# Build rule for target.
+swblib: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 swblib
+.PHONY : swblib
+
+# fast build rule for target.
+swblib/fast:
+	$(MAKE) -f src/CMakeFiles/swblib.dir/build.make src/CMakeFiles/swblib.dir/build
+.PHONY : swblib/fast
+
+#=============================================================================
+# Target rules for targets named proj4
+
+# Build rule for target.
+proj4: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 proj4
+.PHONY : proj4
+
+# fast build rule for target.
+proj4/fast:
+	$(MAKE) -f src/CMakeFiles/proj4.dir/build.make src/CMakeFiles/proj4.dir/build
+.PHONY : proj4/fast
+
+#=============================================================================
 # Target rules for targets named swbstats
 
 # Build rule for target.
@@ -182,6 +208,19 @@ swb/fast:
 	$(MAKE) -f src/CMakeFiles/swb.dir/build.make src/CMakeFiles/swb.dir/build
 .PHONY : swb/fast
 
+#=============================================================================
+# Target rules for targets named swbtest
+
+# Build rule for target.
+swbtest: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 swbtest
+.PHONY : swbtest
+
+# fast build rule for target.
+swbtest/fast:
+	$(MAKE) -f test/unit_tests/CMakeFiles/swbtest.dir/build.make test/unit_tests/CMakeFiles/swbtest.dir/build
+.PHONY : swbtest/fast
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -194,8 +233,11 @@ help:
 	@echo "... package_source"
 	@echo "... package"
 	@echo "... copy"
+	@echo "... swblib"
+	@echo "... proj4"
 	@echo "... swbstats"
 	@echo "... swb"
+	@echo "... swbtest"
 .PHONY : help
 
 
