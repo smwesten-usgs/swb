@@ -38,7 +38,7 @@ export LIB_GFORTRAN=$(glocate libgfortran.a | grep Cellar | grep -v "386" | grep
 
 export LIB_XM=$(glocate libXm.dylib | grep -v "386" | grep Cellar )
 
-export DISLIN_MODULE_DIR=$(glocate "gf/dislin.mod" | sed -e "s/dislin.mod//g")
+export DISLIN_MODULE_DIR=$(glocate "mac_osx/gfortran/dislin.mod" | sed -e "s/dislin.mod//g")
 
 export R_SCRIPT=/usr/local/bin/Rscript
 export SWB_EXECUTABLE=/usr/local/bin/swb
