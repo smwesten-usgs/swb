@@ -549,7 +549,7 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   call cpu_time(rEndTime)
   print "(//1x,'SWB run completed in: ',f10.2,' minutes')", &
     (rEndTime - rStartTime) / 60.0_c_float
-  write(unit=LU_LOG,fmt="(//1x,'SWB run completed in: ',f10.2, ' minutes')"), &
+  write(unit=LU_LOG,fmt="(//1x,'SWB run completed in: ',f10.2, ' minutes')")   &
     (rEndTime - rStartTime) / 60.0_c_float
 
 end subroutine model_EndOfRun

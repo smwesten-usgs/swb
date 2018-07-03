@@ -49,6 +49,8 @@ module types
   integer (kind=c_int), parameter :: LU_PEST_INS = 46
   !> @}
 
+  character (len=1)   :: OS_NATIVE_PATH_DELIMITER = "\"
+
   !> @name Constants: General conversion factors and flags
   !> Some useful and common conversion factors, defined here
   !> to ensure consistency throughout the code

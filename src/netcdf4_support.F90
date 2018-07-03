@@ -346,6 +346,9 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
   do
 
+    ! need to get out of here if the first guess is out-of-bounds for our DateTimeValues array
+    if ( iIndex > ubound(NCFILE%rDateTimeValues,1) ) exit
+
     ! determine Julian Date associated with the current date/time value at this index position
     rJD_atIndex = nf_dayvalue_to_julian_day( NCFILE=NCFILE, rDayValue=NCFILE%rDateTimeValues(iIndex) )
 
@@ -386,15 +389,15 @@ function nf_julian_day_to_index_adj( NCFILE, rJulianDay )  result(iStart)
 
   enddo
 
-  if ( .not. lFound ) then
-
-    write(LU_LOG, fmt="('JD (SWB start): ', i10, '   JD (NetCDF file): ', i10)" )  &
-      int( rJulianDay ), int( rJD_atIndex )
-
-    call assert( lTRUE, "Problem finding the index number of the time " &
-    //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
-
-  endif
+  ! if ( .not. lFound ) then
+  !
+  !   write(LU_LOG, fmt="('JD (SWB start): ', i10, '   JD (NetCDF file): ', i10)" )  &
+  !     int( rJulianDay ), int( rJD_atIndex )
+  !
+  !   call assert( lTRUE, "Problem finding the index number of the time " &
+  !   //"variable in NetCDF file "//dquote(NCFILE%sFilename), trim(__FILE__), __LINE__)
+  !
+  ! endif
 
 end function nf_julian_day_to_index_adj
 
@@ -2299,7 +2302,7 @@ function nf_get_first_and_last(NCFILE, iVarIndex)  result(dpValues)
   end select
 
 !print *, __FILE__, ": ", __LINE__, dpValues
-  dpValues = dpValues * pNC_VAR%rScaleFactor + NCFILE%pNC_VAR%rAddOffset
+  dpValues = dpValues * pNC_VAR%rScaleFactor + pNC_VAR%rAddOffset
 !  print *, pNC_VAR%rScaleFactor, pNC_VAR%rAddOffset, pNC_VAR%sVariableName
 !print *, "MODIFIED: ", dpValues
 

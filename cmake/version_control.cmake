@@ -1,4 +1,4 @@
-
+# get the current git branch name
 execute_process(
   COMMAND git rev-parse --abbrev-ref HEAD
   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
@@ -14,8 +14,17 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# Get the total number of commits on this branch
+execute_process(
+  COMMAND git rev-list --count HEAD
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  OUTPUT_VARIABLE GIT_COMMITS_ON_BRANCH
+  OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
 add_definitions("-DGIT_COMMIT_HASH=${GIT_COMMIT_HASH}")
 add_definitions("-DGIT_BRANCH=${GIT_BRANCH}")
+add_definitions("-DGIT_COMMITS_ON_BRANCH=${GIT_COMMITS_ON_BRANCH}")
 
 configure_file(
   ${CMAKE_SOURCE_DIR}/src/version_control.tpl

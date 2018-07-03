@@ -1810,8 +1810,8 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
         //TRIM(STAT_INFO(i)%sVARIABLE_NAME)//" on unit " &
         //TRIM(asCharacter(STAT_INFO(i)%iLU))
 
-      write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(asCharacter(iSTARTDATE_POS))
-      write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(asCharacter(iENDDATE_POS))
+      ! write(unit=LU_LOG,fmt=*) "start date offset: "//TRIM(asCharacter(iSTARTDATE_POS))
+      ! write(unit=LU_LOG,fmt=*) "end date offset: "//TRIM(asCharacter(iENDDATE_POS))
 
       read(UNIT=STAT_INFO(i)%iLU) iNX             ! Number of cells in the x-direction
       read(UNIT=STAT_INFO(i)%iLU) iNY             ! Number of cells in the y-direction

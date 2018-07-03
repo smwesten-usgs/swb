@@ -19,59 +19,84 @@
   character (len=256)             :: sControlFile
   integer (kind=c_int)            :: iNumArgs
   character (len=1024)            :: sCompilerFlags
+  character (len=256)             :: sVersionString
   character (len=256)             :: sCompilerVersion
+  character (len=256)             :: sCompilationDateString
+  character (len=256)             :: sCompilationSystemString
+  character (len=256)             :: sGitHashString
   logical                         :: lExists
-  integer (kind=c_int), parameter :: NUM_REPEAT_CHARS = 35
+  integer (kind=c_int)            :: iCount
+  integer (kind=c_int), parameter :: NUM_REPEAT_CHARS = 36
 
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 
   if(iNumArgs < 1) then
 
-    write(UNIT=*,FMT="(/,a,/)") &
-      "Soil Water Balance Code version "//trim(SWB_VERSION)
-    write(UNIT=*,FMT="(a,/)") "Git branch and commit hash: " &
-      //trim(GIT_BRANCH_STRING)//" ( "//trim( adjustl( GIT_COMMIT_HASH_STRING ) )//" )"
 
-    write(UNIT=*,FMT="(a,/)") "Compiled on "//trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
+    sVersionString = "  Soil Water Balance Code version "//trim( SWB_VERSION )
+    sCompilationDateString   = "    compilation date           : "              &
+                                 //trim(COMPILE_DATE)//" "//trim(COMPILE_TIME)
+    sCompilationSystemString = "    compiled on                : "//trim(SYSTEM_NAME)
+
+    if (     (str_compare(SYSTEM_NAME,"Windows") )                           &
+        .or. (str_compare(SYSTEM_NAME, "Mingw") ) ) then
+      OS_NATIVE_PATH_DELIMITER = "\"
+    else
+      OS_NATIVE_PATH_DELIMITER = "/"
+    endif
+
+    sGitHashString = "    Git branch and commit hash : "                        &
+                          //trim( adjustl(GIT_BRANCH_STRING ) )                 &
+                          //", "//trim( GIT_COMMIT_HASH_STRING )
+
+    iCount = max( max( len_trim( sVersionString ), len_trim( sGitHashString ) ), &
+                  len_trim( sCompilationSystemString) )
+
+    write(unit=*, fmt="(/,a)") repeat("-",iCount + 4)
+    write(UNIT=*,FMT="(a,/)") trim( sVersionString )
+    write(UNIT=*,FMT="(a)") trim( sCompilationDateString )
+    write(UNIT=*,FMT="(a)") trim( sCompilationSystemString )
+    write(UNIT=*,FMT="(a)") trim( sGitHashString )
+    write(unit=*, fmt="(a,/)") repeat("-",iCount + 4)
 
 #ifdef __GFORTRAN__
     sCompilerFlags = COMPILER_OPTIONS()
     sCompilerVersion = COMPILER_VERSION()
-    write(UNIT=*,FMT="(a,/)") "Compiled with: gfortran ("//TRIM(sCompilerVersion)//")"
-    write(UNIT=*,FMT="(a)") "Compiler flags:"
+    write(UNIT=*,FMT="(a,/)") "compiled with: gfortran ("//TRIM(sCompilerVersion)//")"
+    write(UNIT=*,FMT="(a)") "compiler flags:"
     write(UNIT=*,FMT="(a)") repeat("-", NUM_REPEAT_CHARS)
     write(UNIT=*,FMT="(a,/)") TRIM(sCompilerFlags)
 #endif
 
 #ifdef __INTEL_COMPILER
-    write(UNIT=*,FMT="(a)") "Compiled with: Intel Fortran version " &
+    write(UNIT=*,FMT="(a)") "compiled with: Intel Fortran version " &
       //TRIM(int2char(__INTEL_COMPILER))
-      write(UNIT=*,FMT="(a,/)") "Compiler build date:"//TRIM(int2char(__INTEL_COMPILER_BUILD_DATE))
+      write(UNIT=*,FMT="(a,/)") "compiler build date:"//TRIM(int2char(__INTEL_COMPILER_BUILD_DATE))
 #endif
 
 #ifdef __G95__
-    write(UNIT=*,FMT="(a,/)") "Compiled with: G95 minor version " &
+    write(UNIT=*,FMT="(a,/)") "compiled with: G95 minor version " &
       //TRIM(int2char(__G95_MINOR__))
 #endif
 
-    write(UNIT=*,FMT="(a)") "Compilation options:"
-    write(UNIT=*,FMT="(a)") repeat("-", NUM_REPEAT_CHARS)
+    write(UNIT=*,FMT="(a)") "compilation options:"
+    write(UNIT=*,FMT="(t2,a)") repeat("-", NUM_REPEAT_CHARS)
 #ifdef STREAM_INTERACTIONS
-    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS         yes"
+    write(UNIT=*,FMT="(t2,a)") "STREAM_INTERACTIONS         yes"
 #else
-    write(UNIT=*,FMT="(a)") " STREAM_INTERACTIONS          no"
+    write(UNIT=*,FMT="(t2,a)") "STREAM_INTERACTIONS          no"
 #endif
 
 #ifdef STRICT_DATE_CHECKING
-    write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING        yes"
+    write(UNIT=*,FMT="(t2,a)") "STRICT_DATE_CHECKING        yes"
 #else
-    write(UNIT=*,FMT="(a)") " STRICT_DATE_CHECKING         no"
+    write(UNIT=*,FMT="(t2,a)") "STRICT_DATE_CHECKING         no"
 #endif
 
 #ifdef DEBUG_PRINT
-    write(UNIT=*,FMT="(a)") " DEBUG_PRINT                 yes"
+    write(UNIT=*,FMT="(t2,a)") "DEBUG_PRINT                 yes"
 #else
-    write(UNIT=*,FMT="(a)") " DEBUG_PRINT                  no"
+    write(UNIT=*,FMT="(t2,a)") "DEBUG_PRINT                  no"
 #endif
 
     write(UNIT=*,FMT="(/,/,a,/)")    "Usage: swb [control file name]"
