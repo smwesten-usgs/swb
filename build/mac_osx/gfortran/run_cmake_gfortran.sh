@@ -14,6 +14,7 @@ export COMPILER_MAJ_VERSION=8
 export COMPILER_VERSION=8.1.0
 export COMPILER_DIR=/usr/local
 export DISLIN_VERSION=11
+export PYTHON_CMD=~/miniconda3/bin/python
 
 # if locate is finding old library versions, run the following.
 # source https://superuser.com/questions/109590/whats-the-equivalent-of-linuxs-updatedb-command-for-the-mac#109592
@@ -94,6 +95,7 @@ cmake ../../.. -G "Unix Makefiles"                \
 -DLIB_GCC="$LIB_GCC "                             \
 -DLIB_GFORTRAN="$LIB_GFORTRAN "                   \
 -DLIB_XM="$LIB_XM "                               \
+-DPYTHON_CMD="$PYTHON_CMD "                       \
 -DR_SCRIPT="$R_SCRIPT "                           \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS "         \
 -DSYSTEM_TYPE="$SYSTEM_TYPE "                     \

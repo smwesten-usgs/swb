@@ -12,7 +12,10 @@ program tests
 
   call init_fruit
 
-  call run_test_case(test_datetime_basic_dateparse,"test_datetime_basic_dateparse")
+  call run_test_case(test_datetime_basic_dateparse,"datetime: parse with default mm/dd/yyyy date format")
+  call run_test_case(test_datetime_basic_mangled_dateparse,"datetime: parse with default mm/dd/yyyy date format, missing '0' values in month and day")
+  call run_test_case(test_datetime_custom_dateparse,"datetime: parse with custom yyyy-mm-dd date format")
+  call run_test_case(test_datetime_addition,"datetime: add 5 to Julian day and return the correct Gregorian date")
 
   call fruit_summary
   call fruit_finalize

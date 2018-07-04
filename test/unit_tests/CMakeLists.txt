@@ -1,6 +1,6 @@
 
 execute_process(
-  COMMAND python make_test_suite.py
+  COMMAND ${PYTHON_CMD} make_test_suite.py
   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
