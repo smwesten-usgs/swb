@@ -158,15 +158,17 @@ module types
       real (kind=c_float) :: rElevation =rZERO            ! Ground elevation
       real (kind=c_float) :: rSoilWaterCapInput = rZERO   ! Soil water capacity from grid file
       real (kind=c_float) :: rSoilWaterCap = rZERO        ! Soil water capacity adjusted for LU/LC
-      real (kind=c_float) :: rSoilMoisture = rZERO        ! Soil moisture in inches of water
-      real (kind=c_float) :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
+      real (kind=c_double) :: rSoilMoisture = 0.0_c_double ! Soil moisture in inches of water
+      real (kind=c_float)  :: rCurrentRootingDepth = 0.2   ! Current rooting depth for use w FAO56 calculations
       real (kind=c_float) :: rMaximumRechargeRate = 999.  ! Maximum recharge rate
       real (kind=c_float) :: rKcb = rZERO                 ! crop coefficient for this cell
-      real (kind=c_float) :: rTotalAvailableWater = rZERO    ! plant available water
-      real (kind=c_float) :: rReadilyAvailableWater = rZERO  ! p * TAW
-      real (kind=c_float) :: rKs = rONE                      ! plant water stress coefficient
-      real (kind=c_float) :: rKe = rONE                      ! surface evaporation coefficient
-      real (kind=c_float) :: rKr = rONE                      ! evaporation reduction coefficient
+      real (kind=c_double) :: rTotalAvailableWater = 0.0_c_double    ! plant available water
+      real (kind=c_double) :: rReadilyAvailableWater = 0.0_c_double  ! p * TAW
+
+      real (kind=c_double)  :: sm_deficit = rZERO              ! current soil moisture deficit
+      real (kind=c_double)  :: rKs = rONE                      ! plant water stress coefficient
+      real (kind=c_double)  :: rKe = rONE                      ! surface evaporation coefficient
+      real (kind=c_double)  :: rKr = rONE                      ! evaporation reduction coefficient
 
       real (kind=c_float) :: rSoilMoisturePct = rZERO        ! Soil moisture as percentage of water capacity
       real (kind=c_float) :: rSM_AccumPotentWatLoss = rZERO  ! Accumulated potential water loss
@@ -1271,6 +1273,11 @@ module types
     module procedure FtoK_sgl_fn
     module procedure FtoK_dbl_fn
   end interface FtoK
+
+  interface in_to_mm
+    module procedure in_to_mm_float
+    module procedure in_to_mm_double
+  end interface in_to_mm
 
 contains
 
@@ -2558,7 +2565,7 @@ end function count_fields
 !
 ! SOURCE
 
-function in_to_mm(r_in)   result(r_mm)
+function in_to_mm_float(r_in)   result(r_mm)
   ! Converts value in inches to millimeters
   ! [ ARGUMENTS ]
   real (kind=c_float),intent(in) :: r_in
@@ -2567,7 +2574,19 @@ function in_to_mm(r_in)   result(r_mm)
 
   r_mm = r_in * rMM_PER_INCH
 
-end function in_to_mm
+end function in_to_mm_float
+
+
+function in_to_mm_double(r_in)   result(r_mm)
+  ! Converts value in inches to millimeters
+  ! [ ARGUMENTS ]
+  real (kind=c_double),intent(in) :: r_in
+  ! [ RETURN VALUE ]
+  real (kind=c_double) :: r_mm
+
+  r_mm = r_in * real(rMM_PER_INCH, kind=c_double)
+
+end function in_to_mm_double
 
 !--------------------------------------------------------------------------
 !****f* types/mm_to_in

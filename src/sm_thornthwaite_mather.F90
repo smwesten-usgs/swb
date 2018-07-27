@@ -112,9 +112,9 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
           cel%rSoilMoisture = (cel%rSoilMoisturePct/rHUNDRED) * cel%rSoilWaterCap
 
           ! calculate APWL from T-M table
-          cel%rSM_AccumPotentWatLoss = grid_SearchColumn(pGrd=gWLT, &
-                                               rXval=cel%rSoilWaterCap, &
-                                               rZval=cel%rSoilMoisture, &
+          cel%rSM_AccumPotentWatLoss = grid_SearchColumn(pGrd=gWLT,                         &
+                                               rXval=cel%rSoilWaterCap,                     &
+                                               rZval=real(cel%rSoilMoisture, kind=c_float), &
                                                rNoData=-rONE)
 
         elseif ( pConfig%iConfigureSM == CONFIG_SM_TM_EQUATIONS ) then

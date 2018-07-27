@@ -342,13 +342,13 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                 ! look up APWL in T-M tables
                 cel%rSM_AccumPotentWatLoss = &
-                grid_SearchColumn(gWLT,cel%rSoilWaterCap,cel%rSoilMoisture,-rONE)
+                grid_SearchColumn(gWLT,cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=c_float),-rONE)
 
               elseif(pConfig%iConfigureSM == CONFIG_SM_TM_EQUATIONS ) then
 
                 ! detemine APWL from an equation
                 cel%rSM_AccumPotentWatLoss = &
-                sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,REAL(cel%rSoilMoisture, kind=c_double) )
+                sm_thornthwaite_mather_APWL(cel%rSoilWaterCap, cel%rSoilMoisture )
 
               else  ! L1c: we are *NOT* using T-M soil moisture retention tables or equations
 

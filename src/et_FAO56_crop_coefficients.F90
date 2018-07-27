@@ -37,13 +37,13 @@ function adjust_depletion_fraction_p( pIRRIGATION, reference_et0 )   result( p )
 
   type (T_IRRIGATION_LOOKUP),pointer   :: pIRRIGATION  ! pointer to an irrigation table entry
   real (kind=c_float), intent(in)      :: reference_et0
-  real (kind=c_float)                  :: p
+  real (kind=c_double)                 :: p
 
-  p = pIRRIGATION%rDepletionFraction                                       &
-          + 0.04_c_float * ( 5.0_c_float - in_to_mm( reference_et0 ) )
+  p = real(pIRRIGATION%rDepletionFraction, kind=c_double)                                              &
+          + 0.04_c_double * ( 5.0_c_double - in_to_mm( real(reference_et0, kind=c_double) ) )
 
-  p = min( p, 0.8_c_float )
-  p = max( p, 0.1_c_float )
+  p = min( p, 0.8_c_double )
+  p = max( p, 0.1_c_double )
 
 end function adjust_depletion_fraction_p
 
@@ -76,9 +76,8 @@ end function adjust_depletion_fraction_p
   ! now calculate Kcb for the given landuse
   if(iThreshold > (pIRRIGATION%iL_late + iOffset_) ) then
     rKcb = pIRRIGATION%rKcb_min
-
   elseif ( iThreshold > (pIRRIGATION%iL_mid + iOffset_) ) then
-    frac = real(iThreshold - pIRRIGATION%iL_mid, kind=c_double ) &
+    frac = real(iThreshold - pIRRIGATION%iL_mid - iOffset_, kind=c_double ) &
       / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=c_double )
     rKcb =  pIRRIGATION%rKcb_mid * (1_c_double - frac) &
                          + pIRRIGATION%rKcb_end * frac
@@ -87,7 +86,7 @@ end function adjust_depletion_fraction_p
     rKcb = pIRRIGATION%rKcb_mid
 
   elseif ( iThreshold > (pIRRIGATION%iL_ini + iOffset_) ) then
-    frac = real(iThreshold - pIRRIGATION%iL_ini) &
+    frac = real(iThreshold - pIRRIGATION%iL_ini - iOffset_) &
         / real( pIRRIGATION%iL_dev - pIRRIGATION%iL_ini )
     rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
                            + pIRRIGATION%rKcb_mid * frac
@@ -106,12 +105,12 @@ end function et_kc_UpdateCropCoefficient
 function et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDeficit)  result(rKr)
 
   ! [ ARGUMENTS ]
-  real (kind=c_float) :: rTEW
-  real (kind=c_float) :: rREW
-  real (kind=c_float) :: rDeficit
+  real (kind=c_double)  :: rTEW
+  real (kind=c_double)  :: rREW
+  real (kind=c_double)  :: rDeficit
 
   ! [ RESULT ]
-  real (kind=c_float) :: rKr
+  real (kind=c_double) :: rKr
 
   if ( rDeficit <= rREW ) then
 
@@ -144,29 +143,30 @@ function et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, rKcb )   result (r
   real (kind=c_float) :: r_few
 
   ! [ LOCALS ]
-  real (kind=c_float) :: r_fc
-  real (kind=c_float) :: rNumerator
-  real (kind=c_float) :: rDenominator
-  real (kind=c_float) :: rExponent
+  real (kind=c_double) :: r_fc
+  real (kind=c_double) :: rNumerator
+  real (kind=c_double) :: rDenominator
+  real (kind=c_double) :: rExponent
 
 !  rNumerator = pIRRIGATION%rKcb - pIRRIGATION%rKcb_min
 !
 ! BUG? if Kcb is tracked for each cell, the value contained in the irrigation table is undefined(?)
 !
-  rNumerator = rKcb - pIRRIGATION%rKcb_min
-  rDenominator = pIRRIGATION%rKcb_mid - pIRRIGATION%rKcb_min
-  rExponent = 1.0 + 0.5 * pIRRIGATION%rMeanPlantHeight * rM_PER_FOOT
+  rNumerator = real(rKcb, kind=c_double) - real(pIRRIGATION%rKcb_min, kind=c_double)
+  rDenominator = real(pIRRIGATION%rKcb_mid, kind=c_double)                 &
+                  - real(pIRRIGATION%rKcb_min, kind=c_double)
+  rExponent = 1.0_c_double + 0.5_c_double * pIRRIGATION%rMeanPlantHeight * rM_PER_FOOT
 
   if(rDenominator > rNEAR_ZERO) then
     r_fc = (rNumerator / rDenominator) ** rExponent
   else
-    r_fc = 1.0
+    r_fc = 1.0_c_double
   endif
 
-  r_few = 1.0 - r_fc
+  r_few = 1.0_c_double - r_fc
 
-  if (r_few < 0.) r_few = 0.0
-  if (r_few > 1.) r_few = 1.0
+  if (r_few < 0.) r_few = 0.0_c_double
+  if (r_few > 1.) r_few = 1.0_c_double
 
 end function et_kc_CalcFractionExposedAndWettedSoil
 
@@ -229,13 +229,13 @@ function et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, rKcb, rKr )     r
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  real (kind=c_float) :: rKcb
-  real (kind=c_float) :: rKr
+  real (kind=c_float)  :: rKcb
+  real (kind=c_double) :: rKr
 
   ! [ RESULT ]
-  real (kind=c_float) :: rKe
+  real (kind=c_double) :: rKe
 
-  rKe = rKr * ( pIRRIGATION%rKcb_max - rKcb )
+  rKe = rKr * ( real(pIRRIGATION%rKcb_max, kind=c_double) - real(rKcb, kind=c_double) )
 
 end function et_kc_CalcSurfaceEvaporationCoefficient
 
@@ -250,11 +250,12 @@ subroutine et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
   type (T_CELL), pointer :: cel
 
   ! [ LOCALS ]
-  real (kind=c_float) :: p
+  real (kind=c_double) :: p
 
   p = adjust_depletion_fraction_p( pIRRIGATION, cel%rReferenceET0_adj )
 
-  cel%rTotalAvailableWater = cel%rCurrentRootingDepth * cel%rSoilWaterCapInput
+  cel%rTotalAvailableWater = real(cel%rCurrentRootingDepth, kind=c_double)      &
+                              * real(cel%rSoilWaterCapInput, kind=c_double)
   cel%rReadilyAvailableWater = cel%rTotalAvailableWater * p
 
 end subroutine et_kc_CalcTotalAvailableWater
@@ -269,11 +270,11 @@ function et_kc_CalcWaterStressCoefficient( pIRRIGATION, &
 
   ! [ ARGUMENTS ]
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  real (kind=c_float) :: rDeficit
-  type (T_CELL), pointer :: cel
+  real (kind=c_double)               :: rDeficit
+  type (T_CELL), pointer             :: cel
 
   ! [ RESULT ]
-  real (kind=c_float) :: rKs
+  real (kind=c_double) :: rKs
 
   if (rDeficit < cel%rReadilyAvailableWater) then
 
@@ -303,11 +304,9 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
   integer (kind=c_int)  :: iRow, iCol
   type (T_CELL),pointer :: cel
-  real (kind=c_float)   :: rTEW          ! Total evaporable water
-  real (kind=c_float)   :: rREW          ! Readily evaporable water
-  real (kind=c_float)   :: rDeficit      ! Soil moisture deficit
-  real (kind=c_float)   :: rDepthOfEvap  ! Depth of evaporation
-  real (kind=c_float)   :: r_few         ! Fraction exposed and wetted soil
+  real (kind=c_double)  :: rTEW          ! Total evaporable water
+  real (kind=c_double)  :: rREW          ! Readily evaporable water
+  real (kind=c_double)  :: r_few         ! Fraction exposed and wetted soil
   real (kind=c_float)   :: rZr_max       ! Maximum rooting depth
   integer (kind=c_int)  :: iOffset
 
@@ -345,6 +344,8 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
        rZr_max = pConfig%ROOTING_DEPTH(cel%iLandUseIndex,cel%iSoilGroup)
 
+       cel%sm_deficit = MAX(0.0_c_double, real(cel%rSoilWaterCap, kind=c_double) - cel%rSoilMoisture)
+
        ! update crop coefficient and current rooting depth
        if(pIRRIGATION%lUnitsAreDOY) then
 
@@ -360,20 +361,10 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        rREW = pConfig%READILY_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
        rTEW = pConfig%TOTAL_EVAPORABLE_WATER(cel%iLandUseIndex, cel%iSoilGroup)
 
-       ! Deficit is defined in the sense of Thornthwaite and Mather
-!       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
-
        ! following call updates the total available water (TAW) and
        ! readily available water (RAW) on the basis of the current
        ! plant root depth
        call et_kc_CalcTotalAvailableWater( pIRRIGATION, cel)
-
-       ! Deficit is defined in the sense of Thornthwaite and Mather, and
-       ! is calculated relative to the CURRENT ROOTING DEPTH
-       ! ********* ????????
-!       rDeficit = MAX(rZERO, cel%rTotalAvailableWater - cel%rSoilMoisture)
-       rDeficit = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
-       rDepthOfEvap = MAX(rZERO, cel%rSoilWaterCap - cel%rSoilMoisture)
 
        ! "STANDARD" vs "NONSTANDARD": in the FAO56 publication the term
        ! "STANDARD" is used to refer to crop ET requirements under
@@ -386,14 +377,14 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          ! the adjustments for nonstandard growing conditions (e.g. plant
          ! stress and resulting decrease in ET during dry conditions).
 
-         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDepthOfEvap)
+         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, cel%sm_deficit)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
          cel%rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, cel%rKr ), &
                    r_few * pIRRIGATION%rKcb_mid )
 
-         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, cel%sm_deficit, cel)
 
-         cel%rBareSoilEvap = cel%rReferenceET0_adj * cel%rKe
+         cel%rBareSoilEvap = real(cel%rReferenceET0_adj, kind=c_double) * cel%rKe
          cel%rCropETc = cel%rReferenceET0_adj * (cel%rKcb * cel%rKs)
 
        elseif ( pConfig%iConfigureFAO56 == CONFIG_FAO56_ONE_FACTOR_NONSTANDARD ) then
@@ -402,7 +393,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
          ! stress and resulting decrease in ET during dry conditions).
          ! *EXCLUDING* explicit calculation of BareSoilEvap
 
-         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, rDeficit, cel)
+         cel%rKs = et_kc_CalcWaterStressCoefficient( pIRRIGATION, cel%sm_deficit, cel)
 
          cel%rBareSoilEvap = rZERO
          cel%rCropETc = cel%rReferenceET0_adj * (cel%rKcb * cel%rKs)
@@ -417,7 +408,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
 
          ! NO reductions in Kc due to water availability
 
-         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, rDepthOfEvap)
+         cel%rKr = et_kc_CalcEvaporationReductionCoefficient(rTEW, rREW, cel%sm_deficit)
          r_few = et_kc_CalcFractionExposedAndWettedSoil( pIRRIGATION, cel%rKcb )
          cel%rKe = min(et_kc_CalcSurfaceEvaporationCoefficient( pIRRIGATION, cel%rKcb, cel%rKr ), &
                    r_few * pIRRIGATION%rKcb_mid )

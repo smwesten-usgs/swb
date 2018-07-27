@@ -206,7 +206,7 @@ subroutine output_to_SWB_binary(pGrd, pConfig, cel, iRow, iCol, iTime, &
 
         case(iSOIL_MOISTURE)
           call RLE_writeByte(STAT_INFO(iSOIL_MOISTURE)%iLU, &
-            cel%rSoilMoisture, pConfig%iRLE_MULT, &
+            real(cel%rSoilMoisture, kind=c_float), pConfig%iRLE_MULT, &
             pConfig%rRLE_OFFSET, pGrd%iNumGridCells, iSOIL_MOISTURE)
 
         case(iCHG_IN_SOIL_MOIST)
@@ -418,7 +418,7 @@ subroutine output_to_SSF(pGrd, pConfig, cel, iRow, iCol, &
               iYear, cel%rSM_AccumPotentWatLoss)
           case(iSOIL_MOISTURE)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
-              iYear, cel%rSoilMoisture)
+              iYear, real(cel%rSoilMoisture, kind=c_float))
           case(iCHG_IN_SOIL_MOIST)
             call stats_write_to_SSF_file(pConfig, iIndex, iMonth, iDay, &
               iYear, rChangeInStorage)
