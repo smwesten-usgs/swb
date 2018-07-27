@@ -48,43 +48,50 @@ end function adjust_depletion_fraction_p
 
 !--------------------------------------------------------------------------------------------------
 
- !> Update the current basal crop corfficient (Kcb) for
+ !> Update the current basal crop coefficient (Kcb) for
  !! a SINGLE irrigation table entry
  !!
  !! @param[inout] pIRRIGATION pointer to a single line of information in the irrigation file.
  !! @param[in] iThreshold either the current day of year or the number of growing degree days.
  !! @retval rKcb Basal crop coefficient given the irrigation table entries and the current threshold values.
- function et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold)  result(rKcb)
+ function et_kc_UpdateCropCoefficient(pIRRIGATION, iThreshold, iOffset)  result(rKcb)
 
-  type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
-  integer (kind=c_int), intent(in)   :: iThreshold
-  real (kind=c_float)                :: rKcb
+  type (T_IRRIGATION_LOOKUP),pointer           :: pIRRIGATION  ! pointer to an irrigation table entry
+  integer (kind=c_int), intent(in)             :: iThreshold
+  integer (kind=c_int), intent(in), optional   :: iOffset
+  real (kind=c_float)                          :: rKcb
 
   ! [ LOCALS ]
   integer (kind=c_int) :: i, j
-
+  integer (kind=c_int) :: iOffset_
   real (kind=c_double) :: frac
 
+  if ( present( iOffset) ) then
+    iOffset_ = iOffset
+  else
+    iOffset_ = 0_c_int
+  endif
+
   ! now calculate Kcb for the given landuse
-  if(iThreshold > pIRRIGATION%iL_late) then
+  if(iThreshold > (pIRRIGATION%iL_late + iOffset_) ) then
     rKcb = pIRRIGATION%rKcb_min
 
-  elseif ( iThreshold > pIRRIGATION%iL_mid ) then
+  elseif ( iThreshold > (pIRRIGATION%iL_mid + iOffset_) ) then
     frac = real(iThreshold - pIRRIGATION%iL_mid, kind=c_double ) &
       / real( pIRRIGATION%iL_late - pIRRIGATION%iL_mid, kind=c_double )
     rKcb =  pIRRIGATION%rKcb_mid * (1_c_double - frac) &
                          + pIRRIGATION%rKcb_end * frac
 
-  elseif ( iThreshold > pIRRIGATION%iL_dev ) then
+  elseif ( iThreshold > (pIRRIGATION%iL_dev + iOffset_) ) then
     rKcb = pIRRIGATION%rKcb_mid
 
-  elseif ( iThreshold > pIRRIGATION%iL_ini ) then
+  elseif ( iThreshold > (pIRRIGATION%iL_ini + iOffset_) ) then
     frac = real(iThreshold - pIRRIGATION%iL_ini) &
         / real( pIRRIGATION%iL_dev - pIRRIGATION%iL_ini )
     rKcb = pIRRIGATION%rKcb_ini * (1_c_double - frac) &
                            + pIRRIGATION%rKcb_mid * frac
 
-  elseif ( iThreshold >= pIRRIGATION%iL_plant ) then
+  elseif ( iThreshold >= (pIRRIGATION%iL_plant + iOffset_) ) then
     rKcb = pIRRIGATION%rKcb_ini
   else
     rKcb = pIRRIGATION%rKcb_min
@@ -291,21 +298,27 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iRow, iCol
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
+
+  integer (kind=c_int)  :: iRow, iCol
   type (T_CELL),pointer :: cel
-  real (kind=c_float) :: rTEW          ! Total evaporable water
-  real (kind=c_float) :: rREW          ! Readily evaporable water
-  real (kind=c_float) :: rDeficit      ! Soil moisture deficit
-  real (kind=c_float) :: rDepthOfEvap  ! Depth of evaporation
-  real (kind=c_float) :: r_few         ! Fraction exposed and wetted soil
-  real (kind=c_float) :: rZr_max       ! Maximum rooting depth
+  real (kind=c_float)   :: rTEW          ! Total evaporable water
+  real (kind=c_float)   :: rREW          ! Readily evaporable water
+  real (kind=c_float)   :: rDeficit      ! Soil moisture deficit
+  real (kind=c_float)   :: rDepthOfEvap  ! Depth of evaporation
+  real (kind=c_float)   :: r_few         ! Fraction exposed and wetted soil
+  real (kind=c_float)   :: rZr_max       ! Maximum rooting depth
+  integer (kind=c_int)  :: iOffset
 
   integer (kind=c_int) :: iLBound
   integer (kind=c_int) :: iUBound
 
   iLBound = lbound( pConfig%IRRIGATION, 1 )
   iUBound = ubound( pConfig%IRRIGATION, 1 )
+  iOffset = 0_c_int
+
+  ! kludge to ensure that the month/day thresholds are updated during leap year
+  if (MODEL_SIM%lIsLeapYear .and. (MODEL_SIM%iMonth > 2) )  iOffset = 1
 
    ! iterate over cells; update evaporation coefficients,
    ! calculate Kc, and apply to ET0
@@ -334,7 +347,7 @@ subroutine et_kc_ApplyCropCoefficients(pGrd, pConfig)
        ! update crop coefficient and current rooting depth
        if(pIRRIGATION%lUnitsAreDOY) then
 
-         cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear)
+         cel%rKcb = et_kc_UpdateCropCoefficient(pIRRIGATION, pConfig%iDayOfYear, iOffset)
 
        else
 
