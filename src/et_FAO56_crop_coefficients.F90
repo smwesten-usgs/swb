@@ -9,6 +9,7 @@
 module et_crop_coefficients
 
   use iso_c_binding, only : c_short, c_int, c_float, c_double
+  use datetime, only      : MODEL_SIM
   use types
   use sm_thornthwaite_mather
   implicit none
