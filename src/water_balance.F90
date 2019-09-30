@@ -39,26 +39,26 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
-  integer (kind=c_int), intent(in) :: iDayOfYear
-  integer (kind=c_int), intent(in) :: iDay
-  integer (kind=c_int), intent(in) :: iMonth
-  integer (kind=c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iDayOfYear
+  integer (c_int), intent(in) :: iDay
+  integer (c_int), intent(in) :: iMonth
+  integer (c_int), intent(in) :: iYear
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,k,l,iTgt_Col,iTgt_Row
-  integer (kind=c_int) :: iNumGridCells
-  integer (kind=c_int) :: iTime
-  real (kind=c_float) :: rPrevious_Soil_Moisture
-  real (kind=c_float) :: rPrecipMinusPotentET
-  real (kind=c_float) :: rMSB_DailyMassBalance
-  real (kind=c_float) :: rMoistureDeficit
-  real (kind=c_float) :: rMoistureSurplus
-  real (kind=c_float) :: rChangeInStorage
-  real (kind=c_float) :: rNetInfil
-  real (kind=c_float) :: rNetInflow
-  real (kind=c_float) :: rStreamCapture
-  real (kind=c_float) :: rSoilMoistureTemp
-  real (kind=c_float) :: rMin, rMean, rMax, rSum
-  integer (kind=c_int) :: iRowCount
+  integer (c_int) :: iCol,iRow,k,l,iTgt_Col,iTgt_Row
+  integer (c_int) :: iNumGridCells
+  integer (c_int) :: iTime
+  real (c_float) :: rPrevious_Soil_Moisture
+  real (c_float) :: rPrecipMinusPotentET
+  real (c_float) :: rMSB_DailyMassBalance
+  real (c_float) :: rMoistureDeficit
+  real (c_float) :: rMoistureSurplus
+  real (c_float) :: rChangeInStorage
+  real (c_float) :: rNetInfil
+  real (c_float) :: rNetInflow
+  real (c_float) :: rStreamCapture
+  real (c_float) :: rSoilMoistureTemp
+  real (c_float) :: rMin, rMean, rMax, rSum
+  integer (c_int) :: iRowCount
 
   type ( T_CELL ),pointer :: cel
   character (len=256) :: sBuf
@@ -342,7 +342,7 @@ subroutine calculate_water_balance ( pGrd, pConfig, &
 
                 ! look up APWL in T-M tables
                 cel%rSM_AccumPotentWatLoss = &
-                grid_SearchColumn(gWLT,cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=c_float),-rONE)
+                grid_SearchColumn(gWLT,cel%rSoilWaterCap,real(cel%rSoilMoisture, c_float),-rONE)
 
               elseif(pConfig%iConfigureSM == CONFIG_SM_TM_EQUATIONS ) then
 

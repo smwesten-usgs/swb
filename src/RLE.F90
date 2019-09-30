@@ -39,22 +39,22 @@ subroutine RLE_writeByte(iLU, rValue, iRLE_MULT, rRLE_OFFSET, &
                     iByteTotal, iVarNum)
 
   ![ARGUMENTS]
-  integer(kind=c_int), intent(in) :: iLU
-  real(kind=c_float),intent(in) :: rValue
-  integer(kind=c_int),intent(in) :: iRLE_MULT
-  real(kind=c_float),intent(in) :: rRLE_OFFSET
-  integer(kind=c_int), intent(in) :: iByteTotal      ! total # of bytes in
+  integer(c_int), intent(in) :: iLU
+  real(c_float),intent(in) :: rValue
+  integer(c_int),intent(in) :: iRLE_MULT
+  real(c_float),intent(in) :: rRLE_OFFSET
+  integer(c_int), intent(in) :: iByteTotal      ! total # of bytes in
                                                      ! original datastream
-  integer(kind=c_int), intent(in) :: iVarNum
+  integer(c_int), intent(in) :: iVarNum
 
   ![LOCALS]
-  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iRunCount
-  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iByteCount = 0
+  integer(c_int),dimension(1:iNUM_VARIABLES), save :: iRunCount
+  integer(c_int),dimension(1:iNUM_VARIABLES), save :: iByteCount = 0
                                                 ! total # of bytes fed into
                                                 ! RLE_writeByte so far
-  integer(kind=c_int) :: i
-  integer(kind=c_int),dimension(1:iNUM_VARIABLES), save :: iPrevious, iCurr
-  logical(kind=c_bool),dimension(1:iNUM_VARIABLES),save :: lRun
+  integer(c_int) :: i
+  integer(c_int),dimension(1:iNUM_VARIABLES), save :: iPrevious, iCurr
+  logical(c_bool),dimension(1:iNUM_VARIABLES),save :: lRun
 
   ! iByteCount is incremented *EVERY* time this subroutine is called.
   ! This subroutine should be called a number of times that EXACTLY
@@ -172,21 +172,21 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
                         iByteTotal,lEOF)
 
   ![ARGUMENTS]
-  integer(kind=c_int), intent(in) :: iLU
-  integer(kind=c_int),intent(in) :: iRLE_MULT
-  real(kind=c_float),intent(in) :: rRLE_OFFSET
-  real(kind=c_float),dimension(iByteTotal), intent(out) :: rValue
-  integer(kind=c_int), intent(in) :: iByteTotal      ! total # of bytes in
+  integer(c_int), intent(in) :: iLU
+  integer(c_int),intent(in) :: iRLE_MULT
+  real(c_float),intent(in) :: rRLE_OFFSET
+  real(c_float),dimension(iByteTotal), intent(out) :: rValue
+  integer(c_int), intent(in) :: iByteTotal      ! total # of bytes in
                                                            ! original datastream
-  logical(kind=c_bool),intent(out) :: lEOF
+  logical(c_bool),intent(out) :: lEOF
 
   ![LOCALS]
-  integer(kind=c_int), save :: iByteCount   ! total # of bytes reconstituted
+  integer(c_int), save :: iByteCount   ! total # of bytes reconstituted
                                                   ! by RLE_readByte so far
 
-  integer(kind=c_int) iCurr, i, iRepeat, iStat
-  integer(kind=c_int), save :: iPrevious
-  logical(kind=c_bool),save :: lRun
+  integer(c_int) iCurr, i, iRepeat, iStat
+  integer(c_int), save :: iPrevious
+  logical(c_bool),save :: lRun
   lEOF = lFALSE
 
 
@@ -206,7 +206,7 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
     read(iLU,iostat=iStat) iCurr  ! read in a byte of data
     call Assert(iStat == 0, &
        "Error reading input file: module RLE, subroutine RLE_readByte")
-    call Assert(LOGICAL(iCurr>=-HUGE(iCurr),kind=c_bool), &
+    call Assert(LOGICAL(iCurr>=-HUGE(iCurr),c_bool), &
         "Integer overflow; iLU= "//TRIM(int2char(iLU)) &
         //"; iCurr= "//TRIM(int2char(iCurr)) &
           //". Use a smaller value for RLE_MULTIPLIER", &
@@ -217,11 +217,11 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	  lRun = lFALSE
 
-	  call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
+	  call Assert(LOGICAL( iByteCount <=iByteTotal, c_bool), &
         "iByteCount exceeds iByteTotal: module RLE, subroutine RLE_readByte")
 
-      rValue(iByteCount) = REAL(iPrevious, kind=c_float) &
-                           / REAL(iRLE_MULT, kind=c_float) &
+      rValue(iByteCount) = REAL(iPrevious, c_float) &
+                           / REAL(iRLE_MULT, c_float) &
                            - rRLE_OFFSET
 
 !      write(UNIT=LU_LOG,FMT=*) iByteCount,":  iPrev: ",iPrevious,"  iCurr: ", iCurr, "  rValue: ", &
@@ -233,17 +233,17 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 
 	  ! assign value of iCurr
       iByteCount = iByteCount + 1
-      call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
+      call Assert(LOGICAL( iByteCount <=iByteTotal, c_bool), &
         "iByteCount exceeds iByteTotal", &
                 trim(__FILE__),__LINE__)
 
-!      rValue(iByteCount) = REAL(iCurr, kind=c_float) / REAL(iRLE_MULT, kind=c_float)
+!      rValue(iByteCount) = REAL(iCurr, c_float) / REAL(iRLE_MULT, c_float)
 
-      rValue(iByteCount) = REAL(iCurr, kind=c_float) &
-                           / REAL(iRLE_MULT, kind=c_float) &
+      rValue(iByteCount) = REAL(iCurr, c_float) &
+                           / REAL(iRLE_MULT, c_float) &
                            - rRLE_OFFSET
 
-      call Assert(LOGICAL(iCurr>=-iEOF,kind=c_bool), &
+      call Assert(LOGICAL(iCurr>=-iEOF,c_bool), &
         "Read beyond end of file marker", &
                 trim(__FILE__),__LINE__)
 
@@ -257,13 +257,13 @@ subroutine RLE_readByte(iLU,iRLE_MULT, rRLE_OFFSET, rValue, &
 	  ! if iRepeat is ZERO, loop will *NOT* execute
       do i=iRepeat,1,-1
         iByteCount = iByteCount + 1
-	    call Assert(LOGICAL( iByteCount <=iByteTotal, kind=c_bool), &
+	    call Assert(LOGICAL( iByteCount <=iByteTotal, c_bool), &
           "iByteCount exceeds iByteTotal: module RLE, subroutine RLE_readByte", &
                 trim(__FILE__),__LINE__)
-!        rValue(iByteCount) = REAL(iCurr, kind=c_float) / REAL(iRLE_MULT, kind=c_float)
+!        rValue(iByteCount) = REAL(iCurr, c_float) / REAL(iRLE_MULT, c_float)
 
-        rValue(iByteCount) = REAL(iCurr, kind=c_float) &
-                           / REAL(iRLE_MULT, kind=c_float) &
+        rValue(iByteCount) = REAL(iCurr, c_float) &
+                           / REAL(iRLE_MULT, c_float) &
                            - rRLE_OFFSET
 
         call Assert( iCurr >= -iEOF, &

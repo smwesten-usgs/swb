@@ -38,7 +38,7 @@ subroutine control_setModelOptions(sControlFile)
 !  type (T_GENERAL_GRID),pointer :: pSoilGroupGrid    ! Soil HSG input grid
 !  type (T_GENERAL_GRID),pointer :: pFlowDirGrid      ! Flow direction input grid
 !  type (T_GENERAL_GRID),pointer :: pSoilAWCGrid      ! Available Water Capacity input grid
-  real (kind=c_float), dimension(:,:), pointer :: pArray_sgl
+  real (c_float), dimension(:,:), pointer :: pArray_sgl
 
 
   type (T_GRAPH_CONFIGURATION), dimension(:),pointer :: pGraph
@@ -49,11 +49,11 @@ subroutine control_setModelOptions(sControlFile)
   type (T_TIME_SERIES_FILE), pointer :: pTSt
 
   type (T_SSF_FILES), dimension(:), pointer :: pSSF   ! pointer to struct containing SSF file info
-  logical (kind=c_bool), save :: lNO_SSF_FILES = lTRUE
-  logical (kind=c_bool) :: lOpened
-  integer (kind=c_int) :: iOldSize, iNewSize
-  integer (kind=c_int) :: iRowNum, iColNum
-  logical (kind=c_bool) :: lMatch
+  logical (c_bool), save :: lNO_SSF_FILES = lTRUE
+  logical (c_bool) :: lOpened
+  integer (c_int) :: iOldSize, iNewSize
+  integer (c_int) :: iRowNum, iColNum
+  logical (c_bool) :: lMatch
 
   character (len=256) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
@@ -66,23 +66,23 @@ subroutine control_setModelOptions(sControlFile)
   character (len=32)  :: col_str, row_str
   character (len=256) :: sDateStr, sDateStrPretty ! hold date and time of initiation of run
   character(len=256) :: sBuf
-  integer (kind=c_int) :: iNX                     ! Number of cells in the x-direction
-  integer (kind=c_int) :: iNY                     ! Number of cells in the y-direction
-  integer (kind=c_int) :: iValue                  ! Temporary value for 'CONSTANT'
-  integer (kind=c_int) :: iRetVal
-  integer (kind=c_int) :: iStat                   ! For 'iostat=' checks
-  integer (kind=c_int) :: i,iVarNum,iTimeFrame    ! loop counters
-  integer (kind=c_int) :: idx                     ! index counter for STREAM_CAPTURE routines
-  integer (kind=c_int) :: iLU_SSF = 300           ! last LU for SSF file
-  integer (kind=c_int) :: DMPCOL, DMPROW
-  integer (kind=c_int) :: iCurrentLineNumber
-  real (kind=c_double), dimension(0:1) :: rX_LL, rY_LL ! Model grid extent (lower-left)
-  real (kind=c_double) :: rX0, rY0                     ! Model grid extent (lower-left)
-  real (kind=c_double) :: rX1, rY1                     ! Model grid extent (upper-right)
-  real (kind=c_double) :: rXp, rYp                     ! Coordinates at a point within a grid
-  real (kind=c_double) :: rTemp
-  real (kind=c_double) :: rGridCellSize             ! Model grid cell size
-  real (kind=c_float) :: rValue                    ! Temporary value for 'CONSTANT'
+  integer (c_int) :: iNX                     ! Number of cells in the x-direction
+  integer (c_int) :: iNY                     ! Number of cells in the y-direction
+  integer (c_int) :: iValue                  ! Temporary value for 'CONSTANT'
+  integer (c_int) :: iRetVal
+  integer (c_int) :: iStat                   ! For 'iostat=' checks
+  integer (c_int) :: i,iVarNum,iTimeFrame    ! loop counters
+  integer (c_int) :: idx                     ! index counter for STREAM_CAPTURE routines
+  integer (c_int) :: iLU_SSF = 300           ! last LU for SSF file
+  integer (c_int) :: DMPCOL, DMPROW
+  integer (c_int) :: iCurrentLineNumber
+  real (c_double), dimension(0:1) :: rX_LL, rY_LL ! Model grid extent (lower-left)
+  real (c_double) :: rX0, rY0                     ! Model grid extent (lower-left)
+  real (c_double) :: rX1, rY1                     ! Model grid extent (upper-right)
+  real (c_double) :: rXp, rYp                     ! Coordinates at a point within a grid
+  real (c_double) :: rTemp
+  real (c_double) :: rGridCellSize             ! Model grid cell size
+  real (c_float) :: rValue                    ! Temporary value for 'CONSTANT'
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   character (len=8) :: sDate
@@ -306,11 +306,11 @@ subroutine control_setModelOptions(sControlFile)
         write(UNIT=LU_LOG,FMT=*) "Reading growing season"
         pConfig%iConfigureGrowingSeason = CONFIG_GROWING_SEASON_CONTROL_FILE
         read ( sArgument, fmt=*, iostat=iStat ) rValue
-        pConfig%iDayOfFirstFrost = INT(rValue,kind=c_int)
+        pConfig%iDayOfFirstFrost = INT(rValue,c_int)
         call Assert ( iStat == 0, "Could not read start of growing season" )
         call Chomp ( sRecord, sArgument )
         read ( sArgument, fmt=*, iostat=iStat ) rValue
-        pConfig%iDayOfLastFrost = INT(rValue,kind=c_int)
+        pConfig%iDayOfLastFrost = INT(rValue,c_int)
         call Assert ( iStat == 0, "Could not read end of growing season" )
         call Chomp ( sRecord, sOption )
         call Uppercase ( sOption )
@@ -411,7 +411,8 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       call DAT(PRECIP_DATA)%set_user_scale(asReal(sArgument))
 
-    else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_PRECIP_X_VAR")                         &
+       .or. str_compare(sItem,"PRECIPITATION_NETCDF_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_x = trim(sArgument)
 
@@ -419,7 +420,8 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%rX_Coord_AddOffset = asReal(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_PRECIP_Y_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_PRECIP_Y_VAR")                         &
+       .or. str_compare(sItem,"PRECIPITATION_NETCDF_Y_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_y = trim(sArgument)
 
@@ -427,11 +429,13 @@ subroutine control_setModelOptions(sControlFile)
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%rY_Coord_AddOffset = asReal(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_PRECIP_Z_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_PRECIP_Z_VAR")                         &
+       .or. str_compare(sItem,"PRECIPITATION_NETCDF_Z_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_z = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_PRECIP_TIME_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_PRECIP_TIME_VAR")                         &
+       .or. str_compare(sItem,"PRECIPITATION_NETCDF_TIME_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(PRECIP_DATA)%sVariableName_time = trim(sArgument)
 
@@ -469,9 +473,9 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (sItem == "PRECIPITATION_MISSING_VALUES_ACTION") then
       call Chomp ( sRecord, sArgument )
-      if (sArgument == "ZERO") then
+      if (uppercase_fn(sArgument) == "ZERO") then
         DAT(PRECIP_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
-      elseif (sArgument == "MEAN" ) then
+      elseif (uppercase_fn(sArgument) == "MEAN" ) then
         DAT(PRECIP_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
       else
         call assert(lFALSE, "Unknown missing value action supplied for" &
@@ -623,39 +627,149 @@ subroutine control_setModelOptions(sControlFile)
       end if
       flush(UNIT=LU_LOG)
 
+    else if ( sItem == "TMAX" ) then
+      write(UNIT=LU_LOG,FMT=*) "Configuring maximum air temperature data input"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      if ( trim(sOption) == "SINGLE_STATION" ) then
+        pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SINGLE_STATION
+        write(UNIT=LU_LOG,FMT=*) "  Temperature data will be read for a single station"
+        call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+           rConstant=65.0 )
+      else
+
+        if ( trim(sOption) == "ARC_GRID" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
+
+          call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          pConfig%lGriddedData = lTRUE
+
+        elseif ( trim(sOption) == "SURFER" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
+
+          call DAT(TMAX_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          pConfig%lGriddedData = lTRUE
+
+        else if( trim(sOption) == "NETCDF" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
+
+          call DAT(TMAX_DATA)%initialize_netcdf( &
+            sDescription=trim(sItem), &
+            sFilenameTemplate = trim(sArgument), &
+            iDataType=DATATYPE_REAL, &
+            pGrdBase=pGrd )
+
+        else
+          call Assert( lFALSE, "Illegal maximum air temperature input format specified", &
+            TRIM(__FILE__),__LINE__)
+        endif
+      end if
+      flush(UNIT=LU_LOG)
+
+    else if ( sItem == "TMIN" ) then
+      write(UNIT=LU_LOG,FMT=*) "Configuring minimum air temperature data input"
+      call Chomp ( sRecord, sOption )
+      call Uppercase ( sOption )
+      call Chomp ( sRecord, sArgument )
+      if ( trim(sOption) == "SINGLE_STATION" ) then
+        pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SINGLE_STATION
+        write(UNIT=LU_LOG,FMT=*) "  Temperature data will be read for a single station"
+        call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+           rConstant=65.0 )
+      else
+
+        if ( trim(sOption) == "ARC_GRID" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_ARC_GRID
+
+          call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          pConfig%lGriddedData = lTRUE
+
+        elseif ( trim(sOption) == "SURFER" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_SURFER_GRID
+
+          call DAT(TMIN_DATA)%initialize(sDescription=trim(sItem), &
+            sFileType=trim(sOption), &
+            sFilenameTemplate=trim(sArgument), &
+            iDataType=DATATYPE_REAL )
+
+          pConfig%lGriddedData = lTRUE
+
+        else if( trim(sOption) == "NETCDF" ) then
+
+          pConfig%iConfigureTemperature = CONFIG_TEMPERATURE_NETCDF
+
+          call DAT(TMIN_DATA)%initialize_netcdf( &
+            sDescription=trim(sItem), &
+            sFilenameTemplate = trim(sArgument), &
+            iDataType=DATATYPE_REAL, &
+            pGrdBase=pGrd)
+
+        else
+          call Assert( lFALSE, "Illegal minimum air temperature input format specified", &
+            TRIM(__FILE__),__LINE__)
+        endif
+      end if
+      flush(UNIT=LU_LOG)
+
     else if (sItem == "TEMPERATURE_GRID_PROJECTION_DEFINITION") then
       call DAT(TMAX_DATA)%set_PROJ4( trim(sRecord) )
       call DAT(TMIN_DATA)%set_PROJ4( trim(sRecord) )
 
-    else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMAX_X_VAR")                         &
+       .or. str_compare(sItem,"TMAX_NETCDF_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_x = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMAX_Y_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMAX_Y_VAR")                         &
+       .or. str_compare(sItem,"TMAX_NETCDF_Y_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_y = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMAX_Z_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMAX_Z_VAR")                         &
+       .or. str_compare(sItem,"TMAX_NETCDF_Z_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_z = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMAX_TIME_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMAX_TIME_VAR")                         &
+       .or. str_compare(sItem,"TMAX_NETCDF_TIME_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMAX_DATA)%sVariableName_time = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMIN_X_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMIN_X_VAR")                         &
+       .or. str_compare(sItem,"TMIN_NETCDF_X_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_x = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMIN_Y_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMIN_Y_VAR")                         &
+       .or. str_compare(sItem,"TMIN_NETCDF_Y_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_y = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMIN_Z_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMIN_Z_VAR")                         &
+       .or. str_compare(sItem,"TMIN_NETCDF_Z_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_z = trim(sArgument)
 
-    else if ( str_compare(sItem,"NETCDF_TMIN_TIME_VAR") ) then
+    else if ( str_compare(sItem,"NETCDF_TMIN_TIME_VAR")                         &
+       .or. str_compare(sItem,"TMIN_NETCDF_TIME_VAR") ) then
       call Chomp ( sRecord, sArgument )
       DAT(TMIN_DATA)%sVariableName_time = trim(sArgument)
 
@@ -718,9 +832,9 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (sItem == "TMAX_MISSING_VALUES_ACTION") then
       call Chomp ( sRecord, sArgument )
-      if (sArgument == "ZERO") then
+      if (uppercase_fn(sArgument) == "ZERO") then
         DAT(TMAX_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
-      elseif (sArgument == "MEAN" ) then
+      elseif (uppercase_fn(sArgument) == "MEAN" ) then
         DAT(TMAX_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
       else
         call assert(lFALSE, "Unknown missing value action supplied for" &
@@ -760,9 +874,9 @@ subroutine control_setModelOptions(sControlFile)
 
     elseif (sItem == "TMIN_MISSING_VALUES_ACTION") then
       call Chomp ( sRecord, sArgument )
-      if (sArgument == "ZERO") then
+      if (uppercase_fn(sArgument) == "ZERO") then
         DAT(TMIN_DATA)%iMissingValuesAction = MISSING_VALUES_ZERO_OUT
-      elseif (sArgument == "MEAN" ) then
+      elseif (uppercase_fn(sArgument) == "MEAN" ) then
         DAT(TMIN_DATA)%iMissingValuesAction = MISSING_VALUES_REPLACE_WITH_MEAN
       else
         call assert(lFALSE, "Unknown missing value action supplied for" &
@@ -1321,7 +1435,9 @@ subroutine control_setModelOptions(sControlFile)
         call grid_Destroy( input_grd )
       end if
 
-    else if ( sItem == "SOIL_GROUP" .or. sItem == "HYDROLOGIC_SOIL_GROUP") then
+    else if ( (sItem == "SOIL_GROUP")                                          &
+         .or. (sItem == "HYDROLOGIC_SOIL_GROUP")                               &
+         .or. (sItem == "HYDROLOGIC_SOILS_GROUP") ) then
       write(UNIT=LU_LOG,FMT=*) "Populating hydrologic soil group grid"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
@@ -1497,7 +1613,9 @@ subroutine control_setModelOptions(sControlFile)
 
 
 
-    else if ( sItem == "WATER_CAPACITY" .or. sItem == "AVAILABLE_WATER_CAPACITY") then
+    else if ( (sItem == "WATER_CAPACITY")                                      &
+         .or. (sItem == "AVAILABLE_WATER_CAPACITY")                            &
+         .or. (sItem == "AVAILABLE_WATER_CONTENT") ) then
       write(UNIT=LU_LOG,FMT=*) "Populating available water capacity grid"
       call Chomp ( sRecord, sOption )
       call Uppercase ( sOption )
@@ -1558,7 +1676,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*)  "Initial soil moisture grid MAXIMUM VALUE:", &
          maxval(pGrd%Cells%rSoilMoisturePct)
       call Assert( LOGICAL( minval(pGrd%Cells%rSoilMoisturePct) >= 0, &
-         kind=c_bool), "Negative values are not allowed in the" &
+         c_bool), "Negative values are not allowed in the" &
          //" initial soil moisture grid.")
 
       flush(UNIT=LU_LOG)
@@ -1578,19 +1696,19 @@ subroutine control_setModelOptions(sControlFile)
       !!                useful for simulations where humidity data are not available)
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevStationElevation
-      call Assert( logical(iStat==0, kind=c_bool), &
+      call Assert( logical(iStat==0, c_bool), &
         "Failed to read station elevation " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevDryFactor
-      call Assert( logical(iStat==0, kind=c_bool), &
+      call Assert( logical(iStat==0, c_bool), &
         "Failed to read dry elevation factor " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevHumidFactor
-      call Assert( logical(iStat==0, kind=c_bool), &
+      call Assert( logical(iStat==0, c_bool), &
         "Failed to read humid elevation factor " // sArgument )
       call Chomp( sRecord, sArgument )
       read(unit=sArgument, fmt=*, iostat=iStat) pconfig%rElevHumidityThreshold
-      call Assert( logical(iStat==0, kind=c_bool), &
+      call Assert( logical(iStat==0, c_bool), &
         "Failed to read humidity threshold " // sArgument )
       pconfig%lElevAdjustment = .true.
 
@@ -2049,7 +2167,7 @@ subroutine control_setModelOptions(sControlFile)
       write(UNIT=LU_LOG,FMT=*) "Solving the model"
       flush(UNIT=LU_LOG)
       call Chomp ( sRecord, sArgument )
-      call Assert (LOGICAL(len_trim(sArgument)>0,kind=c_bool), &
+      call Assert (LOGICAL(len_trim(sArgument)>0,c_bool), &
          "No time-series data file specified" )
       pConfig%sTimeSeriesFilename = trim(sArgument)
       ! if first time through, open file and grab the year so we know
@@ -2076,7 +2194,7 @@ subroutine control_setModelOptions(sControlFile)
         "Solving the model - no single-station time series data will be read"
       flush(UNIT=LU_LOG)
       call Chomp ( sRecord, sArgument )
-      call Assert (LOGICAL(len_trim(sArgument)>0,kind=c_bool), &
+      call Assert (LOGICAL(len_trim(sArgument)>0,c_bool), &
          "Must specify the year to begin simulation" )
       read(sArgument,FMT=*,iostat=iStat) pConfig%iStartYear
       call Assert( iStat == 0, &
@@ -2138,7 +2256,7 @@ subroutine control_setModelOptions(sControlFile)
     else if (trim(sItem) == "STREAM_CONFIG" ) then
         call chomp(sRecord, sOption)
         read (unit=sOption, fmt=*, iostat=istat) idx
-        call Assert(LOGICAL(idx <= STREAM_INTERACTIONS_MAX, kind=c_bool), &
+        call Assert(LOGICAL(idx <= STREAM_INTERACTIONS_MAX, c_bool), &
            "STREAM_CONFIG index cannot exceed the value of STREAM_INTERACTIONS_MAX", &
            TRIM(__FILE__),__LINE__)
 

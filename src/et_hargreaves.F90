@@ -43,8 +43,8 @@ subroutine et_hargreaves_configure( pConfig, sRecord )
 
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=c_int) :: iStat
-  real (kind=c_float) :: rValue
+  integer (c_int) :: iStat
+  real (c_float) :: rValue
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Hargreaves PET model"
 
@@ -83,12 +83,12 @@ subroutine et_hargreaves_ComputeET( pGrd, pConfig, iDayOfYear, iNumDaysInYear)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  integer (kind=c_int),intent(in) :: iNumDaysInYear
+  integer (c_int),intent(in) :: iDayOfYear
+  integer (c_int),intent(in) :: iNumDaysInYear
 
   ! [ LOCALS ]
-  real (kind=c_double) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
-  integer (kind=c_int) :: iCol, iRow
+  real (c_double) :: rLatitude, rDelta, rOmega_s, rD_r, rRa
+  integer (c_int) :: iCol, iRow
   type (T_CELL), pointer :: cel
 
 !  write(UNIT=LU_LOG,FMT=*) iDayOfYear, iNumDaysInYear
@@ -161,16 +161,16 @@ function ET0_hargreaves(pConfig, rRa, rTMinF, rTMaxF) result(rET_0)
 
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  real (kind=c_double),intent(in) :: rRa
-  real (kind=c_float),intent(in) :: rTMinF
-  real (kind=c_float),intent(in) :: rTMaxF
+  real (c_double),intent(in) :: rRa
+  real (c_float),intent(in) :: rTMinF
+  real (c_float),intent(in) :: rTMaxF
 
   ! [ RETURN VALUE ]
-  real (kind=c_float) :: rET_0
+  real (c_float) :: rET_0
 
   ! [ LOCALS ]
-  real (kind=c_double) :: rTDelta
-  real (kind=c_double) :: rTAvg
+  real (c_double) :: rTDelta
+  real (c_double) :: rTAvg
 
   rTAvg = (rTMinF + rTMaxF) / 2_c_double
 

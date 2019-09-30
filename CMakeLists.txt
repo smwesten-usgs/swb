@@ -10,7 +10,7 @@
 # Fortran_FLAGS_RELEASE
 # Fortran_FLAGS_PROFILE
 # PATH_TO_R
-# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
+# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "mac_osx", "linux_x64"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_VERSION       | ex: "4.8.2"
 # LIBRARIES
@@ -48,7 +48,7 @@ set(PACKAGE_STRING "swb 1.2")
 set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.2")
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 include( cmake/version_control.cmake )
 include( cmake/options_and_targets.cmake )
@@ -115,7 +115,7 @@ if ( "${LEN_LIB_EXTRAS}" GREATER "0" )
 endif()
 
 link_libraries( ${EXTERNAL_LIBS} )
-include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} "${PROJECT_SOURCE_DIR}/src/proj4" )
+include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} ${CMAKE_BINARY_DIR}/src ${PROJECT_SOURCE_DIR}/src/proj4 )
 
 if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe

@@ -36,3 +36,7 @@ if( ${OPTION__STRICT_DATE_CHECKING} )
 endif()
 
 add_definitions( ${PREPROCESSOR_DEFINES} )
+
+if(NOT PYTHON_CMD)
+  set(PYTHON_CMD "python")
+endif()

@@ -41,8 +41,8 @@ module et_blaney_criddle
   !! Module data
 
   !! Configuration -- input data
-  real (kind=c_float) :: rLatitude       ! degrees on input; stored in radians
-  real (kind=c_float) :: rSunAnnual      ! Annual sun hours
+  real (c_float) :: rLatitude       ! degrees on input; stored in radians
+  real (c_float) :: rSunAnnual      ! Annual sun hours
 
 contains
 
@@ -52,13 +52,13 @@ subroutine et_bc_configure( sRecord )
   character (len=*),intent(inout) :: sRecord
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=c_int) :: iStat
+  integer (c_int) :: iStat
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Blaney-Criddle PET model"
 
   call Chomp( sRecord,sOption )
   read ( unit=sOption, fmt=*, iostat=iStat ) rLatitude
-  call Assert( LOGICAL(iStat==0,kind=c_bool), "Could not read the latitude" )
+  call Assert( LOGICAL(iStat==0,c_bool), "Could not read the latitude" )
   rLatitude = dpTWOPI * rLatitude / 360.0_c_float
 
   return
@@ -71,8 +71,8 @@ subroutine et_bc_initialize( grd, sFileName )
   type ( T_GENERAL_GRID ),pointer :: grd
   character (len=*),intent(in) :: sFileName
   ! [ LOCALS ]
-  real (kind=c_float) :: rDelta
-  integer (kind=c_int) :: iDay
+  real (c_float) :: rDelta
+  integer (c_int) :: iDay
 
   write(UNIT=LU_LOG,FMT=*)"Initializing Blaney-Criddle PET model"
   do iDay=1,365
@@ -92,16 +92,16 @@ subroutine et_bc_ComputeET( pGrd, iDayOfYear, rRH, &
   !!
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
+  integer (c_int),intent(in) :: iDayOfYear
+  real (c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
-  real (kind=c_float) :: rDelta,rT,rSunFrac,rPRatio,rAbc,rBbc,rF
-  integer (kind=c_int) :: iCol,iRow
+  real (c_float) :: rDelta,rT,rSunFrac,rPRatio,rAbc,rBbc,rF
+  integer (c_int) :: iCol,iRow
   ! [ CONSTANTS ]
-  real (kind=c_float),parameter :: UNIT_CONV = 0.313_c_float / 25.4_c_float
+  real (c_float),parameter :: UNIT_CONV = 0.313_c_float / 25.4_c_float
 
-  call Assert( LOGICAL(rSunPct>=rZERO,kind=c_bool), "Missing data for percent sunshine" )
-  call Assert( LOGICAL(rMinRH>=rZERO,kind=c_bool),"Missing data for relative humidity" )
+  call Assert( LOGICAL(rSunPct>=rZERO,c_bool), "Missing data for percent sunshine" )
+  call Assert( LOGICAL(rMinRH>=rZERO,c_bool),"Missing data for relative humidity" )
 
 !  rDelta = 0.4093_c_float * sin( (dpTWOPI * iDayOfYear / 365.0_c_float) - 1.405_c_float )
   rDelta = solar_declination(iDayOfYear, 365)

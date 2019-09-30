@@ -17,7 +17,7 @@
   implicit none
 
   character (len=256)             :: sControlFile
-  integer (kind=c_int)            :: iNumArgs
+  integer (c_int)            :: iNumArgs
   character (len=1024)            :: sCompilerFlags
   character (len=256)             :: sVersionString
   character (len=256)             :: sCompilerVersion
@@ -25,8 +25,8 @@
   character (len=256)             :: sCompilationSystemString
   character (len=256)             :: sGitHashString
   logical                         :: lExists
-  integer (kind=c_int)            :: iCount
-  integer (kind=c_int), parameter :: NUM_REPEAT_CHARS = 36
+  integer (c_int)            :: iCount
+  integer (c_int), parameter :: NUM_REPEAT_CHARS = 36
 
   iNumArgs = COMMAND_ARGUMENT_COUNT()
 

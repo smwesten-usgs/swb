@@ -27,7 +27,7 @@ module sm_thornthwaite_mather
 
   implicit none
 
-  real (kind=c_float), parameter :: APWL_Cap = -40.69_c_float
+  real (c_float), parameter :: APWL_Cap = -40.69_c_float
 
   !! Module data
 
@@ -36,8 +36,8 @@ module sm_thornthwaite_mather
 
   ! parameters that allow the Thornthwaite-Mather tables (1957) to be
   ! represented by a single equation
-  real (kind=c_double), parameter :: rTM_slope_term = 0.478769194198665_c_double
-  real (kind=c_double), parameter :: rTM_exp_term = -1.03678439421169_c_double
+  real (c_double), parameter :: rTM_slope_term = 0.478769194198665_c_double
+  real (c_double), parameter :: rTM_exp_term = -1.03678439421169_c_double
 
 contains
 
@@ -74,7 +74,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iRow,iCol
+  integer (c_int) :: iRow,iCol
   type ( T_CELL ),pointer :: cel
 
   ! Initialize the accumulated water loss for each cell according to the
@@ -114,7 +114,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
           ! calculate APWL from T-M table
           cel%rSM_AccumPotentWatLoss = grid_SearchColumn(pGrd=gWLT,                         &
                                                rXval=cel%rSoilWaterCap,                     &
-                                               rZval=real(cel%rSoilMoisture, kind=c_float), &
+                                               rZval=real(cel%rSoilMoisture, c_float), &
                                                rNoData=-rONE)
 
         elseif ( pConfig%iConfigureSM == CONFIG_SM_TM_EQUATIONS ) then
@@ -125,7 +125,7 @@ subroutine sm_thornthwaite_mather_Initialize ( pGrd, pConfig )
 
          ! calculate APWL from equation
          cel%rSM_AccumPotentWatLoss = &
-           sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,real(cel%rSoilMoisture, kind=c_double) )
+           sm_thornthwaite_mather_APWL(cel%rSoilWaterCap,real(cel%rSoilMoisture, c_double) )
 
         endif
 
@@ -151,10 +151,10 @@ end subroutine sm_thornthwaite_mather_Initialize
 
 function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(dpValue)
 
-  real (kind=c_float), intent(in) :: rSWC     ! max soil-water capacity (inches)
-  real (kind=c_float), intent(in) :: rAPWL    ! accum pot. water loss (inches)
+  real (c_float), intent(in) :: rSWC     ! max soil-water capacity (inches)
+  real (c_float), intent(in) :: rAPWL    ! accum pot. water loss (inches)
 
-  real (kind=c_double) :: dpValue
+  real (c_double) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
@@ -165,9 +165,9 @@ function sm_thornthwaite_mather_soil_storage(rSWC, rAPWL)  result(dpValue)
 
   if(rSWC > rZERO ) &
 
-    dpValue = 10_c_double**( log10(REAL(rSWC,kind=c_double)) - &
-              ( ABS(REAL(rAPWL,kind=c_double)) * rTM_slope_term &
-              * real(rSWC, kind=c_double)**rTM_exp_term ) )
+    dpValue = 10_c_double**( log10(REAL(rSWC,c_double)) - &
+              ( ABS(REAL(rAPWL,c_double)) * rTM_slope_term &
+              * real(rSWC, c_double)**rTM_exp_term ) )
 
 
 end function sm_thornthwaite_mather_soil_storage
@@ -176,10 +176,10 @@ end function sm_thornthwaite_mather_soil_storage
 
 function sm_thornthwaite_mather_APWL(rSWC, dpSoilStorage)  result(dpValue)
 
-  real (kind=c_float), intent(in) :: rSWC          ! max soil-water capacity (inches)
-  real (kind=c_double), intent(in) :: dpSoilStorage  ! curr soil storage (inches)
+  real (c_float), intent(in) :: rSWC          ! max soil-water capacity (inches)
+  real (c_double), intent(in) :: dpSoilStorage  ! curr soil storage (inches)
 
-  real (kind=c_double) :: dpValue
+  real (c_double) :: dpValue
 
   ! equation as implemented in R;
   ! sm.df$y = maximum soil-water capacity
@@ -190,8 +190,8 @@ function sm_thornthwaite_mather_APWL(rSWC, dpSoilStorage)  result(dpValue)
 
   if(rSWC > rZERO .and. dpSoilStorage > dpZERO) &
 
-    dpValue = -( log10(REAL(rSWC,kind=c_double)) - log10(dpSoilStorage)) / &
-          ( rTM_slope_term * REAL(rSWC,kind=c_double)**rTM_exp_term )
+    dpValue = -( log10(REAL(rSWC,c_double)) - log10(dpSoilStorage)) / &
+          ( rTM_slope_term * REAL(rSWC,c_double)**rTM_exp_term )
 
 end function sm_thornthwaite_mather_APWL
 

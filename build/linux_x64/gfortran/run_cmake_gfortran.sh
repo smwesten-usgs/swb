@@ -12,7 +12,7 @@ rm -f *.txt
 export CMAKEROOT=/usr/bin/cmake
 export COMPILER_VERSION=6.3.1
 export COMPILER_MAJ_VERSION=6
-export COMPILER_TRIPLET=x86_64-redhat-linux
+export COMPILER_TRIPLET=x86_64-linux-gnu
 export COMPILER_DIR=/usr/local
 
 # if locate is finding old library versions, run the following.
@@ -22,30 +22,28 @@ export COMPILER_DIR=/usr/local
 # on Linux, the command in normally just 'sudo updatedb'
 
 # explicitly locate each key library
-export LIB_HDF5_HL=$( locate libhdf5_hl.a | grep "/usr/local/lib" | grep -v "openmpi" )
-export LIB_HDF5=$( locate libhdf5.a | grep "/usr/local/lib" | grep -v "openmpi" )
+export LIB_HDF5_HL=$( locate libhdf5_hl.so | grep -v "so." | grep -v "openmpi" )
+export LIB_HDF5=$( locate libhdf5.so | grep -v "so." | grep -v "openmpi" )
 # prevent locate from glomming onto the i386 version or the miniconda version
-export LIB_Z=$(locate libz.a | grep "/usr/lib" | grep -v "openmpi" )
+export LIB_Z=$(locate libz.so | grep "/usr/lib" | grep -v "openmpi" )
 export LIB_CURL="NOTFOUND"
 #export LIB_SZ=$(locate libsz.a | grep "/usr/lib" | grep -v "openmpi" )
-export LIB_NETCDF=$( locate libnetcdf.a | grep "/usr/local/lib" | grep -v "openmpi" | grep -v "so.")
-export LIB_DISLIN=$(locate libdislin.so | grep "/usr/lib" | grep -v "so.")
-export LIB_GCC=$(locate libgcc.a | grep "/usr/lib" | grep -v "/32" | grep -v "mxe" )
-export LIB_GFORTRAN=$(locate libgfortran.a | grep "/usr/lib" | grep -v "/32" | grep -v "mxe")
+export LIB_NETCDF=$( locate libnetcdf.so| grep -v "so." | grep -v "openmpi")
+export LIB_DISLIN=$(locate libdislin.so | grep "/usr/lib64" | grep -v "so.")
+export LIB_GCC=$(locate libgcc.a | grep "/usr/lib" | grep -v "/32" | grep -v "mxe" | grep -v "x32" )
+export LIB_GFORTRAN=$(locate libgfortran.a | grep "/usr/lib" | grep -v "/32" | grep -v "mxe" | grep -v "x32")
+
 
 export LIB_XM=$(locate libXm.so.4 | grep "/usr/lib" | grep -v "so.4." )
-export LIB_XT=$(locate libXt.so | grep "/usr/lib" | grep -v "so." )
-
-export LIB_OPENGL32="NOTFOUND"
-export LIB_GDI32="NOTFOUND"
-export LIB_SZ="NOTFOUND"
-
-export EXTRA_LIBS=$(locate libdl.so | grep -v "mxe" | grep -v "so." )
-export EXTRA_LIBS="$EXTRA_LIBS;$(locate librt.so | grep -v "mxe" | grep -v "so." )"
+export LIB_XT=$(locate libXt.so | grep "/usr/lib" | grep -v "so.6." )
 
 # the following tend to be needed for Windows builds
 #export LIB_OPENGL32=$(locate libopengl32.a | grep "/usr/lib" | grep -v "mxe")
 #export LIB_GDI32=$(locate libgdi32.a | grep "/usr/lib" | grep -v "mxe")
+
+export LIB_OPENGL32="NOTFOUND"
+export LIB_GDI32="NOTFOUND"
+export LIB_SZ="NOTFOUND"
 
 #if [ -n "$LIB_OPENGL" ]; then
 #  export LIB_OPENGL="NOTFOUND"
@@ -81,6 +79,9 @@ export CMAKE_Fortran_FLAGS_DEBUG="-O0 -g -ggdb -cpp -fcheck=all -fexceptions -ff
 #set CMAKE_Fortran_FLAGS_RELEASE="-O2 -mtune=native -floop-parallelize-all -flto -ffree-line-length-none -static-libgcc -static-libgfortran"
 export CMAKE_Fortran_FLAGS_RELEASE="-O3 -cpp -mtune=native -ffree-line-length-none"
 
+export EXTRA_LIBS=$(locate libdl.so | grep -v "lib32" grep -v "libx32" | grep -v "so." )
+export EXTRA_LIBS="$EXTRA_LIBS;$(locate librt.so | grep -v "lib32" | grep -v "libx32" | grep -v "so." )"
+
 export PATH=/usr/local/bin:/usr/local/lib:$PATH
 
 # set important environment variables
@@ -106,13 +107,12 @@ cmake ../../.. -G "Unix Makefiles"                \
 -DLIB_DISLIN="$LIB_DISLIN "                       \
 -DLIB_GCC="$LIB_GCC "                             \
 -DLIB_GFORTRAN="$LIB_GFORTRAN "                   \
+-DLIB_OPENGL32="$LIB_OPENGL32 "                   \
+-DR_SCRIPT="$R_SCRIPT "                           \
 -DLIB_XM="$LIB_XM "                               \
 -DLIB_XT="$LIB_XT "                               \
 -DLIB_CURL="$LIB_CURL "                           \
--DLIB_OPENGL32="$LIB_OPENGL32 "                   \
--DLIB_GDI32="$LIB_GDI32 "                         \
 -DLIB_EXTRAS="$EXTRA_LIBS "                       \
--DR_SCRIPT="$R_SCRIPT "                           \
 -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS "         \
 -DSYSTEM_TYPE="$SYSTEM_TYPE "                     \
 -DCMAKE_BUILD_TYPE="$BUILD_TYPE "                 \

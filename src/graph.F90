@@ -19,9 +19,9 @@ module graph
 
     type (T_GENERAL_GRID),pointer :: pGrd      ! Grid of model cells
     type(T_GRAPH_CONFIGURATION), dimension(:), pointer :: pGraph
-    integer (kind=c_int), intent(in) :: iVarNum
+    integer (c_int), intent(in) :: iVarNum
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
-    integer (kind=c_int) :: iCol,iRow
+    integer (c_int) :: iCol,iRow
     character (len=256) :: sBuf
 
 #ifdef GRAPHICS_SUPPORT
@@ -35,12 +35,12 @@ module graph
     integer :: iX, iY, iNXW, iNYW, iNXP, iNYP
     integer , parameter :: iSZ = 1024    ! base graph size
 
-    real (kind=c_float) :: rMin, rMean, rMax
+    real (c_float) :: rMin, rMean, rMax
     integer :: iNumGridCells
     character (len=256) :: sPaperSize
     real :: rFG_Color
     integer :: iBG_Color
-    integer (kind=c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
+    integer (c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
     character (len=256) :: sDislin
 
     ! is the DISLIN environment variable defined? if so, it is OK
@@ -96,7 +96,7 @@ module graph
 
     ! if no data and ZA == ZE, make up a maximum and calc ZSTEP
     ! accordingly
-!    if(approx_equal(real(ZA,kind=c_float), real(ZE,kind=c_float) ) ) then
+!    if(approx_equal(real(ZA,c_float), real(ZE,c_float) ) ) then
      if( int(ZA) == int(ZE) ) then
       ZE = ZA * 1.1 + .1
       ZSTEP = (ZE - ZA) / 10.
@@ -138,10 +138,10 @@ module graph
       iNYP = 2790
     endif
 
-!      iNXP = INT(rAspectRatio * REAL(iSZ,kind=c_float))
+!      iNXP = INT(rAspectRatio * REAL(iSZ,c_float))
     iNXW = iNXP
 
-!      iNYP = INT((1./rAspectRatio) * REAL(iSZ,kind=c_float) * 1.15)
+!      iNYP = INT((1./rAspectRatio) * REAL(iSZ,c_float) * 1.15)
       iNYW = iNYP
 
 
@@ -382,27 +382,27 @@ module graph
     character (len=*) :: sOutputFilename
     character (len=*) :: sTitleTxt
     character (len=*) :: sAxisTxt
-    real (kind=c_float), optional :: rMinZVal
-    real (kind=c_float), optional :: rMaxZVal
+    real (c_float), optional :: rMinZVal
+    real (c_float), optional :: rMaxZVal
 
 #ifdef GRAPHICS_SUPPORT
 
     ! [ LOCALS ]
     real, dimension(pGrd%iNX,pGrd%iNY) :: ZMAT
-    integer (kind=c_int) :: iCol,iRow
+    integer (c_int) :: iCol,iRow
     character (len=256) :: sBuf = ""
     character (len=256) :: sSummaryTxt = ""
-    real (kind=c_float) :: rH_V_AspectRatio
-    integer (kind=c_int) :: iPixVRes = 1000.
-    integer (kind=c_int) :: iPixHRes
-    integer (kind=c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
+    real (c_float) :: rH_V_AspectRatio
+    integer (c_int) :: iPixVRes = 1000.
+    integer (c_int) :: iPixHRes
+    integer (c_int), dimension(pGrd%iNX,pGrd%iNY) :: iMask
 
-    integer (kind=c_int) :: iPtVRes
-    integer (kind=c_int) :: iPtHRes
-    integer (kind=c_int) :: iPtVOrigin
-    integer (kind=c_int) :: iPtHOrigin
-    integer (kind=c_int) :: iPtVAxLen
-    integer (kind=c_int) :: iPtHAxLen
+    integer (c_int) :: iPtVRes
+    integer (c_int) :: iPtHRes
+    integer (c_int) :: iPtVOrigin
+    integer (c_int) :: iPtHOrigin
+    integer (c_int) :: iPtVAxLen
+    integer (c_int) :: iPtHAxLen
 
     character (len=256) :: sDislin
 
@@ -419,7 +419,7 @@ module graph
     real :: ZA,ZE,ZOR,ZSTEP
 
     integer :: iX, iY, iNXW, iNYW
-    integer (kind=c_int) :: iNumGridCells
+    integer (c_int) :: iNumGridCells
 
     call get_environment_variable("DISLIN", sDislin)
 
@@ -491,7 +491,7 @@ module graph
 
         do iRow=1,iY
           do iCol=1,iX
-            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),kind=c_float)
+            ZMAT(iCol,iRow) = REAL(pGrd%iData(iCol,(iY-iRow+1)),c_float)
             iMask(iCol, iRow) = pGrd%iMask(iCol,(iY-iRow+1))
           end do
         end do
