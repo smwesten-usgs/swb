@@ -410,6 +410,9 @@ end subroutine initialize_netcdf_data_object_sub
     !! rest of SWB sees...
     if (present(rValues)) then
 
+      print *, "Scale factor and offset: ", this%rUserScaleFactor, this%rUserOffset
+      print *, "  min and max: ", minval(pGrdBase%rData), maxval(pGrdBase%rData)
+
        rValues = ( pGrdBase%rData * this%rUserScaleFactor ) + this%rUserOffset
 
     endif
@@ -1118,15 +1121,6 @@ end subroutine set_constant_value_real
 
           this%iSourceDataType = this%NCFILE%iVarType(NC_Z)
 
-          ! populate these values with the scale and offset
-          ! factor included in the NetCDF attribute data, if any.
-
-          this%rAddOffset = this%NCFILE%pNC_VAR( NC_Z )%rAddOffset
-          this%rScaleFactor = this%NCFILE%pNC_VAR( NC_Z )%rScaleFactor
-
-          ! this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
-          ! this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
-
           ! Amongst other things, the call to netcdf_open_and_prepare
           ! finds the nearest column and row that correspond to the
           ! project bounds, then back-calculates the coordinate values
@@ -1178,6 +1172,14 @@ end subroutine set_constant_value_real
         endif
 
         call netcdf_get_variable_slice(NCFILE=this%NCFILE, rValues=this%pGrdNative%rData)
+
+          ! populate these values with the scale and offset
+          ! factor included in the NetCDF attribute data, if any.
+
+        this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
+        this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
+
+        print *, __FILE__,": ", __LINE__, "   Offset, Scalefactor (netCDF): ", this%rAddOffset, this%rScaleFactor
 
         ! the missing_values code stored in the NetCDF file needs to be processed *before* applying
         ! the scale and offset

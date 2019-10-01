@@ -1243,6 +1243,7 @@ module types
   end interface asCharacter
 
   interface asReal
+    module procedure short2real
     module procedure char2real
     module procedure int2real
     module procedure dbl2real
@@ -1253,6 +1254,13 @@ module types
     module procedure real2int
     module procedure dbl2int
   end interface asInt
+
+  interface asDouble
+    module procedure char2dbl
+    module procedure short2dbl
+    module procedure int2dbl      
+    module procedure real2dbl
+  end interface asDouble    
 
   interface chomp
     module procedure chomp_delim_sub
@@ -2864,10 +2872,10 @@ end function short2char
 !--------------------------------------------------------------------------
 
 !> Convert an character value into a integer
-function char2int(sValue)  result(iValue)
+elemental function char2int(sValue)  result(iValue)
 
-  character (len=*) :: sValue
-  integer (c_int) :: iValue
+  character (len=*), intent(in) :: sValue
+  integer (c_int)               :: iValue
 
   read(UNIT=sValue,FMT=*) iValue
 
@@ -2876,10 +2884,10 @@ end function char2int
 !--------------------------------------------------------------------------
 
 !> Convert a real value into a integer
-function real2int(rValue)  result(iValue)
+elemental function real2int(rValue)  result(iValue)
 
-  real (c_float) :: rValue
-  integer (c_int) :: iValue
+  real (c_float), intent(in) :: rValue
+  integer (c_int)            :: iValue
 
   iValue = int(rValue, c_int)
 
@@ -2887,11 +2895,23 @@ end function real2int
 
 !--------------------------------------------------------------------------
 
-!> Convert a double-precision value to an integer
-function dbl2int(rValue)  result(iValue)
+!> Convert a real value into a double
+elemental function real2dbl(rValue)  result(dpValue)
 
-  real (c_double) :: rValue
-  integer (c_int) :: iValue
+  real (c_float), intent(in) :: rValue
+  real (c_double)            :: dpValue
+
+  dpValue = real(rValue, c_double)
+
+end function real2dbl
+
+!--------------------------------------------------------------------------
+
+!> Convert a double-precision value to an integer
+elemental function dbl2int(rValue)  result(iValue)
+
+  real (c_double), intent(in) :: rValue
+  integer (c_int)             :: iValue
 
   iValue = int(rValue, c_int)
 
@@ -2900,10 +2920,10 @@ end function dbl2int
 !--------------------------------------------------------------------------
 
 !> Convert an character value into a real
-function char2real(sValue)  result(rValue)
+elemental function char2real(sValue)  result(rValue)
 
-  character (len=*) :: sValue
-  real (c_float) :: rValue
+  character (len=*), intent(in) :: sValue
+  real (c_float)                :: rValue
 
   read(UNIT=sValue,FMT=*) rValue
 
@@ -2911,11 +2931,47 @@ end function char2real
 
 !--------------------------------------------------------------------------
 
-!> Convert an int value into a real
-function int2real(iValue)  result(rValue)
+!> Convert an character value into a double
+elemental function char2dbl(sValue)  result(dpValue)
 
-  integer (c_int) :: iValue
-  real (c_float) :: rValue
+  character (len=*), intent(in) :: sValue
+  real (c_double)               :: dpValue
+
+  read(UNIT=sValue,FMT=*) dpValue
+
+end function char2dbl
+
+!--------------------------------------------------------------------------
+
+!> Convert a short int value into a real
+elemental function short2real(i2Value)  result(rValue)
+
+  integer (c_short), intent(in) :: i2Value
+  real (c_float)                :: rValue
+
+  rValue = real(i2Value, c_float)
+
+end function short2real
+
+!--------------------------------------------------------------------------
+
+!> Convert a short int value into a double
+elemental function short2dbl(i2Value)  result(dpValue)
+
+  integer (c_short), intent(in) :: i2Value
+  real (c_double)               :: dpValue
+
+  dpValue = real(i2Value, c_double)
+
+end function short2dbl
+
+!--------------------------------------------------------------------------
+
+!> Convert an int value into a real
+elemental function int2real(iValue)  result(rValue)
+
+  integer (c_int), intent(in) :: iValue
+  real (c_float)              :: rValue
 
   rValue = real(iValue, c_float)
 
@@ -2923,11 +2979,23 @@ end function int2real
 
 !--------------------------------------------------------------------------
 
-!> Convert an dbl value into a real
-function dbl2real(dpValue)  result(rValue)
+!> Convert an int value into a double
+elemental function int2dbl(iValue)  result(dpValue)
 
-  real (c_double) :: dpValue
-  real (c_float) :: rValue
+  integer (c_int), intent(in) :: iValue
+  real (c_double)             :: dpValue
+
+  dpValue = real(iValue, c_double)
+
+end function int2dbl
+
+!--------------------------------------------------------------------------
+
+!> Convert an dbl value into a real
+elemental function dbl2real(dpValue)  result(rValue)
+
+  real (c_double), intent(in) :: dpValue
+  real (c_float)              :: rValue
 
   rValue = real(dpValue, c_float)
 
