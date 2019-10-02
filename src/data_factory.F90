@@ -410,9 +410,6 @@ end subroutine initialize_netcdf_data_object_sub
     !! rest of SWB sees...
     if (present(rValues)) then
 
-      print *, "Scale factor and offset: ", this%rUserScaleFactor, this%rUserOffset
-      print *, "  min and max: ", minval(pGrdBase%rData), maxval(pGrdBase%rData)
-
        rValues = ( pGrdBase%rData * this%rUserScaleFactor ) + this%rUserOffset
 
     endif
@@ -1178,8 +1175,6 @@ end subroutine set_constant_value_real
 
         this%rAddOffset = this%NCFILE%rAddOffset(NC_Z)
         this%rScaleFactor = this%NCFILE%rScaleFactor(NC_Z)
-
-        print *, __FILE__,": ", __LINE__, "   Offset, Scalefactor (netCDF): ", this%rAddOffset, this%rScaleFactor
 
         ! the missing_values code stored in the NetCDF file needs to be processed *before* applying
         ! the scale and offset

@@ -2852,8 +2852,6 @@ subroutine nf_get_scale_and_offset(NCFILE)
         //dQuote(NCFILE%sFilename))
     endif    
   endif
-
-  print *, __FILE__,": ", __LINE__, "   Offset, Scalefactor (netCDF): ", NCFILE%rAddOffset(NC_Z), NCFILE%rScaleFactor(NC_Z)
           
  end subroutine nf_get_scale_and_offset
         

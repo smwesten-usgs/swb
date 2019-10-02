@@ -1137,7 +1137,6 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
 
   ! [ LOCAL PARAMETERS ]
-  real (c_float), parameter :: rMELT_INDEX = 1.5_c_float
 
   ! set snowmelt to zero uniformly across model grid
   pGrd%Cells(:,:)%rSnowMelt = rZERO
@@ -1244,7 +1243,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
         ! Is there any melting?
         if ( cel%rTAvg > rFREEZING ) then
-          dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
+          dpPotentialMelt = pConfig%rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
                             * dpC_PER_F / rMM_PER_INCH
 
           if(dpSnowCover > dpPotentialMelt) then
@@ -3656,7 +3655,7 @@ subroutine model_dumpvals(pGrd, pConfig)
 
       cel => pGrd%Cells( DUMP_VARS( idx )%column_num, DUMP_VARS( idx )%row_num )
 
-      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),40(g16.9,','),g16.9 )") pConfig%iMonth, &
+      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),40(g17.9e3,','),g17.9e3 )") pConfig%iMonth, &
         pConfig%iDay,                                                                                              &
         pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
         cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &

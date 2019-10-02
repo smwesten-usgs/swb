@@ -1362,6 +1362,16 @@ subroutine control_setModelOptions(sControlFile)
       endif
       flush(UNIT=LU_LOG)
 
+    else if ( (sItem == "SNOWMELT_CONSTANT")                         &
+         .or. (sItem == "SNOWMELT_INDEX") ) then
+      write(UNIT=LU_LOG,FMT=*) "Initializing snowmelt index for use in estimating potential snowmelt"
+      call Chomp ( sRecord, sArgument )
+      read ( unit=sArgument, fmt=*, iostat=iStat ) rValue
+      call Assert( iStat == 0, "Cannot read real data value" )
+      pConfig%rMELT_INDEX = rValue
+      write(UNIT=LU_LOG,FMT=*)  "Snowmelt index set to: ", rValue, "millimeters per degree Celcius above freezing point of water"
+      flush(UNIT=LU_LOG)
+
     else if ( sItem == "REFERENCE_ET_SLOPE" ) then
       write(UNIT=LU_LOG,FMT=*) "Initializing slope factor for reference ET method"
       call Chomp ( sRecord, sArgument )

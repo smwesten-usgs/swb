@@ -1023,6 +1023,9 @@ module types
       real (c_float) :: rSNWD_intcp1 = 67.9
       real (c_float) :: rSNWD_denom = 2.6
 
+      ! snowmelt constant
+      real (c_float) :: rMELT_INDEX = 1.5_c_float
+
       ! Filename for standard (single-station) time-series file
       character (len=256) :: sTimeSeriesFilename = ""
 
@@ -1216,7 +1219,7 @@ module types
     character (len=256)                :: filename
   end type T_DUMP_VAR
 
-  type ( T_DUMP_VAR )                  :: DUMP_VARS( 20 )
+  type ( T_DUMP_VAR )                  :: DUMP_VARS( 30 )
 
 !**********************************************************************
 !! GENERIC interfaces
