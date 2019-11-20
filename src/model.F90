@@ -28,17 +28,17 @@ module model
    implicit none
 
   !! Counter for moving average water inputs
-  integer (kind=c_int) :: iDayCtr
+  integer (c_int) :: iDayCtr
 
   !! Generic grids used to shuffle data between subroutines
   type ( T_GENERAL_GRID ),pointer :: pGenericGrd_int
   type ( T_GENERAL_GRID ),pointer :: pGenericGrd_sgl
 
   !! For the "downhill" solution
-  integer (kind=c_int) :: iOrderCount
-  integer (kind=c_int), dimension(:), allocatable :: iOrderCol
-  integer (kind=c_int), dimension(:), allocatable :: iOrderRow
-  real(kind=c_float) :: rStartTime,rEndTime
+  integer (c_int) :: iOrderCount
+  integer (c_int), dimension(:), allocatable :: iOrderCol
+  integer (c_int), dimension(:), allocatable :: iOrderRow
+  real(c_float) :: rStartTime,rEndTime
 
 contains
 
@@ -74,17 +74,17 @@ subroutine model_Solve( pGrd, pConfig, pGraph)
     ! DISLIN plots
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
-  integer (kind=c_int) :: tj, ti
-  integer (kind=c_int) :: iTempDay, iTempMonth, iTempYear
-  integer (kind=c_long_long) :: iPos
-  integer (kind=c_int) :: iIndex
-  integer (kind=c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
-  integer (kind=c_int) :: iCol, iRow
+  integer (c_int) :: i, j, k, iStat, iDayOfYear, iMonth
+  integer (c_int) :: tj, ti
+  integer (c_int) :: iTempDay, iTempMonth, iTempYear
+  integer (c_long_long) :: iPos
+  integer (c_int) :: iIndex
+  integer (c_int) :: jj, ii, iNChange, iUpstreamCount, iPasses, iTempval
+  integer (c_int) :: iCol, iRow
   character(len=3) :: sMonthName
-  logical (kind=c_bool) :: lMonthEnd
+  logical (c_bool) :: lMonthEnd
 
-  real (kind=c_float) :: rmin,ravg,rmax
+  real (c_float) :: rmin,ravg,rmax
 
   type (T_CELL),pointer :: cel
   character (len=256) :: sBuf
@@ -512,7 +512,7 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
     ! DISLIN plots
 
   ![LOCALS]
-  integer (kind=c_int) :: iIndex
+  integer (c_int) :: iIndex
 
   ! clean up
   close ( unit=LU_TS )
@@ -589,14 +589,14 @@ subroutine model_GetDailyPrecipValue( pGrd, pConfig, rPrecip, iMonth, iDay, iYea
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  real (kind=c_float), intent(in) :: rPrecip
-  integer (kind=c_int), intent(in) :: iMonth
-  integer (kind=c_int), intent(in) :: iDay
-  integer (kind=c_int), intent(in) :: iYear
-  integer (kind=c_int), intent(in) :: iJulianDay
+  real (c_float), intent(in) :: rPrecip
+  integer (c_int), intent(in) :: iMonth
+  integer (c_int), intent(in) :: iDay
+  integer (c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iJulianDay
   ! [ LOCALS ]
-  real (kind=c_double) :: rMin, rMean, rMax, rSum
-  integer (kind=c_int) :: iCount, iNegCount
+  real (c_double) :: rMin, rMean, rMax, rSum
+  integer (c_int) :: iCount, iNegCount
   character (len=256) sBuf
 
 
@@ -686,19 +686,19 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  real (kind=c_float), intent(in) :: rPrecip
-  real (kind=c_float), intent(in) :: rAvgT
-  real (kind=c_float), intent(in) :: rMinT
-  real (kind=c_float), intent(in) :: rMaxT
-  integer (kind=c_int), intent(in) :: iMonth
-  integer (kind=c_int), intent(in) :: iDay
-  integer (kind=c_int), intent(in) :: iYear
-  integer (kind=c_int), intent(in) :: iJulianDay
+  real (c_float), intent(in) :: rPrecip
+  real (c_float), intent(in) :: rAvgT
+  real (c_float), intent(in) :: rMinT
+  real (c_float), intent(in) :: rMaxT
+  integer (c_int), intent(in) :: iMonth
+  integer (c_int), intent(in) :: iDay
+  integer (c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iJulianDay
 
   ! [ LOCALS ]
-  real (kind=c_double) :: rMin, rMean, rMax, rSum, rTempVal
-  integer (kind=c_int) :: iNumGridCells
-  integer (kind=c_int) :: iRow,iCol, iCount, iCount_valid, iNegCount
+  real (c_double) :: rMin, rMean, rMax, rSum, rTempVal
+  integer (c_int) :: iNumGridCells
+  integer (c_int) :: iRow,iCol, iCount, iCount_valid, iNegCount
   character (len=256) sBuf
   type (T_CELL),pointer :: cel
 
@@ -778,19 +778,19 @@ subroutine model_GetDailyTemperatureValue( pGrd, pConfig, rAvgT, rMinT, &
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  real (kind=c_float), intent(in) :: rAvgT
-  real (kind=c_float), intent(in) :: rMinT
-  real (kind=c_float), intent(in) :: rMaxT
-  real (kind=c_float), intent(in) :: rRH
-  integer (kind=c_int), intent(in) :: iMonth
-  integer (kind=c_int), intent(in) :: iDay
-  integer (kind=c_int), intent(in) :: iYear
-  integer (kind=c_int), intent(in) :: iJulianDay
+  real (c_float), intent(in) :: rAvgT
+  real (c_float), intent(in) :: rMinT
+  real (c_float), intent(in) :: rMaxT
+  real (c_float), intent(in) :: rRH
+  integer (c_int), intent(in) :: iMonth
+  integer (c_int), intent(in) :: iDay
+  integer (c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iJulianDay
 
   ! [ LOCALS ]
-  real (kind=c_double) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal, rMeanTMIN, rMeanTMAX
-  integer (kind=c_int) :: iNumGridCells
-  integer (kind=c_int) :: iRow,iCol, iCount, iCount_valid
+  real (c_double) :: rMin, rMean, rMax, rSum, rTFactor, rTempVal, rMeanTMIN, rMeanTMAX
+  integer (c_int) :: iNumGridCells
+  integer (c_int) :: iRow,iCol, iCount, iCount_valid
   character (len=256) sBuf
   type (T_CELL),pointer :: cel
 
@@ -888,11 +888,11 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
     ! model options, flags, and other settings
 
   ! [ LOCALS ]
-  real (kind=c_float) :: A = 0.97             ! decay coefficient
-  integer (kind=c_int) :: iCol,iRow               ! temporary array indices
+  real (c_float) :: A = 0.97             ! decay coefficient
+  integer (c_int) :: iCol,iRow               ! temporary array indices
   type (T_CELL),pointer :: cel              ! pointer to a particular cell
-  real (kind=c_float) :: rTAvg_C              ! temporary variable holding avg temp in C
-  real (kind=c_float) :: rSnowDepthCM         ! snow depth in centimeters
+  real (c_float) :: rTAvg_C              ! temporary variable holding avg temp in C
+  real (c_float) :: rSnowDepthCM         ! snow depth in centimeters
 
   !!!   *$OMP DO ORDERED PRIVATE(iRow, iCol, cel)
 
@@ -941,7 +941,7 @@ subroutine model_UpdateGrowingSeason( pGrd, pConfig )
 
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel              ! pointer to a particular cell
-  integer (kind=c_int) :: iCol, iRow
+  integer (c_int) :: iCol, iRow
 
 
 
@@ -1013,14 +1013,14 @@ subroutine model_UpdateGrowingDegreeDay( pGrd , pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  real (kind=c_float) :: rDD                        ! daily departure from TBase
+  real (c_float) :: rDD                        ! daily departure from TBase
   type (T_CELL),pointer :: cel                      ! pointer to a particular cell
-  real (kind=c_float) :: rA, rAt
-  real (kind=c_float) :: rTMax
-  real (kind=c_float) :: rW
-  integer (kind=c_int) :: iCol,iRow
-  real (kind=c_float) :: rGDD_BaseTemp, rGDD_MaxTemp
-  logical (kind=c_bool) :: lAssertTest
+  real (c_float) :: rA, rAt
+  real (c_float) :: rTMax
+  real (c_float) :: rW
+  integer (c_int) :: iCol,iRow
+  real (c_float) :: rGDD_BaseTemp, rGDD_MaxTemp
+  logical (c_bool) :: lAssertTest
 
   ! zero out growing degree day at start of calendar year
   if(pConfig%iDayOfYear == 1) pGrd%Cells%rGDD = 0.
@@ -1116,28 +1116,27 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear  ! Day of the year
-  integer (kind=c_int), intent(in) :: iMonth     ! Integer month value (1-12)
+  integer (c_int),intent(in) :: iDayOfYear  ! Day of the year
+  integer (c_int), intent(in) :: iMonth     ! Integer month value (1-12)
   ! [ LOCALS ]
-  real (kind=c_double) :: dpPotentialMelt,dpPotentialInterception,dpInterception
-  real (kind=c_double) :: dpPreviousSnowCover,dpChgInSnowCover, dpSnowCover
-  real (kind=c_double) :: dpNetPrecip    ! all forms of precip, after interception
-  real (kind=c_double) :: dpNetRainfall  ! precip as RAINFALL, after interception
-  integer (kind=c_int) :: iRow, iCol
+  real (c_double) :: dpPotentialMelt,dpPotentialInterception,dpInterception
+  real (c_double) :: dpPreviousSnowCover,dpChgInSnowCover, dpSnowCover
+  real (c_double) :: dpNetPrecip    ! all forms of precip, after interception
+  real (c_double) :: dpNetRainfall  ! precip as RAINFALL, after interception
+  integer (c_int) :: iRow, iCol
   type (T_CELL),pointer :: cel
-  integer (kind=c_int) :: iNumGridCells
-  real (kind=c_double) :: rMin, rMean, rMax, rSum, rSum2
-  integer (kind=c_int) :: iRowCount
-  real (kind=c_float) ::  rMonthlySnowRunoff
-  logical (kind=c_bool) :: lFREEZING
-  real (kind=c_float)   :: rPotential_Evaporated_Interception
-  real (kind=c_float)   :: rPrevious_Interception_Storage
-  real (kind=c_float)   :: rMAXIMUM_INTERCEPTION_STORAGE
-  real (kind=c_float)   :: rFraction_Wet
+  integer (c_int) :: iNumGridCells
+  real (c_double) :: rMin, rMean, rMax, rSum, rSum2
+  integer (c_int) :: iRowCount
+  real (c_float) ::  rMonthlySnowRunoff
+  logical (c_bool) :: lFREEZING
+  real (c_float)   :: rPotential_Evaporated_Interception
+  real (c_float)   :: rPrevious_Interception_Storage
+  real (c_float)   :: rMAXIMUM_INTERCEPTION_STORAGE
+  real (c_float)   :: rFraction_Wet
 
 
   ! [ LOCAL PARAMETERS ]
-  real (kind=c_float), parameter :: rMELT_INDEX = 1.5_c_float
 
   ! set snowmelt to zero uniformly across model grid
   pGrd%Cells(:,:)%rSnowMelt = rZERO
@@ -1175,20 +1174,20 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         ! this simply retrieves the table value for the given landuse, with the amount
         ! zeroed out in the event that interception storage is already maxed out
         dpPotentialInterception = max( rf_model_GetInterception(pConfig,cel), 0.0_c_double )   !  &
-!                                     - real( cel%rInterceptionStorage, kind=c_double ),  &
+!                                     - real( cel%rInterceptionStorage, c_double ),  &
 !                                       0.0_c_double )
 
         ! save the current snowcover value, create local copy as well
-        dpPreviousSnowCover = real(cel%rSnowCover, kind=c_double)
-        dpSnowCover = real(cel%rSnowCover, kind=c_double)
+        dpPreviousSnowCover = real(cel%rSnowCover, c_double)
+        dpSnowCover = real(cel%rSnowCover, c_double)
 
         ! calculate NET PRECIPITATION; assign value of zero if all of the
         ! GROSS PRECIP is captured by the INTERCEPTION process
-        dpNetPrecip = real(cel%rGrossPrecip, kind=c_double) - dpPotentialInterception
+        dpNetPrecip = real(cel%rGrossPrecip, c_double) - dpPotentialInterception
 
         if ( dpNetPrecip < dpZERO ) dpNetPrecip = dpZERO
 
-        dpInterception = real(cel%rGrossPrecip, kind=c_double) - dpNetPrecip
+        dpInterception = real(cel%rGrossPrecip, c_double) - dpNetPrecip
 
         ! negative interception can only be generated if the user has supplied
         ! *negative* values for GROSS PRECIPITATION; this has happened,
@@ -1206,7 +1205,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
             trim(__FILE__), __LINE__)
         endif
 
-        cel%rInterception = real(dpInterception, kind=c_float)
+        cel%rInterception = real(dpInterception, c_float)
         cel%rInterceptionStorage = cel%rInterceptionStorage + cel%rInterception
 
         rMAXIMUM_INTERCEPTION_STORAGE = pConfig%LU( cel%iLandUseIndex )%rMax_Interception_Storage
@@ -1244,7 +1243,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
         ! Is there any melting?
         if ( cel%rTAvg > rFREEZING ) then
-          dpPotentialMelt = rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
+          dpPotentialMelt = pConfig%rMELT_INDEX * ( cel%rTMax - rFREEZING ) &
                             * dpC_PER_F / rMM_PER_INCH
 
           if(dpSnowCover > dpPotentialMelt) then
@@ -1260,22 +1259,22 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         dpChgInSnowCover = dpSnowCover - dpPreviousSnowCover
 
         ! copy temporary double-precision values back to single-precision
-        cel%rSnowCover = real(dpSnowCover, kind=c_float)
-        cel%rNetRainfall = real(dpNetRainfall, kind=c_float)
+        cel%rSnowCover = real(dpSnowCover, c_float)
+        cel%rNetRainfall = real(dpNetRainfall, c_float)
 
       endif
 
       call stats_UpdateAllAccumulatorsByCell( &
-        REAL(dpChgInSnowCover,kind=c_double), iCHG_IN_SNOW_COV,iMonth,iZERO)
+        REAL(dpChgInSnowCover,c_double), iCHG_IN_SNOW_COV,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
         dpNetRainfall,iNET_RAINFALL,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowMelt,kind=c_double),iSNOWMELT,iMonth,iZERO)
+        REAL(cel%rSnowMelt,c_double),iSNOWMELT,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
-        REAL(cel%rSnowFall_SWE,kind=c_double),iSNOWFALL_SWE,iMonth,iZERO)
+        REAL(cel%rSnowFall_SWE,c_double),iSNOWFALL_SWE,iMonth,iZERO)
 
       call stats_UpdateAllAccumulatorsByCell( &
         dpSnowCover,iSNOWCOVER,iMonth,iZERO)
@@ -1327,13 +1326,13 @@ subroutine model_ProcessRunoff(pGrd, pConfig, iDayOfYear, iMonth)
   type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear    ! day of current year (January 1 = 1)
+  integer (c_int),intent(in) :: iDayOfYear    ! day of current year (January 1 = 1)
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCount
-  integer (kind=c_int) :: j, i
-  real (kind=c_double) :: xmin, xmax, ymin, ymax
-  integer (kind=c_int), intent(in) :: iMonth     ! Integer month value (1-12)
-  integer (kind=c_int) :: iNumGridCells
+  integer (c_int) :: iCount
+  integer (c_int) :: j, i
+  real (c_double) :: xmin, xmax, ymin, ymax
+  integer (c_int), intent(in) :: iMonth     ! Integer month value (1-12)
+  integer (c_int) :: iNumGridCells
 
   ! calculate number of cells in model grid
   iNumGridCells = pGrd%iNX * pGrd%iNY
@@ -1408,14 +1407,14 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol, iRow, iStat, tj, ti, iTgt_Row, iTgt_Col,k,iCumlCount,iCount
-  integer (kind=c_int) :: iRowSub, iColSub, iNChange, iUpstreamCount, iPasses
-  integer (kind=c_int) :: ic
-  integer (kind=c_int) :: iNumGridCells, iNumActiveGridCells
-  integer (kind=c_int) :: iNumIterationsNochange
-  integer (kind=c_int) :: LU_TEMP
-  logical (kind=c_bool) :: lExist
-  logical (kind=c_bool) :: lCircular = lFALSE
+  integer (c_int) :: iCol, iRow, iStat, tj, ti, iTgt_Row, iTgt_Col,k,iCumlCount,iCount
+  integer (c_int) :: iRowSub, iColSub, iNChange, iUpstreamCount, iPasses
+  integer (c_int) :: ic
+  integer (c_int) :: iNumGridCells, iNumActiveGridCells
+  integer (c_int) :: iNumIterationsNochange
+  integer (c_int) :: LU_TEMP
+  logical (c_bool) :: lExist
+  logical (c_bool) :: lCircular = lFALSE
   type( T_GENERAL_GRID ), pointer :: pTempGrid
   type (T_CELL),pointer :: cel
 
@@ -1617,7 +1616,7 @@ subroutine model_ConfigureRunoffDownhill( pGrd, pConfig)
 
     ! crude error checking to see whether the routing table has the right
     ! number of elements
-    call Assert(LOGICAL(iOrderCount==iNumActiveGridCells,kind=c_bool), &
+    call Assert(LOGICAL(iOrderCount==iNumActiveGridCells,c_bool), &
       'Problem with existing routing file.  Delete swb_routing.bin and rerun')
 
     do ic=1,iOrderCount
@@ -1678,11 +1677,11 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
   type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  integer (kind=c_int), intent(in) :: iMonth       ! Integer month value (1-12)
+  integer (c_int),intent(in) :: iDayOfYear
+  integer (c_int), intent(in) :: iMonth       ! Integer month value (1-12)
   ! [ LOCALS ]
-  integer (kind=c_int) :: ic,iTgt_Col,iTgt_Row,iFrac
-  real (kind=c_float) :: rP,rR,rDelta
+  integer (c_int) :: ic,iTgt_Col,iTgt_Row,iFrac
+  real (c_float) :: rP,rR,rDelta
   type (T_CELL),pointer :: cel
   type (T_CELL),pointer :: target_cel
 
@@ -1711,11 +1710,11 @@ subroutine model_RunoffDownhill(pGrd, pConfig, iDayOfYear, iMonth)
 
     ! MUST screen target values to ensure we don't start attempting
     ! manipulation of memory that is out of bounds!!
-    call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,kind=c_bool), &
+    call Assert(LOGICAL(iTgt_Row>0 .and. iTgt_Row <= pGrd%iNY,c_bool), &
       "iTgt_Row out of bounds: Row = "//int2char(iOrderRow(ic)) &
       //"  Col = "//int2char(iOrderCol(ic)), &
       trim(__FILE__),__LINE__)
-    call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,kind=c_bool), &
+    call Assert(LOGICAL(iTgt_Col>0 .and. iTgt_Col <= pGrd%iNX,c_bool), &
       "iTgt_Col out of bounds: Row = "//int2char(iOrderRow(ic)) &
       //"  Col = "//int2char(iOrderCol(ic)), &
       trim(__FILE__),__LINE__)
@@ -1793,10 +1792,10 @@ subroutine model_Runoff_NoRouting(pGrd, pConfig, iDayOfYear, iMonth)
   type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  integer (kind=c_int), intent(in) :: iMonth       ! Integer month value (1-12)
+  integer (c_int),intent(in) :: iDayOfYear
+  integer (c_int), intent(in) :: iMonth       ! Integer month value (1-12)
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow, iFrac
+  integer (c_int) :: iCol,iRow, iFrac
   type (T_CELL),pointer :: cel
   ! [ CONSTANTS ]
 
@@ -1847,9 +1846,9 @@ function rf_model_CellRunoff(pConfig, cel, iDayOfYear) result(rOutFlow)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   type (T_CELL),pointer :: cel
-  integer (kind=c_int),intent(in) :: iDayOfYear
+  integer (c_int),intent(in) :: iDayOfYear
   ! [ RETURN VALUE ]
-  real (kind=c_float) :: rOutFlow
+  real (c_float) :: rOutFlow
   ! [ LOCALS ]
 
   if (pConfig%iConfigureRunoff == CONFIG_RUNOFF_CURVE_NUMBER) then
@@ -1896,9 +1895,9 @@ function rf_model_CellRunoff_GreenAmpt(pConfig, cel, iDayOfYear) result(rOutFlow
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   type (T_CELL),pointer :: cel
-  integer (kind=c_int),intent(in) :: iDayOfYear
+  integer (c_int),intent(in) :: iDayOfYear
   ! [ RETURN VALUE ]
-  real (kind=c_float) :: rOutFlow
+  real (c_float) :: rOutFlow
   ! [ LOCALS ]
 
   call Assert( lFALSE, "Steve needs to put some code in here!" )
@@ -1948,21 +1947,21 @@ subroutine model_InitializeFlowDirection( pGrd , pConfig)
     ! model options, flags, and other settings
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iRow,iCol
-  integer (kind=c_int) :: iTgt_Row,iTgt_Col
+  integer (c_int) :: iRow,iCol
+  integer (c_int) :: iTgt_Row,iTgt_Col
   type (T_CELL),pointer :: cel
   character (len=256) :: sBuf
 
   ! [ PARAMETERS ]
-  integer (kind=c_short),parameter :: DIR_DEPRESSION=0
-  integer (kind=c_short),parameter :: DIR_RIGHT=1
-  integer (kind=c_short),parameter :: DIR_DOWN_RIGHT=2
-  integer (kind=c_short),parameter :: DIR_DOWN=4
-  integer (kind=c_short),parameter :: DIR_DOWN_LEFT=8
-  integer (kind=c_short),parameter :: DIR_LEFT=16
-  integer (kind=c_short),parameter :: DIR_UP_LEFT=32
-  integer (kind=c_short),parameter :: DIR_UP=64
-  integer (kind=c_short),parameter :: DIR_UP_RIGHT=128
+  integer (c_short),parameter :: DIR_DEPRESSION=0
+  integer (c_short),parameter :: DIR_RIGHT=1
+  integer (c_short),parameter :: DIR_DOWN_RIGHT=2
+  integer (c_short),parameter :: DIR_DOWN=4
+  integer (c_short),parameter :: DIR_DOWN_LEFT=8
+  integer (c_short),parameter :: DIR_LEFT=16
+  integer (c_short),parameter :: DIR_UP_LEFT=32
+  integer (c_short),parameter :: DIR_UP=64
+  integer (c_short),parameter :: DIR_UP_RIGHT=128
 
   ! no point in doing these calculations unless we're really going to
   ! route water
@@ -2132,18 +2131,18 @@ subroutine model_DownstreamCell(pGrd,iRow,iCol,iTgt_Row,iTgt_Col)
   !! (iTgt_Row,iTgt_Col)
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
-  integer (kind=c_int),intent(in) :: iRow,iCol
-  integer (kind=c_int),intent(out) :: iTgt_Row,iTgt_Col
+  integer (c_int),intent(in) :: iRow,iCol
+  integer (c_int),intent(out) :: iTgt_Row,iTgt_Col
   ! [ PARAMETERS ]
-  integer (kind=c_short),parameter :: DIR_DEPRESSION=0
-  integer (kind=c_short),parameter :: DIR_RIGHT=1
-  integer (kind=c_short),parameter :: DIR_DOWN_RIGHT=2
-  integer (kind=c_short),parameter :: DIR_DOWN=4
-  integer (kind=c_short),parameter :: DIR_DOWN_LEFT=8
-  integer (kind=c_short),parameter :: DIR_LEFT=16
-  integer (kind=c_short),parameter :: DIR_UP_LEFT=32
-  integer (kind=c_short),parameter :: DIR_UP=64
-  integer (kind=c_short),parameter :: DIR_UP_RIGHT=128
+  integer (c_short),parameter :: DIR_DEPRESSION=0
+  integer (c_short),parameter :: DIR_RIGHT=1
+  integer (c_short),parameter :: DIR_DOWN_RIGHT=2
+  integer (c_short),parameter :: DIR_DOWN=4
+  integer (c_short),parameter :: DIR_DOWN_LEFT=8
+  integer (c_short),parameter :: DIR_LEFT=16
+  integer (c_short),parameter :: DIR_UP_LEFT=32
+  integer (c_short),parameter :: DIR_UP=64
+  integer (c_short),parameter :: DIR_UP_RIGHT=128
 
   select case (pGrd%Cells(iCol,iRow)%iFlowDir)
     case ( DIR_DEPRESSION )
@@ -2196,7 +2195,7 @@ subroutine model_ReadBasinMaskTable ( pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat, iNumMaskFiles, i, iRecNum, iSize
+  integer (c_int) :: iStat, iNumMaskFiles, i, iRecNum, iSize
   character (len=256) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
   character (len=256) :: sBuf
@@ -2204,7 +2203,7 @@ subroutine model_ReadBasinMaskTable ( pConfig )
   ! open basin mask file
   open ( LU_MASK, file=pConfig%sBasinMaskFilename, &
     status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=c_bool), &
+  call Assert( LOGICAL( iStat == 0,c_bool), &
     "Open failed for file: " // pConfig%sBasinMaskFilename )
 
   ! read first line of file
@@ -2329,16 +2328,16 @@ subroutine model_ReadLanduseLookupTable( pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
-  integer (kind=c_int) :: iNumSoilTypes
+  integer (c_int) :: iStat, iNumLandUses, i, iType, iRecNum, iSize
+  integer (c_int) :: iNumSoilTypes
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256)  :: sItem                    ! Key word read from sRecord
-  real (kind=c_float)  :: fTempVal
+  real (c_float)  :: fTempVal
 
   ! open landuse file
   open ( LU_LOOKUP, file=pConfig%sLanduseLookupFilename, &
     status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=c_bool), &
+  call Assert( LOGICAL( iStat == 0,c_bool), &
     "Open failed for file: " // pConfig%sLanduseLookupFilename )
 
   ! read first line of file
@@ -2585,22 +2584,22 @@ subroutine model_ReadIrrigationLookupTable( pConfig, pGrd )
   type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat, iNumLandUses, i, j, iType, iRecNum, iSize
-  integer (kind=c_int) :: iLandUseType
-  integer (kind=c_int) :: iLandUseIndex
-  integer (kind=c_int) :: iNumSoilTypes
-  logical (kind=c_bool) :: lFound
-  real (kind=c_float) :: rTempValue
+  integer (c_int) :: iStat, iNumLandUses, i, j, iType, iRecNum, iSize
+  integer (c_int) :: iLandUseType
+  integer (c_int) :: iLandUseIndex
+  integer (c_int) :: iNumSoilTypes
+  logical (c_bool) :: lFound
+  real (c_float) :: rTempValue
   character (len=1024) :: sRecord                  ! Input file text buffer
   character (len=256) :: sItem                    ! Key word read from sRecord
   character (len=256) :: sBuf
-	integer (kind=c_int) :: iCol,iRow
+	integer (c_int) :: iCol,iRow
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
 
   ! open IRRIGATION file
   open ( LU_LOOKUP, file=pConfig%sIrrigationLookupFilename, &
     status="OLD", iostat=iStat )
-  call Assert( LOGICAL( iStat == 0,kind=c_bool), &
+  call Assert( LOGICAL( iStat == 0,c_bool), &
     "Open failed for file: " // pConfig%sIrrigationLookupFilename )
 
   call Assert(associated(pConfig%LU), "The landuse lookup table must be read in " &
@@ -2949,13 +2948,13 @@ function rf_model_GetInterception( pConfig, cel ) result(rIntRate)
   type (T_CELL),pointer :: cel
 
   ! [ RETURN VALUE ]
-  real (kind=c_float) :: rIntRate
+  real (c_float) :: rIntRate
 
   ! [ LOCALS ]
-  integer ( kind=c_int )             :: i
-  logical ( kind=c_bool )            :: lAssertTest
+  integer ( c_int )             :: i
+  logical ( c_bool )            :: lAssertTest
   type ( T_LANDUSE_LOOKUP ),pointer  :: pLU
-  real (kind=c_float)                :: fTempPrecip
+  real (c_float)                :: fTempPrecip
 
   lAssertTest = cel%iLandUseIndex >= 1 .and. cel%iLandUseIndex <= pConfig%iNumberOfLanduses
 
@@ -3066,7 +3065,7 @@ subroutine model_setInactiveCells( pGrd, pConfig )
 
   endwhere
 
-  pGenericGrd_sgl%rData = real( pGrd%iMask, kind=c_float )
+  pGenericGrd_sgl%rData = real( pGrd%iMask, c_float )
   call grid_WriteGrid( &
    sFilename="ACTIVE_MODEL_CELLS"//".asc", pGrd=pGenericGrd_sgl, iOutputFormat=OUTPUT_ARC)
 
@@ -3210,7 +3209,7 @@ subroutine model_InitializeInputAndOutput( pGrd, pConfig )
     type (T_MODEL_CONFIGURATION), pointer :: pConfig      ! pointer to data structure that contains
 
    ! [ LOCALS ]
-   integer (kind=c_int) :: iStat
+   integer (c_int) :: iStat
 
   call stats_OpenBinaryFiles(pConfig, pGrd)
 
@@ -3340,12 +3339,12 @@ subroutine model_ProcessET( pGrd, pConfig, iDayOfYear, iNumDaysInYear, &
 type ( T_GENERAL_GRID ),pointer :: pGrd          ! pointer to model grid
 type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
   ! model options, flags, and other settings
-integer (kind=c_int),intent(in) :: iDayOfYear, iNumDaysInYear
-real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
+integer (c_int),intent(in) :: iDayOfYear, iNumDaysInYear
+real (c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
 
   ! [ LOCALS ]
   type (T_CELL),pointer :: cel                      ! pointer to a particular cell
-  integer (kind=c_int) :: iCol, iRow
+  integer (c_int) :: iCol, iRow
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
 
   select case ( pConfig%iConfigureET )
@@ -3390,10 +3389,10 @@ subroutine model_InitializeSM(pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,k
+  integer (c_int) :: iCol,iRow,k
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  logical ( kind=c_bool ) :: lMatch
+  logical ( c_bool ) :: lMatch
 
   ! [ LOCAL PARAMETERS ]
 
@@ -3435,7 +3434,7 @@ subroutine model_InitializeSM(pGrd, pConfig )
           call Assert(lFALSE,&
             "Failed to match landuse grid with landuse table during soil moisture initialization~" &
             //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
-            //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=c_int) ) ) )
+            //"  cell LU: "//trim(int2char(int(cel%iLandUse, c_int) ) ) )
         endif
       end do
     end do
@@ -3464,10 +3463,10 @@ subroutine model_InitializeMaxRecharge(pGrd, pConfig )
     ! model options, flags, and other settings
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,k
+  integer (c_int) :: iCol,iRow,k
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  logical ( kind=c_bool ) :: lMatch
+  logical ( c_bool ) :: lMatch
 
   if(pConfig%iConfigureMaxRecharge == CONFIG_MAX_RECHARGE_TABLE ) then
     ! Update the maximum recharge based on land-cover and soil type
@@ -3507,7 +3506,7 @@ subroutine model_InitializeMaxRecharge(pGrd, pConfig )
           call Assert(lFALSE,&
             "Failed to match landuse grid with landuse table during maximum recharge rate initialization~" &
             //" Row: "//trim(int2char(iRow))//"  Col: "//trim(int2char(iCol)) &
-            //"  cell LU: "//trim(int2char(int(cel%iLandUse, kind=c_int) ) ) )
+            //"  cell LU: "//trim(int2char(int(cel%iLandUse, c_int) ) ) )
         endif
       end do
     end do
@@ -3551,11 +3550,11 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,k
+  integer (c_int) :: iCol,iRow,k
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
 
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  logical ( kind=c_bool ) :: lMatch
+  logical ( c_bool ) :: lMatch
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
@@ -3576,7 +3575,7 @@ subroutine model_CreateLanduseIndex(pGrd, pConfig )
              "Value in soil type grid exceeds the maximum " &
              // "number of soil types in the land use lookup table.", &
              trim(__FILE__),__LINE__)
- !         cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,kind=c_int))
+ !         cel%rMaxRecharge = pConfig%MAX_RECHARGE(k,INT(cel%iSoilGroup,c_int))
           lMatch=lTRUE
           exit
         end if
@@ -3602,9 +3601,9 @@ subroutine model_CreateIrrigationTableIndex(pGrd, pConfig )
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
     ! model options, flags, and other settings
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,j
+  integer (c_int) :: iCol,iRow,j
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
-  logical ( kind=c_bool ) :: lMatch
+  logical ( c_bool ) :: lMatch
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX
@@ -3642,7 +3641,7 @@ subroutine model_dumpvals(pGrd, pConfig)
   ! [ LOCALS ]
   type ( T_CELL ),pointer :: cel            ! pointer to cell data structure
   logical                 :: file_is_open
-  integer (kind=c_int)    :: idx
+  integer (c_int)    :: idx
 
   do idx=1, ubound( DUMP_VARS, 1)
 
@@ -3656,7 +3655,11 @@ subroutine model_dumpvals(pGrd, pConfig)
 
       cel => pGrd%Cells( DUMP_VARS( idx )%column_num, DUMP_VARS( idx )%row_num )
 
+<<<<<<< HEAD
       write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),41(g16.9,','),g16.9 )") pConfig%iMonth, &
+=======
+      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),40(g17.9e3,','),g17.9e3 )") pConfig%iMonth, &
+>>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b
         pConfig%iDay,                                                                                              &
         pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
         cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
@@ -3687,10 +3690,10 @@ subroutine model_WriteGrids(pGrd, pConfig, iOutputType)
 type ( T_GENERAL_GRID ),pointer :: pGrd        ! pointer to model grid
 type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
   ! model options, flags, and other settings
-integer (kind=c_int), intent(in) :: iOutputType
+integer (c_int), intent(in) :: iOutputType
 
   ! [ LOCALS ]
-  real (kind=c_double) :: xmin,xmax,ymin,ymax
+  real (c_double) :: xmin,xmax,ymin,ymax
   character (len=256) sBufOut,sBufFuture,sBufSuffix,sDayText,sMonthText, &
     sYearText, sDateText
 
@@ -3758,8 +3761,8 @@ subroutine model_ReadTimeSeriesFile(pConfig, pTS)
 
   ! [ LOCALS ]
   character(len=256) :: sBuf
-  integer (kind=c_int) :: iStat
-  real (kind=c_float) :: rMaxRH
+  integer (c_int) :: iStat
+  real (c_float) :: rMaxRH
 
   do
 

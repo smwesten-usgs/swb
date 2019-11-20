@@ -17,20 +17,20 @@ module swb_python_interface
   use control
   implicit none
 
-  !f2py integer (kind=4), dimension(:), allocatable :: iMonth
-  !f2py integer (kind=4), dimension(:), allocatable :: iDay
-  !f2py integer (kind=4), dimension(:), allocatable :: iYear
-  !f2py integer (kind=4), dimension(:), allocatable :: iHour
-  !f2py integer (kind=4), dimension(:), allocatable :: iMinute
-  !f2py integer (kind=4), dimension(:), allocatable :: iSecond
-  !f2py integer (kind=4), dimension(:), allocatable :: iJulianDay
-  integer (kind=4), dimension(:), allocatable :: iMonth
-  integer (kind=4), dimension(:), allocatable :: iDay
-  integer (kind=4), dimension(:), allocatable :: iYear
-  integer (kind=4), dimension(:), allocatable :: iHour
-  integer (kind=4), dimension(:), allocatable :: iMinute
-  integer (kind=4), dimension(:), allocatable :: iSecond
-  integer (kind=4), dimension(:), allocatable :: iJulianDay
+  !f2py integer (4), dimension(:), allocatable :: iMonth
+  !f2py integer (4), dimension(:), allocatable :: iDay
+  !f2py integer (4), dimension(:), allocatable :: iYear
+  !f2py integer (4), dimension(:), allocatable :: iHour
+  !f2py integer (4), dimension(:), allocatable :: iMinute
+  !f2py integer (4), dimension(:), allocatable :: iSecond
+  !f2py integer (4), dimension(:), allocatable :: iJulianDay
+  integer (4), dimension(:), allocatable :: iMonth
+  integer (4), dimension(:), allocatable :: iDay
+  integer (4), dimension(:), allocatable :: iYear
+  integer (4), dimension(:), allocatable :: iHour
+  integer (4), dimension(:), allocatable :: iMinute
+  integer (4), dimension(:), allocatable :: iSecond
+  integer (4), dimension(:), allocatable :: iJulianDay
 
   !f2py intent(hide) :: pConfig
   type (T_MODEL_CONFIGURATION), pointer :: pConfig

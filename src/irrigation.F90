@@ -35,13 +35,13 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iRow, iCol
-  integer (kind=c_int) :: iNumCells
+  integer (c_int) :: iRow, iCol
+  integer (c_int) :: iNumCells
   type (T_IRRIGATION_LOOKUP),pointer :: pIRRIGATION  ! pointer to an irrigation table entry
   type ( T_CELL ),pointer :: cel
-  real (kind=c_float) :: rDepletionFraction
-  real (kind=c_double) :: rDepletionAmount
-  real (kind=c_double) :: rIrrigationAmount
+  real (c_float) :: rDepletionFraction
+  real (c_double) :: rDepletionAmount
+  real (c_double) :: rIrrigationAmount
 
     ! zero out Irrigation term
     pGrd%Cells%rIrrigationFromGW = rZERO
@@ -86,27 +86,27 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
     !       cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
 
     !       cel%rIrrigationFromGW = cel%rIrrigationFromGW &
-    !          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+    !          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, c_double )
     !       cel%rIrrigationFromSW = cel%rIrrigationFromSW &
-    !          * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+    !          * real(pIRRIGATION%rIrrigationEfficiency_SW, c_double )
 
         ! code snippet from SWB, 8/30/2013
         ! if(rDepletionFraction > pIRRIGATION%rMAD .and. cel%rGDD > 50 ) then
         !   rDepletionAmount = cel%rSoilWaterCap - cel%rSoilMoisture
         !   cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW &
-        !                               * rDepletionAmount, kind=c_double )
+        !                               * rDepletionAmount, c_double )
 
         !   cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW) &
-        !                               * rDepletionAmount, kind=c_double )
+        !                               * rDepletionAmount, c_double )
 
         !   !> NOTE!! Formerly the assumption was that any inefficiencies in
         !   !> delivery were *lost* altogether from the system; changed
         !   !> as of 30 AUG 2013 so that the extra water is instead applied
         !   !> to the soil moisture reservoir
         !   cel%rIrrigationFromGW = cel%rIrrigationFromGW &
-        !      * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+        !      * REAL(pIRRIGATION%rIrrigationEfficiency_GW, c_double )
         !   cel%rIrrigationFromSW = cel%rIrrigationFromSW &
-        !      * real(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+        !      * real(pIRRIGATION%rIrrigationEfficiency_SW, c_double )
 
         !   cel%rIrrigationAmount = cel%rIrrigationFromGW + cel%rIrrigationFromSW
 
@@ -125,10 +125,10 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
               ! inflate the GW and SW irrigation amounts to account for inefficient delivery and application
               cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW * rDepletionAmount                          &
-                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, c_double )
 
               cel%rIrrigationFromSW = (1.0_c_double - pIRRIGATION%rFractionOfIrrigationFromGW) * rDepletionAmount    &
-                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, c_double )
 
             elseif ( pIRRIGATION%iApplication_Scheme == CONFIG_IRRIGATION_APPLICATION_FIELD_CAPACITY_RZ ) then
 
@@ -142,10 +142,10 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
 
               ! inflate the GW and SW irrigation amounts to account for inefficient delivery and application
               cel%rIrrigationFromGW = pIRRIGATION%rFractionOfIrrigationFromGW * rDepletionAmount                          &
-                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_GW, c_double )
 
               cel%rIrrigationFromSW = (1.0_c_double - pIRRIGATION%rFractionOfIrrigationFromGW) * rDepletionAmount    &
-                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+                                          / REAL(pIRRIGATION%rIrrigationEfficiency_SW, c_double )
 
               ! assume that this inflated amount of water makes it to the root zone as well.
               cel%rIrrigationAmount = cel%rIrrigationFromSW + cel%rIrrigationFromGW
@@ -156,16 +156,16 @@ subroutine irrigation_UpdateAmounts(pGrd, pConfig)
               !!                 gets to the root zone by efficiency fraction.
 
               cel%rIrrigationFromGW = REAL(pIRRIGATION%rFractionOfIrrigationFromGW                        &
-                                          * pIRRIGATION%rIrrigationAmount, kind=c_double )
+                                          * pIRRIGATION%rIrrigationAmount, c_double )
 
               cel%rIrrigationFromSW = real((1.0 - pIRRIGATION%rFractionOfIrrigationFromGW)                &
-                                          * pIRRIGATION%rIrrigationAmount, kind=c_double )
+                                          * pIRRIGATION%rIrrigationAmount, c_double )
 
               ! ** not all water associated with the APPLICATION AMOUNT is assumed to make it to the root zone
               cel%rIrrigationAmount =   cel%rIrrigationFromGW                                                   &
-                                          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, kind=c_double )          &
+                                          * REAL(pIRRIGATION%rIrrigationEfficiency_GW, c_double )          &
                                        +    cel%rIrrigationFromSW                                               &
-                                          * REAL(pIRRIGATION%rIrrigationEfficiency_SW, kind=c_double )
+                                          * REAL(pIRRIGATION%rIrrigationEfficiency_SW, c_double )
 
             else
               cel%rIrrigationAmount = rZERO

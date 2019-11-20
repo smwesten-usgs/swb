@@ -14,17 +14,17 @@ module datetime
 
   type, public :: T_DATETIME
 
-    integer (kind=c_int) :: iMonth = 1
-    integer (kind=c_int) :: iDay = 1
-    integer (kind=c_int) :: iYear = 1
-    integer (kind=c_int) :: iHour = 0
-    integer (kind=c_int) :: iMinute = 0
-    integer (kind=c_int) :: iSecond = 0
-    integer (kind=c_int) :: iWaterYearHigh
-    integer (kind=c_int) :: iWaterYearLow
-    logical (kind=c_bool) :: lIsLeapYear = lFALSE
-    integer (kind=c_int) :: iJulianDay
-    real (kind=c_float) :: rFractionOfDay = rZERO
+    integer (c_int) :: iMonth = 1
+    integer (c_int) :: iDay = 1
+    integer (c_int) :: iYear = 1
+    integer (c_int) :: iHour = 0
+    integer (c_int) :: iMinute = 0
+    integer (c_int) :: iSecond = 0
+    integer (c_int) :: iWaterYearHigh
+    integer (c_int) :: iWaterYearLow
+    logical (c_bool) :: lIsLeapYear = lFALSE
+    integer (c_int) :: iJulianDay
+    real (c_float) :: rFractionOfDay = rZERO
 
   contains
 
@@ -100,23 +100,23 @@ module datetime
   ! the following values are determined by the date format string; defaults to MM/DD/YYYY
   character (len=14), private :: sDATE_FORMAT = "MM/DD/YYYY"
   character (len=14), public  :: sDEFAULT_DATE_FORMAT = "MM/DD/YYYY"
-  integer (kind=c_int), private :: iScanMM1 = 1
-  integer (kind=c_int), private :: iScanMM2 = 2
-  integer (kind=c_int), private :: iScanDelim1 = 3
-  integer (kind=c_int), private :: iScanDD1 = 4
-  integer (kind=c_int), private :: iScanDD2 = 5
-  integer (kind=c_int), private :: iScanDelim2 = 6
-  integer (kind=c_int), private :: iScanYYYY1 = 7
-  integer (kind=c_int), private :: iScanYYYY2 = 10
+  integer (c_int), private :: iScanMM1 = 1
+  integer (c_int), private :: iScanMM2 = 2
+  integer (c_int), private :: iScanDelim1 = 3
+  integer (c_int), private :: iScanDD1 = 4
+  integer (c_int), private :: iScanDD2 = 5
+  integer (c_int), private :: iScanDelim2 = 6
+  integer (c_int), private :: iScanYYYY1 = 7
+  integer (c_int), private :: iScanYYYY2 = 10
 
   character (len=14), private :: sTIME_FORMAT = "HH:MM:SS"
   character (len=14), public  :: sDEFAULT_TIME_FORMAT = "HH:MM:SS"
-  integer (kind=c_int), private :: iScanHour1 = 1
-  integer (kind=c_int), private :: iScanHour2 = 2
-  integer (kind=c_int), private :: iScanMin1 = 4
-  integer (kind=c_int), private :: iScanMin2 = 5
-  integer (kind=c_int), private :: iScanSec1 = 7
-  integer (kind=c_int), private :: iScanSec2 = 8
+  integer (c_int), private :: iScanHour1 = 1
+  integer (c_int), private :: iScanHour2 = 2
+  integer (c_int), private :: iScanMin1 = 4
+  integer (c_int), private :: iScanMin2 = 5
+  integer (c_int), private :: iScanSec1 = 7
+  integer (c_int), private :: iScanSec2 = 8
 
   type (T_MODEL_SIM), public :: MODEL_SIM
 
@@ -222,11 +222,11 @@ subroutine parse_text_to_date_sub(this, sString)
   character (len=*), intent(in) :: sString
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat
-  integer (kind=c_int) :: iMonth
-  integer (kind=c_int) :: iDay
-  integer (kind=c_int) :: iYear
-  integer (kind=c_int) :: iMonthOffset, iDayOffset
+  integer (c_int) :: iStat
+  integer (c_int) :: iMonth
+  integer (c_int) :: iDay
+  integer (c_int) :: iYear
+  integer (c_int) :: iMonthOffset, iDayOffset
   character (len=256) :: sStr
   character (len=256) :: sMonth, sDay, sYear, sBuf
 
@@ -279,11 +279,11 @@ subroutine parse_text_to_time_sub(this, sString)
 
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat
-  integer (kind=c_int) :: iHour
-  integer (kind=c_int) :: iMinute
-  integer (kind=c_int) :: iSecond
-  integer (kind=c_int) :: iOffset
+  integer (c_int) :: iStat
+  integer (c_int) :: iHour
+  integer (c_int) :: iMinute
+  integer (c_int) :: iSecond
+  integer (c_int) :: iOffset
 
   character (len=256) :: sHour, sMinute, sSecond
 
@@ -354,16 +354,16 @@ end subroutine calc_water_year_sub
 !                                 iHour, iMinute, iSecond)
 !
 !   class (T_DATETIME) :: this
-!   integer (kind=c_int), intent(in) :: iMonth
-!   integer (kind=c_int), intent(in) :: iDay
-!   integer (kind=c_int), intent(in) :: iYear
-!   integer (kind=c_int), intent(in) :: iHour
-!   integer (kind=c_int), intent(in) :: iMinute
-!   integer (kind=c_int), intent(in) :: iSecond
+!   integer (c_int), intent(in) :: iMonth
+!   integer (c_int), intent(in) :: iDay
+!   integer (c_int), intent(in) :: iYear
+!   integer (c_int), intent(in) :: iHour
+!   integer (c_int), intent(in) :: iMinute
+!   integer (c_int), intent(in) :: iSecond
 !
 !   ! [LOCALS]
-! !  integer (kind=c_int) :: iJulianDay
-! !  real (kind=c_double) :: rFractionOfDay
+! !  integer (c_int) :: iJulianDay
+! !  real (c_double) :: rFractionOfDay
 !
 !   this%iMonth = iMonth
 !   this%iDay = iDay
@@ -373,15 +373,15 @@ end subroutine calc_water_year_sub
 !   this%iSecond = iSecond
 !
 ! !  this%iJulianDay = julian_day( this%iYear, this%iMonth, this%iDay)
-!   this%iJulianDay = julian_day( int(this%iYear, kind=c_int), &
-!                                 int(this%iMonth, kind=c_int), &
-!                                 int(this%iDay, kind=c_int))
+!   this%iJulianDay = julian_day( int(this%iYear, c_int), &
+!                                 int(this%iMonth, c_int), &
+!                                 int(this%iDay, c_int))
 !
-!   this%rFractionOfDay = real(this%iHour, kind=c_double) / 24_c_double + &
-!                    real(this%iMinute, kind=c_double) / 1440_c_double + &
-!                    real(this%iSecond, kind=c_double) / 86400_c_double
+!   this%rFractionOfDay = real(this%iHour, c_double) / 24_c_double + &
+!                    real(this%iMinute, c_double) / 1440_c_double + &
+!                    real(this%iSecond, c_double) / 86400_c_double
 !
-! !  this%rJulianDay = real(iJulianDay, kind=c_double) + rFractionOfDay !&
+! !  this%rJulianDay = real(iJulianDay, c_double) + rFractionOfDay !&
 ! !                                     - 2400000.5_c_double
 !
 !   ! 2400000.5 is subtracted to yield one definition of a "MODIFIED JUILAN DAY"
@@ -394,12 +394,12 @@ subroutine calc_julian_day_sub(this, iMonth, iDay, iYear, &
                                 iHour, iMinute, iSecond)
 
   class (T_DATETIME) :: this
-  integer (kind=c_int), intent(in), optional :: iMonth
-  integer (kind=c_int), intent(in), optional :: iDay
-  integer (kind=c_int), intent(in), optional :: iYear
-  integer (kind=c_int), intent(in), optional :: iHour
-  integer (kind=c_int), intent(in), optional :: iMinute
-  integer (kind=c_int), intent(in), optional :: iSecond
+  integer (c_int), intent(in), optional :: iMonth
+  integer (c_int), intent(in), optional :: iDay
+  integer (c_int), intent(in), optional :: iYear
+  integer (c_int), intent(in), optional :: iHour
+  integer (c_int), intent(in), optional :: iMinute
+  integer (c_int), intent(in), optional :: iSecond
 
   if(present(iMonth) ) this%iMonth = iMonth
   if(present(iDay) ) this%iDay = iDay
@@ -408,14 +408,14 @@ subroutine calc_julian_day_sub(this, iMonth, iDay, iYear, &
   if(present(iMinute) ) this%iMinute = iMinute
   if(present(iSecond) ) this%iSecond = iSecond
 
-  this%iJulianDay = julian_day( int(this%iYear, kind=c_int), &
-                                int(this%iMonth, kind=c_int), &
-                                int(this%iDay, kind=c_int))
-  this%rFractionOfDay = real(this%iHour, kind=c_double) / 24_c_double + &
-                   real(this%iMinute, kind=c_double) / 1440_c_double + &
-                   real(this%iSecond, kind=c_double) / 86400_c_double
+  this%iJulianDay = julian_day( int(this%iYear, c_int), &
+                                int(this%iMonth, c_int), &
+                                int(this%iDay, c_int))
+  this%rFractionOfDay = real(this%iHour, c_double) / 24_c_double + &
+                   real(this%iMinute, c_double) / 1440_c_double + &
+                   real(this%iSecond, c_double) / 86400_c_double
 
-!  this%rJulianDay = real(iJulianDay, kind=c_double) + rFractionOfDay ! - 2400000.5_c_double
+!  this%rJulianDay = real(iJulianDay, c_double) + rFractionOfDay ! - 2400000.5_c_double
 
 end subroutine calc_julian_day_sub
 
@@ -426,14 +426,14 @@ subroutine calc_gregorian_date_sub(this)
   class (T_DATETIME) :: this
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iMonth
-  integer (kind=c_int) :: iDay
-  integer (kind=c_int) :: iYear
-  integer (kind=c_int) :: iHour
-  integer (kind=c_int) :: iMinute
-  integer (kind=c_int) :: iSecond
+  integer (c_int) :: iMonth
+  integer (c_int) :: iDay
+  integer (c_int) :: iYear
+  integer (c_int) :: iHour
+  integer (c_int) :: iMinute
+  integer (c_int) :: iSecond
 
-  real(kind=c_float) :: rHour, rMinute, rSecond
+  real(c_float) :: rHour, rMinute, rSecond
 
   call gregorian_date(this%iJulianDay, iYear, iMonth, iDay)
 
@@ -444,11 +444,11 @@ subroutine calc_gregorian_date_sub(this)
   rHour = this%rFractionOfDay * 24_c_double
   iHour = iHour
 
-  rMinute = (rHour - real(iHour, kind=c_float) ) * 1440_c_double
-  iMinute = int(rMinute, kind=c_int)
+  rMinute = (rHour - real(iHour, c_float) ) * 1440_c_double
+  iMinute = int(rMinute, c_int)
 
-  rSecond = ( rMinute - real(iMinute, kind=c_float) ) * 86400_c_double
-  iSecond = int(rSecond, kind=c_int)
+  rSecond = ( rMinute - real(iMinute, c_float) ) * 86400_c_double
+  iSecond = int(rSecond, c_int)
 
   this%iHour = iHour
   this%iMinute = iMinute
@@ -490,12 +490,12 @@ end subroutine calc_gregorian_date_sub
 ! !! GIVEN THE JULIAN DATE (JD).
 !
 !   ! [ ARGUMENTS ]
-!   integer (kind=c_int) :: iJD
-!   integer (kind=c_int), intent(inout) :: iYear, iMonth, iDay
-!   integer (kind=c_int), optional :: iOrigin
+!   integer (c_int) :: iJD
+!   integer (c_int), intent(inout) :: iYear, iMonth, iDay
+!   integer (c_int), optional :: iOrigin
 !   ! [ LOCALS ]
-!   integer (kind=c_int) iI,iJ,iK,iL,iN
-!   integer (kind=c_int) :: iOffset
+!   integer (c_int) iI,iJ,iK,iL,iN
+!   integer (c_int) :: iOffset
 !
 !   if(present(iOrigin)) then
 !     iOffset = iOrigin
@@ -559,16 +559,16 @@ end subroutine calc_gregorian_date_sub
 ! function julian_day ( iYear, iMonth, iDay, iOrigin ) result(iJD)
 !
 !   ! [ ARGUMENTS ]
-!   integer (kind=c_int), intent(in) :: iYear, iMonth, iDay
-!   integer (kind=c_int), optional :: iOrigin
+!   integer (c_int), intent(in) :: iYear, iMonth, iDay
+!   integer (c_int), optional :: iOrigin
 !
 !   ! [ LOCALS ]
-!   integer (kind=c_int) i,j,k
-!   integer (kind=c_int) :: iOffset
+!   integer (c_int) i,j,k
+!   integer (c_int) :: iOffset
 !   character (len=256) :: sBuf
 !
 !   ! [ RETURN VALUE ]
-!   integer (kind=c_int) :: iJD
+!   integer (c_int) :: iJD
 !
 !   i= iYear
 !   j= iMonth
@@ -605,7 +605,7 @@ function is_date_greater_than(date1, date2)   result(lResult)
   class(T_DATETIME), intent(in) :: date2
 
   ! [ LOCALS ]
-  logical(kind=c_bool ) :: lResult
+  logical(c_bool ) :: lResult
 
   lResult = lFALSE
 
@@ -628,7 +628,7 @@ function is_date_less_than(date1, date2)   result(lResult)
   class(T_DATETIME), intent(in) :: date2
 
   ! [ LOCALS ]
-  logical(kind=c_bool ) :: lResult
+  logical(c_bool ) :: lResult
 
   lResult = lFALSE
 
@@ -651,7 +651,7 @@ function is_date_LT_or_equal_to(date1, date2)   result(lResult)
   class(T_DATETIME), intent(in) :: date2
 
   ! [ LOCALS ]
-  logical(kind=c_bool ) :: lResult
+  logical(c_bool ) :: lResult
 
   lResult = lFALSE
 
@@ -667,7 +667,7 @@ function is_date_GT_or_equal_to(date1, date2)   result(lResult)
   class(T_DATETIME), intent(in) :: date2
 
   ! [ LOCALS ]
-  logical(kind=c_bool ) :: lResult
+  logical(c_bool ) :: lResult
 
   lResult = lFALSE
 
@@ -683,7 +683,7 @@ function is_date_equal_to(date1, date2)   result(lResult)
   class(T_DATETIME), intent(in) :: date2
 
   ! [ LOCALS ]
-  logical(kind=c_bool ) :: lResult
+  logical(c_bool ) :: lResult
 
   lResult = lFALSE
 
@@ -704,7 +704,7 @@ function date_minus_date_fn(date1, date2)  result(rDelta)
 
   class(T_DATETIME), intent(in) :: date1
   class(T_DATETIME), intent(in) :: date2
-  real (kind=c_double) :: rDelta
+  real (c_double) :: rDelta
 
   rDelta = date1%getJulianDay() - date2%getJulianDay()
 
@@ -736,7 +736,7 @@ function write_list_date_fn(this)                     result(sDateText)
   character (len=10) :: sDateText
 
   ! [ LOCALS ]
-  integer (kind=c_int), dimension(5) :: iStat
+  integer (c_int), dimension(5) :: iStat
 !  sDateText = this%listdatetime()
 
   write(sDateText(iScanMM1:iScanMM2),fmt="(i2.2)", iostat=iStat(1)) this%iMonth
@@ -772,19 +772,19 @@ function write_list_datetime_fn(this)    result(sDatetimeText)
 
   class(T_DATETIME) :: this
 !  character(len=*), optional :: sDateFormat
-!  logical (kind=c_bool), optional :: lDateOnly
+!  logical (c_bool), optional :: lDateOnly
   character (len=19) :: sDatetimeText
 
   ! [ LOCALS ]
 !  character(len=25) sDateFmt
-!  integer (kind=c_int) :: iScanMM1, iScanMM2
-!  integer (kind=c_int) :: iScanDD1, iScanDD2
-!  integer (kind=c_int) :: iScanYYYY1, iScanYYYY2
-!  integer (kind=c_int) :: iScanDelim1, iScanDelim2
+!  integer (c_int) :: iScanMM1, iScanMM2
+!  integer (c_int) :: iScanDD1, iScanDD2
+!  integer (c_int) :: iScanYYYY1, iScanYYYY2
+!  integer (c_int) :: iScanDelim1, iScanDelim2
   character (len=32) :: sBuf
 !  character (len=6), parameter :: DELIMITERS = "/-_\. "
-  integer (kind=c_int), dimension(5) :: iStat
-!  logical (kind=c_bool) lListTime
+  integer (c_int), dimension(5) :: iStat
+!  logical (c_bool) lListTime
 
   sDateTimeText = ""
 
@@ -845,7 +845,7 @@ subroutine system_time_to_date_sub(this)
   ! [ LOCALS ]
   character (len=16) :: sDateText
   character (len=16) :: sTimeText
-  integer (kind=c_int), dimension(8) :: iValues
+  integer (c_int), dimension(8) :: iValues
 
   call DATE_AND_TIME(sDateText, sTimeText)
   call DATE_AND_TIME(VALUES = iValues)
@@ -857,7 +857,7 @@ subroutine system_time_to_date_sub(this)
   call this%parseTime(sTimeText)
   call this%calcJulianDay()
   this%rFractionOfDay = this%rFractionOfDay + &
-      (real(iValues(8), kind=c_double) / 86400_c_double / 1000_c_double) ! milliseconds
+      (real(iValues(8), c_double) / 86400_c_double / 1000_c_double) ! milliseconds
 
   call this%setDateFormat()
   call this%setTimeFormat()
@@ -920,11 +920,11 @@ end subroutine new_daterange_fm_datetime_sub
 !! This function simply returns the number of days given the current year.
 !function day_of_year(iJulianDay) result(iDOY)
 
-!  integer (kind=c_int), intent(in) :: iJulianDay
+!  integer (c_int), intent(in) :: iJulianDay
 
   ! [ LOCALS ]
-!  integer (kind=c_int) :: iFirstDay, iCurrDay, iDOY
-!  integer (kind=c_int) :: iYear, iMonth, iDay
+!  integer (c_int) :: iFirstDay, iCurrDay, iDOY
+!  integer (c_int) :: iYear, iMonth, iDay
 
   ! first get the value for the current year
 !  call gregorian_date(iJulianDay, iYear, iMonth, iDay)
@@ -963,14 +963,14 @@ end subroutine new_daterange_fm_datetime_sub
 !function solstice (iJD)  result (iSol)
 
   ! [ ARGUMENTS ]
-!  integer (kind=c_int), intent(in) :: iJD
+!  integer (c_int), intent(in) :: iJD
 
   ! [ LOCALS ]
-!  integer (kind=c_int) iMonth, iDay, iYear
+!  integer (c_int) iMonth, iDay, iYear
 
 
 !  ! [ RETURN VALUE ]
-!  integer (kind=c_int) :: iSol
+!  integer (c_int) :: iSol
 
 !  call gregorian_date(iJD, iYear, iMonth, iDay)
 
@@ -995,9 +995,9 @@ end subroutine new_daterange_fm_datetime_sub
 function get_julian_day_float_fn(this)                   result(rJulianDay)
 
   class(T_DATETIME) :: this
-  real (kind=c_double) :: rJulianDay
+  real (c_double) :: rJulianDay
 
-  rJulianDay = real(this%iJulianDay, kind=c_double) + real(this%rFractionOfDay,kind=c_double)
+  rJulianDay = real(this%iJulianDay, c_double) + real(this%rFractionOfDay,c_double)
 
 end function get_julian_day_float_fn
 
@@ -1006,10 +1006,10 @@ end function get_julian_day_float_fn
 function get_days_in_month_fn(this)  result(iDaysInMonth)
 
   class(T_DATETIME) :: this
-  integer (kind=c_int) :: iDaysInMonth
+  integer (c_int) :: iDaysInMonth
 
   ! [ LOCALS ]
-  integer (kind=c_int), dimension(12), parameter :: iNumberOfDaysInMonth = &
+  integer (c_int), dimension(12), parameter :: iNumberOfDaysInMonth = &
     [31,28,31,30,31,30,31,31,30,31,30,31]
 
   iDaysInMonth = iNumberOfDaysInMonth(this%iMonth)
@@ -1025,7 +1025,7 @@ end function get_days_in_month_fn
 function get_days_in_year_fn(this)  result(iDaysInYear)
 
   class(T_DATETIME) :: this
-  integer (kind=c_int) :: iDaysInYear
+  integer (c_int) :: iDaysInYear
 
   if (this%lIsLeapYear) then
     iDaysInYear = 366

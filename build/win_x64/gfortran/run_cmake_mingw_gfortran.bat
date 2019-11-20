@@ -21,7 +21,7 @@ set SWB_EXECUTABLE=c:/mingw64/bin/swb.exe
 :: explicitly locate each key library
 for /f %%x in ('dir /b /s c:\MinGW64\*libhdf5_hl.a') do call set LIB_HDF5_HL=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libhdf5.a') do call set LIB_HDF5=%%x
-for /f %%x in ('dir /b /s c:\MinGW64\*libsz.a') do call set LIB_SZ=%%x
+::for /f %%x in ('dir /b /s c:\MinGW64\*libsz.a') do call set LIB_SZ=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libz.a') do call set LIB_Z=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libnetcdf.a') do call set LIB_NETCDF=%%x
 for /f %%x in ('dir /b /s c:\MinGW64\*libdismg.a') do call set LIB_DISLIN=%%x
@@ -84,8 +84,8 @@ echo %COMPILER_DIR%\bin\%MAKE_EXECUTABLE_NAME% %%1 > make.bat
 
 :: set compiler-specific link and compile flags
 set LDFLAGS="-flto"
-set CFLAGS="-DCURL_STATICLIB"
-set CPPFLAGS="DgFortran -DCURL_STATICLIB"
+::set CFLAGS="-DCURL_STATICLIB"
+::set CPPFLAGS="DgFortran -DCURL_STATICLIB"
 set LINKER_FLAGS="-static"
 
 set CTEST_OUTPUT_ON_FAILURE=1
@@ -100,7 +100,6 @@ cmake ..\..\.. -G "MinGW Makefiles" ^
 -DCOMPILER_VERSION=%COMPILER_VERSION%  ^
 -DLIB_HDF5_HL=%LIB_HDF5_HL%     ^
 -DLIB_HDF5=%LIB_HDF5%           ^
--DLIB_SZ=%LIB_SZ%               ^
 -DLIB_Z=%LIB_Z%                 ^
 -DLIB_NETCDF=%LIB_NETCDF%       ^
 -DLIB_DISLIN=%LIB_DISLIN%       ^

@@ -27,16 +27,16 @@ module stats
 
   ! dpVolConvert combines the conversion factor between inches and meters, and
   ! multiplies by the area of a grid cell (assumed to be meters)
-  real (kind=c_double), public :: dpVolConvert
+  real (c_double), public :: dpVolConvert
 
   !! Monthly accumulators - to hold SUM of daily values across all cells
-  real (kind=c_double), dimension(iNUM_MONTHS,iNUM_STATS,iNUM_VARIABLES), public :: rMonthly
+  real (c_double), dimension(iNUM_MONTHS,iNUM_STATS,iNUM_VARIABLES), public :: rMonthly
 
   !! Daily accumulators - to hold SUM of daily values across all cells
-  real (kind=c_double), dimension(iNUM_STATS,iNUM_VARIABLES), public :: rDaily
+  real (c_double), dimension(iNUM_STATS,iNUM_VARIABLES), public :: rDaily
 
   !! Annual accumulators - to hold SUM of daily values across all cells
-  real (kind=c_double), dimension(iNUM_STATS,iNUM_VARIABLES), public :: rAnnual
+  real (c_double), dimension(iNUM_STATS,iNUM_VARIABLES), public :: rAnnual
 
 contains
 
@@ -51,7 +51,7 @@ subroutine stats_InitializeVolumeConversion(pGrd)
   if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_METERS) then
 
     dpVolConvert = (dpONE / 12.0_c_double) &
-               *(real(pGrd%rGridCellSize,kind=c_double) ** 2_c_double) &
+               *(real(pGrd%rGridCellSize,c_double) ** 2_c_double) &
                * dpSQM_to_SQFT &
                / 43560_c_double
     ! multiply by area of grid cell in acres (yields acre-ft of water)
@@ -59,7 +59,7 @@ subroutine stats_InitializeVolumeConversion(pGrd)
   else if(pGrd%iLengthUnits == iGRID_LENGTH_UNITS_FEET) then
 
     dpVolConvert = (dpONE / 12.0_c_double) &
-               *(real(pGrd%rGridCellSize,kind=c_double) ** 2_c_double) &
+               *(real(pGrd%rGridCellSize,c_double) ** 2_c_double) &
                / 43560_c_double
     ! multiply by area of grid cell in acres (yields acre-ft of water)
 
@@ -108,14 +108,14 @@ subroutine stats_FormatTextString(sText,rValue,pConfig, &
 
   ![ARGUMENTS]
   character(len=*), intent(in) :: sText
-  real(kind=c_float), intent(in), dimension(:) :: rValue
+  real(c_float), intent(in), dimension(:) :: rValue
   type (T_MODEL_CONFIGURATION), pointer :: pConfig
 
-  integer(kind=c_int), intent(in) :: iVarNum
+  integer(c_int), intent(in) :: iVarNum
 
   character(len=256), dimension(size(rValue)) :: sFormattedText
   ![LOCALS]
-  integer(kind=c_int) :: i
+  integer(c_int) :: i
   character(len=256) :: sBuf
   character(len=1) :: sSpace = ' '
   character(len=3) :: sMassBalanceOperator
@@ -187,12 +187,12 @@ end subroutine stats_FormatTextString
 subroutine stats_WriteDailyAccumulatorValuesCSV(iLU,iMonth,iDay,iYear, iStatistic)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
-  integer (kind=c_int), intent(in) :: iMonth,iDay,iYear
-  integer (kind=c_int), intent(in) :: iStatistic
+  integer (c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iMonth,iDay,iYear
+  integer (c_int), intent(in) :: iStatistic
 
   ![LOCALS]
-  integer (kind=c_int) :: i,j
+  integer (c_int) :: i,j
 
   select case(iStatistic)
 
@@ -232,11 +232,11 @@ end subroutine stats_WriteDailyAccumulatorValuesCSV
 subroutine stats_WriteAnnualAccumulatorValuesCSV(iLU,iYear)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
-  integer (kind=c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iYear
 
   ![LOCALS]
-  integer (kind=c_int) :: i
+  integer (c_int) :: i
 
    write(iLU,"(i4)", advance="no") iYear
    do i=1,iNUM_VARIABLES
@@ -257,11 +257,11 @@ end subroutine stats_WriteAnnualAccumulatorValuesCSV
 subroutine stats_WriteDailyAccumulatorHeaderCSV(iLU, iStatistic)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
-  integer (kind=c_int), intent(in) :: iStatistic
+  integer (c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iStatistic
 
   ![LOCALS]
-  integer (kind=c_int) :: i,j
+  integer (c_int) :: i,j
 
   write(iLU,"(A)",advance="no") "Mass balance?"
   do i=1,iNUM_VARIABLES
@@ -292,10 +292,10 @@ end subroutine stats_WriteDailyAccumulatorHeaderCSV
 subroutine stats_WriteAnnualAccumulatorHeaderCSV(iLU)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iLU
 
   ![LOCALS]
-  integer (kind=c_int) :: i
+  integer (c_int) :: i
 
    write(iLU,"(A)",advance="no") "Mass balance?"
    do i=1,iNUM_VARIABLES
@@ -329,20 +329,20 @@ end subroutine stats_WriteAnnualAccumulatorHeaderCSV
 subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iLU
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
   ![LOCALS]
-  integer (kind=c_int) :: i,j
+  integer (c_int) :: i,j
   character(len=256),dimension(iNUM_STATS) :: sText
-  real (kind=c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
-  real (kind=c_double) :: rMassBalance
+  real (c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
+  real (c_double) :: rMassBalance
 
   rTempArray = rDaily
 
   rMassBalance = SUM((rTempArray(iSUM,:) * dpVolConvert ) &
-                    * real(STAT_INFO(:)%iMassBalanceConst, kind=c_double) )
+                    * real(STAT_INFO(:)%iMassBalanceConst, c_double) )
 
   rTempArray(iSUM,:) = rTempArray(iSUM,:) * dpVolConvert
 
@@ -355,7 +355,7 @@ subroutine stats_DumpDailyAccumulatorValues(iLU, pConfig)
   do i=1,iNUM_VARIABLES
     if(STAT_INFO(i)%lActive) then
       call stats_FormatTextString(STAT_INFO(i)%sVARIABLE_NAME, &
-                  REAL(rTempArray(:,i),kind=c_float), &
+                  REAL(rTempArray(:,i),c_float), &
                   pConfig, &
                   i, &
                   sText)
@@ -382,17 +382,17 @@ end subroutine stats_DumpDailyAccumulatorValues
 subroutine stats_DumpMonthlyAccumulatorValues(iLU, iMonth, sMonthName, pConfig)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
-  integer (kind=c_int),intent(in) :: iMonth        ! month for which to dump data
+  integer (c_int), intent(in) :: iLU
+  integer (c_int),intent(in) :: iMonth        ! month for which to dump data
   character (len=3), intent(in) :: sMonthName
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
 
   ![LOCALS]
-  integer (kind=c_int) :: i,j
+  integer (c_int) :: i,j
   character(len=256),dimension(iNUM_STATS) :: sText
-  real (kind=c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
-  real (kind=c_double) :: rMassBalance
+  real (c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
+  real (c_double) :: rMassBalance
 
   rTempArray = rMonthly(iMonth,:,:)
 
@@ -415,7 +415,7 @@ subroutine stats_DumpMonthlyAccumulatorValues(iLU, iMonth, sMonthName, pConfig)
   do i=1,iNUM_VARIABLES
     if(STAT_INFO(i)%lShowSum) then
       call stats_FormatTextString(STAT_INFO(i)%sVARIABLE_NAME, &
-                REAL(rTempArray(:,i),kind=c_float), &
+                REAL(rTempArray(:,i),c_float), &
                 pConfig, &
                 i, &
                 sText)
@@ -441,15 +441,15 @@ end subroutine stats_DumpMonthlyAccumulatorValues
 subroutine stats_DumpAnnualAccumulatorValues(iLU, pConfig, iYear)
 
   ![ARGUMENTS]
-  integer (kind=c_int), intent(in) :: iLU
+  integer (c_int), intent(in) :: iLU
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  integer (kind=c_int), intent(in) :: iYear
+  integer (c_int), intent(in) :: iYear
   ![LOCALS]
-  integer (kind=c_int) :: i,j
+  integer (c_int) :: i,j
   character(len=256),dimension(iNUM_STATS) :: sText
-  real (kind=c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
-  real (kind=c_double) :: rMassBalance
+  real (c_double),dimension(iNUM_STATS,iNUM_VARIABLES) :: rTempArray
+  real (c_double) :: rMassBalance
 
   rTempArray(:,:) = rAnnual(:,:)
   rTempArray(iSUM,:) = rAnnual(iSUM,:) * dpVolConvert
@@ -466,7 +466,7 @@ subroutine stats_DumpAnnualAccumulatorValues(iLU, pConfig, iYear)
   do i=1,iNUM_VARIABLES
     if(STAT_INFO(i)%lShowSum) then
       call stats_FormatTextString(STAT_INFO(i)%sVARIABLE_NAME, &
-                REAL(rTempArray(:,i),kind=c_float), &
+                REAL(rTempArray(:,i),c_float), &
                 pConfig, &
                 i, &
                 sText)
@@ -491,23 +491,23 @@ end subroutine stats_DumpAnnualAccumulatorValues
 subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCells)
 
   ![ARGUMENTS]
-  real (kind=c_double), intent(in) :: rValue
-  integer (kind=c_int), intent(in) :: iVarNum
-  integer (kind=c_int), intent(in) :: iMonthNum
-  integer (kind=c_int), intent(in) :: iNumGridCells
+  real (c_double), intent(in) :: rValue
+  integer (c_int), intent(in) :: iVarNum
+  integer (c_int), intent(in) :: iMonthNum
+  integer (c_int), intent(in) :: iNumGridCells
 
   ![LOCALS]
-!  real (kind=c_float) :: rMinimum
+!  real (c_float) :: rMinimum
 
-  call Assert(LOGICAL(iVarNum>=1 .and. iVarNum <= iNUM_VARIABLES,kind=c_bool), &
+  call Assert(LOGICAL(iVarNum>=1 .and. iVarNum <= iNUM_VARIABLES,c_bool), &
     'call to UpdateAllAccumulators failed...inappropriate variable index specified')
-  call Assert(LOGICAL(iMonthNum>=1 .and. iMonthNum <= iNUM_MONTHS,kind=c_bool), &
+  call Assert(LOGICAL(iMonthNum>=1 .and. iMonthNum <= iNUM_MONTHS,c_bool), &
     'call to UpdateAllAccumulators failed...inappropriate month index specified')
 
   if(iNumGridCells > 0) then  ! tidy up and divide by the number of grid cells
                               ! NOTE!! rValue is ignored in this instance!!
 
-    rDaily(iMEAN,iVarNum) = rDaily(iSUM,iVarNum) / REAL(iNumGridCells, kind=c_double)
+    rDaily(iMEAN,iVarNum) = rDaily(iSUM,iVarNum) / REAL(iNumGridCells, c_double)
 
     rMonthly(iMonthNum,iMIN,iVarNum) = MIN(rMonthly(iMonthNum,iMIN,iVarNum), &
           rDaily(iMIN,iVarNum))
@@ -523,7 +523,7 @@ subroutine stats_UpdateAllAccumulatorsByCell(rValue,iVarNum,iMonthNum,iNumGridCe
     rAnnual(iMAX,iVarNum) = MAX(rAnnual(iMAX,iVarNum), rDaily(iMAX,iVarNum))
     rAnnual(iSUM,iVarNum) = rAnnual(iSUM,iVarNum) + rDaily(iSUM,iVarNum)
 
-    if (.not. int(rDaily(iLENGTH,iVarNum),kind=c_int) == iNumGridCells) then
+    if (.not. int(rDaily(iLENGTH,iVarNum),c_int) == iNumGridCells) then
 
       print *, rDaily(iLENGTH,iVarNum)
       print *, iNumGridCells
@@ -550,15 +550,15 @@ end subroutine stats_UpdateAllAccumulatorsByCell
 subroutine stats_UpdateAllAccumulatorsByGrid(rMin,rMean,rMax,rSum,iVarNum,iMonthNum)
 
   ![ARGUMENTS]
-  real (kind=c_double), intent(in) :: rMin,rMean,rMax,rSum
-  integer (kind=c_int), intent(in) :: iVarNum
-  integer (kind=c_int), intent(in) :: iMonthNum
+  real (c_double), intent(in) :: rMin,rMean,rMax,rSum
+  integer (c_int), intent(in) :: iVarNum
+  integer (c_int), intent(in) :: iMonthNum
 
   ![LOCALS]
 
-  call Assert(LOGICAL(iVarNum>=1 .and. iVarNum <= iNUM_VARIABLES,kind=c_bool), &
+  call Assert(LOGICAL(iVarNum>=1 .and. iVarNum <= iNUM_VARIABLES,c_bool), &
     'call to UpdateAllAccumulators failed...inappropriate variable index specified')
-  call Assert(LOGICAL(iMonthNum>=1 .and. iMonthNum <= iNUM_MONTHS,kind=c_bool), &
+  call Assert(LOGICAL(iMonthNum>=1 .and. iMonthNum <= iNUM_MONTHS,c_bool), &
     'call to UpdateAllAccumulators failed...inappropriate month index specified')
 
   rDaily(iMIN,iVarNum) = rMin
@@ -592,15 +592,15 @@ end subroutine stats_UpdateAllAccumulatorsByGrid
 subroutine stats_WriteMinMeanMax( iLU, sText, rData , iCount, iMask)
 
   ! [ ARGUMENTS ]
-  integer (kind=c_int), intent(in) :: iLU       ! Fortran logical file unit
+  integer (c_int), intent(in) :: iLU       ! Fortran logical file unit
   character (len=*) :: sText
-  real (kind=c_float), dimension(:,:) :: rData   ! Real data
-  integer (kind=c_int), optional :: iCount
-  integer (kind=c_int), dimension(:,:), optional :: iMask
+  real (c_float), dimension(:,:) :: rData   ! Real data
+  integer (c_int), optional :: iCount
+  integer (c_int), dimension(:,:), optional :: iMask
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iNumGridCells
-  real (kind=c_float) :: rMin, rMean, rMax
+  integer (c_int) :: iNumGridCells
+  real (c_float) :: rMin, rMean, rMax
 
   if(present(iCount)) then
     ! establish number of cells in model grid
@@ -638,7 +638,7 @@ end subroutine stats_WriteMinMeanMax
 subroutine stats_OpenMSBReport()
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iStat
+  integer (c_int) :: iStat
 
       open(LU_MSB_REPORT, file='SWB_daily_mass_balance_report.csv', &
         iostat=iStat, status='REPLACE')
@@ -683,9 +683,9 @@ end subroutine stats_OpenMSBReport
 subroutine stats_WriteMSBReport(pGrd,iMonth,iDay,iYear,iDayOfYear)
 
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  integer (kind=c_int),intent(in) :: iMonth,iDay,iYear,iDayOfYear
+  integer (c_int),intent(in) :: iMonth,iDay,iYear,iDayOfYear
 
-  real (kind=c_double) :: rDailyMSB
+  real (c_double) :: rDailyMSB
 
 
        rDailyMSB =  rDaily(iSUM,iSNOWMELT) &
@@ -748,20 +748,20 @@ subroutine stats_RewriteGrids(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   type ( T_GENERAL_GRID ),pointer :: pTempGrd
-  integer (kind=c_int) :: i, j, k, iStat, iDayOfYear, iMonth
-  integer (kind=c_int) :: iDay, iYear, iVar, iVal, iRep, iTemp
-  integer (kind=c_int) :: iStartYear, iEndYear
-  integer (kind=c_int) :: iNumGridCells
-  integer (kind=c_int) :: iJulianDay, iCount, iDaysInMonthCount, iDaysInYearCount
+  integer (c_int) :: i, j, k, iStat, iDayOfYear, iMonth
+  integer (c_int) :: iDay, iYear, iVar, iVal, iRep, iTemp
+  integer (c_int) :: iStartYear, iEndYear
+  integer (c_int) :: iNumGridCells
+  integer (c_int) :: iJulianDay, iCount, iDaysInMonthCount, iDaysInYearCount
   character(len=3) :: sMonthName
-  real(kind=c_float),dimension(pGrd%iNX*pGrd%iNY) :: rVal, rAnnualSum, rMonthlySum, rPad
-  real(kind=c_float) :: rZA, rZE, rZOR, rZSTEP
-  real(kind=c_float) :: rZA_TEMP, rZE_TEMP, rZOR_TEMP, rZSTEP_TEMP
+  real(c_float),dimension(pGrd%iNX*pGrd%iNY) :: rVal, rAnnualSum, rMonthlySum, rPad
+  real(c_float) :: rZA, rZE, rZOR, rZSTEP
+  real(c_float) :: rZA_TEMP, rZE_TEMP, rZOR_TEMP, rZSTEP_TEMP
   character(len=256) :: sBuf
   character (len=256) :: sFilePrefix
   character(len=1) sDelimiter
-  logical (kind=c_bool) :: lMonthEnd
-  logical (kind=c_bool) :: lEOF
+  logical (c_bool) :: lMonthEnd
+  logical (c_bool) :: lEOF
 
   rPad = rNO_DATA_NCDC
   iCount = 0; iDaysInMonthCount = 0; iDaysInYearCount = 0
@@ -917,7 +917,7 @@ subroutine stats_RewriteGrids(pGrd, pConfig, pGraph)
 
           where (pTempGrd%iMask == iACTIVE_CELL)
             pTempGrd%rData(:,:) = pTempGrd%rData(:,:) &
-               / real(iDaysInMonthCount, kind=c_float)
+               / real(iDaysInMonthCount, c_float)
           endwhere
 
           if(STAT_INFO(k)%iMonthlyOutput==iGRID &
@@ -1008,7 +1008,7 @@ subroutine stats_RewriteGrids(pGrd, pConfig, pGraph)
           where (pTempGrd%iMask == iACTIVE_CELL)
 
             pTempGrd%rData(:,:) = pTempGrd%rData(:,:) &
-               / real(iDaysInYearCount, kind=c_float)
+               / real(iDaysInYearCount, c_float)
 
           endwhere
 
@@ -1071,9 +1071,9 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
 
   type ( T_GENERAL_GRID ),pointer :: pTmpGrd
 
-  integer (kind=c_int) :: j, k, iStat, iCount, n, iMajorityLU, iMajoritySoil
-  integer (kind=c_int) ::  iLU_Max, iSoil_Max, iNumGridCells
-  real (kind=c_float) :: rSum, rAvg, rMin, rMax
+  integer (c_int) :: j, k, iStat, iCount, n, iMajorityLU, iMajoritySoil
+  integer (c_int) ::  iLU_Max, iSoil_Max, iNumGridCells
+  real (c_float) :: rSum, rAvg, rMin, rMax
 
   character (len=256) :: sBuf
 
@@ -1153,7 +1153,7 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
 
         ! establish number of cells in model grid
         iNumGridCells = COUNT( &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pConfig%LU(j)%iLandUseType &
+          INT(pGrd%Cells%iLanduse,c_int)==pConfig%LU(j)%iLandUseType &
           .and. TEMP_DAT%pGrdNative%rData>0 )
 
         if(iNumGridCells>iLU_Max) then
@@ -1163,11 +1163,11 @@ subroutine stats_CalcBasinStats(pGrd, pConfig, pGraph)
 
     end do
 
-    do j=1,maxval(INT(pGrd%Cells%iSoilGroup,kind=c_int))
+    do j=1,maxval(INT(pGrd%Cells%iSoilGroup,c_int))
 
       ! establish number of cells in model grid for THIS combination
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iSoilGroup,kind=c_int)==j &
+        INT(pGrd%Cells%iSoilGroup,c_int)==j &
           .and. TEMP_DAT%pGrdNative%rData > 0 )
 
         if(iNumGridCells>iSoil_Max) then
@@ -1234,7 +1234,7 @@ subroutine stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
 
   type ( T_GENERAL_GRID ),pointer :: pTmpGrd
 
-  integer (kind=c_int) :: k,n
+  integer (c_int) :: k,n
 
   character (len=256) :: sBuf
 
@@ -1315,9 +1315,9 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  integer (kind=c_int) :: iNumGridCells
+  integer (c_int) :: iNumGridCells
 
-  integer (kind=c_int) :: i,k,n
+  integer (c_int) :: i,k,n
 
   character (len=256) :: sBuf
 
@@ -1350,12 +1350,12 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
 
         !create pointer to a specific land use type
         pLU => pConfig%LU(k)
-		call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+		call Assert(LOGICAL(associated(pLU),c_bool), &
 		   "pointer association failed - stats - CalcMeanRechargebyLU")
 
       ! establish number of ACTIVE cells in model grid
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+        INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
            .and. pGrd%iMask==iACTIVE_CELL)
 
       if(iNumGridCells>0) then
@@ -1363,13 +1363,13 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
         write(LU_LOG,"(a45,3(f12.2,2x))") &
           adjustl(pLU%sLandUseDescription), &
           minval(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
              .and. pGrd%iMask==iACTIVE_CELL), &
           sum(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
               .and. pGrd%iMask==iACTIVE_CELL) / iNumGridCells, &
           maxval(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
              .and. pGrd%iMask==iACTIVE_CELL)
 
         else
@@ -1392,17 +1392,17 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
   ! Now iterate through all land use types *AND* soil types
   do k = 1,size(pConfig%LU,1)
 
-    do i=1,maxval(INT(pGrd%Cells%iSoilGroup,kind=c_int))
+    do i=1,maxval(INT(pGrd%Cells%iSoilGroup,c_int))
 
         !create pointer to a specific land use type
         pLU => pConfig%LU(k)
-		call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+		call Assert(LOGICAL(associated(pLU),c_bool), &
 		   "pointer association failed - stats - CalcMeanRechargebyLU")
 
       ! establish number of cells in model grid for THIS combination
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i)
+        INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i)
 
       if(iNumGridCells>0) then
 
@@ -1410,15 +1410,15 @@ subroutine stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
           adjustl(pLU%sLandUseDescription), &
           i, &
           minval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i), &
           sum(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i) &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i) &
              /iNumGridCells, &
           maxval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i), &
           iNumGridCells
 
 
@@ -1454,9 +1454,9 @@ subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
 
   ![LOCALS]
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  integer (kind=c_int) :: iNumGridCells
+  integer (c_int) :: iNumGridCells
 
-  integer (kind=c_int) :: i,k,n
+  integer (c_int) :: i,k,n
 
   character (len=256) :: sBuf
 
@@ -1489,12 +1489,12 @@ subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
 
         !create pointer to a specific land use type
         pLU => pConfig%LU(k)
-    call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+    call Assert(LOGICAL(associated(pLU),c_bool), &
        "pointer association failed - stats - CalcMeanIrrigationbyLU")
 
       ! establish number of ACTIVE cells in model grid
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+        INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
            .and. pGrd%iMask==iACTIVE_CELL)
 
       if(iNumGridCells>0) then
@@ -1502,13 +1502,13 @@ subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
         write(LU_LOG,"(a45,3(f12.2,2x))") &
           adjustl(pLU%sLandUseDescription), &
           minval(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
              .and. pGrd%iMask==iACTIVE_CELL), &
           sum(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
               .and. pGrd%iMask==iACTIVE_CELL) / iNumGridCells, &
           maxval(pTmpGrd%rData, &
-            INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
+            INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
              .and. pGrd%iMask==iACTIVE_CELL)
 
         else
@@ -1531,17 +1531,17 @@ subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
   ! Now iterate through all land use types *AND* soil types
   do k = 1,size(pConfig%LU,1)
 
-    do i=1,maxval(INT(pGrd%Cells%iSoilGroup,kind=c_int))
+    do i=1,maxval(INT(pGrd%Cells%iSoilGroup,c_int))
 
         !create pointer to a specific land use type
         pLU => pConfig%LU(k)
-    call Assert(LOGICAL(associated(pLU),kind=c_bool), &
+    call Assert(LOGICAL(associated(pLU),c_bool), &
        "pointer association failed - stats - CalcMeanRechargebyLU")
 
       ! establish number of cells in model grid for THIS combination
       iNumGridCells = COUNT( &
-        INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i)
+        INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i)
 
       if(iNumGridCells>0) then
 
@@ -1549,15 +1549,15 @@ subroutine stats_CalcMeanIrrigationbyLU(pGrd, pConfig, pGraph)
           adjustl(pLU%sLandUseDescription), &
           i, &
           minval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i), &
           sum(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i) &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i) &
              /iNumGridCells, &
           maxval(pTmpGrd%rData, &
-          INT(pGrd%Cells%iLanduse,kind=c_int)==pLU%iLandUseType  &
-           .and. INT(pGrd%Cells%iSoilGroup,kind=c_int)==i), &
+          INT(pGrd%Cells%iLanduse,c_int)==pLU%iLandUseType  &
+           .and. INT(pGrd%Cells%iSoilGroup,c_int)==i), &
           iNumGridCells
 
 
@@ -1584,13 +1584,13 @@ subroutine stats_write_to_SSF_file(pConfig, iSSFindex, iMonth, iDay, iYear, rVal
 
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  integer (kind=c_int), intent(in) :: iSSFindex
-  integer (kind=c_int), intent(in) :: iMonth, iDay, iYear
-  real (kind=c_float), intent(in) :: rValue
+  integer (c_int), intent(in) :: iSSFindex
+  integer (c_int), intent(in) :: iMonth, iDay, iYear
+  real (c_float), intent(in) :: rValue
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: i
-  integer (kind=c_int) :: iStat
+  integer (c_int) :: i
+  integer (c_int) :: iStat
   character(len=128) :: sBuf
   type (T_SSF_FILES), pointer :: pSSF
 
@@ -1639,8 +1639,8 @@ subroutine stats_SetBinaryFilePosition(pConfig, pGrd)
   type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: k
-  integer (kind=c_int) :: iPos
+  integer (c_int) :: k
+  integer (c_int) :: iPos
 
   if(pConfig%lFirstDayOfSimulation) then
     ! scan through list of potential output variables; if any
@@ -1672,7 +1672,7 @@ subroutine stats_TimestampBinaryFile(pConfig)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: k
+  integer (c_int) :: k
 
   ! write timestamp to the unformatted fortran file(s)
   do k=1,iNUM_VARIABLES
@@ -1695,8 +1695,8 @@ subroutine stats_OpenBinaryFiles(pConfig, pGrd)
   type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
 
   ! [ LOCALS ]
-  integer(kind=c_int) :: i
-  integer (kind=c_int) :: iCol, iRow
+  integer(c_int) :: i
+  integer (c_int) :: iCol, iRow
   character (len=256) :: sFilename
 
   do i=1,iNUM_VARIABLES
@@ -1774,24 +1774,24 @@ subroutine stats_OpenBinaryFilesReadOnly(pConfig, pGrd)
   type (T_GENERAL_GRID),pointer :: pGrd                ! pointer to model grid
 
   ! [ LOCALS ]
-  integer(kind=c_int) :: i
+  integer(c_int) :: i
 
   ! variables that are read in from the binary file header
-  integer (kind=c_int) :: iNX
-  integer (kind=c_int) :: iNY
-  integer (kind=c_int) :: iDataType
-  real (kind=c_double)    :: rGridCellSize
-  integer (kind=c_int) :: iLengthUnits
+  integer (c_int) :: iNX
+  integer (c_int) :: iNY
+  integer (c_int) :: iDataType
+  real (c_double)    :: rGridCellSize
+  integer (c_int) :: iLengthUnits
   character (len=15) :: sSWBCompileDate
-  integer (kind=c_int) :: iVariableNumber
-  integer (kind=c_int) :: iRLE_MULT
-  real (kind=c_float)    :: rRLE_OFFSET
-  real (kind=c_double)    :: rX0, rX1
-  real (kind=c_double)    :: rY0, rY1
-  integer (kind=c_int) :: iTemp
-  integer (kind=c_int) :: iStartMM, iStartDD, iStartYYYY
-  integer (kind=c_int) :: iEndMM, iEndDD, iEndYYYY
-  integer (kind=c_int) :: iRow, iCol
+  integer (c_int) :: iVariableNumber
+  integer (c_int) :: iRLE_MULT
+  real (c_float)    :: rRLE_OFFSET
+  real (c_double)    :: rX0, rX1
+  real (c_double)    :: rY0, rY1
+  integer (c_int) :: iTemp
+  integer (c_int) :: iStartMM, iStartDD, iStartYYYY
+  integer (c_int) :: iEndMM, iEndDD, iEndYYYY
+  integer (c_int) :: iRow, iCol
   character (len=len_trim(pConfig%sBASE_PROJ4)) :: sPROJ4_string
 
   do i=1,iNUM_VARIABLES
@@ -1856,7 +1856,7 @@ end subroutine stats_OpenBinaryFilesReadOnly
 subroutine stats_CloseBinaryFiles()
 
   ! [ LOCALS ]
-  integer(kind=c_int) :: i
+  integer(c_int) :: i
 
   do i=1,iNUM_VARIABLES
 

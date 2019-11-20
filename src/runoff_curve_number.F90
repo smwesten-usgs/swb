@@ -40,10 +40,10 @@ subroutine runoff_InitializeCurveNumber( pGrd, pConfig )
                                                    ! model options, flags, and other setting
 
   ! [ LOCALS ]
-  integer (kind=c_int) :: iCol,iRow,k,l
+  integer (c_int) :: iCol,iRow,k,l
   type (T_CELL),pointer :: cel              ! pointer to a grid cell data structure
   type ( T_LANDUSE_LOOKUP ),pointer :: pLU  ! pointer to landuse data structure
-  logical (kind=c_bool) :: lMatch
+  logical (c_bool) :: lMatch
 
   write(UNIT=LU_LOG,FMT=*)"Initializing the base curve numbers"
   ! Initialize all CNs to "bare rock"
@@ -113,9 +113,9 @@ end subroutine runoff_InitializeCurveNumber
 
 function prob_runoff_enhancement(rCFGI, rLL, rUL)    result(rPf)
 
-  real (kind=c_float) :: rCFGI, rLL, rUL, rPf
+  real (c_float) :: rCFGI, rLL, rUL, rPf
 
-  call Assert(LOGICAL(rLL<=rUL,kind=c_bool), &
+  call Assert(LOGICAL(rLL<=rUL,c_bool), &
     "Lower CFGI limit defining unfrozen ground must be <= upper CFGI limit")
 
   if(rCFGI <= rLL) then
@@ -138,11 +138,11 @@ subroutine runoff_UpdateCurveNumber(pConfig, cel,iJulDay)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that con
                                                    ! model options, flags, and other se
   type (T_CELL),pointer :: cel
-  integer (kind=c_int),intent(in) :: iJulDay
+  integer (c_int),intent(in) :: iJulDay
   ! [ LOCALS ]
-  real (kind=c_float) :: rTotalInflow
-  real (kind=c_float) :: rTempCN
-  real (kind=c_float) :: rPf
+  real (c_float) :: rTotalInflow
+  real (c_float) :: rTempCN
+  real (c_float) :: rPf
 
   rTotalInflow = sum(cel%rNetInflowBuf)
 
@@ -211,13 +211,13 @@ function runoff_CellRunoff_CurveNumber(pConfig, cel, iJulDay) result(rRunoff)
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
   type (T_CELL),pointer :: cel
-  integer (kind=c_int),intent(in) :: iJulDay
+  integer (c_int),intent(in) :: iJulDay
   ! [ RETURN VALUE ]
-  real (kind=c_float) :: rRunoff
+  real (c_float) :: rRunoff
   ! [ LOCALS ]
-  real (kind=c_float) :: rP
-  real (kind=c_float) :: rP_avail
-  real (kind=c_float) :: rCN_05
+  real (c_float) :: rP
+  real (c_float) :: rP_avail
+  real (c_float) :: rCN_05
 
   ! including interception in the amount of total water that the curve number
   ! method 'sees'; the initial abstration term likely negates much of the

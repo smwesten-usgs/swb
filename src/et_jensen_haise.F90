@@ -31,10 +31,10 @@ module et_jensen_haise
   !! Module data
 
   !! Configuration -- input data
-  real (kind=c_float) :: rLatitude       ! degrees on input; stored in radians
-  real (kind=c_float) :: rAlbedo         ! defaults to 0.23
-  real (kind=c_float) :: rAs             ! defaults to 0.25
-  real (kind=c_float) :: rBs             ! defaults to 0.50
+  real (c_float) :: rLatitude       ! degrees on input; stored in radians
+  real (c_float) :: rAlbedo         ! defaults to 0.23
+  real (c_float) :: rAs             ! defaults to 0.25
+  real (c_float) :: rBs             ! defaults to 0.50
 
 contains
 
@@ -44,7 +44,7 @@ subroutine et_jh_configure( sRecord )
   character (len=*),intent(inout) :: sRecord
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=c_int) :: iStat
+  integer (c_int) :: iStat
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Jensen-Haise PET model"
 
@@ -89,16 +89,16 @@ subroutine et_jh_ComputeET( pGrd, iDayOfYear, rRH, &
   !!
   ! [ ARGUMENTS ]
   type ( T_GENERAL_GRID ),pointer :: pGrd
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  real (kind=c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
+  integer (c_int),intent(in) :: iDayOfYear
+  real (c_float),intent(in) :: rRH,rMinRH,rWindSpd,rSunPct
   ! [ LOCALS ]
-  real (kind=c_float) :: rSo,rDelta,rOmega_s,rD_r,rS0,rSn,rT
-  integer (kind=c_int) :: iCol, iRow
+  real (c_float) :: rSo,rDelta,rOmega_s,rD_r,rS0,rSn,rT
+  integer (c_int) :: iCol, iRow
   ! [ CONSTANTS ]
-  real (kind=c_float),parameter :: UNIT_CONV = 0.41_c_float / 25.4_c_float
+  real (c_float),parameter :: UNIT_CONV = 0.41_c_float / 25.4_c_float
 
-  call Assert( LOGICAL(rSunPct>=rZERO, kind=c_bool),"Missing data for percent sunshine" )
-  call Assert( LOGICAL(rRH>=rZERO, kind=c_bool),"Missing data for relative humidity" )
+  call Assert( LOGICAL(rSunPct>=rZERO, c_bool),"Missing data for percent sunshine" )
+  call Assert( LOGICAL(rRH>=rZERO, c_bool),"Missing data for relative humidity" )
 
   rD_r = rONE + 0.033_c_float * cos( dpTWOPI * iDayOfYear / 365.0_c_float )
   rDelta = 0.4093_c_float * sin( (dpTWOPI * iDayOfYear / 365.0_c_float) - 1.405_c_float )

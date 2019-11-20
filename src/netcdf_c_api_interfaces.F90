@@ -16,24 +16,24 @@
 !
 !      import :: c_int, c_ptr, c_short, c_ptrdiff_t, c_size_t
 !
-!      integer (kind=c_int), value             :: ncid, varid
+!      integer (c_int), value             :: ncid, varid
 !
-!      integer (kind=c_size_t)                            :: startp(*)
-!      integer (kind=c_size_t)                            :: countp(*)
-!      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+!      integer (c_size_t)                            :: startp(*)
+!      integer (c_size_t)                            :: countp(*)
+!      integer (c_ptrdiff_t)                         :: stridep(*)
 
 !!!      type (c_ptr), value                     :: startp
 !!!      type (c_ptr), value                     :: countp
 !!!      type (c_ptr), value                     :: stridep
-!      integer (kind=c_short), intent(out)     :: vars(*)
+!      integer (c_short), intent(out)     :: vars(*)
 
-!      integer (kind=c_int)                             :: nc_get_vars_short
+!      integer (c_int)                             :: nc_get_vars_short
 
 !    end function nc_get_vars_short
 !  end interface
 !>
 !> @todo
-!> change "type (c_ptr), value" entries to "integer (kind=c_size_t)"
+!> change "type (c_ptr), value" entries to "integer (c_size_t)"
 !> or similar, depending on the size of the integer declared in the
 !> C code
 
@@ -50,11 +50,11 @@ module netcdf_c_api_interfaces
 
       import :: c_char, c_int
 
-      character (kind=c_char), intent(in)  :: path(*)
-      integer (kind=c_int),    value       :: cmode
-      integer (kind=c_int),    intent(out) :: ncidp
+      character (c_char), intent(in)  :: path(*)
+      integer (c_int),    value       :: cmode
+      integer (c_int),    intent(out) :: ncidp
 
-      integer (kind=c_int)                 :: nc_create
+      integer (c_int)                 :: nc_create
 
     end function nc_create
   end interface
@@ -64,13 +64,13 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value :: ncid
-      integer (kind=c_int), value :: varid
-      integer (kind=c_int), value :: shuffle
-      integer (kind=c_int), value :: deflate
-      integer (kind=c_int), value :: deflate_level
+      integer (c_int), value :: ncid
+      integer (c_int), value :: varid
+      integer (c_int), value :: shuffle
+      integer (c_int), value :: deflate
+      integer (c_int), value :: deflate_level
 
-      integer (kind=c_int)        :: nc_def_var_deflate
+      integer (c_int)        :: nc_def_var_deflate
 
     end function nc_def_var_deflate
   end interface
@@ -80,14 +80,14 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value       :: ncid
-      character (kind=c_char), intent(in)  :: name(*)
-      integer (kind=c_int),    value       :: xtype
-      integer (kind=c_int),    value       :: ndims
-      integer (kind=c_int),    intent(in)  :: dimidsp(*)
-      integer (kind=c_int),    intent(out) :: varidp
+      integer (c_int),    value       :: ncid
+      character (c_char), intent(in)  :: name(*)
+      integer (c_int),    value       :: xtype
+      integer (c_int),    value       :: ndims
+      integer (c_int),    intent(in)  :: dimidsp(*)
+      integer (c_int),    intent(out) :: varidp
 
-      integer (kind=c_int)                 :: nc_def_var
+      integer (c_int)                 :: nc_def_var
 
     end function nc_def_var
   end interface
@@ -97,12 +97,12 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_char
 
-      integer (kind=c_int),    value       :: ncid
-      character (kind=c_char), intent(in)  :: name(*)
-      integer (kind=c_size_t), value       :: lenv
-      integer (kind=c_int),    intent(out) :: dimidp
+      integer (c_int),    value       :: ncid
+      character (c_char), intent(in)  :: name(*)
+      integer (c_size_t), value       :: lenv
+      integer (c_int),    intent(out) :: dimidp
 
-      integer (kind=c_int)                 :: nc_def_dim
+      integer (c_int)                 :: nc_def_dim
 
     end function nc_def_dim
   end interface
@@ -112,9 +112,9 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value :: ncid
+      integer (c_int), value :: ncid
 
-      integer (kind=c_int)        :: nc_enddef
+      integer (c_int)        :: nc_enddef
 
     end function nc_enddef
   end interface
@@ -125,10 +125,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_short
 
-      integer (kind=c_int), value          :: ncid, varid
-      integer (kind=c_short), intent(out)  :: sp(*)
+      integer (c_int), value          :: ncid, varid
+      integer (c_short), intent(out)  :: sp(*)
 
-      integer (kind=c_int)                 :: nc_get_var_short
+      integer (c_int)                 :: nc_get_var_short
 
     end function nc_get_var_short
   end interface
@@ -138,10 +138,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_short
 
-      integer (kind=c_int), value      :: ncid, varid
-      integer (kind=c_short), intent(in) :: sp(*)
+      integer (c_int), value      :: ncid, varid
+      integer (c_short), intent(in) :: sp(*)
 
-      integer (kind=c_int)             :: nc_put_var_short
+      integer (c_int)             :: nc_put_var_short
 
      end function nc_put_var_short
   end interface
@@ -152,10 +152,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value       :: ncid, varid
-      integer (kind=c_int), intent(out) :: ip(*)
+      integer (c_int), value       :: ncid, varid
+      integer (c_int), intent(out) :: ip(*)
 
-      integer (kind=c_int)              :: nc_get_var_int
+      integer (c_int)              :: nc_get_var_int
 
     end function nc_get_var_int
   end interface
@@ -165,10 +165,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value      :: ncid, varid
-      integer (kind=c_int), intent(in) :: ip(*)
+      integer (c_int), value      :: ncid, varid
+      integer (c_int), intent(in) :: ip(*)
 
-      integer (kind=c_int)             :: nc_put_var_int
+      integer (c_int)             :: nc_put_var_int
 
     end function nc_put_var_int
   end interface
@@ -179,10 +179,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_float
 
-      integer (kind=c_int), value       :: ncid, varid
-      real (kind=c_float), intent(out) :: rp(*)
+      integer (c_int), value       :: ncid, varid
+      real (c_float), intent(out) :: rp(*)
 
-      integer (kind=c_int)              :: nc_get_var_float
+      integer (c_int)              :: nc_get_var_float
 
     end function nc_get_var_float
   end interface
@@ -192,10 +192,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_float
 
-      integer (kind=c_int), value      :: ncid, varid
-      real (kind=c_float),  intent(in) :: rp(*)
+      integer (c_int), value      :: ncid, varid
+      real (c_float),  intent(in) :: rp(*)
 
-      integer (kind=c_int)             :: nc_put_var_float
+      integer (c_int)             :: nc_put_var_float
 
     end function nc_put_var_float
   end interface
@@ -206,10 +206,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_double
 
-      integer (kind=c_int), value         :: ncid, varid
-      real (kind=c_double), intent(out)  :: dp(*)
+      integer (c_int), value         :: ncid, varid
+      real (c_double), intent(out)  :: dp(*)
 
-      integer (kind=c_int)                :: nc_get_var_double
+      integer (c_int)                :: nc_get_var_double
 
     end function nc_get_var_double
   end interface
@@ -219,10 +219,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_double
 
-      integer (kind=c_int), value      :: ncid, varid
-      real (kind=c_double), intent(in) :: dp(*)
+      integer (c_int), value      :: ncid, varid
+      real (c_double), intent(in) :: dp(*)
 
-      integer (kind=c_int)             :: nc_put_var_double
+      integer (c_int)             :: nc_put_var_double
 
     end function nc_put_var_double
   end interface
@@ -233,18 +233,18 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptr, c_short, c_ptrdiff_t, c_size_t
 
-      integer (kind=c_int), value             :: ncid, varid
+      integer (c_int), value             :: ncid, varid
 
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
 !      type (c_ptr), value                     :: startp
 !      type (c_ptr), value                     :: countp
 !      type (c_ptr), value                     :: stridep
-      integer (kind=c_short), intent(out)     :: vars(*)
+      integer (c_short), intent(out)     :: vars(*)
 
-      integer (kind=c_int)                             :: nc_get_vars_short
+      integer (c_int)                             :: nc_get_vars_short
 
     end function nc_get_vars_short
   end interface
@@ -254,15 +254,15 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptrdiff_t, c_size_t, c_short
 
-      integer (kind=c_int), value         :: ncid, varid
+      integer (c_int), value         :: ncid, varid
 !      type(c_ptr),         value         :: startp, countp, stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      integer (kind=c_short), intent(in)  :: vars(*)
+      integer (c_short), intent(in)  :: vars(*)
 
-      integer (kind=c_int)                :: nc_put_vars_short
+      integer (c_int)                :: nc_put_vars_short
 
     end function nc_put_vars_short
   end interface
@@ -273,17 +273,17 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptrdiff_t, c_size_t
 
-      integer (kind=c_int), value             :: ncid, varid
+      integer (c_int), value             :: ncid, varid
 !      type (c_ptr), value                     :: startp
 !      type (c_ptr), value                     :: countp
 !      type (c_ptr), value                     :: stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      integer (kind=c_int), intent(out)       :: vars(*)
+      integer (c_int), intent(out)       :: vars(*)
 
-      integer (kind=c_int)                    :: nc_get_vars_int
+      integer (c_int)                    :: nc_get_vars_int
 
     end function nc_get_vars_int
   end interface
@@ -293,15 +293,15 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptrdiff_t, c_size_t
 
-      integer (kind=c_int), value      :: ncid, varid
+      integer (c_int), value      :: ncid, varid
 !      type (c_ptr),         value      :: startp, countp, stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      integer (kind=c_int), intent(in) :: vars(*)
+      integer (c_int), intent(in) :: vars(*)
 
-      integer (kind=c_int)             :: nc_put_vars_int
+      integer (c_int)             :: nc_put_vars_int
 
     end function nc_put_vars_int
   end interface
@@ -314,18 +314,18 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptrdiff_t, c_size_t, c_float
 
-      integer (kind=c_int), value             :: ncid, varid
+      integer (c_int), value             :: ncid, varid
 !      type (c_ptr), value                     :: startp
 !      type (c_ptr), value                     :: countp
 !      type (c_ptr), value                     :: stridep
 
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      real (kind=c_float), intent(out)        :: vars(*)
+      real (c_float), intent(out)        :: vars(*)
 
-      integer (kind=c_int)                             :: nc_get_vars_float
+      integer (c_int)                             :: nc_get_vars_float
 
     end function nc_get_vars_float
   end interface
@@ -335,15 +335,15 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_float, c_ptrdiff_t, c_size_t
 
-      integer (kind=c_int), value      :: ncid, varid
+      integer (c_int), value      :: ncid, varid
 !      type(c_ptr),         value      :: startp, countp, stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      real (kind=c_float),  intent(in) :: vars(*)
+      real (c_float),  intent(in) :: vars(*)
 
-      integer (kind=c_int)             :: nc_put_vars_float
+      integer (c_int)             :: nc_put_vars_float
 
     end function nc_put_vars_float
   end interface
@@ -354,17 +354,17 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_double, c_size_t, c_ptrdiff_t
 
-      integer (kind=c_int), value             :: ncid, varid
+      integer (c_int), value             :: ncid, varid
 !      type (c_ptr), value                     :: startp
 !      type (c_ptr), value                     :: countp
 !      type (c_ptr), value                     :: stridep
-      integer (kind=c_size_t)                            :: startp(*)
-      integer (kind=c_size_t)                            :: countp(*)
-      integer (kind=c_ptrdiff_t)                         :: stridep(*)
+      integer (c_size_t)                            :: startp(*)
+      integer (c_size_t)                            :: countp(*)
+      integer (c_ptrdiff_t)                         :: stridep(*)
 
-      real (kind=c_double), intent(out)       :: vars(*)
+      real (c_double), intent(out)       :: vars(*)
 
-      integer (kind=c_int)                    :: nc_get_vars_double
+      integer (c_int)                    :: nc_get_vars_double
 
     end function nc_get_vars_double
   end interface
@@ -374,15 +374,15 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_double, c_ptrdiff_t, c_size_t
 
-      integer (kind=c_int), value      :: ncid, varid
+      integer (c_int), value      :: ncid, varid
 !      type(c_ptr),         value      :: startp, countp, stridep
-      integer (kind=c_size_t)          :: startp(*)
-      integer (kind=c_size_t)          :: countp(*)
-      integer (kind=c_ptrdiff_t)       :: stridep(*)
+      integer (c_size_t)          :: startp(*)
+      integer (c_size_t)          :: countp(*)
+      integer (c_ptrdiff_t)       :: stridep(*)
 
-      real (kind=c_double), intent(in) :: vars(*)
+      real (c_double), intent(in) :: vars(*)
 
-      integer (kind=c_int)             :: nc_put_vars_double
+      integer (c_int)             :: nc_put_vars_double
 
     end function nc_put_vars_double
   end interface
@@ -393,11 +393,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value       :: ncid, varid
-      character (kind=c_char), intent(in)  :: name(*)
-      character (kind=c_char), intent(out) :: ip(*)
+      integer (c_int),    value       :: ncid, varid
+      character (c_char), intent(in)  :: name(*)
+      character (c_char), intent(out) :: ip(*)
 
-      integer (kind=c_int)                 :: nc_get_att_text
+      integer (c_int)                 :: nc_get_att_text
 
     end function nc_get_att_text
   end interface
@@ -407,11 +407,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value       :: ncid, varid
-      character (kind=c_char), intent(in)  :: name(*)
-      integer (kind=c_int),    intent(out) :: ip(*)
+      integer (c_int),    value       :: ncid, varid
+      character (c_char), intent(in)  :: name(*)
+      integer (c_int),    intent(out) :: ip(*)
 
-      integer (kind=c_int)                 :: nc_get_att_int
+      integer (c_int)                 :: nc_get_att_int
 
     end function nc_get_att_int
   end interface
@@ -421,11 +421,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char, c_short
 
-      integer (kind=c_int),    value          :: ncid, varid
-      character (kind=c_char), intent(in)     :: name(*)
-      integer (kind=c_short),    intent(out)  :: ip(*)
+      integer (c_int),    value          :: ncid, varid
+      character (c_char), intent(in)     :: name(*)
+      integer (c_short),    intent(out)  :: ip(*)
 
-      integer (kind=c_int)                    :: nc_get_att_short
+      integer (c_int)                    :: nc_get_att_short
 
     end function nc_get_att_short
   end interface
@@ -435,11 +435,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_float, c_char
 
-      integer (kind=c_int),    value         :: ncid, varid
-      character (kind=c_char), intent(in)    :: name(*)
-      real (kind=c_float),     intent(out)   :: ip(*)
+      integer (c_int),    value         :: ncid, varid
+      character (c_char), intent(in)    :: name(*)
+      real (c_float),     intent(out)   :: ip(*)
 
-      integer (kind=c_int)                   :: nc_get_att_float
+      integer (c_int)                   :: nc_get_att_float
 
     end function nc_get_att_float
   end interface
@@ -449,11 +449,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_double, c_char
 
-      integer (kind=c_int),    value         :: ncid, varid
-      character (kind=c_char), intent(in)    :: name(*)
-      real (kind=c_double),     intent(out)  :: ip(*)
+      integer (c_int),    value         :: ncid, varid
+      character (c_char), intent(in)    :: name(*)
+      real (c_double),     intent(out)  :: ip(*)
 
-      integer (kind=c_int)                   :: nc_get_att_double
+      integer (c_int)                   :: nc_get_att_double
 
     end function nc_get_att_double
   end interface
@@ -463,10 +463,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value          :: ncid, varid, attnum
-      character (kind=c_char), intent(inout)  :: name(*)
+      integer (c_int),    value          :: ncid, varid, attnum
+      character (c_char), intent(inout)  :: name(*)
 
-      integer (kind=c_int)                    :: nc_inq_attname
+      integer (c_int)                    :: nc_inq_attname
 
     end function nc_inq_attname
   end interface
@@ -476,12 +476,12 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_char
 
-      integer (kind=c_int),    value        :: ncid, varid
-      character (kind=c_char), intent(in)   :: name(*)
-      integer (kind=c_int),    intent(out)  :: xtypep
-      integer (kind=c_size_t), intent(out)  :: lenp
+      integer (c_int),    value        :: ncid, varid
+      character (c_char), intent(in)   :: name(*)
+      integer (c_int),    intent(out)  :: xtypep
+      integer (c_size_t), intent(out)  :: lenp
 
-      integer (kind=c_int)                  :: nc_inq_att
+      integer (c_int)                  :: nc_inq_att
 
     end function nc_inq_att
   end interface
@@ -492,15 +492,15 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value       :: ncid
-      integer (kind=c_int),    value       :: varid
-      character (kind=c_char)             :: name(*)
-      integer (kind=c_int),    intent(out) :: xtypep
-      integer (kind=c_int),    intent(out) :: ndimsp
-      integer (kind=c_int),    intent(out) :: dimidsp(*)
-      integer (kind=c_int),    intent(out) :: nattsp
+      integer (c_int),    value       :: ncid
+      integer (c_int),    value       :: varid
+      character (c_char)             :: name(*)
+      integer (c_int),    intent(out) :: xtypep
+      integer (c_int),    intent(out) :: ndimsp
+      integer (c_int),    intent(out) :: dimidsp(*)
+      integer (c_int),    intent(out) :: nattsp
 
-      integer (kind=c_int)                 :: nc_inq_var
+      integer (c_int)                 :: nc_inq_var
 
     end function nc_inq_var
   end interface
@@ -511,12 +511,12 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_char
 
-      integer (kind=c_int),    value         :: ncid
-      integer (kind=c_int),    value         :: dimid
-      character (kind=c_char), intent(inout) :: name(*)
-      integer (kind=c_size_t), intent(out)   :: lenp
+      integer (c_int),    value         :: ncid
+      integer (c_int),    value         :: dimid
+      character (c_char), intent(inout) :: name(*)
+      integer (c_size_t), intent(out)   :: lenp
 
-      integer (kind=c_int)                   :: nc_inq_dim
+      integer (c_int)                   :: nc_inq_dim
 
     end function nc_inq_dim
   end interface
@@ -526,7 +526,7 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_ptr
 
-      integer (kind=c_int), value :: ncerr
+      integer (c_int), value :: ncerr
 
       type(c_ptr)                :: nc_strerror
 
@@ -538,10 +538,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value       :: ncid
-      integer (kind=c_int), intent(out) :: formatp
+      integer (c_int), value       :: ncid
+      integer (c_int), intent(out) :: formatp
 
-      integer (kind=c_int)              :: nc_inq_format
+      integer (c_int)              :: nc_inq_format
 
     end function nc_inq_format
   end interface
@@ -552,11 +552,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value         :: ncid
-      integer (kind=c_int),    value         :: dimid
-      character (kind=c_char), intent(inout) :: name(*)
+      integer (c_int),    value         :: ncid
+      integer (c_int),    value         :: dimid
+      character (c_char), intent(inout) :: name(*)
 
-      integer (kind=c_int)                   :: nc_inq_dimname
+      integer (c_int)                   :: nc_inq_dimname
 
     end function nc_inq_dimname
   end interface
@@ -566,10 +566,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value       :: ncid
-      integer (kind=c_int), intent(out) :: unlimdimidp
+      integer (c_int), value       :: ncid
+      integer (c_int), intent(out) :: unlimdimidp
 
-      integer (kind=c_int)              :: nc_inq_unlimdim
+      integer (c_int)              :: nc_inq_unlimdim
 
     end function nc_inq_unlimdim
   end interface
@@ -579,10 +579,10 @@ module netcdf_c_api_interfaces
 
      import :: c_int
 
-     integer (kind=c_int), value       :: ncid
-     integer (kind=c_int), intent(out) ::  ndimsp
+     integer (c_int), value       :: ncid
+     integer (c_int), intent(out) ::  ndimsp
 
-     integer (kind=c_int)              :: nc_inq_ndims
+     integer (c_int)              :: nc_inq_ndims
 
    end function nc_inq_ndims
   end interface
@@ -592,10 +592,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value       :: ncid
-      integer (kind=c_int), intent(out) ::  nvarsp
+      integer (c_int), value       :: ncid
+      integer (c_int), intent(out) ::  nvarsp
 
-      integer (kind=c_int)              :: nc_inq_nvars
+      integer (c_int)              :: nc_inq_nvars
 
     end function nc_inq_nvars
   end interface
@@ -605,10 +605,10 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value       :: ncid
-      integer (kind=c_int), intent(out) :: ngattsp
+      integer (c_int), value       :: ncid
+      integer (c_int), intent(out) :: ngattsp
 
-      integer (kind=c_int)              :: nc_inq_natts
+      integer (c_int)              :: nc_inq_natts
 
     end function nc_inq_natts
   end interface
@@ -620,12 +620,12 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_char
 
-      integer (kind=c_int),    value      :: ncid, varid
-      integer (kind=c_size_t), value      :: nlen
-      character (kind=c_char), intent(in) :: name(*)
-      character (kind=c_char), intent(in) :: tp(*)
+      integer (c_int),    value      :: ncid, varid
+      integer (c_size_t), value      :: nlen
+      character (c_char), intent(in) :: name(*)
+      character (c_char), intent(in) :: tp(*)
 
-      integer (kind=c_int)                :: nc_put_att_text
+      integer (c_int)                :: nc_put_att_text
 
     end function nc_put_att_text
   end interface
@@ -637,13 +637,13 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_char
 
-      integer (kind=c_int),    value      :: ncid, varid
-      integer (kind=c_size_t), value      :: nlen
-      integer (kind=c_int),    value      :: xtype
-      character (kind=c_char), intent(in) :: name(*)
-      integer (kind=c_int),    intent(in) :: ip(*)
+      integer (c_int),    value      :: ncid, varid
+      integer (c_size_t), value      :: nlen
+      integer (c_int),    value      :: xtype
+      character (c_char), intent(in) :: name(*)
+      integer (c_int),    intent(in) :: ip(*)
 
-      integer (kind=c_int)                :: nc_put_att_int
+      integer (c_int)                :: nc_put_att_int
 
     end function nc_put_att_int
   end interface
@@ -655,13 +655,13 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_float, c_char
 
-      integer (kind=c_int),    value      :: ncid, varid
-      integer (kind=c_size_t), value      :: nlen
-      integer (kind=c_int),    value      :: xtype
-      character (kind=c_char), intent(in) :: name(*)
-      real (kind=c_float),     intent(in) :: fp(*)
+      integer (c_int),    value      :: ncid, varid
+      integer (c_size_t), value      :: nlen
+      integer (c_int),    value      :: xtype
+      character (c_char), intent(in) :: name(*)
+      real (c_float),     intent(in) :: fp(*)
 
-      integer (kind=c_int) :: nc_put_att_float
+      integer (c_int) :: nc_put_att_float
 
     end function nc_put_att_float
   end interface
@@ -673,13 +673,13 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_size_t, c_double, c_char
 
-      integer (kind=c_int),    value      :: ncid, varid
-      integer (kind=c_size_t), value      :: nlen
-      integer (kind=c_int),    value      :: xtype
-      character (kind=c_char), intent(in) :: name(*)
-      real (kind=c_double),    intent(in) :: dp(*)
+      integer (c_int),    value      :: ncid, varid
+      integer (c_size_t), value      :: nlen
+      integer (c_int),    value      :: xtype
+      character (c_char), intent(in) :: name(*)
+      real (c_double),    intent(in) :: dp(*)
 
-      integer (kind=c_int)                :: nc_put_att_double
+      integer (c_int)                :: nc_put_att_double
 
     end function nc_put_att_double
   end interface
@@ -691,11 +691,11 @@ module netcdf_c_api_interfaces
 
       import :: c_int, c_char
 
-      integer (kind=c_int),    value      :: ncid_in, varid_in, varid_out, &
+      integer (c_int),    value      :: ncid_in, varid_in, varid_out, &
                                             ncid_out
-      character (kind=c_char), intent(in) :: name(*)
+      character (c_char), intent(in) :: name(*)
 
-      integer (kind=c_int)                :: nc_copy_att
+      integer (c_int)                :: nc_copy_att
 
     end function nc_copy_att
   end interface
@@ -707,11 +707,11 @@ module netcdf_c_api_interfaces
 
       import :: c_char, c_int
 
-      character (kind=c_char), intent(in)  :: path(*)
-      integer (kind=c_int), value          :: mode
-      integer (kind=c_int), intent(out)    :: ncidp
+      character (c_char), intent(in)  :: path(*)
+      integer (c_int), value          :: mode
+      integer (c_int), intent(out)    :: ncidp
 
-      integer (kind=c_int)                 :: nc_open
+      integer (c_int)                 :: nc_open
 
     end function nc_open
   end interface
@@ -721,12 +721,12 @@ module netcdf_c_api_interfaces
 
       import :: c_char, c_int, c_size_t
 
-      character (kind=c_char), intent(in)  :: path(*)
-      integer (kind=c_int),    value       :: mode
-      integer (kind=c_size_t), intent(in)  :: chunksizehintp
-      integer (kind=c_int),    intent(out) :: ncidp
+      character (c_char), intent(in)  :: path(*)
+      integer (c_int),    value       :: mode
+      integer (c_size_t), intent(in)  :: chunksizehintp
+      integer (c_int),    intent(out) :: ncidp
 
-      integer (kind=c_int)                 :: nc__open
+      integer (c_int)                 :: nc__open
 
     end function nc__open
   end interface
@@ -736,9 +736,9 @@ module netcdf_c_api_interfaces
 
       import :: c_int
 
-      integer (kind=c_int), value :: ncid
+      integer (c_int), value :: ncid
 
-      integer (kind=c_int)        :: nc_close
+      integer (c_int)        :: nc_close
 
     end function nc_close
   end interface

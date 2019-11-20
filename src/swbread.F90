@@ -10,43 +10,43 @@ implicit none
   ! general temporary variables
   character (len=256)  :: sBinFile, sBuf, sBuf2, sBuf3 = ""
   character (len=256)  :: sOutputFilename = ""
-  integer (kind=T_INT) :: iNumArgs
-  integer (kind=T_INT) :: iNumGridCells
-  integer (kind=T_INT) :: iStat
-  integer (kind=T_INT) :: i, k
-  integer (kind=T_INT) :: iDateNum = 0
-  integer (kind=T_INT) :: iNumDaysInYear
-  integer (kind=T_INT) :: iLen1, iLen2
-  integer (kind=T_INT), dimension(2) :: iTempDate
+  integer (T_INT) :: iNumArgs
+  integer (T_INT) :: iNumGridCells
+  integer (T_INT) :: iStat
+  integer (T_INT) :: i, k
+  integer (T_INT) :: iDateNum = 0
+  integer (T_INT) :: iNumDaysInYear
+  integer (T_INT) :: iLen1, iLen2
+  integer (T_INT), dimension(2) :: iTempDate
 
   ! variables that are read in from the binary file header
-  integer (kind=T_INT) :: iNX
-  integer (kind=T_INT) :: iNY
-  integer (kind=T_INT) :: iDataType
-  real (kind=T_SGL)    :: rGridCellSize
-  integer (kind=T_INT) :: iLengthUnits
-  integer (kind=T_INT) :: iVariableNumber
-  integer (kind=T_INT) :: iRLE_MULT
-  real (kind=T_SGL)    :: rRLE_OFFSET
-  real (kind=T_DBL)    :: rX0, rX1
-  real (kind=T_DBL)    :: rY0, rY1
-  integer (kind=T_INT) :: iStartMM, iStartDD, iStartYYYY
-  integer (kind=T_INT) :: iEndMM, iEndDD, iEndYYYY
+  integer (T_INT) :: iNX
+  integer (T_INT) :: iNY
+  integer (T_INT) :: iDataType
+  real (T_SGL)    :: rGridCellSize
+  integer (T_INT) :: iLengthUnits
+  integer (T_INT) :: iVariableNumber
+  integer (T_INT) :: iRLE_MULT
+  real (T_SGL)    :: rRLE_OFFSET
+  real (T_DBL)    :: rX0, rX1
+  real (T_DBL)    :: rY0, rY1
+  integer (T_INT) :: iStartMM, iStartDD, iStartYYYY
+  integer (T_INT) :: iEndMM, iEndDD, iEndYYYY
 
-  integer (kind=T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD
-  integer (kind=T_INT) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
-  integer (kind=T_INT) :: iTempStartDate, iTempEndDate
+  integer (T_INT) :: iCurrMM, iCurrDD, iCurrYYYY, iCurrDOY, iCurrJD
+  integer (T_INT) :: iTomorrowMM, iTomorrowDD, iTomorrowYYYY, iTomorrowDOY, iTomorrowJD
+  integer (T_INT) :: iTempStartDate, iTempEndDate
   character (len=256) :: sMonthName = ""
-  logical (kind=T_LOGICAL) :: lMonthEnd
-  logical (kind=T_LOGICAL) :: lYearEnd
+  logical (T_LOGICAL) :: lMonthEnd
+  logical (T_LOGICAL) :: lYearEnd
 
-  integer (kind=T_INT) :: LU_SWBREAD
+  integer (T_INT) :: LU_SWBREAD
 
-  integer (kind=T_INT) :: iSWBReadStartDate, iSWBReadStartMM, &
+  integer (T_INT) :: iSWBReadStartDate, iSWBReadStartMM, &
                           iSWBReadStartDD,iSWBReadStartYYYY
-  integer (kind=T_INT) :: iSWBReadEndDate, iSWBReadEndMM, &
+  integer (T_INT) :: iSWBReadEndDate, iSWBReadEndMM, &
                           iSWBReadEndDD,iSWBReadEndYYYY
-  integer (kind=T_INT) :: iSWBReadOutputType = iBOTH
+  integer (T_INT) :: iSWBReadOutputType = iBOTH
 
   character (len=256) :: sTitleTxt
   character (len=10) :: sDateTxt
@@ -55,7 +55,7 @@ implicit none
   type ( T_GENERAL_GRID ),pointer :: pMonthGrd
   type ( T_GENERAL_GRID ),pointer :: pYearGrd
 
-  real(kind=T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad
+  real(T_SGL),dimension(:), allocatable :: rVal,rValSum,rPad
 
   character (len=8) :: sDate
   character (len=10) :: sTime
@@ -64,10 +64,10 @@ implicit none
   character (len=1) :: sSlash = "/"
   character (len=20) :: sOutputFilePrefix = ""
   character (len=20) :: sOutputFileSuffix = "asc"
-  logical (kind=T_LOGICAL) :: lVerbose = lFALSE
-  integer (kind=T_INT) :: iOutputFormat = OUTPUT_ARC
-  logical (kind=T_LOGICAL) :: lEOF
-  logical (kind=T_LOGICAL) :: lPrematureEOF = lFALSE
+  logical (T_LOGICAL) :: lVerbose = lFALSE
+  integer (T_INT) :: iOutputFormat = OUTPUT_ARC
+  logical (T_LOGICAL) :: lEOF
+  logical (T_LOGICAL) :: lPrematureEOF = lFALSE
 
 
   call date_and_time(sDate,sTime,sTZ)

@@ -10,7 +10,7 @@
 # Fortran_FLAGS_RELEASE
 # Fortran_FLAGS_PROFILE
 # PATH_TO_R
-# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "max_osx", "linux_x64"
+# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "mac_osx", "linux_x64"
 # Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
 # COMPILER_VERSION       | ex: "4.8.2"
 # LIBRARIES
@@ -48,7 +48,7 @@ set(PACKAGE_STRING "swb 1.2")
 set(PACKAGE_TARNAME "swb")
 set(PACKAGE_VERSION "1.2")
 
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.1)
 
 include( cmake/version_control.cmake )
 include( cmake/options_and_targets.cmake )

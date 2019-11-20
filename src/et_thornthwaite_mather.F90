@@ -40,12 +40,12 @@ module et_thornthwaite_mather
   !! Module data
 
   !! Configuration -- input data
-  real (kind=c_double) :: rLatitude
-  real (kind=c_double) :: rTanLatitude
+  real (c_double) :: rLatitude
+  real (c_double) :: rTanLatitude
 
   !! Parameters from pre-scan of annual data
-  real (kind=c_double) :: rAnnualIndex        ! Annual thermal index
-  real (kind=c_double) :: rExponentA        ! Exponent 'a'
+  real (c_double) :: rAnnualIndex        ! Annual thermal index
+  real (c_double) :: rExponentA        ! Exponent 'a'
 
 contains
 
@@ -55,7 +55,7 @@ subroutine et_tm_configure( sRecord )
   character (len=*),intent(inout) :: sRecord
   ! [ LOCALS ]
   character (len=256) :: sOption
-  integer (kind=c_int) :: iStat
+  integer (c_int) :: iStat
 
   write(UNIT=LU_LOG,FMT=*) "Configuring Thornthwaite-Mather ET model"
   call Chomp( sRecord,sOption )
@@ -77,21 +77,21 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
                                                    ! model options, flags, and other settings
   character (len=*),intent(in) :: sFileName
   ! [ LOCALS ]
-  integer (kind=c_int) :: iJulianDay, iStat, iMonth, iDay, iYear,i
-  integer (kind=c_int) :: iDayOfYear
-  real(kind=c_float) :: rPrecip, rAvgT, rMinT, rMaxT, rRH, rMinRH, rWindSpd, rSunPct
-  real(kind=c_double) :: rMonthAvg,rMonthIndex
+  integer (c_int) :: iJulianDay, iStat, iMonth, iDay, iYear,i
+  integer (c_int) :: iDayOfYear
+  real(c_float) :: rPrecip, rAvgT, rMinT, rMaxT, rRH, rMinRH, rWindSpd, rSunPct
+  real(c_double) :: rMonthAvg,rMonthIndex
   character (len=256) :: sBuf
   character (len=3) :: sMonthName
-  logical (kind=c_bool) :: lMonthEnd
-  logical (kind=c_bool) :: lOpened
-  integer (kind=c_int) :: iLU
-  integer (kind=c_int), dimension(12) :: iMonthlyCount
-  real (kind=c_double), dimension(12) :: rMonthlySum
-  logical (kind=c_bool) :: lIsOpen
+  logical (c_bool) :: lMonthEnd
+  logical (c_bool) :: lOpened
+  integer (c_int) :: iLU
+  integer (c_int), dimension(12) :: iMonthlyCount
+  real (c_double), dimension(12) :: rMonthlySum
+  logical (c_bool) :: lIsOpen
 
   !> exponent value is from Thornthwaite (1948), p 89.
-  real (kind=c_double),parameter :: rExp=1.514_c_double
+  real (c_double),parameter :: rExp=1.514_c_double
   write(UNIT=LU_LOG,FMT=*)"Initializing Thornthwaite-Mather ET model with annual data ", trim(sFileName)
 
 
@@ -128,7 +128,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
     call LookupMonth(iMonth, iDay, iYear,iDayOfYear, &
                        sMonthName,lMonthEnd)
 
-    rMonthlySum(iMonth) = rMonthlySum(iMonth) + real(rAvgT, kind=c_double)
+    rMonthlySum(iMonth) = rMonthlySum(iMonth) + real(rAvgT, c_double)
     iMonthlyCount(iMonth) = iMonthlyCount(iMonth) + 1
   end do
 
@@ -138,7 +138,7 @@ subroutine et_tm_initialize( pGrd, pConfig, sFileName )
   rAnnualIndex = rZERO
   do i=1,12
     if ( iMonthlyCount(i) > 0 ) then
-      rMonthAvg = rMonthlySum(i) / real(iMonthlyCount(i), kind=c_double)
+      rMonthAvg = rMonthlySum(i) / real(iMonthlyCount(i), c_double)
       if ( rMonthAvg > dpFREEZING ) then
         !> calculate monthly index as per Thornthwaite (1948), p89.
         rMonthIndex = (FtoC(rMonthAvg) / 5_c_double) ** 1.514_c_double
@@ -193,27 +193,27 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear)
   type ( T_GENERAL_GRID ),pointer :: pGrd
   type (T_MODEL_CONFIGURATION), pointer :: pConfig ! pointer to data structure that contains
                                                    ! model options, flags, and other settings
-  integer (kind=c_int),intent(in) :: iDayOfYear
-  real (kind=c_double) :: rPotET, rDecl, rOmega_s, rN, rPotET_adj
+  integer (c_int),intent(in) :: iDayOfYear
+  real (c_double) :: rPotET, rDecl, rOmega_s, rN, rPotET_adj
 
   ! [ locals ]
-  integer (kind=c_int) :: iCol, iRow
-!  real (kind=c_float),dimension(3),parameter :: rHighTPoly = &
+  integer (c_int) :: iCol, iRow
+!  real (c_float),dimension(3),parameter :: rHighTPoly = &
 !    (/ -5.25625072726565D-03, 1.04170341298537D+00, - 44.3259754866234D+00 /)
   type (T_CELL), pointer :: cel
-  real (kind=c_double) :: rTempC
+  real (c_double) :: rTempC
 
 
-  rDecl = 0.4093_c_double * sin((dpTWOPI * real(iDayOfYear, kind=c_double)/365.0_c_double) - 1.405_c_double )
+  rDecl = 0.4093_c_double * sin((dpTWOPI * real(iDayOfYear, c_double)/365.0_c_double) - 1.405_c_double )
 !  rDecl = solar_declination(iDayOfYear, MODEL_SIM%daysperyear())
-  rOmega_s = sunset_angle(real(rLatitude * dpPI_OVER_180, kind=c_double), rDecl)
+  rOmega_s = sunset_angle(real(rLatitude * dpPI_OVER_180, c_double), rDecl)
   rN = daylight_hours(rOmega_s)
 
   do iRow=1,pGrd%iNY
     do iCol=1,pGrd%iNX  ! last subscript in a Fortran array should be the slowest changing
       cel => pGrd%Cells(iCol,iRow)
 
-      rTempC = FtoC(real(cel%rTAvg, kind=c_double))
+      rTempC = FtoC(real(cel%rTAvg, c_double))
 
       if (pGrd%Cells(iCol,iRow)%rTAvg <= rFREEZING ) then
         rPotET = dpZERO
@@ -228,7 +228,7 @@ subroutine et_tm_ComputeET( pGrd, pConfig, iDayOfYear)
 
         !> high temperature equation is equation 4 in Willmott, C.J., Rowe, C.M.
         !> and Mintz, Y., 1985, Climatology of the terrestrial seasonal
-        !> water cycle: Journal of Climatology, v. 5, no. 6, p. 589–606.
+        !> water cycle: Journal of Climatology, v. 5, no. 6, p. 589ï¿½606.
         rPotET = (-415.85_c_double + 32.24_c_double*rTempC -0.43_c_double*rTempC**2) &
            / 25.4_c_double &
            / 30_c_double
