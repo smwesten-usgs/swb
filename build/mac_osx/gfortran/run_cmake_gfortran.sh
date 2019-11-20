@@ -3,6 +3,7 @@
 # remove existing Cmake cache and directories
 rm -rf CMake*
 rm -rf Testing
+rm -rf test
 rm -rf src
 rm -rf tests
 rm -f CPack*
@@ -10,8 +11,8 @@ rm -f *.txt
 
 # set CMAKE-related and build-related variables
 export CMAKEROOT=/usr/bin/cmake
-export COMPILER_MAJ_VERSION=8
-export COMPILER_VERSION=8.1.0
+export COMPILER_MAJ_VERSION=9
+export COMPILER_VERSION=9.2.0
 export COMPILER_DIR=/usr/local
 export DISLIN_VERSION=11
 export PYTHON_CMD=~/miniconda3/bin/python

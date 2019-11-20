@@ -3656,19 +3656,19 @@ subroutine model_dumpvals(pGrd, pConfig)
 
       cel => pGrd%Cells( DUMP_VARS( idx )%column_num, DUMP_VARS( idx )%row_num )
 
-      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),40(g16.9,','),g16.9 )") pConfig%iMonth, &
+      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),41(g16.9,','),g16.9 )") pConfig%iMonth, &
         pConfig%iDay,                                                                                              &
         pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
         cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
-        cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rInterception,        &
-        cel%rNetRainfall, cel%rSnowCover,                                                                          &
+        cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rInterception,                        &
+        cel%rNetRainfall, cel%rSnowFall_SWE, cel%rSnowCover,                                                       &
         cel%rSnowMelt, cel%rIrrigationAmount, cel%rIrrigationFromGW, cel%rIrrigationFromSW,                        &
         cel%rKcb, cel%rCropETc, cel%rBareSoilEvap, cel%rTotalAvailableWater, cel%rReadilyAvailableWater,           &
         cel%rReferenceET0,                                                                                         &
         cel%rActualET, cel%rReferenceET0_adj,                                                                      &
         cel%sm_deficit, cel%rKe, cel%rKs, cel%rKr,                                                                 &
-        cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rSMax, cel%rInflow, cel%rRunoff, &
-        cel%rOutflow, cel%rFlowOutOfGrid,           &
+        cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rSMax, cel%rInflow, cel%rRunoff,                     &
+        cel%rOutflow, cel%rFlowOutOfGrid,                                                                          &
         cel%rDailyRecharge, cel%rRejectedRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                     &
         cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
 
