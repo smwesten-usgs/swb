@@ -1560,11 +1560,6 @@ contains
   subroutine assert_eq_complex_(var1, var2, message)
 
     complex(kind(1.0D0)), intent (in) :: var1, var2
-<<<<<<< HEAD:test/unit_tests/fruit.F90
-
-=======
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
 
         if ((real (var1) < real (var2)) .or. &
@@ -1584,11 +1579,7 @@ contains
   subroutine assert_eq_complex_in_range_(var1, var2, delta, message)
 
     complex(kind(1.0D0)), intent (in) :: var1, var2
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     real (c_double), intent (in) :: delta
-=======
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
 
         if (abs(var1 - var2) > delta) then
@@ -1603,17 +1594,10 @@ contains
 
   !------ 1d_complex ------
   subroutine assert_eq_1d_complex_(var1, var2, n, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n
     integer (c_int)              :: i
     complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
 
-=======
-    integer, intent (in) :: n
-    integer              :: i
-    complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     do i = 1, n
         if ((real (var1(i)) < real (var2(i))) .or. &
@@ -1631,17 +1615,10 @@ contains
 
   !------ 1d_complex ------
   subroutine assert_eq_1d_complex_in_range_(var1, var2, n, delta, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n
     integer (c_int)              :: i
     complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
     real (c_double), intent (in) :: delta
-=======
-    integer, intent (in) :: n
-    integer              :: i
-    complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     do i = 1, n
         if (abs(var1(i) - var2(i)) > delta) then
@@ -1656,17 +1633,10 @@ contains
 
   !------ 2d_complex ------
   subroutine assert_eq_2d_complex_(var1, var2, n, m, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n, m
     integer (c_int)              :: i, j
     complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
 
-=======
-    integer, intent (in) :: n, m
-    integer              :: i, j
-    complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     do j = 1, m
       do i = 1, n
@@ -1686,17 +1656,10 @@ contains
 
   !------ 2d_complex ------
   subroutine assert_eq_2d_complex_in_range_(var1, var2, n, m, delta, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n, m
     integer (c_int)              :: i, j
     complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
     real (c_double), intent (in) :: delta
-=======
-    integer, intent (in) :: n, m
-    integer              :: i, j
-    complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     do j = 1, m
       do i = 1, n
@@ -2226,11 +2189,6 @@ contains
   subroutine assert_not_equals_complex_(var1, var2, message)
 
     complex(kind(1.0D0)), intent (in) :: var1, var2
-<<<<<<< HEAD:test/unit_tests/fruit.F90
-
-=======
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
@@ -2256,11 +2214,7 @@ contains
   subroutine assert_not_equals_complex_in_range_(var1, var2, delta, message)
 
     complex(kind(1.0D0)), intent (in) :: var1, var2
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     real (c_double), intent (in) :: delta
-=======
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
@@ -2281,17 +2235,10 @@ contains
 
   !------ 1d_complex ------
   subroutine assert_not_equals_1d_complex_(var1, var2, n, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n
     integer (c_int)              :: i
     complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
 
-=======
-    integer, intent (in) :: n
-    integer              :: i
-    complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
@@ -2315,17 +2262,10 @@ contains
 
   !------ 1d_complex ------
   subroutine assert_not_equals_1d_complex_in_range_(var1, var2, n, delta, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n
     integer (c_int)              :: i
     complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
     real (c_double), intent (in) :: delta
-=======
-    integer, intent (in) :: n
-    integer              :: i
-    complex(kind(1.0D0)), intent (in) :: var1(n), var2(n)
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
@@ -2346,17 +2286,10 @@ contains
 
   !------ 2d_complex ------
   subroutine assert_not_equals_2d_complex_(var1, var2, n, m, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n, m
     integer (c_int)              :: i, j
     complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
 
-=======
-    integer, intent (in) :: n, m
-    integer              :: i, j
-    complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
-    
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
@@ -2382,17 +2315,10 @@ contains
 
   !------ 2d_complex ------
   subroutine assert_not_equals_2d_complex_in_range_(var1, var2, n, m, delta, message)
-<<<<<<< HEAD:test/unit_tests/fruit.F90
     integer (c_int), intent (in) :: n, m
     integer (c_int)              :: i, j
     complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
     real (c_double), intent (in) :: delta
-=======
-    integer, intent (in) :: n, m
-    integer              :: i, j
-    complex(kind(1.0D0)), intent (in) :: var1(n, m), var2(n, m)
-    double precision, intent (in) :: delta
->>>>>>> 259c01e0f31d551578d1a54b69d6221ea622614b:test/unit_tests/fruit.f90
     character(len = *), intent (in), optional :: message
     logical :: same_so_far
 
