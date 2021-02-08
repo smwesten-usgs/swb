@@ -457,6 +457,46 @@ function rel_Earth_Sun_dist(iDayOfYear,iNumDaysInYear) result(rDsubR)
 
 end function rel_Earth_Sun_dist
 
+!--------------------------------------------------------------------------
+!!****f* meteorological_functions/melt_factor_seasonal_variation
+! NAME
+!   melt_factor_seasonal_variation - calculates seasonal variation in snow melt factor.
+! SYNOPSIS
+!   Calculates the seasonal variation factor associated with snowmelt.
+!
+! INPUTS
+!   iDayOfYear - Integer day of the year (January 1 = 1)
+!   iNumDaysInYear - Number of days in the current year
+!
+! OUTPUTS
+!   Sv - seasonal variation factor to be applied to snowmelt rates.
+!
+! NOTES
+!
+! Implemented as part of equation 7 in SNOW-17 (Anderson, 2006).
+!
+!  Eric Anderson, 2006, Snow Accumulation and Ablation Model -- SNOW-17,
+!    accessed March 19, 2017, at 
+!    https://www.wcc.nrcs.usda.gov/ftpref/wntsc/H&H/snow/AndersonSnow17.pdf.
+!
+function melt_factor_seasonal_variation( iDayOfYear, iNumDaysInYear )  result(Sv)
+
+  ! [ ARGUMENTS ]
+  integer (c_int), intent(in) :: iDayOfYear
+  integer (c_int), intent(in) :: iNumDaysInYear
+
+!
+! What we really need is the number of days that have elapsed since March 21st.
+! Need to modify iDayOfYear to make it relative to March 21.
+!
+  ! [ LOCALS ]
+  real (c_float) :: Sv
+
+  Sv = 0.5_c_double * sin( real(iDayOfYear, c_double) * 2.0_c_double * dpPI     &
+                             / real(iNumDaysInYear, c_double))
+
+end function melt_factor_seasonal_variation  
+
 !!***
 
 !--------------------------------------------------------------------------

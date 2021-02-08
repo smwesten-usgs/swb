@@ -821,6 +821,20 @@ module types
   integer (c_int),parameter :: CONFIG_LANDUSE_STATIC_GRID = 4
   !> @}
 
+  !> @name Constants: Snowfall method
+  !> Configuration information for snowfall method calculations
+  !> @{
+  integer (c_int),parameter :: CONFIG_SNOWFALL_ORIGINAL = 0
+  integer (c_int),parameter :: CONFIG_SNOWFALL_PRMS = 1
+  !> @}
+
+  !> @name Constants: Snowmelt method
+  !> Configuration information for snowmelt method calculations
+  !> @{
+  integer (c_int),parameter :: CONFIG_SNOWMELT_ORIGINAL = 0
+  integer (c_int),parameter :: CONFIG_SNOWMELT_SEASONALLY_VARIABLE = 1
+  !> @}
+
   !> @name Constants: Soil-moisture input data format
   !> Configuration information for soil-moisture capacity calculations
   !> @{
@@ -934,6 +948,12 @@ module types
 
       !> Landuse data input option
       integer (c_int) :: iConfigureLanduse = CONFIG_NONE
+
+      !> Snowfall calculation method
+      integer (c_int) :: iConfigureSnowfall = CONFIG_SNOWFALL_ORIGINAL
+
+      !> Snowmelt calculation method
+      integer (c_int) :: iConfigureSnowmelt = CONFIG_SNOWMELT_ORIGINAL
 
       !> Soil moisture calculation option
       integer (c_int) :: iConfigureSM = CONFIG_SM_NONE

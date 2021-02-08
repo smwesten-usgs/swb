@@ -1162,20 +1162,59 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
 
       else
 
-        ! allow for correction factor to be applied to precip gage input data
-        if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
-          lFREEZING = lTRUE
-          cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
-        else
-          lFREEZING = lFALSE
-          cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
-        end if
+        ! ! allow for correction factor to be applied to precip gage input data
+        ! if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
+        !   lFREEZING = lTRUE
+        !   cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+        ! else
+        !   lFREEZING = lFALSE
+        !   cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+        ! end if
+        if ( pConfig%iConfigureSnowfall == CONFIG_SNOWFALL_ORIGINAL ) then
 
-        ! this simply retrieves the table value for the given landuse, with the amount
-        ! zeroed out in the event that interception storage is already maxed out
+          ! allow for correction factor to be applied to precip gage input data
+          if ( cel%rTAvg - (cel%rTMax-cel%rTMin) / 3.0_c_float <= rFREEZING ) then
+            rFracRain = 0.0
+            cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+            cel%rSnowFall_SWE = cel%rGrossPrecip 
+          else
+            rFracRain = 1.0
+            cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+            cel%rSnowFall_SWE = 0.0 
+          end if
+
+        else   ! use the algorithm contained in PRMS
+
+          if(cel%rTMin > pConfig%rTMaxAllSnow &
+             .and. cel%rTMax > pConfig%rTMaxAllRain) then
+  
+            rFracRain = rONE
+            cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+            cel%rSnowFall_SWE = 0.0 
+
+          else if(cel%rTMax < pConfig%rTMaxAllSnow) then
+  
+            rFracRain = rZERO
+            cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor
+            cel%rSnowFall_SWE = cel%rGrossPrecip
+
+          else
+  
+            ! this is straight from MMS/PRMS
+            rFracRain = ((cel%rTMax - pConfig%rTMaxAllSnow) &
+               / (cel%rTMax - cel%rTMin))
+  
+            cel%rGrossPrecip = cel%rGrossPrecip * pConfig%rSnowFall_SWE_Corr_Factor              &
+                          + cel%rGrossPrecip * pConfig%rRainfall_Corr_Factor
+
+            cel%rSnowFall_SWE = cel%rGrossPrecip * (1.0_c_double - rFracRain) 
+
+           end if
+
+        endif 
+
+        ! this simply retrieves the table value for the given landuse
         dpPotentialInterception = max( rf_model_GetInterception(pConfig,cel), 0.0_c_double )   !  &
-!                                     - real( cel%rInterceptionStorage, c_double ),  &
-!                                       0.0_c_double )
 
         ! save the current snowcover value, create local copy as well
         dpPreviousSnowCover = real(cel%rSnowCover, c_double)
@@ -1235,11 +1274,15 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         dpNetRainfall = dpNetPrecip
 
         ! Is it snowing?
-        if (lFREEZING ) then
-          dpSnowCover = dpSnowCover + dpNetPrecip
-          cel%rSnowFall_SWE = dpNetPrecip
-          dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
-        end if
+        ! if (lFREEZING ) then
+        !   dpSnowCover = dpSnowCover + dpNetPrecip
+        !   cel%rSnowFall_SWE = dpNetPrecip
+        !   dpNetRainfall = dpZERO      ! For now -- if there is snowmelt, we do it next
+        ! end if
+
+        dpSnowCover = max(0.0_c_double, dpSnowCover + cel%rSnowFall_SWE - cel%rInterception )
+        dpNetRainfall = cel%rGrossPrecip * rFracRain - cel
+
 
         ! Is there any melting?
         if ( cel%rTAvg > rFREEZING ) then
