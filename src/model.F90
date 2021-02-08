@@ -750,7 +750,7 @@ subroutine model_GetDailyPrecipAndTemperatureValue( pGrd, pConfig, rPrecip, &
   call assert(iCount > 0, "Cannot continue -- there are no active cells", &
     __FILE__, __LINE__)
   ! We are ignoring any missing or bogus values in this calculation
-  rMean = rSum / iCount
+  rMean = rSum / real(iCount, c_double)
 
   if(pConfig%lHaltIfMissingClimateData) then
     call Assert(rMin >= pConfig%rMinValidPrecip,"Precipitation values less than " &
@@ -906,16 +906,14 @@ subroutine model_UpdateContinuousFrozenGroundIndex( pGrd , pConfig)
       ! assuming snow depth is 10 times the water content of the snow in inches
       rSnowDepthCM = cel%rSnowCover * 10.0_c_float * rCM_PER_INCH
 
-  if(cel%rTAvg > rFREEZING) then
-    cel%rCFGI = max(A*cel%rCFGI - &
-      (rTAvg_C * exp (-0.4_c_float * 0.5_c_float * rSnowDepthCM)),rZERO)
-  else ! temperature is below freezing
-    cel%rCFGI = max(A*cel%rCFGI - &
-      (rTAvg_C * exp (-0.4_c_float * 0.08_c_float * rSnowDepthCM)),rZERO)
-  end if
+      if(cel%rTAvg > rFREEZING) then
+        cel%rCFGI = max(A*cel%rCFGI - (rTAvg_C * exp (-0.4_c_float * 0.5_c_float * rSnowDepthCM)),rZERO)
+      else ! temperature is below freezing
+        cel%rCFGI = max(A*cel%rCFGI - (rTAvg_C * exp (-0.4_c_float * 0.08_c_float * rSnowDepthCM)),rZERO)
+      end if
 
+    end do
   end do
-end do
 
   !!!   *$OMP END DO
 
@@ -3698,19 +3696,19 @@ subroutine model_dumpvals(pGrd, pConfig)
 
       cel => pGrd%Cells( DUMP_VARS( idx )%column_num, DUMP_VARS( idx )%row_num )
 
-      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),40(g17.9e3,','),g17.9e3 )") pConfig%iMonth, &
+      write( DUMP_VARS( idx )%file_unit, "(i2,',',i2,',',i4,',',5(i12,','),41(g16.9,','),g16.9 )") pConfig%iMonth, &
         pConfig%iDay,                                                                                              &
         pConfig%iYear, cel%iLandUse, cel%iLandUseIndex, cel%iSoilGroup, cel%iNumUpslopeConnections,                &
         cel%iSumUpslopeCells, cel%rTMin, cel%rTMax, cel%rTAvg,                                                     &
-        cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rInterception,        &
-        cel%rNetRainfall, cel%rSnowCover,                                                                          &
+        cel%rCFGI, cel%rGDD, cel%rCurrentRootingDepth, cel%rGrossPrecip, cel%rInterception,                        &
+        cel%rNetRainfall, cel%rSnowFall_SWE, cel%rSnowCover,                                                       &
         cel%rSnowMelt, cel%rIrrigationAmount, cel%rIrrigationFromGW, cel%rIrrigationFromSW,                        &
         cel%rKcb, cel%rCropETc, cel%rBareSoilEvap, cel%rTotalAvailableWater, cel%rReadilyAvailableWater,           &
         cel%rReferenceET0,                                                                                         &
         cel%rActualET, cel%rReferenceET0_adj,                                                                      &
         cel%sm_deficit, cel%rKe, cel%rKs, cel%rKr,                                                                 &
-        cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rSMax, cel%rInflow, cel%rRunoff, &
-        cel%rOutflow, cel%rFlowOutOfGrid,           &
+        cel%rSoilWaterCap, cel%rSoilMoisture, cel%rAdjCN, cel%rSMax, cel%rInflow, cel%rRunoff,                     &
+        cel%rOutflow, cel%rFlowOutOfGrid,                                                                          &
         cel%rDailyRecharge, cel%rRejectedRecharge, cel%rNetInflowBuf(1), cel%rNetInflowBuf(2),                     &
         cel%rNetInflowBuf(3), cel%rNetInflowBuf(4), cel%rNetInflowBuf(5)
 

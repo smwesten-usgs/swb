@@ -115,7 +115,8 @@ if ( "${LEN_LIB_EXTRAS}" GREATER "0" )
 endif()
 
 link_libraries( ${EXTERNAL_LIBS} )
-include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} ${CMAKE_BINARY_DIR}/src ${PROJECT_SOURCE_DIR}/src/proj4 )
+
+include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} ${PROJECT_SOURCE_DIR}/src/proj4 ${CMAKE_BINARY_DIR}/src )
 
 if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
   add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe

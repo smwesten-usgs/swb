@@ -542,7 +542,8 @@ subroutine control_setModelOptions(sControlFile)
       write( DUMP_VARS( idx )%file_unit, fmt="(a)") &
         "month, day, year, landuse_code, landuse_index, soil_group, num_upslope_connections, sum_upslope_cells, "     &
         //"tmin, tmax, tmean, cfgi, gdd, current_rooting_depth, gross_precip, "                                       &
-        //"interception, net_rainfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, irrigation_fm_sw, "        &
+        //"interception, net_rainfall, snowfall, snow_cover, snowmelt, irrigation, irrigation_fm_gw, "                &
+        //"irrigation_fm_sw, "                                                                                        &
         //"kcb, crop_etc, bare_soil_evap, total_available_water, readily_available_water,"                            &
         //"ref_et0, actual_et, ref_etc0_adj, sm_deficit, surf_evap_coef_ke, plant_stress_coef_ks, "                   &
         //"evap_reduction_coef_kr, soil_storage_max, soil_storage, "                                                  &
