@@ -1357,15 +1357,7 @@ subroutine exit_with_code( codeval )
     codeval_ = 0
   endif
 
-#ifdef __GFORTRAN__
-
   call exit( codeval_ )
-
-#else
-
-  stop codeval_
-
-#endif
 
 end subroutine exit_with_code
 

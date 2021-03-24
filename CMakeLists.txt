@@ -1,132 +1,61 @@
-# CMake project for swb
+cmake_minimum_required(VERSION 3.7)
 
-# This script expects that the following configuration variables are
-# set and passed during CMake invocation:
-
-# CMAKE_BINARY_DIR
-# DESIRED_BUILD_TYPE     | possible values: "debug", "release", "profile"
-# CMAKE_INSTALL_PREFIX   | ex: "D:/DOS"
-# Fortran_FLAGS_DEBUG
-# Fortran_FLAGS_RELEASE
-# Fortran_FLAGS_PROFILE
-# PATH_TO_R
-# SYSTEM_TYPE                     | possible values: "win_x86", "win_x64", "mac_osx", "linux_x64"
-# Fortran_COMPILER_NAME  | ex: "gfortran", "ifort"
-# COMPILER_VERSION       | ex: "4.8.2"
-# LIBRARIES
+project( swb LANGUAGES C Fortran )
 
 message("Processing top-level CMakelists.txt for project swb")
 
+set(SWB_MAJOR_VERSION "1")
+set(SWB_MINOR_VERSION "3")
+set(SWB_PATCH_VERSION "0")
+set(SWB_LATEST_VERSION_TAG "v1.3.0")
+
 #------------------------------------------------------------------------------------#
-#                           Build directory check                                    #
+#                           Force out-of-source build
 #------------------------------------------------------------------------------------#
 if(${CMAKE_SOURCE_DIR}/src STREQUAL ${CMAKE_BINARY_DIR})
-  message(FATAL_ERROR "Cannot be built in the source directory. Use
-  out-of-source build instead.")
+  message(FATAL_ERROR "Cannot be built in the source directory. Use out-of-source build instead.")
   message(FATAL_ERROR "  cd /some/work/dir/build")
   message(FATAL_ERROR "  cmake -i /path/to/source")
 endif()
 
-#------------------------------------------------------------------------
-# Set basic project settings
-#------------------------------------------------------------------------
-#
-# NOTE: must enable CXX as a language in order to use the GNU compiler
-#       toolchain
-#
-project (swb Fortran C)
-enable_language (Fortran C)
 
 SET(CPACK_GENERATOR "TGZ")
 include(CPack)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set(PACKAGE_BUGREPORT "smwesten@usgs.gov")
-set(PACKAGE_NAME "swb")
-set(PACKAGE_STRING "swb 1.2")
-set(PACKAGE_TARNAME "swb")
-set(PACKAGE_VERSION "1.2")
+set(CMAKE_Fortran_MODULE_DIRECTORY ${PROJECT_BINARY_DIR}/modules)
 
-cmake_minimum_required(VERSION 3.1)
+# try to have CMake find static libraries if possible
+set(CMAKE_FIND_LIBRARY_SUFFIXES ".so" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+
+if ( CMAKE_HOST_WIN32 )
+  set( OUTPUT_BIN_TARGET_DIR win_x64 )
+  if ( CMAKE_Fortran_COMPILER_ID STREQUAL "Intel" )
+    set(CMAKE_FIND_LIBRARY_SUFFIXES ".lib" )
+    add_definitions(/D_CRT_SECURE_NO_DEPRECATE /DWIN32_LEAN_AND_MEAN)
+    message("==> Set library suffixes to .lib")
+  endif()
+elseif( CMAKE_HOST_APPLE )
+  set( OUTPUT_BIN_TARGET_DIR macOS )
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".dylib" ${CMAKE_FIND_LIBRARY_SUFFIXES})
+elseif( CMAKE_HOST_UNIX AND (NOT CMAKE_HOST_APPLE) )
+  set( OUTPUT_BIN_TARGET_DIR linux_x64 )
+endif()
 
 include( cmake/version_control.cmake )
-include( cmake/options_and_targets.cmake )
+include( cmake/FindHDF5.cmake )
+include( cmake/FindHDF5_HL.cmake )
+include( cmake/FindNetCDF.cmake )
+include( cmake/FindZlib.cmake )
+include( cmake/FindCurl.cmake )
+include( cmake/FindSzip.cmake )
+include( cmake/FindDISLIN.cmake)
+#include( cmake/FindWinPthread.cmake )
+#include( cmake/FindQuadMath.cmake )
+#include( cmake/FindGfortran.cmake )
 
-#------------------------------------------------------------------------
-# Locate utility programs
-#------------------------------------------------------------------------
-SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-SET(BUILD_SHARED_LIBS OFF)
-
-set( EXTERNAL_LIBS ${LIB_NETCDF} ${LIB_HDF5_HL} ${LIB_HDF5} )
-set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GFORTRAN} ${LIB_GCC} )
-
-if (NOT ${LIB_Z} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_Z} )
-endif()
-
-if (NOT ${LIB_SZ} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_SZ} )
-endif()
-
-set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_DISLIN} )
-
-if (NOT ${LIB_XM} STREQUAL "NOTFOUND" )
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_XM} )
-endif()
-
-if (NOT ${LIB_XT} STREQUAL "NOTFOUND" )
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_XT} )
-endif()
-
-if (NOT ${LIB_OPENGL32} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_OPENGL32} )
-endif()
-
-if (NOT ${LIB_GDI32} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GDI32} )
-endif()
-
-if (NOT ${LIB_GLU32} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_GLU32} )
-endif()
-
-if (NOT ${LIB_KERNEL32} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_KERNEL32} )
-endif()
-
-if (NOT ${LIB_USER32} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_USER32} )
-endif()
-
-if (NOT ${LIB_MSVCRT} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_MSVCRT} )
-endif()
-
-if (NOT ${LIB_CURL} STREQUAL "NOTFOUND")
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_CURL} )
-endif()
-
-list( LENGTH LIB_EXTRAS LEN_LIB_EXTRAS )
-
-if ( "${LEN_LIB_EXTRAS}" GREATER "0" )
-  set( EXTERNAL_LIBS ${EXTERNAL_LIBS} ${LIB_EXTRAS} )
-endif()
-
-link_libraries( ${EXTERNAL_LIBS} )
-
-include_directories( ${INCLUDE_DIRECTORIES} ${DISLIN_MODULE_DIR} ${PROJECT_SOURCE_DIR}/src/proj4 ${CMAKE_BINARY_DIR}/src )
-
-if ("${SYSTEM_TYPE}" STREQUAL "win_x64" OR "${SYSTEM_TYPE}" STREQUAL "win_x86")
-  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${CMAKE_INSTALL_PREFIX}/swb.exe
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${CMAKE_INSTALL_PREFIX}/swbstats.exe
-  )
-else()
-  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb ${CMAKE_INSTALL_PREFIX}/swb
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats ${CMAKE_INSTALL_PREFIX}/swbstats
-  )
-endif()
+include_directories( ${CMAKE_SOURCE_DIR} src src/proj4 )
 
 include( cmake/print_summary.cmake )
 
@@ -135,3 +64,22 @@ add_subdirectory(src)
 add_subdirectory(test/unit_tests)
 add_subdirectory(tests/general)
 add_subdirectory(tests/irrigation)
+
+#set(CMAKE_Fortran_MODULE_DIRECTORY src/dislin)
+
+# prepend location of project 'bin' directory
+set( OUTPUT_BIN_TARGET_DIR ${PROJECT_SOURCE_DIR}/bin/${OUTPUT_BIN_TARGET_DIR} )
+
+if ( WIN32 )
+  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb.exe ${OUTPUT_BIN_TARGET_DIR}/swb.exe
+                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats.exe ${OUTPUT_BIN_TARGET_DIR}/swbstats.exe
+		             COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/test/unit_tests/swbtest.exe ${PROJECT_SOURCE_DIR}/test/unit_tests/swbtest.exe
+  )
+else()
+  add_custom_target(copy ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swb ${OUTPUT_BIN_TARGET_DIR}/swb
+                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/src/swbstats ${OUTPUT_BIN_TARGET_DIR}/swbstats
+                 COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_BINARY_DIR}/test/unit_tests/swbtest ${PROJECT_SOURCE_DIR}/test/unit_tests/swbtest
+  )
+endif()
+
+file(WRITE VERSION "${SWB_MAJOR_VERSION}.${SWB_MINOR_VERSION}.${SWB_PATCH_VERSION}, build ${GIT_COMMITS_ON_BRANCH}")

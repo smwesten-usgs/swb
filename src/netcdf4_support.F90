@@ -3011,8 +3011,8 @@ subroutine nf_create(NCFILE, sFilename, iLU)
   character (len=*) :: sFilename
   integer (c_int), optional :: iLU
 
-  character (len=256) :: sBuf
-  call getcwd(sBuf)
+!  character (len=256) :: sBuf
+!  call getcwd(sBuf)
 
   call nf_trap(nc_create(path=trim(fortran_to_c_string(sFilename)), &
                  cmode=NC_NETCDF4, &

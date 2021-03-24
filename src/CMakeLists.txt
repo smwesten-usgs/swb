@@ -1,4 +1,4 @@
-add_library(proj4 STATIC
+add_library(proj4_lib STATIC
             proj4/aasincos.c
             proj4/adjlon.c
             proj4/bch2bps.c
@@ -164,7 +164,7 @@ add_library(proj4 STATIC
 
     )
 
-add_library(swblib STATIC
+add_library(swb_lib STATIC
             control.F90
             data_factory.F90
             datetime.F90
@@ -193,16 +193,11 @@ add_library(swblib STATIC
             generated/version_control.F90
 
   )
-target_link_libraries(swblib proj4)
 
+target_link_libraries( swb_lib proj4_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})
 
-add_executable(swb
-            main.F90
-  )
-target_link_libraries(swb swblib proj4)
+add_executable(swb main.F90 )
+target_link_libraries( swb proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})
 
-
-add_executable(swbstats
-            swbstats.F90
-    )
-target_link_libraries(swbstats swblib)
+add_executable(swbstats swbstats.F90)
+target_link_libraries( swbstats proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})

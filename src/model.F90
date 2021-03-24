@@ -1132,7 +1132,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
   real (c_float)   :: rPrevious_Interception_Storage
   real (c_float)   :: rMAXIMUM_INTERCEPTION_STORAGE
   real (c_float)   :: rFraction_Wet
-
+  real (c_double)   :: rFracRain
 
   ! [ LOCAL PARAMETERS ]
 
@@ -1279,7 +1279,7 @@ subroutine model_ProcessRain( pGrd, pConfig, iDayOfYear, iMonth)
         ! end if
 
         dpSnowCover = max(0.0_c_double, dpSnowCover + cel%rSnowFall_SWE - cel%rInterception )
-        dpNetRainfall = cel%rGrossPrecip * rFracRain - cel
+        dpNetRainfall = cel%rGrossPrecip * rFracRain - cel%rInterception
 
 
         ! Is there any melting?
