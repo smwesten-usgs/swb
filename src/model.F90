@@ -530,8 +530,9 @@ subroutine model_EndOfRun(pGrd, pConfig, pGraph)
   ! trigger the call to reconstitute the output grids and plots from the
   ! compressed binary files, if desired
 
-  if(.not. pConfig%lUseSWBRead) &
+  if(.not. pConfig%lUseSWBRead) then
     call stats_RewriteGrids(pGrd, pConfig, pGraph)
+  endif
 
   ! destroy model grid to free up memory
   call grid_Destroy(pGrd)

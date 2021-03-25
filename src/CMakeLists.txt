@@ -1,3 +1,9 @@
+add_library(dummy_lib STATIC
+  dislin/glDummy.c
+  dislin/XmDummy.c
+  dislin/X11Dummy.c
+  )
+
 add_library(proj4_lib STATIC
             proj4/aasincos.c
             proj4/adjlon.c
@@ -194,10 +200,10 @@ add_library(swb_lib STATIC
 
   )
 
-target_link_libraries( swb_lib proj4_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})
+target_link_libraries( swb_lib proj4_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY} dummy_lib gdi32.lib user32.lib)
 
 add_executable(swb main.F90 )
-target_link_libraries( swb proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})
+target_link_libraries( swb proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY} dummy_lib gdi32.lib user32.lib)
 
 add_executable(swbstats swbstats.F90)
-target_link_libraries( swbstats proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY})
+target_link_libraries( swbstats proj4_lib swb_lib ${NETCDF_LIBRARY} ${HDF5_HL_LIBRARY} ${HDF5_LIBRARY} ${ZLIB_LIBRARY} ${DISLIN_LIBRARY} dummy_lib gdi32.lib user32.lib)

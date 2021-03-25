@@ -12,8 +12,8 @@ module version_control
 #define PLATFORM_NAME "Windows-10.0.18363"
 #define WINDOWS_SYSTEM_BOOL "1"
 #define GIT_BRANCH_VALUE "master"
-#define GIT_COMMIT_HASH_VALUE "637db91"
-#define GIT_COMMITS_ON_BRANCH_VALUE "0"
+#define GIT_COMMIT_HASH_VALUE "fd8698b"
+#define GIT_COMMITS_ON_BRANCH_VALUE "1"
 #define SWB_MAJOR_VERSION_VALUE "1"
 #define SWB_MINOR_VERSION_VALUE "3"
 #define SWB_PATCH_VERSION_VALUE "0"
@@ -34,7 +34,7 @@ module version_control
                                        //trim(adjustl(BUILD_NUMBER))
 
   character (len=*), parameter :: SYSTEM_NAME = adjustl(trim(PLATFORM_NAME))
-  character (len=*), parameter :: COMPILE_DATE = trim(__DATE__)
+  character (len=15), parameter :: COMPILE_DATE = trim(__DATE__)
   character (len=*), parameter :: COMPILE_TIME = trim(__TIME__)
   character (len=*), parameter :: COMPILATION_TIMESTAMP = trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
   logical (c_bool), parameter  :: WINDOWS_SYSTEM = (trim(WINDOWS_SYSTEM_BOOL) == "True")

@@ -34,7 +34,7 @@ module version_control
                                        //trim(adjustl(BUILD_NUMBER))
 
   character (len=*), parameter :: SYSTEM_NAME = adjustl(trim(PLATFORM_NAME))
-  character (len=*), parameter :: COMPILE_DATE = trim(__DATE__)
+  character (len=15), parameter :: COMPILE_DATE = trim(__DATE__)
   character (len=*), parameter :: COMPILE_TIME = trim(__TIME__)
   character (len=*), parameter :: COMPILATION_TIMESTAMP = trim(COMPILE_DATE)//"  "//trim(COMPILE_TIME)
   logical (c_bool), parameter  :: WINDOWS_SYSTEM = (trim(WINDOWS_SYSTEM_BOOL) == "True")

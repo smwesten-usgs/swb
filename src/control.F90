@@ -2303,6 +2303,7 @@ subroutine control_setModelOptions(sControlFile)
 #endif
 
     else if ( trim(sItem) == "EOJ" ) then
+
       call stats_CalcMeanRecharge(pGrd, pConfig, pGraph)
       call stats_CalcMeanRechargebyLU(pGrd, pConfig, pGraph)
       write(UNIT=LU_LOG,FMT=*) "Job complete."

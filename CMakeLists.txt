@@ -43,6 +43,7 @@ elseif( CMAKE_HOST_UNIX AND (NOT CMAKE_HOST_APPLE) )
   set( OUTPUT_BIN_TARGET_DIR linux_x64 )
 endif()
 
+include( cmake/options_and_targets.cmake )
 include( cmake/version_control.cmake )
 include( cmake/FindHDF5.cmake )
 include( cmake/FindHDF5_HL.cmake )
@@ -55,7 +56,7 @@ include( cmake/FindDISLIN.cmake)
 #include( cmake/FindQuadMath.cmake )
 #include( cmake/FindGfortran.cmake )
 
-include_directories( ${CMAKE_SOURCE_DIR} src src/proj4 )
+include_directories( ${CMAKE_SOURCE_DIR} src src/proj4 src/dislin )
 
 include( cmake/print_summary.cmake )
 
