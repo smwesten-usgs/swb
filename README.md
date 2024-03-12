@@ -10,7 +10,8 @@ Recharge calculations are made on a rectangular grid of computational elements t
 easily imported into a regional groundwater-flow model. Recharge estimates calculated by
  the code may be output as daily, monthly, or annual values.
 
-SWB version 1.x receives infrequent bug fixes. Development of the SWB code continues under the name 'SWB2' in this repo: https://github.com/smwesten-usgs/swb2
+> :warning: **Warning!**
+SWB version 1.x receives infrequent bug fixes. Development of the SWB code continues under the name 'SWB2' in this repo: https://github.com/smwesten-usgs/swb2. Users should consider using SWB2 unless there is a compelling reason to prefer version 1.x.
 
 Disclaimer
 ----------
